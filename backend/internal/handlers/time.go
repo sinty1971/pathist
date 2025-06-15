@@ -15,14 +15,14 @@ func NewTimeHandler() *TimeHandler {
 }
 
 // ParseTime godoc
-// @Summary      Parse time string
-// @Description  Parse various date/time string formats
-// @Tags         time
+// @Summary      タイムスタンプの解析
+// @Description  様々な日時文字列フォーマットを解析します
+// @Tags         時刻処理
 // @Accept       json
 // @Produce      json
-// @Param        request body models.TimeParseRequest true "Time string to parse"
-// @Success      200 {object} models.TimeParseResponse "Successful response"
-// @Failure      400 {object} map[string]string "Bad request"
+// @Param        request body models.TimeParseRequest true "解析する時刻文字列"
+// @Success      200 {object} models.TimeParseResponse "正常なレスポンス"
+// @Failure      400 {object} map[string]string "不正なリクエスト"
 // @Router       /time/parse [post]
 func (h *TimeHandler) ParseTime(c *fiber.Ctx) error {
 	var req models.TimeParseRequest
@@ -48,12 +48,12 @@ func (h *TimeHandler) ParseTime(c *fiber.Ctx) error {
 }
 
 // GetSupportedFormats godoc
-// @Summary      Get supported time formats
-// @Description  Get list of all supported date/time formats
-// @Tags         time
+// @Summary      サポートされる時刻フォーマット一覧
+// @Description  サポートされているすべての日時フォーマットの一覧を取得します
+// @Tags         時刻処理
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} models.SupportedFormatsResponse "Successful response"
+// @Success      200 {object} models.SupportedFormatsResponse "正常なレスポンス"
 // @Router       /time/formats [get]
 func (th *TimeHandler) GetSupportedFormats(c *fiber.Ctx) error {
 	formats := []models.TimeFormat{

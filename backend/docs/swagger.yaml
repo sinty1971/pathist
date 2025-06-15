@@ -1,7 +1,24 @@
 basePath: /api
 definitions:
+  models.FileEntriesListResponse:
+    description: ファイルエントリ一覧を含むレスポンス
+    properties:
+      file_count:
+        description: File number of file entries
+        example: 10
+        type: integer
+      file_entries:
+        description: File entries
+        items:
+          $ref: '#/definitions/models.FileEntry'
+        type: array
+      folder_count:
+        description: Folder number of file entries
+        example: 10
+        type: integer
+    type: object
   models.FileEntry:
-    description: File or directory information
+    description: ファイルまたはディレクトリの情報
     properties:
       id:
         example: 123456
@@ -26,19 +43,6 @@ definitions:
         description: Size of the file in bytes
         example: 4096
         type: integer
-    type: object
-  models.FolderListResponse:
-    description: Response containing list of folders
-    properties:
-      count:
-        description: Total number of folders returned
-        example: 10
-        type: integer
-      folders:
-        description: List of folders
-        items:
-          $ref: '#/definitions/models.FileEntry'
-        type: array
     type: object
   models.KoujiEntriesResponse:
     description: Response containing list of construction kouji folders
@@ -65,9 +69,6 @@ definitions:
         type: string
       end_date:
         $ref: '#/definitions/models.Timestamp'
-      file_count:
-        example: 42
-        type: integer
       id:
         example: 123456
         type: integer
@@ -99,9 +100,6 @@ definitions:
       status:
         example: 進行中
         type: string
-      subdir_count:
-        example: 5
-        type: integer
       tags:
         example:
         - '[''工事'''
@@ -174,31 +172,21 @@ definitions:
       time.Time:
         type: string
     type: object
-  models.UpdateKoujiEntryDatesRequest:
-    description: Request body for updating kouji start and end dates
-    properties:
-      end_date:
-        example: "2024-12-31T00:00:00Z"
-        type: string
-      start_date:
-        example: "2024-01-01T00:00:00Z"
-        type: string
-    type: object
 host: localhost:8080
 info:
   contact: {}
-  description: API for managing and browsing file entries
-  title: Penguin FileSystem Management API
+  description: ファイルエントリの管理と閲覧のためのAPI
+  title: Penguin ファイルシステム管理API
   version: 1.0.0
 paths:
   /file-entries:
     get:
       consumes:
       - application/json
-      description: Retrieve a list of folders from the specified path
+      description: 指定されたパスからファイルとフォルダーの一覧を取得します
       parameters:
       - default: ~/penguin
-        description: Path to the directory to list
+        description: 取得するディレクトリのパス
         in: query
         name: path
         type: string
@@ -206,18 +194,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful response
+          description: 正常なレスポンス
           schema:
-            $ref: '#/definitions/models.FolderListResponse'
+            $ref: '#/definitions/models.FileEntriesListResponse'
         "500":
-          description: Internal server error
+          description: サーバーエラー
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: Get folders
+      summary: ファイルエントリ一覧の取得
       tags:
-      - file-entries
+      - ファイル管理
   /kouji-entries:
     get:
       consumes:
@@ -247,90 +235,19 @@ paths:
       summary: 工事プロジェクト一覧の取得
       tags:
       - 工事管理
-  /kouji-entries/{project_id}/dates:
-    put:
-      consumes:
-      - application/json
-      description: Update start and end dates for a specific kouji project
-      parameters:
-      - description: Project ID
-        in: path
-        name: project_id
-        required: true
-        type: string
-      - description: Updated dates
-        in: body
-        name: dates
-        required: true
-        schema:
-          $ref: '#/definitions/models.UpdateKoujiEntryDatesRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success message
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Update kouji project dates
-      tags:
-      - kouji-entries
-  /kouji-entries/cleanup:
-    post:
-      consumes:
-      - application/json
-      description: Remove kouji entries with invalid time data (like 0001-01-01T09:26:51+09:18)
-        from YAML
-      parameters:
-      - default: ~/penguin/豊田築炉/2-工事/.inside.yaml
-        description: Path to the YAML file
-        in: query
-        name: yaml_path
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success message with cleanup details
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Cleanup invalid time data
-      tags:
-      - kouji-entries
   /kouji-entries/save:
     post:
       consumes:
       - application/json
-      description: Save kouji entries information to a YAML file
+      description: 工事プロジェクト情報をYAMLファイルに保存します
       parameters:
       - default: ~/penguin/豊田築炉/2-工事
-        description: Path to the directory to scan
+        description: スキャンするディレクトリのパス
         in: query
         name: path
         type: string
       - default: ~/penguin/豊田築炉/2-工事/.inside.yaml
-        description: Output YAML file path
+        description: 出力YAMLファイルのパス
         in: query
         name: output_path
         type: string
@@ -338,42 +255,42 @@ paths:
       - application/json
       responses:
         "200":
-          description: Success message
+          description: 成功メッセージ
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: Internal server error
+          description: サーバーエラー
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: Save kouji entries to YAML
+      summary: 工事情報のYAML保存
       tags:
-      - kouji-entries
+      - 工事管理
   /time/formats:
     get:
       consumes:
       - application/json
-      description: Get list of all supported date/time formats
+      description: サポートされているすべての日時フォーマットの一覧を取得します
       produces:
       - application/json
       responses:
         "200":
-          description: Successful response
+          description: 正常なレスポンス
           schema:
             $ref: '#/definitions/models.SupportedFormatsResponse'
-      summary: Get supported time formats
+      summary: サポートされる時刻フォーマット一覧
       tags:
-      - time
+      - 時刻処理
   /time/parse:
     post:
       consumes:
       - application/json
-      description: Parse various date/time string formats
+      description: 様々な日時文字列フォーマットを解析します
       parameters:
-      - description: Time string to parse
+      - description: 解析する時刻文字列
         in: body
         name: request
         required: true
@@ -383,16 +300,16 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful response
+          description: 正常なレスポンス
           schema:
             $ref: '#/definitions/models.TimeParseResponse'
         "400":
-          description: Bad request
+          description: 不正なリクエスト
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: Parse time string
+      summary: タイムスタンプの解析
       tags:
-      - time
+      - 時刻処理
 swagger: "2.0"

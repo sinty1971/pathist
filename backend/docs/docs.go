@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/file-entries": {
             "get": {
-                "description": "Retrieve a list of folders from the specified path",
+                "description": "指定されたパスからファイルとフォルダーの一覧を取得します",
                 "consumes": [
                     "application/json"
                 ],
@@ -25,27 +25,27 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "file-entries"
+                    "ファイル管理"
                 ],
-                "summary": "Get folders",
+                "summary": "ファイルエントリ一覧の取得",
                 "parameters": [
                     {
                         "type": "string",
                         "default": "~/penguin",
-                        "description": "Path to the directory to list",
+                        "description": "取得するディレクトリのパス",
                         "name": "path",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response",
+                        "description": "正常なレスポンス",
                         "schema": {
-                            "$ref": "#/definitions/models.FolderListResponse"
+                            "$ref": "#/definitions/models.FileEntriesListResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "サーバーエラー",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -97,53 +97,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/kouji-entries/cleanup": {
-            "post": {
-                "description": "Remove kouji entries with invalid time data (like 0001-01-01T09:26:51+09:18) from YAML",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "kouji-entries"
-                ],
-                "summary": "Cleanup invalid time data",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "~/penguin/豊田築炉/2-工事/.inside.yaml",
-                        "description": "Path to the YAML file",
-                        "name": "yaml_path",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success message with cleanup details",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/kouji-entries/save": {
             "post": {
-                "description": "Save kouji entries information to a YAML file",
+                "description": "工事プロジェクト情報をYAMLファイルに保存します",
                 "consumes": [
                     "application/json"
                 ],
@@ -151,28 +107,28 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "kouji-entries"
+                    "工事管理"
                 ],
-                "summary": "Save kouji entries to YAML",
+                "summary": "工事情報のYAML保存",
                 "parameters": [
                     {
                         "type": "string",
                         "default": "~/penguin/豊田築炉/2-工事",
-                        "description": "Path to the directory to scan",
+                        "description": "スキャンするディレクトリのパス",
                         "name": "path",
                         "in": "query"
                     },
                     {
                         "type": "string",
                         "default": "~/penguin/豊田築炉/2-工事/.inside.yaml",
-                        "description": "Output YAML file path",
+                        "description": "出力YAMLファイルのパス",
                         "name": "output_path",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success message",
+                        "description": "成功メッセージ",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -181,69 +137,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/kouji-entries/{project_id}/dates": {
-            "put": {
-                "description": "Update start and end dates for a specific kouji project",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "kouji-entries"
-                ],
-                "summary": "Update kouji project dates",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Project ID",
-                        "name": "project_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Updated dates",
-                        "name": "dates",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.UpdateKoujiEntryDatesRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success message",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
+                        "description": "サーバーエラー",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -256,7 +150,7 @@ const docTemplate = `{
         },
         "/time/formats": {
             "get": {
-                "description": "Get list of all supported date/time formats",
+                "description": "サポートされているすべての日時フォーマットの一覧を取得します",
                 "consumes": [
                     "application/json"
                 ],
@@ -264,12 +158,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "time"
+                    "時刻処理"
                 ],
-                "summary": "Get supported time formats",
+                "summary": "サポートされる時刻フォーマット一覧",
                 "responses": {
                     "200": {
-                        "description": "Successful response",
+                        "description": "正常なレスポンス",
                         "schema": {
                             "$ref": "#/definitions/models.SupportedFormatsResponse"
                         }
@@ -279,7 +173,7 @@ const docTemplate = `{
         },
         "/time/parse": {
             "post": {
-                "description": "Parse various date/time string formats",
+                "description": "様々な日時文字列フォーマットを解析します",
                 "consumes": [
                     "application/json"
                 ],
@@ -287,12 +181,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "time"
+                    "時刻処理"
                 ],
-                "summary": "Parse time string",
+                "summary": "タイムスタンプの解析",
                 "parameters": [
                     {
-                        "description": "Time string to parse",
+                        "description": "解析する時刻文字列",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -303,13 +197,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response",
+                        "description": "正常なレスポンス",
                         "schema": {
                             "$ref": "#/definitions/models.TimeParseResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "不正なリクエスト",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -322,8 +216,31 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.FileEntriesListResponse": {
+            "description": "ファイルエントリ一覧を含むレスポンス",
+            "type": "object",
+            "properties": {
+                "file_count": {
+                    "description": "File number of file entries",
+                    "type": "integer",
+                    "example": 10
+                },
+                "file_entries": {
+                    "description": "File entries",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.FileEntry"
+                    }
+                },
+                "folder_count": {
+                    "description": "Folder number of file entries",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
         "models.FileEntry": {
-            "description": "File or directory information",
+            "description": "ファイルまたはディレクトリの情報",
             "type": "object",
             "properties": {
                 "id": {
@@ -357,24 +274,6 @@ const docTemplate = `{
                     "description": "Size of the file in bytes",
                     "type": "integer",
                     "example": 4096
-                }
-            }
-        },
-        "models.FolderListResponse": {
-            "description": "Response containing list of folders",
-            "type": "object",
-            "properties": {
-                "count": {
-                    "description": "Total number of folders returned",
-                    "type": "integer",
-                    "example": 10
-                },
-                "folders": {
-                    "description": "List of folders",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.FileEntry"
-                    }
                 }
             }
         },
@@ -412,10 +311,6 @@ const docTemplate = `{
                 },
                 "end_date": {
                     "$ref": "#/definitions/models.Timestamp"
-                },
-                "file_count": {
-                    "type": "integer",
-                    "example": 42
                 },
                 "id": {
                     "type": "integer",
@@ -459,10 +354,6 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "進行中"
-                },
-                "subdir_count": {
-                    "type": "integer",
-                    "example": 5
                 },
                 "tags": {
                     "type": "array",
@@ -561,20 +452,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "models.UpdateKoujiEntryDatesRequest": {
-            "description": "Request body for updating kouji start and end dates",
-            "type": "object",
-            "properties": {
-                "end_date": {
-                    "type": "string",
-                    "example": "2024-12-31T00:00:00Z"
-                },
-                "start_date": {
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
-                }
-            }
         }
     }
 }`
@@ -585,8 +462,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "Penguin FileSystem Management API",
-	Description:      "API for managing and browsing file entries",
+	Title:            "Penguin ファイルシステム管理API",
+	Description:      "ファイルエントリの管理と閲覧のためのAPI",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

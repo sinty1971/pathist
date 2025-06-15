@@ -14,9 +14,9 @@ import (
 	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
-// @title Penguin FileSystem Management API
+// @title Penguin ファイルシステム管理API
 // @version 1.0.0
-// @description API for managing and browsing file entries
+// @description ファイルエントリの管理と閲覧のためのAPI
 // @host localhost:8080
 // @BasePath /api
 func main() {

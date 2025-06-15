@@ -17,14 +17,14 @@ func NewFileSystemHandler(fsService *services.FileSystemService) *FileSystemHand
 }
 
 // GetFileEntries godoc
-// @Summary      Get folders
-// @Description  Retrieve a list of folders from the specified path
-// @Tags         file-entries
+// @Summary      ファイルエントリ一覧の取得
+// @Description  指定されたパスからファイルとフォルダーの一覧を取得します
+// @Tags         ファイル管理
 // @Accept       json
 // @Produce      json
-// @Param        path query string false "Path to the directory to list" default(~/penguin)
-// @Success      200 {object} models.FolderListResponse "Successful response"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Param        path query string false "取得するディレクトリのパス" default(~/penguin)
+// @Success      200 {object} models.FileEntriesListResponse "正常なレスポンス"
+// @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /file-entries [get]
 func (h *FileSystemHandler) GetFileEntries(c *fiber.Ctx) error {
 	fsPath := c.Query("path", "~/penguin")

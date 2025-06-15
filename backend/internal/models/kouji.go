@@ -23,10 +23,3 @@ type KoujiEntriesResponse struct {
 	Count        int          `json:"count" example:"10" description:"Total number of entries returned"`
 	TotalSize    int64        `json:"total_size,omitempty" example:"1073741824" description:"Total size of all files in bytes"`
 }
-
-// UpdateKoujiEntryDatesRequest represents the request body for updating kouji dates
-// @Description Request body for updating kouji start and end dates
-type UpdateKoujiEntryDatesRequest struct {
-	StartDate string `json:"start_date" example:"2024-01-01T00:00:00Z"`
-	EndDate   string `json:"end_date" example:"2024-12-31T00:00:00Z"`
-}

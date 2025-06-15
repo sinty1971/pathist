@@ -49,15 +49,15 @@ func (h *KoujiHandler) GetKoujiEntries(c *fiber.Ctx) error {
 }
 
 // SaveKoujiEntries godoc
-// @Summary      Save kouji entries to YAML
-// @Description  Save kouji entries information to a YAML file
-// @Tags         kouji-entries
+// @Summary      工事情報のYAML保存
+// @Description  工事プロジェクト情報をYAMLファイルに保存します
+// @Tags         工事管理
 // @Accept       json
 // @Produce      json
-// @Param        path query string false "Path to the directory to scan" default(~/penguin/豊田築炉/2-工事)
-// @Param        output_path query string false "Output YAML file path" default(~/penguin/豊田築炉/2-工事/.inside.yaml)
-// @Success      200 {object} map[string]string "Success message"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Param        path query string false "スキャンするディレクトリのパス" default(~/penguin/豊田築炉/2-工事)
+// @Param        output_path query string false "出力YAMLファイルのパス" default(~/penguin/豊田築炉/2-工事/.inside.yaml)
+// @Success      200 {object} map[string]string "成功メッセージ"
+// @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kouji-entries/save [post]
 func (h *KoujiHandler) SaveKoujiEntries(c *fiber.Ctx) error {
 	// リクエストボディを読み込む

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import KoujiEntriesGrid from './KoujiProjectGrid';
-import { getKoujiEntries } from '../api';
+import { getKoujiEntries } from '../api/sdk.gen';
 import type { KoujiEntryExtended } from '../types/kouji';
 
 const KoujiProjectPage = () => {
@@ -14,7 +14,9 @@ const KoujiProjectPage = () => {
   // 工事データをロード
   const loadKoujiEntries = async () => {
     try {
-      const response = await getKoujiEntries({});
+      const response = await getKoujiEntries({
+        query: {} // パスを指定しない場合はデフォルトパスを使用
+      });
       const responseData = response.data as any;
       setKoujiEntries(responseData.kouji_entries || []);
     } catch (err) {

@@ -54,21 +54,18 @@ func (h *KoujiHandler) GetKoujiEntries(c *fiber.Ctx) error {
 // @Tags         工事管理
 // @Accept       json
 // @Produce      json
-// @Param        path query string false "スキャンするディレクトリのパス" default(~/penguin/豊田築炉/2-工事)
-// @Param        output_path query string false "出力YAMLファイルのパス" default(~/penguin/豊田築炉/2-工事/.inside.yaml)
+// @Param        body body []models.KoujiEntry false "工事データ（オプション）"
 // @Success      200 {object} map[string]string "成功メッセージ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kouji-entries/save [post]
 func (h *KoujiHandler) SaveKoujiEntries(c *fiber.Ctx) error {
-	// リクエストボディを読み込む
+	// リクエストボディから編集された工事データを取得
 	var entries []models.KoujiEntry
 	if err := c.BodyParser(&entries); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Invalid request body",
-			"message": err.Error(),
-		})
+		// ボディが空の場合は、現在のデータを取得
+		entries = h.koujiService.GetKoujiEntries()
 	}
-
+	
 	// KoujiServiceを使用して工事プロジェクトを保存
 	err := h.koujiService.SaveKoujiEntries(entries)
 	if err != nil {
@@ -78,11 +75,9 @@ func (h *KoujiHandler) SaveKoujiEntries(c *fiber.Ctx) error {
 		})
 	}
 
-	output_path := h.koujiService.DatabasePath
-
 	return c.JSON(fiber.Map{
-		"message":     "工事フォルダー情報をYAMLファイルに保存しました",
-		"output_path": output_path,
+		"message":     "工事データを正常に保存しました",
+		"output_path": h.koujiService.Database,
 		"count":       len(entries),
 	})
 }

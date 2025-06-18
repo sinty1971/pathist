@@ -48,7 +48,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// 工事サービスを作成
-	koujiService, err := services.NewKoujiService(fileSystemService, "豊田築炉/2-工事")
+	koujiService, err := services.NewKoujiService(fileSystemService, "豊田築炉/2-工事", ".inside.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}

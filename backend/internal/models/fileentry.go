@@ -3,7 +3,7 @@ package models
 // FileEntry はファイルまたはディレクトリを表す
 // @Description ファイルまたはディレクトリの情報
 type FileEntry struct {
-	Id uint64 `json:"id" yaml:"id" example:"123456"`
+	ID uint64 `json:"id" yaml:"id" example:"123456"`
 	// Name of the file or folder
 	Name string `json:"name" yaml:"name" example:"documents"`
 	// Full path to the file or folder

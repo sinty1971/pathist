@@ -4,7 +4,7 @@
 backend:
     cd ./backend && go run cmd/main.go
 
-# Start the frontend development server
+# Start the frontend development server (React Router v7)
 frontend:
     cd ./frontend && npm run dev
 
@@ -21,8 +21,9 @@ backend-update:
 # Generate OpenAPI documentation from Go code
 generate-api:
     cd ./backend && swag init -g cmd/main.go
-    cd ./backend && cp docs/swagger.yaml api/openapi.yaml
-    @echo "OpenAPI documentation generated at backend/api/openapi.yaml"
+    cp ./backend/docs/swagger.yaml ./schemas/openapi.yaml
+    cp ./backend/docs/swagger.json ./schemas/openapi.json
+    @echo "OpenAPI documentation generated and copied to schemas/"
 
 # Install frontend dependencies  
 frontend-deps:
@@ -36,11 +37,15 @@ frontend-update:
 # Generate TypeScript types from OpenAPI spec
 generate-types:
     cd ./frontend && npm run generate-api
-    @echo "TypeScript types generated at frontend/src/api/schema.d.ts"
+    @echo "TypeScript types generated at frontend/app/api/"
 
-# Build frontend for production
+# Build frontend for production (React Router v7)
 frontend-build:
     cd ./frontend && npm run build
+
+# Preview frontend production build
+frontend-preview:
+    cd ./frontend && npm run preview
 
 # Run frontend linting
 frontend-lint:
@@ -75,6 +80,11 @@ claude-code:
 architecture:
     @echo "Opening architecture diagram..."
     @xdg-open "https://mermaid.live/edit#$(cat doc/backend-architecture.md | grep -A 100 '```mermaid' | grep -B 100 '```' | grep -v '```' | base64 -w 0)" 2>/dev/null || open "https://mermaid.live/" 2>/dev/null || echo "Please visit https://mermaid.live/ and paste the mermaid code from doc/backend-architecture.md"
+
+# Open Swagger UI documentation in browser
+swagger:
+    @echo "Opening Swagger UI documentation..."
+    @xdg-open "http://localhost:8080/swagger/index.html" 2>/dev/null || open "http://localhost:8080/swagger/index.html" 2>/dev/null || echo "Please visit http://localhost:8080/swagger/index.html"
 
 # Show available commands
 help:

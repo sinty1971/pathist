@@ -50,8 +50,13 @@ var TimestampParseReplaceRule = map[string]string{
 	"Z07":       `(?:Z|[+-]\d{2})`,       // タイムゾーン（時間のみ）
 }
 
-// init パッケージ初期化時に日時フォーマットを正規表現に変換
+// init パッケージ初期化時に正規表現を初期化
 func init() {
+	InitializeTimestampRegexps()
+}
+
+// InitializeTimestampRegexps 日時フォーマットを正規表現に変換して初期化します
+func InitializeTimestampRegexps() {
 	formatToRegex := func(format string) regexp.Regexp {
 		// 順序を考慮して置換を実行
 		pattern := format

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -37,17 +38,23 @@ func NewFileSystemService(root string) (*FileSystemService, error) {
 	}, nil
 }
 
+// BuildPath 相対パスをRootパスを追加したパスを返す
+// 絶対パスの場合はエラーを返す
+func (s *FileSystemService) BuildPath(relPath string) (string, error) {
+	if filepath.IsAbs(relPath) {
+		return "", errors.New("absolute path is not allowed")
+	}
+	return filepath.Join(s.Root, relPath), nil
+}
+
 // GetFileEntries gets the file entries from the file system
 func (s *FileSystemService) GetFileEntries(fsPath string) (*models.FileEntriesListResponse, error) {
-	// Expand ~ to home directory
-	fsPath = filepath.Join(s.Root, fsPath)
-
-	absPath, err := filepath.Abs(fsPath)
+	fsPath, err := s.BuildPath(fsPath)
 	if err != nil {
 		return nil, err
 	}
 
-	entries, err := os.ReadDir(absPath)
+	entries, err := os.ReadDir(fsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +65,7 @@ func (s *FileSystemService) GetFileEntries(fsPath string) (*models.FileEntriesLi
 	for _, entry := range entries {
 		info, err := entry.Info()
 		if err != nil {
+			// ファイル情報の取得に失敗した場合はスキップ
 			continue
 		}
 		stat := info.Sys().(*syscall.Stat_t)
@@ -65,7 +73,7 @@ func (s *FileSystemService) GetFileEntries(fsPath string) (*models.FileEntriesLi
 		// Check if entry is a directory
 		// For symlinks, check the target's type
 		isDirectory := entry.IsDir()
-		entryPath := filepath.Join(absPath, entry.Name())
+		entryPath := filepath.Join(fsPath, entry.Name())
 
 		// If it's a symlink, check what it points to
 		if info.Mode()&os.ModeSymlink != 0 {
@@ -76,7 +84,7 @@ func (s *FileSystemService) GetFileEntries(fsPath string) (*models.FileEntriesLi
 		}
 
 		fileEntries = append(fileEntries, models.FileEntry{
-			Id:           stat.Ino,
+			ID:           stat.Ino,
 			Name:         entry.Name(),
 			Path:         entryPath,
 			IsDirectory:  isDirectory,

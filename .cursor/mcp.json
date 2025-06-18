@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "recent-go-mcp": {
+      "command": "go",
+      "args": ["run", "github.com/tenkoh/recent-go-mcp@latest", "1.24"],
+      "env": {}
+    }
+  }
+}

@@ -112,18 +112,15 @@ const docTemplate = `{
                 "summary": "工事情報のYAML保存",
                 "parameters": [
                     {
-                        "type": "string",
-                        "default": "~/penguin/豊田築炉/2-工事",
-                        "description": "スキャンするディレクトリのパス",
-                        "name": "path",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "~/penguin/豊田築炉/2-工事/.inside.yaml",
-                        "description": "出力YAMLファイルのパス",
-                        "name": "output_path",
-                        "in": "query"
+                        "description": "工事データ（オプション）",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.KoujiEntry"
+                            }
+                        }
                     }
                 ],
                 "responses": {

@@ -27,7 +27,7 @@ func NewFileSystemHandler(fsService *services.FileSystemService) *FileSystemHand
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /file-entries [get]
 func (h *FileSystemHandler) GetFileEntries(c *fiber.Ctx) error {
-	fsPath := c.Query("path", "~/penguin")
+	fsPath := c.Query("path", "")
 
 	fileEntries, err := h.FileSystemService.GetFileEntries(fsPath)
 	if err != nil {

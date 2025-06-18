@@ -4,8 +4,8 @@ export default defineConfig({
   client: {
     name: '@hey-api/client-fetch',
   },
-  input: './openapi.yaml',
-  output: './src/api',
+  input: '../schemas/openapi.yaml',
+  output: './app/api',
   schemas: {
     export: true,
   },

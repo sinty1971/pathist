@@ -79,3 +79,13 @@ func (ts *Timestamp) UnmarshalJSON(data []byte) error {
 	ts.Time = parsed
 	return nil
 }
+
+// ParseAndRest parses a timestamp string and returns the timestamp and the rest string
+func ParseTimestampAndRest(s string, ts *Timestamp) (string, error) {
+	t, rest, err := utils.ParseTimeAndRest(s)
+	if err != nil {
+		return "", err
+	}
+	ts.Time = t
+	return rest, nil
+}

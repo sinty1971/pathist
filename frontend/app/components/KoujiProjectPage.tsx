@@ -30,14 +30,61 @@ const KoujiProjectPage = () => {
     loadKoujiEntries();
   }, []);
 
-  // 工事データを更新
-  const updateKoujiEntry = (updatedEntry: KoujiEntryExtended) => {
+  // 工事データを更新（日付編集時は自動保存）
+  const updateKoujiEntry = async (updatedEntry: KoujiEntryExtended, autoSave: boolean = false) => {
+    // まずUIを更新
     setKoujiEntries(prev => 
       prev.map(entry => 
         entry.id === updatedEntry.id ? updatedEntry : entry
       )
     );
-    setHasChanges(true);
+    
+    if (autoSave) {
+      // 自動保存を実行
+      await handleAutoSave(prev => 
+        prev.map(entry => 
+          entry.id === updatedEntry.id ? updatedEntry : entry
+        )
+      );
+    } else {
+      setHasChanges(true);
+    }
+  };
+
+  // 自動保存機能
+  const handleAutoSave = async (getUpdatedEntries: (prev: KoujiEntryExtended[]) => KoujiEntryExtended[]) => {
+    setIsSaving(true);
+    setSaveMessage(null);
+    setError(null);
+    
+    try {
+      const updatedEntries = getUpdatedEntries(koujiEntries);
+      
+      const response = await fetch('http://localhost:8080/api/kouji/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedEntries),
+      });
+      
+      if (!response.ok) {
+        throw new Error('自動保存に失敗しました');
+      }
+      
+      await response.json();
+      setSaveMessage('日付が自動保存されました');
+      setHasChanges(false);
+      
+      // 3秒後にメッセージを消去
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (err) {
+      console.error('Error auto-saving kouji entries:', err);
+      setError(err instanceof Error ? err.message : '自動保存に失敗しました');
+      setHasChanges(true); // 保存に失敗した場合は変更ありとする
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSaveKoujiEntries = async () => {
@@ -47,7 +94,7 @@ const KoujiProjectPage = () => {
     
     try {
       // 編集された工事データをサーバーに送信
-      const response = await fetch('http://localhost:8080/api/kouji-entries/save', {
+      const response = await fetch('http://localhost:8080/api/kouji/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -22,6 +22,12 @@ export function Navigation() {
           >
             工事一覧
           </Link>
+          <Link 
+            to="/gantt" 
+            className={location.pathname === '/gantt' ? 'nav-link active' : 'nav-link'}
+          >
+            工程表
+          </Link>
         </div>
       </div>
     </nav>

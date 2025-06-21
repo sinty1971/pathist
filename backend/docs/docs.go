@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/file-entries": {
+        "/file/entries": {
             "get": {
                 "description": "指定されたパスからファイルとフォルダーの一覧を取得します",
                 "consumes": [
@@ -56,7 +56,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/kouji-entries": {
+        "/kouji/entries": {
             "get": {
                 "description": "指定されたパスから工事プロジェクトフォルダーの一覧を取得します。\n各工事プロジェクトには会社名、現場名、工事開始日などの詳細情報が含まれます。",
                 "consumes": [
@@ -97,7 +97,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/kouji-entries/save": {
+        "/kouji/save": {
             "post": {
                 "description": "工事プロジェクト情報をYAMLファイルに保存します",
                 "consumes": [

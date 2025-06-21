@@ -61,11 +61,13 @@ func main() {
 	api := app.Group("/api")
 
 	// File entries routes
-	api.Get("/file-entries", fileSystemHandler.GetFileEntries)
+	api.Get("/file/entries", fileSystemHandler.GetFileEntries)
 
 	// Kouji routes
-	api.Get("/kouji-entries", koujiHandler.GetKoujiEntries)
-	api.Post("/kouji-entries/save", koujiHandler.SaveKoujiEntries)
+	api.Get("/kouji/entries", koujiHandler.GetEntries)
+	api.Post("/kouji/save", koujiHandler.Save)
+
+	// Time routes
 	api.Post("/time/parse", timeHandler.ParseTime)
 	api.Get("/time/formats", timeHandler.GetSupportedFormats)
 

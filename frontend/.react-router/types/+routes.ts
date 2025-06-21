@@ -16,16 +16,19 @@ type Pages = {
   "/kouji": {
     params: {};
   };
+  "/gantt": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/kouji";
+    page: "/" | "/kouji" | "/gantt";
   };
   "routes/_layout.tsx": {
     id: "routes/_layout";
-    page: "/" | "/kouji";
+    page: "/" | "/kouji" | "/gantt";
   };
   "routes/_layout._index.tsx": {
     id: "routes/_layout._index";
@@ -34,5 +37,9 @@ type RouteFiles = {
   "routes/_layout.kouji.tsx": {
     id: "routes/_layout.kouji";
     page: "/kouji";
+  };
+  "routes/_layout.gantt.tsx": {
+    id: "routes/_layout.gantt";
+    page: "/gantt";
   };
 };

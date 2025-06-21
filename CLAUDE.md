@@ -149,3 +149,12 @@ just help            # 利用可能なコマンド一覧
 ### Swagger UI
 - URL: http://localhost:8080/swagger/index.html
 - コマンド: `just swagger` でブラウザで開く
+
+## 技術的な注意事項
+
+### OpenAPI仕様について
+- 現在はSwagger 2.0 (OpenAPI 2.0)を使用
+- OpenAPI 3.0への変換スクリプトあり: `just convert-openapi3`
+- **TODO**: go-swagger3がリリースされたら、OpenAPI 3.0ネイティブサポートへの移行を検討
+  - 参考: https://github.com/swaggest/swgui
+  - 現在のswaggo/swagはSwagger 2.0のみサポート

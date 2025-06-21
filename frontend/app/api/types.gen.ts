@@ -168,7 +168,7 @@ export type GetFileEntriesData = {
          */
         path?: string;
     };
-    url: '/file-entries';
+    url: '/file/entries';
 };
 
 export type GetFileEntriesErrors = {
@@ -200,7 +200,7 @@ export type GetKoujiEntriesData = {
          */
         path?: string;
     };
-    url: '/kouji-entries';
+    url: '/kouji/entries';
 };
 
 export type GetKoujiEntriesErrors = {
@@ -223,17 +223,17 @@ export type GetKoujiEntriesResponses = {
 
 export type GetKoujiEntriesResponse = GetKoujiEntriesResponses[keyof GetKoujiEntriesResponses];
 
-export type PostKoujiEntriesSaveData = {
+export type PostKoujiSaveData = {
     /**
      * 工事データ（オプション）
      */
     body?: Array<ModelsKoujiEntry>;
     path?: never;
     query?: never;
-    url: '/kouji-entries/save';
+    url: '/kouji/save';
 };
 
-export type PostKoujiEntriesSaveErrors = {
+export type PostKoujiSaveErrors = {
     /**
      * サーバーエラー
      */
@@ -242,9 +242,9 @@ export type PostKoujiEntriesSaveErrors = {
     };
 };
 
-export type PostKoujiEntriesSaveError = PostKoujiEntriesSaveErrors[keyof PostKoujiEntriesSaveErrors];
+export type PostKoujiSaveError = PostKoujiSaveErrors[keyof PostKoujiSaveErrors];
 
-export type PostKoujiEntriesSaveResponses = {
+export type PostKoujiSaveResponses = {
     /**
      * 成功メッセージ
      */
@@ -253,7 +253,7 @@ export type PostKoujiEntriesSaveResponses = {
     };
 };
 
-export type PostKoujiEntriesSaveResponse = PostKoujiEntriesSaveResponses[keyof PostKoujiEntriesSaveResponses];
+export type PostKoujiSaveResponse = PostKoujiSaveResponses[keyof PostKoujiSaveResponses];
 
 export type GetTimeFormatsData = {
     body?: never;

@@ -179,7 +179,7 @@ info:
   title: Penguin ファイルシステム管理API
   version: 1.0.0
 paths:
-  /file-entries:
+  /file/entries:
     get:
       consumes:
       - application/json
@@ -206,7 +206,7 @@ paths:
       summary: ファイルエントリ一覧の取得
       tags:
       - ファイル管理
-  /kouji-entries:
+  /kouji/entries:
     get:
       consumes:
       - application/json
@@ -235,7 +235,7 @@ paths:
       summary: 工事プロジェクト一覧の取得
       tags:
       - 工事管理
-  /kouji-entries/save:
+  /kouji/save:
     post:
       consumes:
       - application/json

@@ -4,14 +4,11 @@ import DateEditModal from './DateEditModal';
 
 interface KoujiEntriesGridProps {
   koujiEntries: KoujiEntryExtended[];
-  onUpdateEntry: (entry: KoujiEntryExtended) => void;
+  onUpdateEntry: (entry: KoujiEntryExtended, autoSave?: boolean) => void;
   onReload: () => void;
 }
 
 const KoujiEntriesGrid = ({ koujiEntries, onUpdateEntry, onReload }: KoujiEntriesGridProps) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [path, setPath] = useState('');
   const [totalSize, setTotalSize] = useState<number>(0);
   const [editingProject, setEditingProject] = useState<KoujiEntryExtended | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,16 +19,19 @@ const KoujiEntriesGrid = ({ koujiEntries, onUpdateEntry, onReload }: KoujiEntrie
     setTotalSize(total);
   }, [koujiEntries]);
 
-  // 日付編集後のコールバック
+  // 日付編集後のコールバック（自動保存）
   const handleDateEditSuccess = (projectId: string, startDate: string, endDate: string) => {
     const updatedEntry = koujiEntries.find(entry => entry.id.toString() === projectId);
     if (updatedEntry) {
+      const newStatus = calculateStatus(startDate, endDate);
       const newEntry = {
         ...updatedEntry,
         start_date: startDate,
         end_date: endDate,
+        status: newStatus,  // ステータスも更新
       };
-      onUpdateEntry(newEntry);
+      // 日付編集完了時は自動保存
+      onUpdateEntry(newEntry, true);
     }
     setIsModalOpen(false);
     setEditingProject(null);
@@ -45,6 +45,23 @@ const KoujiEntriesGrid = ({ koujiEntries, onUpdateEntry, onReload }: KoujiEntrie
   const handleEditDates = (project: KoujiEntryExtended) => {
     setEditingProject(project);
     setIsModalOpen(true);
+  };
+
+  // 日付からステータスを計算
+  const calculateStatus = (startDate?: string, endDate?: string): string => {
+    if (!startDate || !endDate) return '未定';
+    
+    const now = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (now < start) {
+      return '予定';
+    } else if (now > end) {
+      return '完了';
+    } else {
+      return '進行中';
+    }
   };
 
   const getStatusColor = (status?: string) => {
@@ -74,25 +91,12 @@ const KoujiEntriesGrid = ({ koujiEntries, onUpdateEntry, onReload }: KoujiEntrie
     return date.toLocaleDateString('ja-JP');
   };
 
-  if (loading) {
-    return <div className="loading">工事プロジェクトを読み込み中...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="error">
-        <p>エラー: {error}</p>
-        <button onClick={onReload}>再試行</button>
-      </div>
-    );
-  }
 
   return (
     <div className="folder-container">
       <div className="folder-header">
         <h2>工事プロジェクト一覧</h2>
         <div className="folder-info">
-          <p>パス: {path}</p>
           <p>プロジェクト数: {koujiEntries.length}</p>
           {totalSize > 0 && <p>合計サイズ: {formatFileSize(totalSize)}</p>}
         </div>

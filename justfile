@@ -25,6 +25,11 @@ generate-api:
     cp ./backend/docs/swagger.json ./schemas/openapi.json
     @echo "OpenAPI documentation generated and copied to schemas/"
 
+# Convert Swagger 2.0 to OpenAPI 3.0
+convert-openapi3:
+    cd ./backend/scripts && node convert-to-openapi3.js
+    @echo "OpenAPI 3.0 documentation generated at schemas/openapi-v3.{yaml,json}"
+
 # Install frontend dependencies  
 frontend-deps:
     cd ./frontend && npm install
@@ -68,8 +73,9 @@ clean-install: backend-deps frontend-deps
 # Kill process running on port 8080
 kill-port:
     @echo "Stopping process on port 8080..."
-    @-pkill -f ":8080" 2>/dev/null || true
-    @-lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+    @-lsof -ti:8080 | xargs -r kill -15 2>/dev/null || true
+    @sleep 1
+    @-lsof -ti:8080 | xargs -r kill -9 2>/dev/null || true
     @echo "Port 8080 cleanup completed"
 
 # Update claude-code

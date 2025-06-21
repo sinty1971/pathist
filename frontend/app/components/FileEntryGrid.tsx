@@ -66,7 +66,7 @@ export const FileEntryGrid: React.FC = () => {
       console.log('Converted to relative path:', relativePath);
       
       // 直接fetchでテスト
-      const directResponse = await fetch(`http://localhost:8080/api/file-entries${relativePath ? `?path=${encodeURIComponent(relativePath)}` : ''}`);
+      const directResponse = await fetch(`http://localhost:8080/api/file/entries${relativePath ? `?path=${encodeURIComponent(relativePath)}` : ''}`);
       console.log('Direct fetch response status:', directResponse.status);
       console.log('Direct fetch response ok:', directResponse.ok);
       

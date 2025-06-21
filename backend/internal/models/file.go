@@ -16,9 +16,9 @@ type FileEntry struct {
 	ModifiedTime Timestamp `json:"modified_time" yaml:"modified_time"`
 }
 
-// FileEntriesListResponse はファイルエントリ一覧のレスポンスを表す
+// GetFileEntriesResponse はファイルエントリ一覧のレスポンスを表す
 // @Description ファイルエントリ一覧を含むレスポンス
-type FileEntriesListResponse struct {
+type GetFileEntriesResponse struct {
 	// File entries
 	FileEntries []FileEntry `json:"file_entries" yaml:"file_entries"`
 	// Folder number of file entries

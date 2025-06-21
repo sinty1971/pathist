@@ -7,10 +7,10 @@ import (
 )
 
 type FileSystemHandler struct {
-	FileSystemService *services.FileSystemService
+	FileSystemService *services.FileService
 }
 
-func NewFileSystemHandler(fsService *services.FileSystemService) *FileSystemHandler {
+func NewFileSystemHandler(fsService *services.FileService) *FileSystemHandler {
 	return &FileSystemHandler{
 		FileSystemService: fsService,
 	}
@@ -25,7 +25,7 @@ func NewFileSystemHandler(fsService *services.FileSystemService) *FileSystemHand
 // @Param        path query string false "取得するディレクトリのパス" default(~/penguin)
 // @Success      200 {object} models.FileEntriesListResponse "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /file-entries [get]
+// @Router       /file/entries [get]
 func (h *FileSystemHandler) GetFileEntries(c *fiber.Ctx) error {
 	fsPath := c.Query("path", "")
 

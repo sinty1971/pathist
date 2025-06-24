@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
@@ -39,13 +38,6 @@ func NewIDFromTime(t time.Time) *ID {
 	// 時刻をナノ秒精度の文字列に変換してIDを生成
 	timeStr := t.Format(time.RFC3339Nano)
 	return NewIDFromString(timeStr)
-}
-
-// NewIDFromStateInfo フォルダー名からIDを生成
-func NewIDFromKoujiProject(koujiProject KoujiEntry) *ID {
-	// フォルダー名で一意性を確保
-	data := fmt.Sprintf("%d%s%s", koujiProject.FileEntry.ID, koujiProject.CompanyName, koujiProject.LocationName)
-	return NewIDFromString(data)
 }
 
 // Full25 は25文字のIDを返す（32^25 = 約10^37通り）

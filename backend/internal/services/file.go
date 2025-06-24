@@ -7,126 +7,91 @@ import (
 	"path/filepath"
 	"penguin-backend/internal/models"
 	"strings"
-	"syscall"
 )
 
 // FileService is a service for managing the file system
 type FileService struct {
-	// Root is the root directory of the file system
-	Root string `json:"root" yaml:"root" example:"/home/<user>/penguin"`
+	// BasePath is the base directory of the file system
+	BasePath string `json:"base_path" yaml:"base_path" example:"~/penguin"`
 }
 
-// NewFileSystemService creates a new FileSystemService
-func NewFileSystemService(root string) (*FileService, error) {
+// NewFileService creates a new FileService
+func NewFileService(basePath string) (*FileService, error) {
 	// Expand ~ to home directory
-	if strings.HasPrefix(root, "~/") {
+	if strings.HasPrefix(basePath, "~/") {
 		usr, err := user.Current()
 		if err != nil {
 			return nil, err
 		}
-		root = filepath.Join(usr.HomeDir, root[2:])
-	}
-
-	// Get absolute path
-	absPath, err := filepath.Abs(root)
-	if err != nil {
-		return nil, err
+		basePath = filepath.Join(usr.HomeDir, basePath[2:])
+	} else {
+		absPath, err := filepath.Abs(basePath)
+		if err != nil {
+			return nil, err
+		}
+		basePath = absPath
 	}
 
 	return &FileService{
-		Root: absPath,
+		BasePath: basePath,
 	}, nil
 }
 
-// GetAbsPath 相対パスをRootパスを追加したパスを返す
+// GetFullpath BasePathに可変長引数の相対パスを追加したパスを返す
 // 絶対パスの場合はエラーを返す
-func (s *FileService) GetFullpath(joinPath ...string) (string, error) {
-	if len(joinPath) == 0 {
-		return s.Root, nil
-	}
-	var fullpath string
-
-	// Expand ~ to home directory
-	if strings.HasPrefix(joinPath[0], "~/") {
-		usr, err := user.Current()
-		if err != nil {
-			return "", err
-		}
-		joinPath[0] = filepath.Join(usr.HomeDir, joinPath[0][2:])
-		fullpath = filepath.Join(joinPath...)
-		return fullpath, nil
-	} else if filepath.IsAbs(joinPath[0]) {
-		// 絶対パスはエラーを返す
-		return "", errors.New("absolute path is not allowed")
+func (s *FileService) GetFullpath(joinPaths ...string) (string, error) {
+	if len(joinPaths) == 0 {
+		return s.BasePath, nil
 	}
 
-	// 相対パスはRootパスを追加したパスを返す
-	joinedPath := filepath.Join(joinPath...)
-	fullpath = filepath.Join(s.Root, joinedPath)
+	// BasePathに相対パスを追加したパスを返す
+	joinedPath := filepath.Join(joinPaths...)
 
-	return fullpath, nil
+	if strings.HasPrefix(joinedPath, "~/") {
+		// 接頭語 "~/" がある場合はエラーを返す
+		return "", errors.New("接頭語 \"~\" は使用できません")
+
+	} else if filepath.IsAbs(joinedPath) {
+		// 絶対パスがある場合はエラーを返す
+		return "", errors.New("絶対パスは使用できません")
+	}
+
+	return filepath.Join(s.BasePath, joinedPath), nil
 }
 
-// GetFileEntries gets the file entries from the file system
-func (s *FileService) GetFileEntries(joinPath ...string) (*models.GetFileEntriesResponse, error) {
-	fullpath, err := s.GetFullpath(joinPath...)
+// GetFileInfos 指定されたディレクトリパス内のファイル情報を取得
+// 取得したファイル情報は実体のファイル情報を取得して判定したもの
+func (s *FileService) GetFileInfos(joinPaths ...string) ([]models.FileInfo, error) {
+	// 絶対パスを取得
+	fullpath, err := s.GetFullpath(joinPaths...)
 	if err != nil {
 		return nil, err
 	}
 
+	// ファイルエントリ配列を取得
 	entries, err := os.ReadDir(fullpath)
 	if err != nil {
 		return nil, err
 	}
 
-	fileEntries := make([]models.FileEntry, len(entries))
-	var folderCount, fileCount int
+	// ファイル情報を作成
+	fileInfos := make([]models.FileInfo, len(entries))
+	var count int
 	for _, entry := range entries {
-		info, err := entry.Info()
+		// ファイルパスを取得
+		entryFullpath := filepath.Join(fullpath, entry.Name())
+
+		// FileInfoを作成
+		fileInfo, err := models.NewFileInfo(entryFullpath)
 		if err != nil {
 			// ファイル情報の取得に失敗した場合はスキップ
 			continue
 		}
-		stat := info.Sys().(*syscall.Stat_t)
 
-		// For symlinks, check the target's type
-		entryFullpath := filepath.Join(fullpath, entry.Name())
-
-		// Check if entry is a directory
-		var isDirectory bool
-
-		// If it's a symlink, check what it points to
-		if info.Mode()&os.ModeSymlink != 0 {
-			fileinfo, err := os.Stat(entryFullpath) // Follow the symlink
-			if err == nil {
-				isDirectory = fileinfo.IsDir()
-			}
-		} else {
-			isDirectory = entry.IsDir()
-		}
-
-		// Add the file entry to the list
-		fileEntries[folderCount+fileCount] = models.FileEntry{
-			ID:           stat.Ino,
-			Name:         entry.Name(),
-			Path:         entryFullpath,
-			IsDirectory:  isDirectory,
-			Size:         info.Size(),
-			ModifiedTime: models.NewTimestamp(info.ModTime()),
-		}
-
-		// Count the number of folders and files
-		if isDirectory {
-			folderCount++
-		} else {
-			fileCount++
-		}
-
+		// ファイル情報の登録
+		fileInfos[count] = *fileInfo
+		count++
 	}
 
-	return &models.GetFileEntriesResponse{
-		FileEntries: fileEntries[:folderCount+fileCount],
-		FolderCount: folderCount,
-		FileCount:   fileCount,
-	}, nil
+	return fileInfos[:count], nil
 }

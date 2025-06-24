@@ -42,34 +42,30 @@ func main() {
 	// Swagger documentation
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
-	// ファイルシステムサービスを作成
-	fileSystemService, err := services.NewFileSystemService("~/penguin")
+	// FileServiceを作成
+	fileService, err := services.NewFileService("~/penguin")
 	if err != nil {
 		log.Fatal(err)
 	}
-	// 工事サービスを作成
-	koujiService, err := services.NewKoujiService(fileSystemService, "豊田築炉/2-工事", ".inside.yaml")
+
+	// ProjectServiceを作成
+	projectService, err := services.NewProjectService("~/penguin/豊田築炉/2-工事")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Create handlers
-	fileSystemHandler := handlers.NewFileSystemHandler(fileSystemService)
-	koujiHandler := handlers.NewKoujiHandler(fileSystemService, koujiService)
-	timeHandler := handlers.NewTimeHandler()
+	fileServiceHandler := handlers.NewFileHandler(fileService)
+	projectHandler := handlers.NewProjectHandler(projectService)
 
 	api := app.Group("/api")
 
 	// File entries routes
-	api.Get("/file/entries", fileSystemHandler.GetFileEntries)
+	api.Get("/file/entries", fileServiceHandler.GetEntries)
 
-	// Kouji routes
-	api.Get("/kouji/entries", koujiHandler.GetEntries)
-	api.Post("/kouji/save", koujiHandler.Save)
-
-	// Time routes
-	api.Post("/time/parse", timeHandler.ParseTime)
-	api.Get("/time/formats", timeHandler.GetSupportedFormats)
+	// Project routes
+	api.Get("/project/entries", projectHandler.GetEntries)
+	api.Post("/project/save", projectHandler.Save)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{

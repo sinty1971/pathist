@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"penguin-backend/internal/utils"
 	"time"
 )
@@ -13,16 +12,14 @@ type Timestamp struct {
 	time.Time `swaggertype:"string" format:"date-time" example:"2024-01-15T10:30:00Z"`
 }
 
-// NewTimestamp creates a new Timestamp from time.Time
-func NewTimestamp(t time.Time) Timestamp {
-	return Timestamp{Time: t}
-}
-
 // ParseTimestamp parses various date/time string formats and returns a Timestamp
 // When no timezone is specified, it uses the server's local timezone
-func ParseTimestamp(s string) (Timestamp, error) {
-	t, _, err := utils.ParseTimeAndRest(s)
-	return NewTimestamp(t), err
+func ParseTimestamp(in string, out *string) (Timestamp, error) {
+	t, err := utils.ParseTime(in, out)
+	if err != nil {
+		return Timestamp{}, err
+	}
+	return Timestamp{Time: t}, nil
 }
 
 // MarshalYAML implements yaml.Marshaler
@@ -35,15 +32,16 @@ func (ts Timestamp) MarshalYAML() (any, error) {
 
 // UnmarshalYAML implements yaml.Unmarshaler
 func (ts *Timestamp) UnmarshalYAML(unmarshal func(any) error) error {
-	var str string
-	if err := unmarshal(&str); err != nil {
+	// 日時文字列を抽出
+	var in string
+	if err := unmarshal(&in); err != nil {
 		return err
 	}
 
-	// Try parsing with RFC3339Nano first
-	parsed, err := utils.ParseTime(str)
+	// 日時文字列をパース
+	parsed, err := utils.ParseTime(in, nil)
 	if err != nil {
-		return fmt.Errorf("failed to parse timestamp: %w", err)
+		return err
 	}
 
 	ts.Time = parsed
@@ -60,32 +58,26 @@ func (ts Timestamp) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (ts *Timestamp) UnmarshalJSON(data []byte) error {
-	str := string(data)
-	if len(str) >= 2 && str[0] == '"' && str[len(str)-1] == '"' {
-		str = str[1 : len(str)-1]
+	in := string(data)
+	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
+		in = in[1 : len(in)-1]
 	}
 
-	if str == "" {
+	if in == "" {
 		ts.Time = time.Time{}
 		return nil
 	}
 
 	// タイムスタンプ文字列のパース
-	parsed, err := utils.ParseTime(str)
+	parsed, err := utils.ParseTime(in, nil)
 	if err != nil {
-		return fmt.Errorf("failed to parse timestamp: %w", err)
+		return err
 	}
 
 	ts.Time = parsed
 	return nil
 }
 
-// ParseAndRest parses a timestamp string and returns the timestamp and the rest string
-func ParseTimestampAndRest(s string, ts *Timestamp) (string, error) {
-	t, rest, err := utils.ParseTimeAndRest(s)
-	if err != nil {
-		return "", err
-	}
-	ts.Time = t
-	return rest, nil
+func (ts *Timestamp) Format(layout string) (string, error) {
+	return utils.FormatTime(layout, ts.Time)
 }

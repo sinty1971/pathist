@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { KoujiEntryExtended } from '../types/kouji';
+import { formatDateForInput, toISOStringWithJST, isValidDateRange } from '../utils/date';
 
 interface KoujiEditModalProps {
   isOpen: boolean;
@@ -19,23 +20,14 @@ const KoujiEditModal = ({ isOpen, onClose, project, onSave }: KoujiEditModalProp
     if (project && isOpen) {
       setFormData({
         ...project,
-        start_date: project.start_date ? formatDateForInput(project.start_date) : '',
-        end_date: project.end_date ? formatDateForInput(project.end_date) : '',
+        start_date: formatDateForInput(project.start_date),
+        end_date: formatDateForInput(project.end_date),
       });
       setTagInput(project.tags ? project.tags.join(', ') : '');
       setError(null);
     }
   }, [project, isOpen]);
 
-  // 日付を入力フィールド用にフォーマット (YYYY-MM-DD)
-  const formatDateForInput = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      return date.toISOString().split('T')[0];
-    } catch {
-      return '';
-    }
-  };
 
   // フォーム値の更新
   const handleInputChange = (field: keyof KoujiEntryExtended, value: string) => {
@@ -65,22 +57,19 @@ const KoujiEditModal = ({ isOpen, onClose, project, onSave }: KoujiEditModalProp
     try {
       // 日付の検証
       if (formData.start_date && formData.end_date) {
-        const startDate = new Date(formData.start_date);
-        const endDate = new Date(formData.end_date);
-        
-        if (startDate > endDate) {
+        if (!isValidDateRange(formData.start_date, formData.end_date)) {
           setError('開始日は終了日より前である必要があります');
           setIsLoading(false);
           return;
         }
       }
 
-      // ISO形式に変換
+      // JSTタイムゾーンを明示したISO形式に変換
       const updatedProject: KoujiEntryExtended = {
         ...project,
         ...formData,
-        start_date: formData.start_date ? `${formData.start_date}T00:00:00` : project.start_date,
-        end_date: formData.end_date ? `${formData.end_date}T23:59:59` : project.end_date,
+        start_date: formData.start_date ? toISOStringWithJST(formData.start_date, false) : project.start_date,
+        end_date: formData.end_date ? toISOStringWithJST(formData.end_date, true) : project.end_date,
       };
 
       onSave(updatedProject);

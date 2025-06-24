@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { KoujiEntryExtended } from '../types/kouji';
 import DateEditModal from './DateEditModal';
+import { formatDateForDisplay } from '../utils/date';
 
 interface KoujiEntriesGridProps {
   koujiEntries: KoujiEntryExtended[];
@@ -85,11 +86,6 @@ const KoujiEntriesGrid = ({ koujiEntries, onUpdateEntry, onReload }: KoujiEntrie
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP');
-  };
 
 
   return (
@@ -146,8 +142,8 @@ const KoujiEntriesGrid = ({ koujiEntries, onUpdateEntry, onReload }: KoujiEntrie
                   </div>
                   
                   <div className="project-dates">
-                    <div>開始: {formatDate(project.start_date)}</div>
-                    <div>終了: {formatDate(project.end_date)}</div>
+                    <div>開始: {formatDateForDisplay(project.start_date)}</div>
+                    <div>終了: {formatDateForDisplay(project.end_date)}</div>
                     <button 
                       className="edit-dates-button"
                       onClick={(e) => {
@@ -178,7 +174,7 @@ const KoujiEntriesGrid = ({ koujiEntries, onUpdateEntry, onReload }: KoujiEntrie
 
                 <div className="folder-meta">
                   <span>{formatFileSize(project.size)}</span>
-                  <span>{formatDate(project.modified_time)}</span>
+                  <span>{formatDateForDisplay(project.modified_time)}</span>
                 </div>
               </div>
             </div>

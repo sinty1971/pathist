@@ -41,7 +41,7 @@ const docTemplate = `{
                     "200": {
                         "description": "正常なレスポンス",
                         "schema": {
-                            "$ref": "#/definitions/models.FileEntriesListResponse"
+                            "$ref": "#/definitions/models.GetFileEntriesResponse"
                         }
                     },
                     "500": {
@@ -99,7 +99,7 @@ const docTemplate = `{
         },
         "/kouji/save": {
             "post": {
-                "description": "工事プロジェクト情報をYAMLファイルに保存します",
+                "description": "[]models.KoujiEntryをYAMLファイルに保存します",
                 "consumes": [
                     "application/json"
                 ],
@@ -213,29 +213,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.FileEntriesListResponse": {
-            "description": "ファイルエントリ一覧を含むレスポンス",
-            "type": "object",
-            "properties": {
-                "file_count": {
-                    "description": "File number of file entries",
-                    "type": "integer",
-                    "example": 10
-                },
-                "file_entries": {
-                    "description": "File entries",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.FileEntry"
-                    }
-                },
-                "folder_count": {
-                    "description": "Folder number of file entries",
-                    "type": "integer",
-                    "example": 10
-                }
-            }
-        },
         "models.FileEntry": {
             "description": "ファイルまたはディレクトリの情報",
             "type": "object",
@@ -271,6 +248,29 @@ const docTemplate = `{
                     "description": "Size of the file in bytes",
                     "type": "integer",
                     "example": 4096
+                }
+            }
+        },
+        "models.GetFileEntriesResponse": {
+            "description": "ファイルエントリ一覧を含むレスポンス",
+            "type": "object",
+            "properties": {
+                "file_count": {
+                    "description": "File number of file entries",
+                    "type": "integer",
+                    "example": 10
+                },
+                "file_entries": {
+                    "description": "File entries",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.FileEntry"
+                    }
+                },
+                "folder_count": {
+                    "description": "Folder number of file entries",
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },

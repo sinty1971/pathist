@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-// import { api } from '../api/client';
+import { formatDateForInput, toISOStringWithJST, isValidDateRange } from '../utils/date';
 
 interface DateEditModalProps {
   isOpen: boolean;
@@ -27,21 +27,6 @@ const DateEditModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      // Convert ISO strings to local date strings for input
-      const formatDateForInput = (dateString: string) => {
-        if (!dateString) return '';
-        try {
-          const date = new Date(dateString);
-          // Use local time zone methods to avoid UTC conversion issues
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
-        } catch {
-          return '';
-        }
-      };
-      
       setStartDate(formatDateForInput(currentStartDate));
       setEndDate(formatDateForInput(currentEndDate));
       setError(null);
@@ -56,7 +41,7 @@ const DateEditModal = ({
       return;
     }
 
-    if (new Date(startDate) > new Date(endDate)) {
+    if (!isValidDateRange(startDate, endDate)) {
       setError('開始日は終了日より前である必要があります');
       return;
     }
@@ -65,10 +50,9 @@ const DateEditModal = ({
     setError(null);
 
     try {
-      // Send dates as simple YYYY-MM-DD format to avoid timezone conversion issues
-      // The backend will handle these as local dates
-      const startDateStr = `${startDate}T00:00:00`;
-      const endDateStr = `${endDate}T23:59:59`;
+      // JSTタイムゾーンを明示したISO形式に変換
+      const startDateStr = toISOStringWithJST(startDate, false);
+      const endDateStr = toISOStringWithJST(endDate, true);
       
       // 編集された日付を親コンポーネントに通知
       onSuccess(projectId, startDateStr, endDateStr);

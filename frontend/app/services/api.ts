@@ -1,4 +1,4 @@
-import { getFileEntries, postKoujiEntriesSave } from '../api/sdk.gen';
+import { getFileEntries } from '../api/sdk.gen';
 import type { ModelsFileEntry, ModelsFileEntriesListResponse } from '../api/types.gen';
 
 export type FileEntry = ModelsFileEntry;
@@ -22,7 +22,8 @@ export const folderService = {
     }
   },
   saveKoujiEntries: async (koujiEntries?: any[]) => {
-    const response = await postKoujiEntriesSave({ 
+    const { postKoujiSave } = await import('../api/sdk.gen');
+    const response = await postKoujiSave({ 
       body: koujiEntries 
     });
     return response.data as unknown as { message: string; output_path: string; count: number };

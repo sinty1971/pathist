@@ -43,7 +43,7 @@ export const getKoujiEntries = <ThrowOnError extends boolean = false>(options?: 
 
 /**
  * 工事情報のYAML保存
- * 工事プロジェクト情報をYAMLファイルに保存します
+ * []models.KoujiEntryをYAMLファイルに保存します
  */
 export const postKoujiSave = <ThrowOnError extends boolean = false>(options?: Options<PostKoujiSaveData, ThrowOnError>) => {
     return (options?.client ?? _heyApiClient).post<PostKoujiSaveResponses, PostKoujiSaveErrors, ThrowOnError>({

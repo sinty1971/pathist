@@ -1,22 +1,5 @@
 basePath: /api
 definitions:
-  models.FileEntriesListResponse:
-    description: ファイルエントリ一覧を含むレスポンス
-    properties:
-      file_count:
-        description: File number of file entries
-        example: 10
-        type: integer
-      file_entries:
-        description: File entries
-        items:
-          $ref: '#/definitions/models.FileEntry'
-        type: array
-      folder_count:
-        description: Folder number of file entries
-        example: 10
-        type: integer
-    type: object
   models.FileEntry:
     description: ファイルまたはディレクトリの情報
     properties:
@@ -42,6 +25,23 @@ definitions:
       size:
         description: Size of the file in bytes
         example: 4096
+        type: integer
+    type: object
+  models.GetFileEntriesResponse:
+    description: ファイルエントリ一覧を含むレスポンス
+    properties:
+      file_count:
+        description: File number of file entries
+        example: 10
+        type: integer
+      file_entries:
+        description: File entries
+        items:
+          $ref: '#/definitions/models.FileEntry'
+        type: array
+      folder_count:
+        description: Folder number of file entries
+        example: 10
         type: integer
     type: object
   models.KoujiEntriesResponse:
@@ -196,7 +196,7 @@ paths:
         "200":
           description: 正常なレスポンス
           schema:
-            $ref: '#/definitions/models.FileEntriesListResponse'
+            $ref: '#/definitions/models.GetFileEntriesResponse'
         "500":
           description: サーバーエラー
           schema:
@@ -239,7 +239,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 工事プロジェクト情報をYAMLファイルに保存します
+      description: '[]models.KoujiEntryをYAMLファイルに保存します'
       parameters:
       - description: 工事データ（オプション）
         in: body

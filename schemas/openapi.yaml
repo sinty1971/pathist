@@ -1,11 +1,8 @@
 basePath: /api
 definitions:
-  models.FileEntry:
+  models.FileInfo:
     description: ファイルまたはディレクトリの情報
     properties:
-      id:
-        example: 123456
-        type: integer
       is_directory:
         description: Whether this item is a directory
         example: true
@@ -16,62 +13,46 @@ definitions:
         description: Last modification time
       name:
         description: Name of the file or folder
-        example: documents
+        example: 2025-0618 豊田築炉 名和工場
         type: string
       path:
-        description: Full path to the file or folder
-        example: /home/user/documents
+        description: FileService.BasePathからの相対パス
+        example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
         type: string
       size:
         description: Size of the file in bytes
         example: 4096
         type: integer
     type: object
-  models.GetFileEntriesResponse:
-    description: ファイルエントリ一覧を含むレスポンス
+  models.ManagedFile:
     properties:
-      file_count:
-        description: File number of file entries
-        example: 10
-        type: integer
-      file_entries:
-        description: File entries
-        items:
-          $ref: '#/definitions/models.FileEntry'
-        type: array
-      folder_count:
-        description: Folder number of file entries
-        example: 10
-        type: integer
+      current:
+        description: FileService.BasePathからの相対パス
+        example: 工事.xlsx
+        type: string
+      recommended:
+        description: FileService.BasePathからの相対パス
+        example: 2025-0618 豊田築炉 名和工場.xlsx
+        type: string
     type: object
-  models.KoujiEntriesResponse:
-    description: Response containing list of construction kouji folders
-    properties:
-      count:
-        example: 10
-        type: integer
-      kouji_entries:
-        items:
-          $ref: '#/definitions/models.KoujiEntry'
-        type: array
-      total_size:
-        example: 1073741824
-        type: integer
-    type: object
-  models.KoujiEntry:
-    description: Construction kouji folder information with extended attributes
+  models.Project:
+    description: Construction project folder information with extended attributes
     properties:
       company_name:
+        description: Additional fields specific to Project folders
         example: 豊田築炉
         type: string
       description:
         example: 工事関連の資料とドキュメント
         type: string
       end_date:
-        $ref: '#/definitions/models.Timestamp'
+        allOf:
+        - $ref: '#/definitions/models.Timestamp'
+        description: Detail
       id:
-        example: 123456
-        type: integer
+        description: Calculated fields
+        example: TC618
+        type: string
       is_directory:
         description: Whether this item is a directory
         example: true
@@ -79,17 +60,22 @@ definitions:
       location_name:
         example: 名和工場
         type: string
+      managed_files:
+        description: Managed files
+        items:
+          $ref: '#/definitions/models.ManagedFile'
+        type: array
       modified_time:
         allOf:
         - $ref: '#/definitions/models.Timestamp'
         description: Last modification time
       name:
         description: Name of the file or folder
-        example: documents
+        example: 2025-0618 豊田築炉 名和工場
         type: string
       path:
-        description: Full path to the file or folder
-        example: /home/user/documents
+        description: FileService.BasePathからの相対パス
+        example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
         type: string
       size:
         description: Size of the file in bytes
@@ -109,63 +95,6 @@ definitions:
           type: string
         type: array
     type: object
-  models.SupportedFormatsResponse:
-    description: List of all supported date/time formats
-    properties:
-      formats:
-        description: List of supported formats
-        items:
-          $ref: '#/definitions/models.TimeFormat'
-        type: array
-    type: object
-  models.TimeFormat:
-    description: Supported time format information
-    properties:
-      example:
-        description: Example value
-        example: "2024-01-15T10:30:00Z"
-        type: string
-      name:
-        description: Format name
-        example: RFC3339
-        type: string
-      pattern:
-        description: Format pattern
-        example: 2006-01-02T15:04:05Z07:00
-        type: string
-    type: object
-  models.TimeParseRequest:
-    description: Request for parsing various date/time formats
-    properties:
-      time_string:
-        description: Time string to parse
-        example: 2024-01-15T10:30:00
-        type: string
-    type: object
-  models.TimeParseResponse:
-    description: Response containing parsed time in various formats
-    properties:
-      original:
-        description: Original input string
-        example: 2024-01-15T10:30:00
-        type: string
-      readable:
-        description: Human readable format
-        example: January 15, 2024 10:30 AM
-        type: string
-      rfc3339:
-        description: Parsed time in RFC3339 format
-        example: "2024-01-15T10:30:00Z"
-        type: string
-      timezone:
-        description: Time zone used
-        example: Local
-        type: string
-      unix:
-        description: Unix timestamp
-        example: 1705318200
-        type: integer
-    type: object
   models.Timestamp:
     description: Timestamp in RFC3339 format
     properties:
@@ -179,7 +108,7 @@ info:
   title: Penguin ファイルシステム管理API
   version: 1.0.0
 paths:
-  /file/entries:
+  /file/fileinfos:
     get:
       consumes:
       - application/json
@@ -196,7 +125,9 @@ paths:
         "200":
           description: 正常なレスポンス
           schema:
-            $ref: '#/definitions/models.GetFileEntriesResponse'
+            items:
+              $ref: '#/definitions/models.FileInfo'
+            type: array
         "500":
           description: サーバーエラー
           schema:
@@ -206,107 +137,57 @@ paths:
       summary: ファイルエントリ一覧の取得
       tags:
       - ファイル管理
-  /kouji/entries:
+  /project/recent:
     get:
       consumes:
       - application/json
-      description: |-
-        指定されたパスから工事プロジェクトフォルダーの一覧を取得します。
-        各工事プロジェクトには会社名、現場名、工事開始日などの詳細情報が含まれます。
-      parameters:
-      - default: ~/penguin/豊田築炉/2-工事
-        description: 工事フォルダーのパス
-        in: query
-        name: path
-        type: string
+      description: 最近の工事一覧を取得します。
       produces:
       - application/json
       responses:
         "200":
-          description: 工事プロジェクト一覧
+          description: 最近のプロジェクト一覧
           schema:
-            $ref: '#/definitions/models.KoujiEntriesResponse'
+            items:
+              $ref: '#/definitions/models.Project'
+            type: array
         "500":
           description: サーバーエラー
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: 工事プロジェクト一覧の取得
+      summary: 最近の工事一覧の取得
       tags:
-      - 工事管理
-  /kouji/save:
+      - プロジェクト管理
+  /project/update:
     post:
       consumes:
       - application/json
-      description: '[]models.KoujiEntryをYAMLファイルに保存します'
+      description: models.ProjectをYAMLファイルに保存します
       parameters:
-      - description: 工事データ（オプション）
+      - description: 工事データ
         in: body
         name: body
+        required: true
         schema:
-          items:
-            $ref: '#/definitions/models.KoujiEntry'
-          type: array
+          $ref: '#/definitions/models.Project'
       produces:
       - application/json
       responses:
         "200":
-          description: 成功メッセージ
+          description: 更新後の工事データ
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/models.Project'
         "500":
           description: サーバーエラー
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: 工事情報のYAML保存
+      summary: 指定されたプロジェクト情報のYAML保存
       tags:
-      - 工事管理
-  /time/formats:
-    get:
-      consumes:
-      - application/json
-      description: サポートされているすべての日時フォーマットの一覧を取得します
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 正常なレスポンス
-          schema:
-            $ref: '#/definitions/models.SupportedFormatsResponse'
-      summary: サポートされる時刻フォーマット一覧
-      tags:
-      - 時刻処理
-  /time/parse:
-    post:
-      consumes:
-      - application/json
-      description: 様々な日時文字列フォーマットを解析します
-      parameters:
-      - description: 解析する時刻文字列
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/models.TimeParseRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 正常なレスポンス
-          schema:
-            $ref: '#/definitions/models.TimeParseResponse'
-        "400":
-          description: 不正なリクエスト
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: タイムスタンプの解析
-      tags:
-      - 時刻処理
+      - プロジェクト管理
+schemes:
+- http
 swagger: "2.0"

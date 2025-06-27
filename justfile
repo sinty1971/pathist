@@ -70,7 +70,42 @@ update-all: backend-update frontend-update
 # Clean and reinstall all dependencies
 clean-install: backend-deps frontend-deps
 
-# Kill process running on port 8080
+# Stop backend server (Go application)
+stop-backend:
+    #!/bin/bash
+    set +e
+    echo "Stopping backend server..."
+    pkill -f "go run cmd/main.go" 2>/dev/null
+    pkill -f "main.go" 2>/dev/null
+    pkill -f "penguin-backend" 2>/dev/null
+    lsof -ti:8080 | xargs -r kill -15 2>/dev/null
+    sleep 1
+    lsof -ti:8080 | xargs -r kill -9 2>/dev/null
+    echo "Backend server stopped"
+
+# Stop frontend development server (React Router v7 / Vite)
+stop-frontend:
+    #!/bin/bash
+    set +e
+    echo "Stopping frontend development server..."
+    pkill -f "npm run dev" 2>/dev/null
+    pkill -f "react-router dev" 2>/dev/null
+    pkill -f "vite" 2>/dev/null
+    pkill -f "node.*vite" 2>/dev/null
+    for port in 5173 5174 5175 5176 5177; do
+        lsof -ti:$port | xargs -r kill -15 2>/dev/null
+    done
+    sleep 1
+    for port in 5173 5174 5175 5176 5177; do
+        lsof -ti:$port | xargs -r kill -9 2>/dev/null
+    done
+    echo "Frontend development server stopped"
+
+# Stop both backend and frontend servers
+stop-all: stop-backend stop-frontend
+    @echo "All servers stopped"
+
+# Kill process running on port 8080 (legacy command)
 kill-port:
     @echo "Stopping process on port 8080..."
     @-lsof -ti:8080 | xargs -r kill -15 2>/dev/null || true

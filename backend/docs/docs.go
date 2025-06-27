@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/file/entries": {
+        "/file/fileinfos": {
             "get": {
                 "description": "指定されたパスからファイルとフォルダーの一覧を取得します",
                 "consumes": [
@@ -41,7 +41,10 @@ const docTemplate = `{
                     "200": {
                         "description": "正常なレスポンス",
                         "schema": {
-                            "$ref": "#/definitions/models.GetFileEntriesResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.FileInfo"
+                            }
                         }
                     },
                     "500": {
@@ -56,9 +59,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/kouji/entries": {
+        "/project/recent": {
             "get": {
-                "description": "指定されたパスから工事プロジェクトフォルダーの一覧を取得します。\n各工事プロジェクトには会社名、現場名、工事開始日などの詳細情報が含まれます。",
+                "description": "最近の工事一覧を取得します。",
                 "consumes": [
                     "application/json"
                 ],
@@ -66,70 +69,16 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "工事管理"
+                    "プロジェクト管理"
                 ],
-                "summary": "工事プロジェクト一覧の取得",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "~/penguin/豊田築炉/2-工事",
-                        "description": "工事フォルダーのパス",
-                        "name": "path",
-                        "in": "query"
-                    }
-                ],
+                "summary": "最近の工事一覧の取得",
                 "responses": {
                     "200": {
-                        "description": "工事プロジェクト一覧",
-                        "schema": {
-                            "$ref": "#/definitions/models.KoujiEntriesResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "サーバーエラー",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/kouji/save": {
-            "post": {
-                "description": "[]models.KoujiEntryをYAMLファイルに保存します",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "工事管理"
-                ],
-                "summary": "工事情報のYAML保存",
-                "parameters": [
-                    {
-                        "description": "工事データ（オプション）",
-                        "name": "body",
-                        "in": "body",
+                        "description": "最近のプロジェクト一覧",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.KoujiEntry"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "成功メッセージ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
+                                "$ref": "#/definitions/models.Project"
                             }
                         }
                     },
@@ -145,32 +94,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/time/formats": {
-            "get": {
-                "description": "サポートされているすべての日時フォーマットの一覧を取得します",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "時刻処理"
-                ],
-                "summary": "サポートされる時刻フォーマット一覧",
-                "responses": {
-                    "200": {
-                        "description": "正常なレスポンス",
-                        "schema": {
-                            "$ref": "#/definitions/models.SupportedFormatsResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/time/parse": {
+        "/project/update": {
             "post": {
-                "description": "様々な日時文字列フォーマットを解析します",
+                "description": "models.ProjectをYAMLファイルに保存します",
                 "consumes": [
                     "application/json"
                 ],
@@ -178,29 +104,29 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "時刻処理"
+                    "プロジェクト管理"
                 ],
-                "summary": "タイムスタンプの解析",
+                "summary": "指定されたプロジェクト情報のYAML保存",
                 "parameters": [
                     {
-                        "description": "解析する時刻文字列",
-                        "name": "request",
+                        "description": "工事データ",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.TimeParseRequest"
+                            "$ref": "#/definitions/models.Project"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "正常なレスポンス",
+                        "description": "更新後の工事データ",
                         "schema": {
-                            "$ref": "#/definitions/models.TimeParseResponse"
+                            "$ref": "#/definitions/models.Project"
                         }
                     },
-                    "400": {
-                        "description": "不正なリクエスト",
+                    "500": {
+                        "description": "サーバーエラー",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -213,14 +139,10 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.FileEntry": {
+        "models.FileInfo": {
             "description": "ファイルまたはディレクトリの情報",
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "integer",
-                    "example": 123456
-                },
                 "is_directory": {
                     "description": "Whether this item is a directory",
                     "type": "boolean",
@@ -237,12 +159,12 @@ const docTemplate = `{
                 "name": {
                     "description": "Name of the file or folder",
                     "type": "string",
-                    "example": "documents"
+                    "example": "2025-0618 豊田築炉 名和工場"
                 },
                 "path": {
-                    "description": "Full path to the file or folder",
+                    "description": "FileService.BasePathからの相対パス",
                     "type": "string",
-                    "example": "/home/user/documents"
+                    "example": "豊田築炉/2-工事/2025-0618 豊田築炉 名和工場"
                 },
                 "size": {
                     "description": "Size of the file in bytes",
@@ -251,54 +173,27 @@ const docTemplate = `{
                 }
             }
         },
-        "models.GetFileEntriesResponse": {
-            "description": "ファイルエントリ一覧を含むレスポンス",
+        "models.ManagedFile": {
             "type": "object",
             "properties": {
-                "file_count": {
-                    "description": "File number of file entries",
-                    "type": "integer",
-                    "example": 10
+                "current": {
+                    "description": "FileService.BasePathからの相対パス",
+                    "type": "string",
+                    "example": "工事.xlsx"
                 },
-                "file_entries": {
-                    "description": "File entries",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.FileEntry"
-                    }
-                },
-                "folder_count": {
-                    "description": "Folder number of file entries",
-                    "type": "integer",
-                    "example": 10
+                "recommended": {
+                    "description": "FileService.BasePathからの相対パス",
+                    "type": "string",
+                    "example": "2025-0618 豊田築炉 名和工場.xlsx"
                 }
             }
         },
-        "models.KoujiEntriesResponse": {
-            "description": "Response containing list of construction kouji folders",
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer",
-                    "example": 10
-                },
-                "kouji_entries": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.KoujiEntry"
-                    }
-                },
-                "total_size": {
-                    "type": "integer",
-                    "example": 1073741824
-                }
-            }
-        },
-        "models.KoujiEntry": {
-            "description": "Construction kouji folder information with extended attributes",
+        "models.Project": {
+            "description": "Construction project folder information with extended attributes",
             "type": "object",
             "properties": {
                 "company_name": {
+                    "description": "Additional fields specific to Project folders",
                     "type": "string",
                     "example": "豊田築炉"
                 },
@@ -307,11 +202,17 @@ const docTemplate = `{
                     "example": "工事関連の資料とドキュメント"
                 },
                 "end_date": {
-                    "$ref": "#/definitions/models.Timestamp"
+                    "description": "Detail",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Timestamp"
+                        }
+                    ]
                 },
                 "id": {
-                    "type": "integer",
-                    "example": 123456
+                    "description": "Calculated fields",
+                    "type": "string",
+                    "example": "TC618"
                 },
                 "is_directory": {
                     "description": "Whether this item is a directory",
@@ -322,6 +223,13 @@ const docTemplate = `{
                     "type": "string",
                     "example": "名和工場"
                 },
+                "managed_files": {
+                    "description": "Managed files",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ManagedFile"
+                    }
+                },
                 "modified_time": {
                     "description": "Last modification time",
                     "allOf": [
@@ -333,12 +241,12 @@ const docTemplate = `{
                 "name": {
                     "description": "Name of the file or folder",
                     "type": "string",
-                    "example": "documents"
+                    "example": "2025-0618 豊田築炉 名和工場"
                 },
                 "path": {
-                    "description": "Full path to the file or folder",
+                    "description": "FileService.BasePathからの相対パス",
                     "type": "string",
-                    "example": "/home/user/documents"
+                    "example": "豊田築炉/2-工事/2025-0618 豊田築炉 名和工場"
                 },
                 "size": {
                     "description": "Size of the file in bytes",
@@ -365,82 +273,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.SupportedFormatsResponse": {
-            "description": "List of all supported date/time formats",
-            "type": "object",
-            "properties": {
-                "formats": {
-                    "description": "List of supported formats",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.TimeFormat"
-                    }
-                }
-            }
-        },
-        "models.TimeFormat": {
-            "description": "Supported time format information",
-            "type": "object",
-            "properties": {
-                "example": {
-                    "description": "Example value",
-                    "type": "string",
-                    "example": "2024-01-15T10:30:00Z"
-                },
-                "name": {
-                    "description": "Format name",
-                    "type": "string",
-                    "example": "RFC3339"
-                },
-                "pattern": {
-                    "description": "Format pattern",
-                    "type": "string",
-                    "example": "2006-01-02T15:04:05Z07:00"
-                }
-            }
-        },
-        "models.TimeParseRequest": {
-            "description": "Request for parsing various date/time formats",
-            "type": "object",
-            "properties": {
-                "time_string": {
-                    "description": "Time string to parse",
-                    "type": "string",
-                    "example": "2024-01-15T10:30:00"
-                }
-            }
-        },
-        "models.TimeParseResponse": {
-            "description": "Response containing parsed time in various formats",
-            "type": "object",
-            "properties": {
-                "original": {
-                    "description": "Original input string",
-                    "type": "string",
-                    "example": "2024-01-15T10:30:00"
-                },
-                "readable": {
-                    "description": "Human readable format",
-                    "type": "string",
-                    "example": "January 15, 2024 10:30 AM"
-                },
-                "rfc3339": {
-                    "description": "Parsed time in RFC3339 format",
-                    "type": "string",
-                    "example": "2024-01-15T10:30:00Z"
-                },
-                "timezone": {
-                    "description": "Time zone used",
-                    "type": "string",
-                    "example": "Local"
-                },
-                "unix": {
-                    "description": "Unix timestamp",
-                    "type": "integer",
-                    "example": 1705318200
-                }
-            }
-        },
         "models.Timestamp": {
             "description": "Timestamp in RFC3339 format",
             "type": "object",
@@ -458,7 +290,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
 	Host:             "localhost:8080",
 	BasePath:         "/api",
-	Schemes:          []string{},
+	Schemes:          []string{"http"},
 	Title:            "Penguin ファイルシステム管理API",
 	Description:      "ファイルエントリの管理と閲覧のためのAPI",
 	InfoInstanceName: "swagger",

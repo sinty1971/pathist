@@ -65,21 +65,23 @@ just help            # 利用可能なコマンド一覧
     │   ├── types/
     │   └── styles/
     ├── package.json
-    └── vite.config.ts
+    ├── vite.config.ts
+    └── public/
+        └── favicon.ico          # ファイル管理アプリ用アイコン
 ```
 
 ## アーキテクチャ
 
 ### バックエンド構造
 - `cmd/main.go`: エントリーポイント、CORSを持つFiberサーバーをセットアップ
-- `internal/handlers/`: HTTPリクエストハンドラー (filesystem.go, kouji.go, time.go)
-- `internal/services/`: ビジネスロジック (filesystem.go, kouji.go)
-- `internal/models/`: データモデル (fileentry.go, kouji.go, id.go, time.go, timestamp.go)
+- `internal/handlers/`: HTTPリクエストハンドラー (project.go, time.go)
+- `internal/services/`: ビジネスロジック (file.go, project.go, yaml.go)
+- `internal/models/`: データモデル (file.go, project.go, id.go, time.go, timestamp.go)
 
 バックエンドは `http://localhost:8080/api` でREST APIを提供し、主要なエンドポイントは以下です：
-- `GET /api/file-entries?path=<オプション-パス>` - フォルダーの内容を返す
-- `GET /api/kouji-entries?path=<オプション-パス>` - 工事プロジェクトの一覧を返す
-- `POST /api/kouji-entries/save` - 工事プロジェクト情報をYAMLファイルに保存
+- `GET /api/file/fileinfos?path=<オプション-パス>` - フォルダーの内容を返す
+- `GET /api/project/recent` - 工事プロジェクトの一覧を返す
+- `POST /api/project/update` - 工事プロジェクト情報をYAMLファイルに保存
 
 ### フロントエンド構造 (React Router v7)
 - `app/root.tsx`: ルートレイアウトコンポーネント
@@ -88,10 +90,18 @@ just help            # 利用可能なコマンド一覧
   - `_layout.tsx`: メインレイアウト
   - `_layout._index.tsx`: ホームページ（フォルダー一覧）
   - `_layout.kouji.tsx`: 工事一覧ページ
-- `app/components/`: UIコンポーネント (FileEntryGrid, FileEntryModal, KoujiProjectGrid, KoujiProjectPage)
+  - `_layout.gantt.tsx`: ガントチャートページ
+- `app/components/`: UIコンポーネント (FileInfoGrid, FileInfoModal, ProjectGrid, ProjectPage, ProjectEditModal, ProjectGanttChart, ProjectGanttChartSimple, DateEditModal, Navigation)
 - `app/api/`: 自動生成されたAPIクライアント
-- `app/types/`: TypeScript型定義 (kouji.ts)
-- `app/styles/`: CSS ファイル
+  - `client/`: APIクライアント実装
+  - `core/`: コア機能（認証、シリアライザ等）
+  - `client.gen.ts`: 自動生成されたクライアント設定
+  - `sdk.gen.ts`: 自動生成されたSDK関数
+  - `types.gen.ts`: 自動生成されたTypeScript型定義
+- `app/types/`: TypeScript型定義 (css.d.ts)
+- `app/styles/`: CSS ファイル (App.css, gantt.css, modal.css)
+- `app/utils/`: ユーティリティ関数 (date.ts, timestamp.ts)
+- `app/services/`: APIサービス (api.ts)
 
 ### 主要な実装詳細
 
@@ -109,27 +119,29 @@ just help            # 利用可能なコマンド一覧
    - 音声 (mp3, wav): 🎵
    - その他: 📎
 
-4. **フォルダーリストの管理
+4. **フォルダーリストの管理**:
    - Id: UnixシステムのInoのuint64を使用
    - 日時データ: 更新日
        - バックエンドのデータベース保存はフォーマット形式RFC3339Nanoの文字列保存
+       - フロントエンドでは`ModelsTimestamp`型（オブジェクト形式）として扱う
 
-4. **工事一覧の管理**: 
+5. **工事一覧の管理**: 
    - フォルダー命名規則: `YYYY-MMDD 会社名 現場名` (例: `2025-0618 豊田築炉 名和工場`)
    - 工事ID: フォルダーのID+元請け会社名+現場名から一意ID生成
-   - 工事データー永続化: `/home/<user>/penguin/豊田築炉/2-工事/.inside.yaml` ファイルで工事情報を保存
+   - 工事データー永続化: `/home/<user>/penguin/豊田築炉/2-工事/<工事フォルダー>/.detail.yaml` ファイルで工事情報を保存
    - 日時データ: 工事開始日、工事完了日、フォルダー更新日
        - バックエンドのデータベース保存はフォーマット形式RFC3339Nanoの文字列保存
+       - フロントエンドでは`ModelsTimestamp`型（オブジェクト形式）として扱う
    - タイムゾーン: JST（ローカルタイム）で日時を保持
 
-5. **APIレスポンス形式**: 
+6. **APIレスポンス形式**: 
    - 一般フォルダー: name、path、size、isDirectory などのプロパティを持つ配列
    - 工事プロジェクト: id、company_name、location_name などの拡張プロパティを含む配列
 
-6. **バックエンド内のデータソース定義**:
+7. **バックエンド内のデータソース定義**:
    - **FileSystem (fs)**: ファイルシステムから取得した情報
-   - **Database (db)**: データベース（`.inside.yaml`ファイル）から取得した情報
-     - 工事プロジェクトデータベースの保存場所: `~/penguin/豊田築炉/2-工事/.inside.yaml`
+   - **Database (db)**: データベース（`.detail.yaml`ファイル）から取得した情報
+     - 工事プロジェクトデータベースの保存場所: `~/penguin/豊田築炉/2-工事/.detail.yaml`
    - **Merge (mg)**: FileSystemとDatabaseのデータマージ処理
      - この処理は工事プロジェクト管理において重要な役割を持つ
      - 原則このデータをフロントエンドに提供する
@@ -158,3 +170,7 @@ just help            # 利用可能なコマンド一覧
 - **TODO**: go-swagger3がリリースされたら、OpenAPI 3.0ネイティブサポートへの移行を検討
   - 参考: https://github.com/swaggest/swgui
   - 現在のswaggo/swagはSwagger 2.0のみサポート
+
+## Memories
+
+- `to memorize`

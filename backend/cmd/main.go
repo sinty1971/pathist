@@ -19,6 +19,7 @@ import (
 // @description ファイルエントリの管理と閲覧のためのAPI
 // @host localhost:8080
 // @BasePath /api
+// @schemes http
 func main() {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -61,11 +62,11 @@ func main() {
 	api := app.Group("/api")
 
 	// File entries routes
-	api.Get("/file/entries", fileServiceHandler.GetEntries)
+	api.Get("/file/fileinfos", fileServiceHandler.GetFileInfos)
 
 	// Project routes
-	api.Get("/project/entries", projectHandler.GetEntries)
-	api.Post("/project/save", projectHandler.Save)
+	api.Get("/project/recent", projectHandler.GetRecentProjects)
+	api.Post("/project/update", projectHandler.Update)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{

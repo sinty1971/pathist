@@ -18,7 +18,7 @@ Go + Fiber製のフォルダー管理API
 - `path` (optional): 対象パス (デフォルト: `~/penguin`)
 
 ### GET /api/kouji/entries
-工事プロジェクト一覧を取得
+工事一覧を取得
 
 **クエリパラメータ:**
 - `path` (optional): 対象パス (デフォルト: `~/penguin/豊田築炉/2-工事`)
@@ -63,7 +63,7 @@ go run cmd/main.go
    curl "http://localhost:8080/api/file/entries"
    ```
 
-2. **工事プロジェクト一覧の取得**:
+2. **工事一覧の取得**:
    ```bash
    curl "http://localhost:8080/api/kouji/entries"
    ```

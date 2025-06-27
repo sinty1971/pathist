@@ -3,6 +3,7 @@ import { defineConfig } from '@hey-api/openapi-ts';
 export default defineConfig({
   client: {
     name: '@hey-api/client-fetch',
+    bundle: true,
   },
   input: '../schemas/openapi.yaml',
   output: './app/api',
@@ -16,4 +17,5 @@ export default defineConfig({
   types: {
     export: true,
   },
+  // baseURLは実行時に設定するため、ここでは指定しない
 });

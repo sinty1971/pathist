@@ -8,8 +8,8 @@ import (
 // FileInfo はファイルまたはディレクトリを表す
 // @Description ファイルまたはディレクトリの情報
 type FileInfo struct {
-	// FileSystem.BasePathからの相対パス
-	Path string `json:"path" yaml:"path" example:"豊田築炉/2-工事/2025-0618 豊田築炉 名和工場"`
+	// FileService.BasePathからの相対パス
+	Path string `json:"path" yaml:"-" example:"豊田築炉/2-工事/2025-0618 豊田築炉 名和工場"`
 	// Name of the file or folder
 	Name string `json:"name" yaml:"name" example:"2025-0618 豊田築炉 名和工場"`
 	// Whether this item is a directory
@@ -18,6 +18,14 @@ type FileInfo struct {
 	Size int64 `json:"size" yaml:"size" example:"4096"`
 	// Last modification time
 	ModifiedTime Timestamp `json:"modified_time" yaml:"modified_time"`
+}
+
+// ManagedFile は現在のファイル名と推奨されるファイル名のセットを表します
+type ManagedFile struct {
+	// FileService.BasePathからの相対パス
+	Recommended string `json:"recommended" yaml:"recommended" example:"2025-0618 豊田築炉 名和工場.xlsx"`
+	// FileService.BasePathからの相対パス
+	Current string `json:"current" yaml:"current" example:"工事.xlsx"`
 }
 
 // NewFileInfo フルパスからFileInfo構造体を作成します

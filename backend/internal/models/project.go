@@ -22,13 +22,12 @@ type Project struct {
 	StartDate    Timestamp `json:"start_date,omitempty" yaml:"start_date"`
 
 	// Detail
-	DetailFile  string    `json:"detail_file,omitempty" yaml:"detail_file" example:".detail.yaml"`
 	EndDate     Timestamp `json:"end_date,omitempty" yaml:"end_date"`
 	Description string    `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
 	Tags        []string  `json:"tags,omitempty" yaml:"tags" example:"['工事', '豊田築炉', '名和工場']"`
 
-	// Managed items
-	ProjectFile string `json:"project_file,omitempty" yaml:"project_file" example:"2025-0618 豊田築炉 名和工場.xlsx"`
+	// Managed files
+	ManagedFiles []ManagedFile `json:"managed_files" yaml:"managed_files"`
 }
 
 // NewProject FileInfoからProjectを作成します
@@ -55,14 +54,13 @@ func NewProject(fileInfo FileInfo) (Project, error) {
 	project := Project{
 		FileInfo: fileInfo,
 
-		ID:     GetProjectID(startDate, companyName, locationName),
+		ID:     GenerateProjectID(startDate, companyName, locationName),
 		Status: DetermineProjectStatus(startDate, startDate),
 
 		CompanyName:  companyName,
 		LocationName: locationName,
 		StartDate:    startDate,
 
-		DetailFile:  ".detail.yaml",
 		EndDate:     startDate,
 		Description: companyName + "の" + locationName + "における工事情報",
 		Tags:        []string{"Project", "工事", companyName, locationName, startDate.Time.Format("2006")}, // Include year as tag
@@ -71,8 +69,8 @@ func NewProject(fileInfo FileInfo) (Project, error) {
 	return project, nil
 }
 
-// DeterminKoujiID は工事IDを決定する
-func GetProjectID(startDate Timestamp, companyName string, locationName string) string {
+// GenerateProjectID は工事IDを生成する
+func GenerateProjectID(startDate Timestamp, companyName string, locationName string) string {
 	startDateStr, err := startDate.Format("20060102")
 	if err != nil {
 		return ""

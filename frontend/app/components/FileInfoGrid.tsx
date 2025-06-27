@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import type { FileEntry } from '../services/api';
-import { folderService } from '../services/api';
-import { FileEntryModal } from './FileEntryModal';
+import { getFileFileinfos } from '../api/sdk.gen';
+import { timestampToString } from '../utils/timestamp';
+import { FileInfoModal } from './FileInfoModal';
 
-export const FileEntryGrid: React.FC = () => {
+export const FileInfoGrid: React.FC = () => {
   const navigate = useNavigate();
-  const [fileEntries, setFileEntries] = useState<FileEntry[]>([]);
+  const [fileInfos, setFileEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState('');
   const [pathInput, setPathInput] = useState('');
-  const [selectedFileEntry, setSelectedFileEntry] = useState<FileEntry | null>(null);
+  const [selectedFileInfo, setSelectedFileInfo] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // ファイルシステムルートからの相対パスに変換
@@ -40,23 +40,11 @@ export const FileEntryGrid: React.FC = () => {
     return `~/penguin/${relativePath}`;
   };
 
-  // 工事プロジェクトディレクトリかどうかをチェック
-  const isKoujiProjectPath = (path: string) => {
-    const normalizedPath = path.replace(/\\/g, '/');
-    return normalizedPath.includes('/豊田築炉/2-工事') || 
-           normalizedPath.endsWith('/2-工事') ||
-           normalizedPath.includes('2-工事');
-  };
 
-  const loadFileEntries = async (path?: string) => {
+  const loadFileEntries = useCallback(async (path?: string) => {
     const frontendPath = path || '';
     const relativePath = convertToRelativePath(frontendPath);
     
-    // 工事プロジェクトディレクトリの場合は工事プロジェクトページにリダイレクト
-    if (isKoujiProjectPath(frontendPath)) {
-      navigate('/kouji');
-      return;
-    }
 
     setLoading(true);
     setError(null);
@@ -65,51 +53,48 @@ export const FileEntryGrid: React.FC = () => {
       console.log('Loading file entries for frontend path:', frontendPath);
       console.log('Converted to relative path:', relativePath);
       
-      // 直接fetchでテスト
-      const directResponse = await fetch(`http://localhost:8080/api/file/entries${relativePath ? `?path=${encodeURIComponent(relativePath)}` : ''}`);
-      console.log('Direct fetch response status:', directResponse.status);
-      console.log('Direct fetch response ok:', directResponse.ok);
+      // APIクライアントを使用
+      console.log('Calling API with query:', relativePath ? { path: relativePath } : {});
+      const response = await getFileFileinfos({
+        query: relativePath ? { path: relativePath } : {}
+      });
       
-      if (!directResponse.ok) {
-        const errorText = await directResponse.text();
-        console.error('Direct fetch error:', errorText);
-        throw new Error(`Direct fetch failed: ${directResponse.status} ${errorText}`);
+      console.log('API response:', response);
+      
+      if (response.data) {
+        // APIは直接配列を返す（実際のAPIでは日付は文字列として返される）
+        const data = response.data as any[];
+        console.log('Received data:', data);
+        setFileEntries(Array.isArray(data) ? data : []);
+        setCurrentPath(frontendPath);
+      } else if (response.error) {
+        console.error('API returned error:', response.error);
+        throw new Error('APIエラー: ' + JSON.stringify(response.error));
       }
-      
-      const directData = await directResponse.json();
-      console.log('Direct fetch data:', directData);
-      
-      setFileEntries(directData.file_entries || []);
-      setCurrentPath(frontendPath);
     } catch (err) {
       console.error('Error loading file entries:', err);
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
     loadFileEntries();
-  }, []);
+  }, [loadFileEntries]);
 
-  const handleFileEntryClick = (fileEntry: FileEntry) => {
-    if (fileEntry.is_directory) {
+  const handleFileInfoClick = (fileInfo: any) => {
+    if (fileInfo.is_directory) {
       // ディレクトリの場合は移動
       // ファイルエントリのパスは絶対パスなので、フロントエンド表示用に変換
-      const displayPath = convertToDisplayPath(convertToRelativePath(fileEntry.path));
+      const displayPath = convertToDisplayPath(convertToRelativePath(fileInfo.path || ''));
       
-      // 工事プロジェクトディレクトリの場合は工事プロジェクトページにリダイレクト
-      if (isKoujiProjectPath(displayPath)) {
-        navigate('/kouji');
-        return;
-      }
       
       setPathInput(displayPath);
       loadFileEntries(displayPath);
     } else {
       // ファイルの場合はモーダル表示
-      setSelectedFileEntry(fileEntry);
+      setSelectedFileInfo(fileInfo);
       setIsModalOpen(true);
     }
   };
@@ -145,21 +130,12 @@ export const FileEntryGrid: React.FC = () => {
   };
 
 
-  // 特別なフォルダーかどうかをチェック
-  const isSpecialFileEntry = (fileEntry: FileEntry) => {
-    if (!fileEntry.is_directory) return false;
-    return isKoujiProjectPath(fileEntry.path) || fileEntry.name === '2-工事';
-  };
 
-  const getFileEntryIcon = (fileEntry: FileEntry) => {
-    if (fileEntry.is_directory) {
-      // 工事プロジェクトフォルダーの場合は特別なアイコン
-      if (isSpecialFileEntry(fileEntry)) {
-        return '🏗️';
-      }
+  const getFileInfoIcon = (fileInfo: any) => {
+    if (fileInfo.is_directory) {
       return '📁';
     }
-    const ext = fileEntry.name.split('.').pop()?.toLowerCase();
+    const ext = fileInfo.name?.split('.').pop()?.toLowerCase();
     switch (ext) {
       case 'pdf': return '📄';
       case 'jpg':
@@ -176,10 +152,10 @@ export const FileEntryGrid: React.FC = () => {
   };
 
   // デバッグ用の表示
-  console.log('FileEntryGrid render:', { 
+  console.log('FileInfoGrid render:', { 
     loading, 
     error, 
-    fileEntriesCount: fileEntries.length,
+    fileInfosCount: fileInfos.length,
     pathInput,
     currentPath 
   });
@@ -187,8 +163,6 @@ export const FileEntryGrid: React.FC = () => {
   return (
     <div className="folder-container">
       <div className="header">
-        <h1>フォルダー管理システム</h1>
-        
         <form onSubmit={handlePathSubmit} className="path-form">
           <button type="button" onClick={handleGoBack} className="back-button">
             <span className="back-arrow">⮜</span>
@@ -205,7 +179,7 @@ export const FileEntryGrid: React.FC = () => {
       </div>
 
       <div className="folder-info">
-        <span className="folder-count">{fileEntries.length} 項目</span>
+        <span className="folder-count">{fileInfos.length} 項目</span>
         <span className="current-path">{currentPath || '~/penguin'}</span>
       </div>
 
@@ -213,33 +187,31 @@ export const FileEntryGrid: React.FC = () => {
       {error && <div className="error">{error}</div>}
 
       <div className="folder-list">
-        {fileEntries.map((fileEntry, index) => {
-          const isSpecial = isSpecialFileEntry(fileEntry);
+        {fileInfos.map((fileInfo, index) => {
           return (
             <div
               key={index}
-              className={`folder-item ${isSpecial ? 'folder-item--special' : ''}`}
-              onClick={() => handleFileEntryClick(fileEntry)}
+              className="folder-item"
+              onClick={() => handleFileInfoClick(fileInfo)}
             >
-              <div className={`folder-icon ${isSpecial ? 'folder-icon--special' : ''}`}>
-                {getFileEntryIcon(fileEntry)}
+              <div className="folder-icon">
+                {getFileInfoIcon(fileInfo)}
               </div>
               <div className="folder-info">
-                <div className={`folder-name ${isSpecial ? 'folder-name--special' : ''}`}>
-                  {fileEntry.name}
-                  {isSpecial && <span className="special-badge">工事一覧</span>}
+                <div className="folder-name">
+                  {fileInfo.name}
                 </div>
                 <div className="folder-meta">
-                  <span>{fileEntry.is_directory ? 'フォルダー' : 'ファイル'}</span>
+                  <span>{fileInfo.is_directory ? 'フォルダー' : 'ファイル'}</span>
                   <span className="folder-date">
                     {' · 更新: '}
-                    {new Date(fileEntry.modified_time).toLocaleDateString('ja-JP', {
+                    {timestampToString(fileInfo.modified_time) ? new Date(timestampToString(fileInfo.modified_time)!).toLocaleDateString('ja-JP', {
                       year: 'numeric',
                       month: '2-digit',
                       day: '2-digit',
                       hour: '2-digit',
                       minute: '2-digit'
-                    })}
+                    }) : '-'}
                   </span>
                 </div>
               </div>
@@ -248,8 +220,8 @@ export const FileEntryGrid: React.FC = () => {
         })}
       </div>
 
-      <FileEntryModal
-        fileEntry={selectedFileEntry}
+      <FileInfoModal
+        fileInfo={selectedFileInfo}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />

@@ -3,8 +3,7 @@
 /**
  * ファイルまたはディレクトリの情報
  */
-export type ModelsFileEntry = {
-    id?: number;
+export type ModelsFileInfo = {
     /**
      * Whether this item is a directory
      */
@@ -18,7 +17,7 @@ export type ModelsFileEntry = {
      */
     name?: string;
     /**
-     * Full path to the file or folder
+     * FileService.BasePathからの相対パス
      */
     path?: string;
     /**
@@ -27,46 +26,43 @@ export type ModelsFileEntry = {
     size?: number;
 };
 
-/**
- * ファイルエントリ一覧を含むレスポンス
- */
-export type ModelsGetFileEntriesResponse = {
+export type ModelsManagedFile = {
     /**
-     * File number of file entries
+     * FileService.BasePathからの相対パス
      */
-    file_count?: number;
+    current?: string;
     /**
-     * File entries
+     * FileService.BasePathからの相対パス
      */
-    file_entries?: Array<ModelsFileEntry>;
-    /**
-     * Folder number of file entries
-     */
-    folder_count?: number;
+    recommended?: string;
 };
 
 /**
- * Response containing list of construction kouji folders
+ * Construction project folder information with extended attributes
  */
-export type ModelsKoujiEntriesResponse = {
-    count?: number;
-    kouji_entries?: Array<ModelsKoujiEntry>;
-    total_size?: number;
-};
-
-/**
- * Construction kouji folder information with extended attributes
- */
-export type ModelsKoujiEntry = {
+export type ModelsProject = {
+    /**
+     * Additional fields specific to Project folders
+     */
     company_name?: string;
     description?: string;
+    /**
+     * Detail
+     */
     end_date?: ModelsTimestamp;
-    id?: number;
+    /**
+     * Calculated fields
+     */
+    id?: string;
     /**
      * Whether this item is a directory
      */
     is_directory?: boolean;
     location_name?: string;
+    /**
+     * Managed files
+     */
+    managed_files?: Array<ModelsManagedFile>;
     /**
      * Last modification time
      */
@@ -76,7 +72,7 @@ export type ModelsKoujiEntry = {
      */
     name?: string;
     /**
-     * Full path to the file or folder
+     * FileService.BasePathからの相対パス
      */
     path?: string;
     /**
@@ -89,77 +85,13 @@ export type ModelsKoujiEntry = {
 };
 
 /**
- * List of all supported date/time formats
- */
-export type ModelsSupportedFormatsResponse = {
-    /**
-     * List of supported formats
-     */
-    formats?: Array<ModelsTimeFormat>;
-};
-
-/**
- * Supported time format information
- */
-export type ModelsTimeFormat = {
-    /**
-     * Example value
-     */
-    example?: string;
-    /**
-     * Format name
-     */
-    name?: string;
-    /**
-     * Format pattern
-     */
-    pattern?: string;
-};
-
-/**
- * Request for parsing various date/time formats
- */
-export type ModelsTimeParseRequest = {
-    /**
-     * Time string to parse
-     */
-    time_string?: string;
-};
-
-/**
- * Response containing parsed time in various formats
- */
-export type ModelsTimeParseResponse = {
-    /**
-     * Original input string
-     */
-    original?: string;
-    /**
-     * Human readable format
-     */
-    readable?: string;
-    /**
-     * Parsed time in RFC3339 format
-     */
-    rfc3339?: string;
-    /**
-     * Time zone used
-     */
-    timezone?: string;
-    /**
-     * Unix timestamp
-     */
-    unix?: number;
-};
-
-/**
  * Timestamp in RFC3339 format
  */
 export type ModelsTimestamp = {
     'time.Time'?: string;
 };
 
-export type GetFileEntriesData = {
+export type GetFileFileinfosData = {
     body?: never;
     path?: never;
     query?: {
@@ -168,10 +100,10 @@ export type GetFileEntriesData = {
          */
         path?: string;
     };
-    url: '/file/entries';
+    url: '/file/fileinfos';
 };
 
-export type GetFileEntriesErrors = {
+export type GetFileFileinfosErrors = {
     /**
      * サーバーエラー
      */
@@ -180,127 +112,74 @@ export type GetFileEntriesErrors = {
     };
 };
 
-export type GetFileEntriesError = GetFileEntriesErrors[keyof GetFileEntriesErrors];
+export type GetFileFileinfosError = GetFileFileinfosErrors[keyof GetFileFileinfosErrors];
 
-export type GetFileEntriesResponses = {
+export type GetFileFileinfosResponses = {
     /**
      * 正常なレスポンス
      */
-    200: ModelsGetFileEntriesResponse;
+    200: Array<ModelsFileInfo>;
 };
 
-export type GetFileEntriesResponse = GetFileEntriesResponses[keyof GetFileEntriesResponses];
+export type GetFileFileinfosResponse = GetFileFileinfosResponses[keyof GetFileFileinfosResponses];
 
-export type GetKoujiEntriesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * 工事フォルダーのパス
-         */
-        path?: string;
-    };
-    url: '/kouji/entries';
-};
-
-export type GetKoujiEntriesErrors = {
-    /**
-     * サーバーエラー
-     */
-    500: {
-        [key: string]: string;
-    };
-};
-
-export type GetKoujiEntriesError = GetKoujiEntriesErrors[keyof GetKoujiEntriesErrors];
-
-export type GetKoujiEntriesResponses = {
-    /**
-     * 工事プロジェクト一覧
-     */
-    200: ModelsKoujiEntriesResponse;
-};
-
-export type GetKoujiEntriesResponse = GetKoujiEntriesResponses[keyof GetKoujiEntriesResponses];
-
-export type PostKoujiSaveData = {
-    /**
-     * 工事データ（オプション）
-     */
-    body?: Array<ModelsKoujiEntry>;
-    path?: never;
-    query?: never;
-    url: '/kouji/save';
-};
-
-export type PostKoujiSaveErrors = {
-    /**
-     * サーバーエラー
-     */
-    500: {
-        [key: string]: string;
-    };
-};
-
-export type PostKoujiSaveError = PostKoujiSaveErrors[keyof PostKoujiSaveErrors];
-
-export type PostKoujiSaveResponses = {
-    /**
-     * 成功メッセージ
-     */
-    200: {
-        [key: string]: string;
-    };
-};
-
-export type PostKoujiSaveResponse = PostKoujiSaveResponses[keyof PostKoujiSaveResponses];
-
-export type GetTimeFormatsData = {
+export type GetProjectRecentData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/time/formats';
+    url: '/project/recent';
 };
 
-export type GetTimeFormatsResponses = {
+export type GetProjectRecentErrors = {
     /**
-     * 正常なレスポンス
+     * サーバーエラー
      */
-    200: ModelsSupportedFormatsResponse;
-};
-
-export type GetTimeFormatsResponse = GetTimeFormatsResponses[keyof GetTimeFormatsResponses];
-
-export type PostTimeParseData = {
-    /**
-     * 解析する時刻文字列
-     */
-    body: ModelsTimeParseRequest;
-    path?: never;
-    query?: never;
-    url: '/time/parse';
-};
-
-export type PostTimeParseErrors = {
-    /**
-     * 不正なリクエスト
-     */
-    400: {
+    500: {
         [key: string]: string;
     };
 };
 
-export type PostTimeParseError = PostTimeParseErrors[keyof PostTimeParseErrors];
+export type GetProjectRecentError = GetProjectRecentErrors[keyof GetProjectRecentErrors];
 
-export type PostTimeParseResponses = {
+export type GetProjectRecentResponses = {
     /**
-     * 正常なレスポンス
+     * 最近のプロジェクト一覧
      */
-    200: ModelsTimeParseResponse;
+    200: Array<ModelsProject>;
 };
 
-export type PostTimeParseResponse = PostTimeParseResponses[keyof PostTimeParseResponses];
+export type GetProjectRecentResponse = GetProjectRecentResponses[keyof GetProjectRecentResponses];
+
+export type PostProjectUpdateData = {
+    /**
+     * 工事データ
+     */
+    body: ModelsProject;
+    path?: never;
+    query?: never;
+    url: '/project/update';
+};
+
+export type PostProjectUpdateErrors = {
+    /**
+     * サーバーエラー
+     */
+    500: {
+        [key: string]: string;
+    };
+};
+
+export type PostProjectUpdateError = PostProjectUpdateErrors[keyof PostProjectUpdateErrors];
+
+export type PostProjectUpdateResponses = {
+    /**
+     * 更新後の工事データ
+     */
+    200: ModelsProject;
+};
+
+export type PostProjectUpdateResponse = PostProjectUpdateResponses[keyof PostProjectUpdateResponses];
 
 export type ClientOptions = {
-    baseUrl: 'localhost:8080/api' | (string & {});
+    baseUrl: 'http://localhost:8080/api' | (string & {});
 };

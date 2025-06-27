@@ -1,12 +1,11 @@
-import { getFileEntries } from '../api/sdk.gen';
-import type { ModelsFileEntry, ModelsFileEntriesListResponse } from '../api/types.gen';
+import { getFileFileinfos } from '../api/sdk.gen';
+import type { ModelsFileInfo } from '../api/types.gen';
 
-export type FileEntry = ModelsFileEntry;
-export type FileEntriesListResponse = ModelsFileEntriesListResponse;
+export type FileInfo = ModelsFileInfo;
 
-export const folderService = {
-  getFileEntries: async (path?: string) => {
-    const response = await getFileEntries({ 
+export const fileService = {
+  getFileInfos: async (path?: string) => {
+    const response = await getFileFileinfos({ 
       query: path ? { path } : {}
     });
     console.log('Full API response:', response);
@@ -14,18 +13,10 @@ export const folderService = {
     console.log('Response data type:', typeof response.data);
     
     // レスポンス構造を確認して適切にデータを返す
-    if (response.data && typeof response.data === 'object') {
-      return response.data as FileEntriesListResponse;
+    if (response.data && Array.isArray(response.data)) {
+      return response.data as ModelsFileInfo[];
     } else {
-      // response自体がデータの場合
-      return response as unknown as FileEntriesListResponse;
+      return [] as ModelsFileInfo[];
     }
-  },
-  saveKoujiEntries: async (koujiEntries?: any[]) => {
-    const { postKoujiSave } = await import('../api/sdk.gen');
-    const response = await postKoujiSave({ 
-      body: koujiEntries 
-    });
-    return response.data as unknown as { message: string; output_path: string; count: number };
   },
 };

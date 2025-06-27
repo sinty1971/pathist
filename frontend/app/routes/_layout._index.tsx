@@ -1,5 +1,5 @@
-import { FileEntryGrid } from "../components/FileEntryGrid";
+import { FileInfoGrid } from "../components/FileInfoGrid";
 
 export default function Index() {
-  return <FileEntryGrid />;
+  return <FileInfoGrid />;
 }

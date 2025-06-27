@@ -13,10 +13,7 @@ type Pages = {
   "/": {
     params: {};
   };
-  "/kouji": {
-    params: {};
-  };
-  "/gantt": {
+  "/projects": {
     params: {};
   };
 };
@@ -24,22 +21,18 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/kouji" | "/gantt";
+    page: "/" | "/projects";
   };
   "routes/_layout.tsx": {
     id: "routes/_layout";
-    page: "/" | "/kouji" | "/gantt";
+    page: "/" | "/projects";
   };
   "routes/_layout._index.tsx": {
     id: "routes/_layout._index";
     page: "/";
   };
-  "routes/_layout.kouji.tsx": {
-    id: "routes/_layout.kouji";
-    page: "/kouji";
-  };
-  "routes/_layout.gantt.tsx": {
-    id: "routes/_layout.gantt";
-    page: "/gantt";
+  "routes/_layout.projects.tsx": {
+    id: "routes/_layout.projects";
+    page: "/projects";
   };
 };

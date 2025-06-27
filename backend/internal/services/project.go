@@ -4,17 +4,20 @@ import (
 	"fmt"
 	"path/filepath"
 	"penguin-backend/internal/models"
+	"regexp"
 	"sort"
+	"strings"
 )
 
 // ProjectService は工事情報取得サービスを提供する
 type ProjectService struct {
 	FileService *FileService
 	YamlService *YamlService[models.Project]
+	DetailFile  string
 }
 
 // NewProjectService はProjectServiceを初期化する
-// @param projectsPath: プロジェクト一覧ファイルのパス (ex. ~/penguin/豊田築炉/2-工事)
+// @Param projectsPath query string true "プロジェクト一覧ファイルのパス" default("~/penguin/豊田築炉/2-工事")
 func NewProjectService(projectsPath string) (*ProjectService, error) {
 	// FileServiceを初期化
 	fileService, err := NewFileService(projectsPath)
@@ -24,19 +27,12 @@ func NewProjectService(projectsPath string) (*ProjectService, error) {
 
 	// YamlServiceを初期化
 	yamlService := NewYamlService[models.Project](fileService)
-	if err != nil {
-		return nil, err
-	}
 
 	return &ProjectService{
 		FileService: fileService,
 		YamlService: yamlService,
+		DetailFile:  ".detail.yaml",
 	}, nil
-}
-
-// GetFullpath は工事一覧フォルダーを基準としてファイルのフルパスを取得する
-func (s *ProjectService) GetFullpath(joinPath ...string) (string, error) {
-	return s.FileService.GetFullpath(joinPath...)
 }
 
 // GetRecentProjects は指定されたパスから最近の工事一覧を取得する
@@ -57,8 +53,11 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 			continue
 		}
 
-		// 工事の詳細を.detail.yamlか取り込む
-		s.ImportDetailFromYaml(&project)
+		// 管理ファイルの設定
+		s.SetManagedFiles(&project)
+
+		// .detail.yamlと同期する
+		s.SyncDetailFile(&project)
 
 		// 工事を登録
 		projects[count] = project
@@ -66,35 +65,57 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 
 	}
 
-	return projects[:count]
+	// 工事開始日で降順ソート（新しいものが最初）
+	validProjects := projects[:count]
+	sort.Slice(validProjects, func(i, j int) bool {
+		// 両方の開始日が有効な場合
+		if !validProjects[i].StartDate.IsZero() && !validProjects[j].StartDate.IsZero() {
+			return validProjects[i].StartDate.After(validProjects[j].StartDate.Time)
+		}
+		// iの開始日が無効でjが有効な場合、jを先に
+		if validProjects[i].StartDate.IsZero() && !validProjects[j].StartDate.IsZero() {
+			return false
+		}
+		// iの開始日が有効でjが無効な場合、iを先に
+		if !validProjects[i].StartDate.IsZero() && validProjects[j].StartDate.IsZero() {
+			return true
+		}
+		// 両方の開始日が無効な場合、フォルダー名で降順
+		return validProjects[i].FileInfo.Name > validProjects[j].FileInfo.Name
+	})
+
+	return validProjects
 }
 
-// ImportDetailFromYaml は工事の詳細を.detail.yamlから取り込む
-// また、工事詳細内の情報も更新する
-func (s *ProjectService) ImportDetailFromYaml(target *models.Project) error {
-	// 工事のフルパスを取得
-	targetFullpath, err := s.GetFullpath(target.FileInfo.Name)
-	if err != nil {
-		return err
-	}
+// SyncDetailFile は工事の詳細を.detail.yamlから取り込む
+// 取り込む詳細情報は、工事完了日・工事説明・工事タグ
+// Statusは取り込み後に計算する
+// 更新後の工事情報を.detail.yamlに反映する。
+// 更新後の工事情報を返す。
+func (s *ProjectService) SyncDetailFile(current *models.Project) error {
 
 	// .detail.yamlを読み込む
-	dotDetailPath := filepath.Join(targetFullpath, ".detail.yaml")
-	detail, err := s.YamlService.Load(dotDetailPath)
+	detailPath := filepath.Join(current.FileInfo.Name, s.DetailFile)
+	detail, err := s.YamlService.Load(detailPath)
 	if err != nil {
-		return err
+		// ファイルが存在しない場合は新規作成
+		err = s.YamlService.Save(detailPath, *current)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// detailにしか保持されない内容をprojectに反映
-	target.Description = detail.Description
-	target.EndDate = detail.EndDate
-	target.Tags = detail.Tags
+	current.Description = detail.Description
+	current.EndDate = detail.EndDate
+	current.Tags = detail.Tags
 
 	// 計算が必要な項目の更新
-	target.Status = models.DetermineProjectStatus(target.StartDate, target.EndDate)
+	current.Status = models.DetermineProjectStatus(current.StartDate, current.EndDate)
 
 	// 工事詳細を更新
-	err = s.YamlService.Save(dotDetailPath, detail)
+	err = s.YamlService.Save(detailPath, detail)
 	if err != nil {
 		return err
 	}
@@ -102,108 +123,141 @@ func (s *ProjectService) ImportDetailFromYaml(target *models.Project) error {
 	return nil
 }
 
-// 工事情報 from を工事情報 to に更新する
-func (s *ProjectService) UpdateProject(from, to models.Project) error {
+// SetManagedFiles は工事の管理ファイルを設定します
+func (s *ProjectService) SetManagedFiles(project *models.Project) error {
 
-	// from フォルダーが存在するか確認
-	if !from.FileInfo.IsExist() {
-		return fmt.Errorf("from フォルダーが存在しません: %s", from.FileInfo.Path)
-	}
-
-	// to フォルダーが存在するか確認
-	if !to.FileInfo.IsExist() {
-		return fmt.Errorf("to フォルダーが存在しません: %s", to.FileInfo.Path)
-	}
-	// データベースの工事一覧をmapに変換する
-	dbEntryMap := KoujiEntriesToMapByID(dbEntries)
-
-	// ファイルシステムの工事一覧を更新する
-	margedEntries := make([]models.Project, len(fsEntries))
-	for i, fsEntry := range fsEntries {
-		// データベースに情報が存在しているときの処理
-		if dbEntry, exists := dbEntryMap[fsEntry.ID]; exists {
-			// 工事開始日の更新
-			fsEntry.StartDate = dbEntry.StartDate
-			// 工事終了日の更新
-			fsEntry.EndDate = dbEntry.EndDate
-			// 工事説明の更新
-			fsEntry.Description = dbEntry.Description
-			// 工事ステータスの更新
-			fsEntry.Status = models.DetermineProjectStatus(dbEntry.StartDate, dbEntry.EndDate)
-			// 工事タグの更新
-			fsEntry.Tags = dbEntry.Tags
-
-			// データベースから削除（検索スピードを向上させるため）
-			delete(dbEntryMap, fsEntry.ID)
-		}
-		// ファイルシステムの工事を更新
-		margedEntries[i] = fsEntry
-	}
-
-	// 開始日の降順でソート（新しい順）
-	sort.Slice(margedEntries, func(i, j int) bool {
-		return margedEntries[i].StartDate.Time.After(margedEntries[j].StartDate.Time)
-	})
-
-	return margedEntries
-}
-
-// KoujiEntriesToMapByID は[]KoujiEntryをmap[string]KoujiEntryに変換する
-func KoujiEntriesToMapByID(entries []models.Project) map[string]models.Project {
-	entryMap := make(map[string]models.Project, len(entries))
-	for _, entry := range entries {
-		entryMap[entry.ID] = entry
-	}
-	return entryMap
-}
-
-// UpdateEntry は工事情報を更新する
-func (s *ProjectService) UpdateEntry(updateEntry models.Project) (models.Project, error) {
-	// データベースから工事一覧を取得
-	dbEntries, err := s.Database.LoadFromYAML()
+	// 工事フォルダーのフルパスを取得
+	projectFullpath, err := s.FileService.GetFullpath(project.FileInfo.Name)
 	if err != nil {
-		return models.Project{}, err
+		return err
 	}
 
-	// Find and update the project
-	foundIndex := -1
-	for i, entry := range dbEntries {
-		if entry.ID == updateEntry.ID {
-			dbEntries[i].StartDate = updateEntry.StartDate
-			dbEntries[i].EndDate = updateEntry.EndDate
-			dbEntries[i].Status = DetermineKoujiStatus(updateEntry.StartDate, updateEntry.EndDate)
-			foundIndex = i
-			break
+	// 工事フォルダー内のファイルを取得
+	fileInfos, err := s.FileService.GetFileInfos(project.FileInfo.Name)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	// 管理ファイルの設定
+	managedFiles := make([]models.ManagedFile, len(fileInfos))
+
+	// 工事ファイルの設定
+	count := 0
+	datePattern := regexp.MustCompile(`^20\d{2}-\d{4}`)
+	for _, fileInfo := range fileInfos {
+		// ファイルの拡張子
+		fileExt := filepath.Ext(fileInfo.Name)
+
+		// 拡張子を除いたファイル名
+		filenameWithoutExt := strings.TrimSuffix(fileInfo.Name, fileExt)
+
+		// エクセルファイル以外はスキップ
+		if !fileInfo.IsExcel() {
+			continue
 		}
+
+		// 拡張子以外のファイル名がyyyy-mmddで始まる場合または工事のファイル名以外はスキップ
+		if !datePattern.MatchString(filenameWithoutExt) && filenameWithoutExt != "工事" {
+			continue
+		}
+
+		recommendedName := strings.Join([]string{project.Name, fileExt}, "")
+
+		// 推奨ファイルと現在のファイルが同じ時は推奨ファイルの表示を不必要と分かるようにする
+		if recommendedName == fileInfo.Name {
+			recommendedName = ""
+		}
+
+		// 管理ファイルの設定
+		managedFiles[count] = models.ManagedFile{
+			Recommended: recommendedName,
+			Current:     fileInfo.Name,
+		}
+		count++
+		break
 	}
 
-	if foundIndex == -1 {
-		return models.Project{}, fmt.Errorf("工事情報がデータベースにありません: %s", updateEntry.ID)
+	// 工事ファイルが見つからない場合はひな形を作成
+	if count == 0 {
+		recommendedName := strings.Join([]string{project.Name, ".xlsx"}, "")
+
+		managedFiles[0] = models.ManagedFile{
+			Recommended: recommendedName,
+			Current:     "工事.xlsx",
+		}
+
+		// テンプレートファイルのパスを取得
+		templatePath, err := s.FileService.GetFullpath("@工事 新規テンプレート", "工事.xlsx")
+		if err != nil {
+			return err
+		}
+
+		// コピー先のパス（工事フォルダ内の "工事.xlsx"）
+		dstPath := filepath.Join(projectFullpath, "工事.xlsx")
+
+		// テンプレートファイルをコピー
+		err = s.FileService.CopyFile(templatePath, dstPath)
+		if err != nil {
+			return err
+		}
+
+		count = 1
 	}
 
-	// Save updated kouji entries to YAML
-	err = s.SaveToYAML(dbEntries)
+	// 管理ファイルの設定
+	project.ManagedFiles = managedFiles[:count]
 
-	// 更新した工事を返す
-	return dbEntries[foundIndex], err
+	return nil
 }
 
-// SaveToYAML は引数<entries>をデータベースに保存する
-func (s *ProjectService) SaveToYAML(entries []models.Project) error {
+// UpdateProjectFileInfo は工事情報 project.FileInfoの情報を更新します
+// projectの詳細情報で.detail.yamlを更新します
+func (s *ProjectService) UpdateProjectFileInfo(project *models.Project) error {
 
-	// データベースから工事一覧を取得
-	fsEntries := s.GetKoujiEntriesFromFileSystem()
+	// 工事開始日・会社名・現場名からフォルダー名を生成
+	updatesStartDate, err := project.StartDate.Format("2006-0102")
+	if err != nil {
+		return err
+	}
+	generatedFolderName := fmt.Sprintf("%s %s %s", updatesStartDate, project.CompanyName, project.LocationName)
 
-	//
-	margedEntries := MargeProjects(fsEntries, entries)
+	// 生成されたフォルダー名とFileInfo.Nameを比較
+	if generatedFolderName != project.FileInfo.Name {
+		// フォルダー名の変更
+		err = s.FileService.MoveFile(project.FileInfo.Name, generatedFolderName)
+		if err != nil {
+			return err
+		}
 
-	return s.Database.SaveToYAML(margedEntries)
+		// FileInfoの作成
+		generatedFullpath, err := s.FileService.GetFullpath(generatedFolderName)
+		if err != nil {
+			return err
+		}
+		generatedFileInfo, err := models.NewFileInfo(generatedFullpath)
+		if err != nil {
+			return err
+		}
+
+		// 詳細情報以外の更新
+		project.FileInfo = *generatedFileInfo
+	}
+
+	// 計算が必要な項目の更新
+	project.ID = models.GenerateProjectID(project.StartDate, project.CompanyName, project.LocationName)
+	project.Status = models.DetermineProjectStatus(project.StartDate, project.EndDate)
+
+	// 更新後の工事情報を.detail.yamlに反映
+	detailPath := filepath.Join(project.FileInfo.Name, s.DetailFile)
+	return s.YamlService.Save(detailPath, *project)
 }
 
-// checkFile はファイル名が規則に沿っているかを返す
-// "新規工事.xlsx"は規則に沿っていいるがテンプレートのため"<工事フォルダー名>.xlsx"への更新が必要
-// 他のファイルは未対応
-func checkFile(file string) bool {
-	// ファイル名が規則に沿っているかを返す
-	return true
+// ProjectsToMapByID は[]Projectをmap[string]Projectに変換する
+func ProjectsToMapByID(projects []models.Project) map[string]models.Project {
+	projectMap := make(map[string]models.Project, len(projects))
+	for _, project := range projects {
+		projectMap[project.ID] = project
+	}
+	return projectMap
 }

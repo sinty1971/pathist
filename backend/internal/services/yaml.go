@@ -19,7 +19,7 @@ func NewYamlService[T any](fileService *FileService) *YamlService[T] {
 }
 
 // LoadFromYAML loads the database from a YAML file
-// @param yamlPath: YAMLファイルのパス(FileSystem.Rootからの相対パス)
+// @Param yamlPath query string true "YAMLファイルのパス(FileSystem.Rootからの相対パス)"
 func (s *YamlService[T]) Load(yamlPath string) (T, error) {
 
 	// Initialize output with default data

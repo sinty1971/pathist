@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { getKoujiEntries } from '../api/sdk.gen';
-import type { KoujiEntryExtended } from '../types/kouji';
+import { getProjectRecent as getProjectsRecent } from '../api/sdk.gen';
+import type { ModelsProject } from '../api/types.gen';
 import '../styles/gantt.css';
 
-interface GanttItem extends KoujiEntryExtended {
+interface GanttItem extends ModelsProject {
   startX: number;
   width: number;
   row: number;
 }
 
-const KoujiGanttChart = () => {
-  const [koujiEntries, setKoujiEntries] = useState<KoujiEntryExtended[]>([]);
+const ProjectGanttChart = () => {
+  const [projects, setProjects] = useState<ModelsProject[]>([]);
   const [ganttItems, setGanttItems] = useState<GanttItem[]>([]);
-  const [selectedProject, setSelectedProject] = useState<KoujiEntryExtended | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ModelsProject | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -27,24 +27,21 @@ const KoujiGanttChart = () => {
   const MONTHS_TO_SHOW = 6; // 表示する月数
 
   // 工事データを読み込み
-  const loadKoujiEntries = async () => {
+  const loadProjects = async () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading kouji entries...');
+      console.log('Loading projects...');
       
-      const response = await getKoujiEntries({
-        query: {}
-      });
+      const response = await getProjectsRecent();
       
       console.log('API response:', response);
-      const responseData = response.data as any;
-      const entries = responseData.kouji_entries || [];
+      const projects = response.data || [];
       
-      console.log('Kouji entries:', entries);
-      setKoujiEntries(entries);
+      console.log('Projects:', projects);
+      setProjects(projects);
     } catch (err) {
-      console.error('Error loading kouji entries:', err);
+      console.error('Error loading projects:', err);
       setError(`工事データの読み込みに失敗しました: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
@@ -53,7 +50,7 @@ const KoujiGanttChart = () => {
 
   // 初期ロード
   useEffect(() => {
-    loadKoujiEntries();
+    loadProjects();
   }, []);
 
   // 表示期間の計算
@@ -67,19 +64,19 @@ const KoujiGanttChart = () => {
 
   // ガントチャートアイテムの計算
   useEffect(() => {
-    if (koujiEntries.length === 0) return;
+    if (projects.length === 0) return;
 
     const startIndex = currentPage * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
-    const pageItems = koujiEntries.slice(startIndex, endIndex);
+    const pageItems = projects.slice(startIndex, endIndex);
 
-    const items: GanttItem[] = pageItems.map((entry, index) => {
+    const items: GanttItem[] = pageItems.map((project, index) => {
       // 安全な日付処理
       let startDate: Date;
       let endDate: Date;
       
       try {
-        startDate = entry.start_date ? new Date(entry.start_date) : new Date();
+        startDate = project.start_date ? new Date(project.start_date as string) : new Date();
         // 無効な日付をチェック
         if (isNaN(startDate.getTime())) {
           startDate = new Date();
@@ -89,7 +86,7 @@ const KoujiGanttChart = () => {
       }
       
       try {
-        endDate = entry.end_date ? new Date(entry.end_date) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+        endDate = project.end_date ? new Date(project.end_date as string) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
         // 無効な日付をチェック
         if (isNaN(endDate.getTime())) {
           endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -107,7 +104,7 @@ const KoujiGanttChart = () => {
       const width = Math.max(DAY_WIDTH, endX - startX);
 
       return {
-        ...entry,
+        ...project,
         startX: isNaN(startX) ? 0 : startX,
         width: isNaN(width) ? DAY_WIDTH : width,
         row: index
@@ -115,10 +112,10 @@ const KoujiGanttChart = () => {
     });
 
     setGanttItems(items);
-  }, [koujiEntries, currentPage, viewStartDate]);
+  }, [projects, currentPage, viewStartDate]);
 
   // プロジェクトクリック処理
-  const handleProjectClick = (project: KoujiEntryExtended) => {
+  const handleProjectClick = (project: ModelsProject) => {
     setSelectedProject(project);
     setIsDetailModalOpen(true);
   };
@@ -161,13 +158,17 @@ const KoujiGanttChart = () => {
   };
 
   // 日付フォーマット
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString?: string | any) => {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('ja-JP');
+    try {
+      return new Date(dateString as string).toLocaleDateString('ja-JP');
+    } catch {
+      return '無効な日付';
+    }
   };
 
   // ページネーション
-  const totalPages = Math.max(1, Math.ceil(koujiEntries.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(projects.length / ITEMS_PER_PAGE));
   const canGoNext = currentPage < totalPages - 1;
   const canGoPrev = currentPage > 0;
 
@@ -290,8 +291,8 @@ const KoujiGanttChart = () => {
             <div className="project-details">
               <p><strong>会社名:</strong> {selectedProject.company_name}</p>
               <p><strong>現場名:</strong> {selectedProject.location_name}</p>
-              <p><strong>開始日:</strong> {formatDate(selectedProject.start_date)}</p>
-              <p><strong>終了日:</strong> {formatDate(selectedProject.end_date)}</p>
+              <p><strong>開始日:</strong> {formatDate(selectedProject.start_date as string)}</p>
+              <p><strong>終了日:</strong> {formatDate(selectedProject.end_date as string)}</p>
               <p><strong>ステータス:</strong> {selectedProject.status}</p>
               {selectedProject.description && (
                 <p><strong>説明:</strong> {selectedProject.description}</p>
@@ -305,4 +306,4 @@ const KoujiGanttChart = () => {
   );
 };
 
-export default KoujiGanttChart;
+export default ProjectGanttChart;

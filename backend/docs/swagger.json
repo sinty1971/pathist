@@ -56,6 +56,47 @@
                 }
             }
         },
+        "/project/get/{path}": {
+            "get": {
+                "description": "Projectを取得します。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "プロジェクト管理"
+                ],
+                "summary": "Projectの取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Projectフォルダーのファイル名",
+                        "name": "path",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Project",
+                        "schema": {
+                            "$ref": "#/definitions/models.Project"
+                        }
+                    },
+                    "500": {
+                        "description": "サーバーエラー",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/project/recent": {
             "get": {
                 "description": "最近の工事一覧を取得します。",
@@ -91,9 +132,9 @@
                 }
             }
         },
-        "/project/update": {
+        "/project/rename-managed-file": {
             "post": {
-                "description": "models.ProjectをYAMLファイルに保存します",
+                "description": "ManagedFileの名前を変更します。",
                 "consumes": [
                     "application/json"
                 ],
@@ -103,7 +144,53 @@
                 "tags": [
                     "プロジェクト管理"
                 ],
-                "summary": "指定されたプロジェクト情報のYAML保存",
+                "summary": "ManagedFileの名前を変更",
+                "parameters": [
+                    {
+                        "description": "工事データと管理ファイル",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RenameManagedFileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新後のファイル名リスト",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "サーバーエラー",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/project/update": {
+            "post": {
+                "description": "Project.FileInfoで指定されたファイル情報をProjectのメンバ変数で更新します。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "プロジェクト管理"
+                ],
+                "summary": "Project.FileInfoで指定されたファイル情報をProjectのメンバ変数で更新",
                 "parameters": [
                     {
                         "description": "工事データ",
@@ -136,6 +223,20 @@
         }
     },
     "definitions": {
+        "handlers.RenameManagedFileRequest": {
+            "type": "object",
+            "properties": {
+                "currents": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                }
+            }
+        },
         "models.FileInfo": {
             "description": "ファイルまたはディレクトリの情報",
             "type": "object",

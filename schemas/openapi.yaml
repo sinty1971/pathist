@@ -1,5 +1,14 @@
 basePath: /api
 definitions:
+  handlers.RenameManagedFileRequest:
+    properties:
+      currents:
+        items:
+          type: string
+        type: array
+      project:
+        $ref: '#/definitions/models.Project'
+    type: object
   models.FileInfo:
     description: ファイルまたはディレクトリの情報
     properties:
@@ -137,6 +146,33 @@ paths:
       summary: ファイルエントリ一覧の取得
       tags:
       - ファイル管理
+  /project/get/{path}:
+    get:
+      consumes:
+      - application/json
+      description: Projectを取得します。
+      parameters:
+      - description: Projectフォルダーのファイル名
+        in: path
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Project
+          schema:
+            $ref: '#/definitions/models.Project'
+        "500":
+          description: サーバーエラー
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Projectの取得
+      tags:
+      - プロジェクト管理
   /project/recent:
     get:
       consumes:
@@ -160,11 +196,41 @@ paths:
       summary: 最近の工事一覧の取得
       tags:
       - プロジェクト管理
+  /project/rename-managed-file:
+    post:
+      consumes:
+      - application/json
+      description: ManagedFileの名前を変更します。
+      parameters:
+      - description: 工事データと管理ファイル
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RenameManagedFileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新後のファイル名リスト
+          schema:
+            items:
+              type: string
+            type: array
+        "500":
+          description: サーバーエラー
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: ManagedFileの名前を変更
+      tags:
+      - プロジェクト管理
   /project/update:
     post:
       consumes:
       - application/json
-      description: models.ProjectをYAMLファイルに保存します
+      description: Project.FileInfoで指定されたファイル情報をProjectのメンバ変数で更新します。
       parameters:
       - description: 工事データ
         in: body
@@ -185,7 +251,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: 指定されたプロジェクト情報のYAML保存
+      summary: Project.FileInfoで指定されたファイル情報をProjectのメンバ変数で更新
       tags:
       - プロジェクト管理
 schemes:

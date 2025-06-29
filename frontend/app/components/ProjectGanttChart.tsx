@@ -185,7 +185,7 @@ const ProjectGanttChart = () => {
 
   return (
     <div className="gantt-container">
-      <h1>工程表（ガントチャート）</h1>
+      <h1>工程表</h1>
       
       <div className="gantt-controls">
         <div className="pagination">

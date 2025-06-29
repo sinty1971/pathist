@@ -65,9 +65,10 @@ func main() {
 	api.Get("/file/fileinfos", fileServiceHandler.GetFileInfos)
 
 	// Project routes
+	api.Get("/project/get/:path", projectHandler.GetProject)
 	api.Get("/project/recent", projectHandler.GetRecentProjects)
 	api.Post("/project/update", projectHandler.Update)
-
+	api.Post("/project/rename-managed-file", projectHandler.RenameManagedFile)
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"message": "Penguin Backend API",

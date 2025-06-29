@@ -1,3 +1,34 @@
+/* Temporarily commented out for debugging
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+DaisyUI Calendar Styles
+.react-day-picker {
+  @apply bg-base-100;
+}
+
+.react-day-picker .rdp-nav_button {
+  @apply btn btn-ghost btn-sm;
+}
+
+.react-day-picker .rdp-day {
+  @apply btn btn-ghost btn-sm;
+}
+
+.react-day-picker .rdp-day_selected {
+  @apply btn-primary;
+}
+
+.react-day-picker .rdp-day_today {
+  @apply btn-outline;
+}
+
+.react-day-picker .rdp-day:hover {
+  @apply btn-primary btn-outline;
+}
+*/
+
 .app {
   height: 100vh;
   display: flex;

@@ -35,6 +35,50 @@ func NewProjectService(projectsPath string) (*ProjectService, error) {
 	}, nil
 }
 
+// GetProject は指定されたパスから工事を取得する
+// pathは工事フォルダーのファイル名
+// 工事を返す
+func (s *ProjectService) GetProject(path string) (models.Project, error) {
+	fmt.Printf("GetProject called with path: '%s'\n", path)
+
+	// 工事フォルダー自体の情報を取得
+	fullPath, err := s.FileService.GetFullpath(path)
+	if err != nil {
+		fmt.Printf("GetFullpath error for path '%s': %v\n", path, err)
+		return models.Project{}, fmt.Errorf("工事フォルダーが見つかりません: %s", path)
+	}
+	fmt.Printf("Full path: %s\n", fullPath)
+
+	fileInfo, err := models.NewFileInfo(fullPath)
+	if err != nil {
+		fmt.Printf("NewFileInfo error for fullPath '%s': %v\n", fullPath, err)
+		return models.Project{}, fmt.Errorf("ファイル情報の取得に失敗しました: %v", err)
+	}
+
+	// 工事を作成
+	project, err := models.NewProject(*fileInfo)
+	if err != nil {
+		fmt.Printf("NewProject error: %v\n", err)
+		return models.Project{}, fmt.Errorf("工事データの作成に失敗しました: %v", err)
+	}
+
+	// 管理ファイルの設定
+	err = s.SetManagedFiles(&project)
+	if err != nil {
+		fmt.Printf("SetManagedFiles error: %v\n", err)
+		return models.Project{}, fmt.Errorf("管理ファイルの設定に失敗しました: %v", err)
+	}
+
+	// .detail.yamlと同期する
+	err = s.SyncDetailFile(&project)
+	if err != nil {
+		fmt.Printf("SyncDetailFile error: %v\n", err)
+		return models.Project{}, fmt.Errorf(".detail.yamlの同期に失敗しました: %v", err)
+	}
+
+	return project, nil
+}
+
 // GetRecentProjects は指定されたパスから最近の工事一覧を取得する
 func (s *ProjectService) GetRecentProjects() []models.Project {
 	// ファイルシステムから工事一覧を取得
@@ -248,6 +292,12 @@ func (s *ProjectService) UpdateProjectFileInfo(project *models.Project) error {
 	project.ID = models.GenerateProjectID(project.StartDate, project.CompanyName, project.LocationName)
 	project.Status = models.DetermineProjectStatus(project.StartDate, project.EndDate)
 
+	// 管理ファイルを更新（推奨ファイル名が変更される可能性があるため）
+	err = s.SetManagedFiles(project)
+	if err != nil {
+		return err
+	}
+
 	// 更新後の工事情報を.detail.yamlに反映
 	detailPath := filepath.Join(project.FileInfo.Name, s.DetailFile)
 	return s.YamlService.Save(detailPath, *project)
@@ -260,4 +310,29 @@ func ProjectsToMapByID(projects []models.Project) map[string]models.Project {
 		projectMap[project.ID] = project
 	}
 	return projectMap
+}
+
+// RenameManagedFile は管理ファイルの名前を変更する
+// projectは工事データ
+// currentsは変更前の管理ファイル名
+// 変更後の管理ファイル名を返す
+func (s *ProjectService) RenameManagedFile(project models.Project, currents []string) []string {
+	renamedFiles := make([]string, len(currents))
+
+	count := 0
+	for _, current := range currents {
+		for _, managedFile := range project.ManagedFiles {
+			if managedFile.Current == current {
+				currentPath := filepath.Join(project.FileInfo.Name, current)
+				recommendedPath := filepath.Join(project.FileInfo.Name, managedFile.Recommended)
+				fmt.Printf("current: %s, recommended: %s\n", currentPath, recommendedPath)
+				err := s.FileService.MoveFile(currentPath, recommendedPath)
+				if err == nil {
+					renamedFiles[count] = recommendedPath
+					count++
+				}
+			}
+		}
+	}
+	return renamedFiles[:count]
 }

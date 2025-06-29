@@ -7,7 +7,7 @@
 
 フォルダー管理システムは、フォルダーの閲覧と管理、および工事プロジェクトの管理のためのWebインターフェースを提供します。構成は以下の通りです：
 - **バックエンド**: Go (1.21) と Fiber v2 フレームワーク
-- **フロントエンド**: React (19.1.0) と TypeScript、React Router v7 (Remix)
+- **フロントエンド**: React (19.1.0) と TypeScript、React Router v7 (Remix)、daisyUI (Tailwind CSSベースのUIライブラリ)
 
 ## 開発コマンド
 
@@ -89,9 +89,8 @@ just help            # 利用可能なコマンド一覧
 - `app/routes/`: ファイルベースルーティング
   - `_layout.tsx`: メインレイアウト
   - `_layout._index.tsx`: ホームページ（フォルダー一覧）
-  - `_layout.kouji.tsx`: 工事一覧ページ
-  - `_layout.gantt.tsx`: ガントチャートページ
-- `app/components/`: UIコンポーネント (FileInfoGrid, FileInfoModal, ProjectGrid, ProjectPage, ProjectEditModal, ProjectGanttChart, ProjectGanttChartSimple, DateEditModal, Navigation)
+  - `_layout.projects.tsx`: 工程表ページ
+- `app/components/`: UIコンポーネント (FileInfoGrid, FileInfoModal, ProjectGrid, ProjectPage, ProjectEditModal, ProjectGanttChart, ProjectGanttChartSimple, DateEditModal, Navigation, CallyCalendar)
 - `app/api/`: 自動生成されたAPIクライアント
   - `client/`: APIクライアント実装
   - `core/`: コア機能（認証、シリアライザ等）
@@ -171,6 +170,34 @@ just help            # 利用可能なコマンド一覧
   - 参考: https://github.com/swaggest/swgui
   - 現在のswaggo/swagはSwagger 2.0のみサポート
 
+## UI/UX改善
+
+### 工事プロジェクト編集機能
+- **ファイル名関連フィールドの強調表示**: 開始日、会社名、現場名は青い背景と枠線で目立たせ
+- **段階的更新機能**: ファイル名に影響するフィールド変更時は即座に更新せず、専用ボタンでまとめて更新
+- **推奨ファイル名自動生成**: 開始日・会社名・現場名の変更時に管理ファイルの推奨名を自動生成
+- **水平レイアウト**: 全てのフィールドでタイトルと入力欄を水平配置
+
+### カレンダーコンポーネント（CallyCalendar）
+- **シンプルなカスタムカレンダー**: 外部ライブラリ（cally）を使わない独自実装
+- **年月選択機能**: 
+  - 年選択: 前後3年表示、垂直配置、選択中の年が中央
+  - 月選択: 1-12月全表示、垂直配置
+- **選択日フォーカス**: ピッカー開時に現在選択されている日付をハイライト
+- **日付処理**: タイムゾーン問題を解決した正確な日付選択
+
+### UIライブラリとスタイリング
+- **daisyUI**: Tailwind CSSベースのUIコンポーネントライブラリを使用
+- **Tailwind CSS**: ユーティリティファーストのCSSフレームワーク
+- **カスタムCSS**: modal.css、gantt.css、App.cssで独自スタイルを定義
+
+### データ管理
+- **開始日での並び替え**: 工事一覧は開始日順（新しい順）で表示
+- **ファイル名規則**: `YYYY-MMDD 会社名 現場名` 形式での一貫した命名
+
 ## Memories
 
-- `to memorize`
+- CallyCalendarコンポーネントは独自実装のシンプルなカレンダー
+- ファイル名変更時は推奨ファイル名を自動生成する
+- 工程表の表示は開始日順でソートされている
+- UIの一貫性を保つため水平レイアウトを採用

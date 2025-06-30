@@ -16,16 +16,19 @@ type Pages = {
   "/projects": {
     params: {};
   };
+  "/gantt": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/projects";
+    page: "/" | "/projects" | "/gantt";
   };
   "routes/_layout.tsx": {
     id: "routes/_layout";
-    page: "/" | "/projects";
+    page: "/" | "/projects" | "/gantt";
   };
   "routes/_layout._index.tsx": {
     id: "routes/_layout._index";
@@ -34,5 +37,9 @@ type RouteFiles = {
   "routes/_layout.projects.tsx": {
     id: "routes/_layout.projects";
     page: "/projects";
+  };
+  "routes/_layout.gantt.tsx": {
+    id: "routes/_layout.gantt";
+    page: "/gantt";
   };
 };

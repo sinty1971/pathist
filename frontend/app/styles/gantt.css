@@ -17,7 +17,7 @@
   align-items: center;
 }
 
-.pagination button {
+.gantt-pagination-button {
   padding: 8px 16px;
   background: #2196F3;
   color: white;
@@ -27,11 +27,11 @@
   transition: background 0.3s;
 }
 
-.pagination button:hover:not(:disabled) {
+.gantt-pagination-button:hover:not(:disabled) {
   background: #1976D2;
 }
 
-.pagination button:disabled {
+.gantt-pagination-button:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
@@ -51,7 +51,7 @@
 }
 
 .gantt-header-left {
-  height: 40px;
+  height: 55px;
   display: flex;
   align-items: center;
   padding: 0 15px;
@@ -87,10 +87,20 @@
 }
 
 .gantt-header {
-  height: 40px;
   position: relative;
   background: #f5f5f5;
-  border-bottom: 2px solid #333;
+}
+
+.month-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+}
+
+.day-header-row {
+  position: sticky;
+  top: 30px;
+  z-index: 14;
 }
 
 .month-header {
@@ -123,6 +133,23 @@
   top: 0;
   bottom: 0;
   width: 1px;
+  background: #eee;
+}
+
+.gantt-horizontal-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.horizontal-grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
   background: #eee;
 }
 
@@ -175,61 +202,16 @@
   white-space: nowrap;
 }
 
-/* モーダル */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  padding: 30px;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.modal-content h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.project-details p {
+/* ガンチャート専用のプロジェクト詳細表示 */
+.gantt-project-details p {
   margin: 10px 0;
   line-height: 1.6;
 }
 
-.project-details strong {
+.gantt-project-details strong {
   display: inline-block;
   width: 100px;
   color: #666;
-}
-
-.modal-content button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background: #2196F3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.modal-content button:hover {
-  background: #1976D2;
 }
 
 /* レスポンシブ対応 */

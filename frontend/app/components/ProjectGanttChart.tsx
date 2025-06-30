@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getProjectRecent as getProjectsRecent } from '../api/sdk.gen';
 import type { ModelsProject } from '../api/types.gen';
+import ProjectEditModal from './ProjectEditModal';
 import '../styles/gantt.css';
 
 interface GanttItem extends ModelsProject {
@@ -15,16 +16,16 @@ const ProjectGanttChart = () => {
   const [selectedProject, setSelectedProject] = useState<ModelsProject | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
   const [viewStartDate, setViewStartDate] = useState(new Date());
   const [viewEndDate, setViewEndDate] = useState(new Date());
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [visibleProjects, setVisibleProjects] = useState<ModelsProject[]>([]);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
   const DAY_WIDTH = 30; // ピクセル/日
   const ROW_HEIGHT = 40; // ピクセル
-  const MONTHS_TO_SHOW = 6; // 表示する月数
 
   // 工事データを読み込み
   const loadProjects = async () => {
@@ -51,26 +52,206 @@ const ProjectGanttChart = () => {
   // 初期ロード
   useEffect(() => {
     loadProjects();
+    // ページが表示されるたびに初期スクロール状態をリセット
+    setHasInitialScrolled(false);
   }, []);
 
-  // 表示期間の計算
+  // 初回ロード時のみ今日の位置にスクロール
+  const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
+  
   useEffect(() => {
-    const today = new Date();
-    const start = new Date(today.getFullYear(), today.getMonth() - 2, 1);
-    const end = new Date(today.getFullYear(), today.getMonth() + MONTHS_TO_SHOW - 2, 0);
-    setViewStartDate(start);
-    setViewEndDate(end);
-  }, []);
+    if (scrollContainerRef.current && viewStartDate && viewEndDate && ganttItems.length > 0 && !hasInitialScrolled) {
+      // 少し遅延させてレンダリング完了後にスクロール
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          // 今日の位置を正しく計算（正常順序：viewStartDateから今日までの日数）
+          const todayX = (new Date().getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH;
+          // 今日の位置を画面中央に表示するためのスクロール位置を計算
+          const containerWidth = scrollContainerRef.current.clientWidth;
+          const scrollPosition = Math.max(0, todayX - containerWidth / 2);
+          scrollContainerRef.current.scrollLeft = scrollPosition;
+          setHasInitialScrolled(true);
+        }
+      }, 300);
+    }
+  }, [viewStartDate, viewEndDate, ganttItems, hasInitialScrolled]);
 
-  // ガントチャートアイテムの計算
+  // 表示期間の計算（全工事の最小～最大期間）- 正常順序
   useEffect(() => {
     if (projects.length === 0) return;
 
-    const startIndex = currentPage * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    const pageItems = projects.slice(startIndex, endIndex);
+    let minDate = new Date();
+    let maxDate = new Date();
+    let hasValidDate = false;
 
-    const items: GanttItem[] = pageItems.map((project, index) => {
+    projects.forEach(project => {
+      try {
+        const startDate = project.start_date ? new Date(project.start_date as string) : null;
+        const endDate = project.end_date ? new Date(project.end_date as string) : null;
+
+        if (startDate && !isNaN(startDate.getTime())) {
+          if (!hasValidDate || startDate < minDate) {
+            minDate = startDate;
+          }
+          hasValidDate = true;
+        }
+
+        if (endDate && !isNaN(endDate.getTime())) {
+          if (!hasValidDate || endDate > maxDate) {
+            maxDate = endDate;
+          }
+          hasValidDate = true;
+        }
+      } catch (error) {
+        // 無効な日付は無視
+      }
+    });
+
+    if (hasValidDate) {
+      // 前後に1ヶ月の余裕を追加（正常順序：minDateを開始、maxDateを終了）
+      const start = new Date(minDate.getFullYear(), minDate.getMonth() - 1, 1);
+      const end = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
+      setViewStartDate(start);
+      setViewEndDate(end);
+    } else {
+      // 有効な日付がない場合はデフォルト期間（正常順序）
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth() - 6, 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 6, 0);
+      setViewStartDate(start);
+      setViewEndDate(end);
+    }
+  }, [projects]);
+
+  // 表示範囲内で一番古い工事を基準にして、その開始日以降の工事を開始日昇順で10個表示
+  const updateVisibleProjects = (scrollLeft: number = 0) => {
+    if (projects.length === 0 || !scrollContainerRef.current) return;
+
+    // 現在の画面表示範囲を計算
+    const containerWidth = scrollContainerRef.current.clientWidth;
+    const visibleStartDays = scrollLeft / DAY_WIDTH;
+    const visibleEndDays = (scrollLeft + containerWidth) / DAY_WIDTH;
+    
+    // 表示範囲の開始日と終了日を計算
+    const visibleStartDate = new Date(viewStartDate.getTime() + visibleStartDays * 24 * 60 * 60 * 1000);
+    const visibleEndDate = new Date(viewStartDate.getTime() + visibleEndDays * 24 * 60 * 60 * 1000);
+    
+    // 現在の画面表示範囲に含まれる工事をフィルタリング
+    const relevantProjects = projects.filter(project => {
+      try {
+        const projectStart = project.start_date ? new Date(project.start_date as string) : new Date();
+        const projectEnd = project.end_date ? new Date(project.end_date as string) : new Date(projectStart.getTime() + 90 * 24 * 60 * 60 * 1000);
+        
+        // プロジェクトが画面表示範囲と重複するかチェック
+        return (projectStart <= visibleEndDate && projectEnd >= visibleStartDate);
+      } catch {
+        return false;
+      }
+    });
+
+    // 表示範囲内の工事を開始日順でソートして、一番古い工事を取得
+    const sortedRelevantProjects = relevantProjects.sort((a, b) => {
+      const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
+      const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+      return dateA - dateB; // 古い順
+    });
+
+    // 表示範囲内で一番古い工事の開始日を基準にする
+    let baselineDate: number;
+    if (sortedRelevantProjects.length > 0) {
+      baselineDate = sortedRelevantProjects[0].start_date 
+        ? new Date(sortedRelevantProjects[0].start_date as string).getTime()
+        : 0;
+    } else {
+      // 表示範囲内に工事がない場合は、表示範囲の開始日以前で最も近い工事を基準にする
+      const visibleStartTime = visibleStartDate.getTime();
+      
+      // 表示範囲の開始日以前の工事を取得
+      const projectsBeforeVisible = projects.filter(project => {
+        const projectStartDate = project.start_date 
+          ? new Date(project.start_date as string).getTime()
+          : 0;
+        return projectStartDate <= visibleStartTime;
+      });
+      
+      if (projectsBeforeVisible.length > 0) {
+        // 表示範囲の開始日に最も近い工事を選択（開始日が最も新しい工事）
+        const closestProject = projectsBeforeVisible.sort((a, b) => {
+          const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
+          const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+          return dateB - dateA; // 新しい順（降順）
+        })[0];
+        
+        baselineDate = closestProject.start_date 
+          ? new Date(closestProject.start_date as string).getTime()
+          : 0;
+      } else {
+        // 表示範囲の開始日以前に工事がない場合は、全工事の最初の工事を基準にする
+        const allProjectsSorted = [...projects].sort((a, b) => {
+          const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
+          const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+          return dateA - dateB;
+        });
+        
+        if (allProjectsSorted.length === 0) return;
+        
+        baselineDate = allProjectsSorted[0].start_date 
+          ? new Date(allProjectsSorted[0].start_date as string).getTime()
+          : 0;
+      }
+    }
+
+    // 基準日以降の全工事を開始日昇順で取得
+    const allProjectsSorted = [...projects].sort((a, b) => {
+      const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
+      const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+      return dateA - dateB; // 古い順（昇順）
+    });
+
+    const projectsFromBaselineDate = allProjectsSorted.filter(project => {
+      const projectStartDate = project.start_date 
+        ? new Date(project.start_date as string).getTime()
+        : 0;
+      return projectStartDate >= baselineDate;
+    });
+
+    // 開始日昇順で10個を取得
+    const finalProjects = projectsFromBaselineDate.slice(0, ITEMS_PER_PAGE);
+
+    setVisibleProjects(finalProjects);
+  };
+
+  // スクロールイベントハンドラ
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+    }
+  };
+
+  // プロジェクトデータ変更時に初期表示を更新
+  useEffect(() => {
+    if (projects.length > 0 && scrollContainerRef.current) {
+      updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+    }
+  }, [projects, viewStartDate]);
+
+  // ウィンドウリサイズ時に表示工事を再計算
+  useEffect(() => {
+    const handleResize = () => {
+      if (scrollContainerRef.current) {
+        updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [projects, viewStartDate]);
+
+  // ガントチャートアイテムの計算
+  useEffect(() => {
+    if (visibleProjects.length === 0) return;
+
+    const items: GanttItem[] = visibleProjects.map((project, index) => {
       // 安全な日付処理
       let startDate: Date;
       let endDate: Date;
@@ -95,7 +276,7 @@ const ProjectGanttChart = () => {
         endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
       }
       
-      // 安全な計算
+      // 安全な計算（正常順序：左が古い、右が新しい）
       const daysDiff = (startDate.getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24);
       const startX = Math.max(0, daysDiff * DAY_WIDTH);
       
@@ -112,12 +293,87 @@ const ProjectGanttChart = () => {
     });
 
     setGanttItems(items);
-  }, [projects, currentPage, viewStartDate]);
+  }, [visibleProjects, viewStartDate]);
 
-  // プロジェクトクリック処理
+  // プロジェクトクリック処理（詳細表示）
   const handleProjectClick = (project: ModelsProject) => {
     setSelectedProject(project);
     setIsDetailModalOpen(true);
+  };
+
+  // プロジェクト編集処理
+  const handleProjectEdit = (project: ModelsProject) => {
+    setSelectedProject(project);
+    setIsEditModalOpen(true);
+  };
+
+  // 工事名エリアクリック処理（中央に移動）- 正常順序
+  const handleProjectNameClick = (project: ModelsProject) => {
+    if (!scrollContainerRef.current) return;
+    
+    try {
+      const projectStart = project.start_date ? new Date(project.start_date as string) : new Date();
+      const projectEnd = project.end_date ? new Date(project.end_date as string) : new Date(projectStart.getTime() + 90 * 24 * 60 * 60 * 1000);
+      
+      // プロジェクトの中央位置を計算（正常順序）
+      const projectMiddle = new Date((projectStart.getTime() + projectEnd.getTime()) / 2);
+      const middleX = (projectMiddle.getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH;
+      
+      // 画面中央に表示するためのスクロール位置を計算
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      const scrollPosition = Math.max(0, middleX - containerWidth / 2);
+      scrollContainerRef.current.scrollLeft = scrollPosition;
+    } catch (error) {
+      console.error('Error calculating project center:', error);
+    }
+  };
+
+  // 今日へ移動（正常順序）
+  const scrollToToday = () => {
+    if (!scrollContainerRef.current) return;
+    
+    const todayX = (new Date().getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH;
+    const containerWidth = scrollContainerRef.current.clientWidth;
+    const scrollPosition = Math.max(0, todayX - containerWidth / 2);
+    scrollContainerRef.current.scrollLeft = scrollPosition;
+  };
+
+  // プロジェクト更新処理（APIコール）
+  const updateProject = async (updatedProject: ModelsProject): Promise<ModelsProject> => {
+    try {
+      const response = await fetch("http://localhost:8080/api/project/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedProject),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "更新に失敗しました");
+      }
+
+      const savedProject = await response.json();
+
+      // プロジェクト一覧を更新
+      setProjects((prevProjects) =>
+        prevProjects.map((p) => (p.id === savedProject.id ? savedProject : p))
+      );
+
+      return savedProject;
+    } catch (err) {
+      console.error("Error updating project:", err);
+      throw err;
+    }
+  };
+
+  // プロジェクトデータを更新
+  const handleProjectUpdate = (updatedProject: ModelsProject) => {
+    setSelectedProject(updatedProject);
+    setProjects((prevProjects) =>
+      prevProjects.map((p) => (p.id === updatedProject.id ? updatedProject : p))
+    );
   };
 
   // ステータスによる色の取得
@@ -134,7 +390,7 @@ const ProjectGanttChart = () => {
     }
   };
 
-  // 月のヘッダーを生成
+  // 月のヘッダーを生成（正常順序・1日基準）
   const generateMonthHeaders = () => {
     const headers = [];
     const current = new Date(viewStartDate);
@@ -157,6 +413,28 @@ const ProjectGanttChart = () => {
     return headers;
   };
 
+  // 3日毎の日付ヘッダーを生成（正常順序）
+  const generateDayHeaders = () => {
+    const headers = [];
+    const current = new Date(viewStartDate);
+    
+    while (current <= viewEndDate) {
+      const day = current.getDate();
+      if (day === 1 || day % 3 === 1) { // 1日、4日、7日、10日...
+        headers.push({
+          date: day,
+          month: current.getMonth() + 1,
+          year: current.getFullYear(),
+          startX: (current.getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH,
+          width: DAY_WIDTH * 3 // 3日分の幅
+        });
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return headers;
+  };
+
   // 日付フォーマット
   const formatDate = (dateString?: string | any) => {
     if (!dateString) return '';
@@ -167,10 +445,6 @@ const ProjectGanttChart = () => {
     }
   };
 
-  // ページネーション
-  const totalPages = Math.max(1, Math.ceil(projects.length / ITEMS_PER_PAGE));
-  const canGoNext = currentPage < totalPages - 1;
-  const canGoPrev = currentPage > 0;
 
   if (loading) {
     return <div className="loading">工事データを読み込み中...</div>;
@@ -181,6 +455,7 @@ const ProjectGanttChart = () => {
   }
 
   const monthHeaders = generateMonthHeaders();
+  const dayHeaders = generateDayHeaders();
   const totalWidth = (viewEndDate.getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH;
 
   return (
@@ -188,82 +463,170 @@ const ProjectGanttChart = () => {
       <h1>工程表</h1>
       
       <div className="gantt-controls">
-        <div className="pagination">
-          <button 
-            onClick={() => setCurrentPage(currentPage - 1)} 
-            disabled={!canGoPrev}
-          >
-            前へ
-          </button>
-          <span>
-            {currentPage + 1} / {totalPages} ページ
-          </span>
-          <button 
-            onClick={() => setCurrentPage(currentPage + 1)} 
-            disabled={!canGoNext}
-          >
-            次へ
-          </button>
+        <button 
+          onClick={scrollToToday}
+          style={{
+            padding: "8px 16px",
+            background: "#FF5252",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "14px"
+          }}
+        >
+          今日へ移動
+        </button>
+        <div className="info">
+          <span>表示中: {ganttItems.length}件 / 全{projects.length}件</span>
         </div>
       </div>
 
       <div className="gantt-wrapper">
         <div className="gantt-sidebar">
-          <div className="gantt-header-left">工事プロジェクト</div>
-          {ganttItems.map((item) => (
-            <div 
-              key={item.id} 
-              className="gantt-row-label"
-              style={{ height: ROW_HEIGHT }}
-            >
-              <div className="project-name">{item.company_name} - {item.location_name}</div>
-            </div>
-          ))}
+          <div className="gantt-header-left">工事名</div>
+          {ganttItems.map((item, index) => {
+            // 今日の日付が工事期間に含まれるかチェック
+            const today = new Date();
+            let startDate: Date;
+            let endDate: Date;
+            
+            try {
+              startDate = item.start_date ? new Date(item.start_date as string) : new Date();
+              if (isNaN(startDate.getTime())) startDate = new Date();
+            } catch {
+              startDate = new Date();
+            }
+            
+            try {
+              endDate = item.end_date ? new Date(item.end_date as string) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+              if (isNaN(endDate.getTime())) endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+            } catch {
+              endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+            }
+            
+            const isActiveProject = today >= startDate && today <= endDate;
+            
+            return (
+              <div 
+                key={`${item.id}-${index}`} 
+                className="gantt-row-label"
+                style={{ 
+                  height: ROW_HEIGHT,
+                  backgroundColor: isActiveProject ? '#fff3cd' : 'transparent',
+                  borderLeft: isActiveProject ? '4px solid #ffc107' : 'none'
+                }}
+              >
+                <div 
+                  className="project-name"
+                  style={{ 
+                    fontWeight: isActiveProject ? 'bold' : 'normal',
+                    color: isActiveProject ? '#856404' : 'inherit',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleProjectNameClick(item)}
+                  title="クリックしてプロジェクト期間の中央に移動"
+                >
+                  {item.company_name} - {item.location_name}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="gantt-chart-container" ref={scrollContainerRef}>
+        <div className="gantt-chart-container" ref={scrollContainerRef} onScroll={handleScroll}>
           <div className="gantt-chart" style={{ width: totalWidth }}>
-            <div className="gantt-header">
+            {/* 月ヘッダー */}
+            <div className="gantt-header month-header-row" style={{ height: "30px" }}>
               {monthHeaders.map((header, index) => (
                 <div 
                   key={index}
                   className="month-header"
                   style={{ 
+                    position: "absolute",
                     left: header.startX, 
-                    width: header.width 
+                    width: header.width,
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#e8f4fd",
+                    borderRight: "1px solid #ddd",
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    color: "#0066cc"
                   }}
                 >
                   {header.year}年{header.month}月
                 </div>
               ))}
             </div>
+            
+            {/* 日付ヘッダー */}
+            <div className="gantt-header day-header-row" style={{ height: "25px", borderBottom: "2px solid #333" }}>
+              {dayHeaders.map((header, index) => (
+                <div 
+                  key={index}
+                  className="day-header"
+                  style={{ 
+                    position: "absolute",
+                    left: header.startX, 
+                    width: header.width,
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#f5f5f5",
+                    borderRight: "1px solid #ddd",
+                    fontSize: "11px",
+                    fontWeight: "500"
+                  }}
+                >
+                  {header.date}日
+                </div>
+              ))}
+            </div>
 
             <div className="gantt-body">
-              {/* グリッド線 */}
+              {/* グリッド線（3日毎） */}
               <div className="gantt-grid">
-                {Array.from({ length: Math.ceil(totalWidth / DAY_WIDTH) }).map((_, index) => (
+                {dayHeaders.map((header, index) => (
                   <div 
                     key={index}
                     className="grid-line"
-                    style={{ left: index * DAY_WIDTH }}
+                    style={{ left: header.startX }}
+                  />
+                ))}
+              </div>
+
+              {/* 水平線（プロジェクト行ごと） */}
+              <div className="gantt-horizontal-grid">
+                {ganttItems.map((_, index) => (
+                  <div
+                    key={`horizontal-${index}`}
+                    className="horizontal-grid-line"
+                    style={{ 
+                      top: (index + 1) * ROW_HEIGHT,
+                      width: '100%'
+                    }}
                   />
                 ))}
               </div>
 
               {/* ガントバー */}
-              {ganttItems.map((item) => (
+              {ganttItems.map((item, index) => (
                 <div 
-                  key={item.id}
+                  key={`${item.id}-${index}`}
                   className="gantt-bar"
                   style={{
                     left: item.startX,
                     width: item.width,
-                    top: item.row * ROW_HEIGHT,
+                    top: index * ROW_HEIGHT,
                     height: ROW_HEIGHT - 10,
                     backgroundColor: getStatusColor(item.status)
                   }}
-                  onClick={() => handleProjectClick(item)}
-                  title={`${item.company_name} - ${item.location_name}`}
+                  onClick={() => handleProjectEdit(item)}
+                  title={`${item.company_name} - ${item.location_name} (クリックして編集)`}
                 >
                   <span className="gantt-bar-text">
                     {item.location_name}
@@ -283,25 +646,14 @@ const ProjectGanttChart = () => {
         </div>
       </div>
 
-      {/* 詳細モーダル */}
-      {isDetailModalOpen && selectedProject && (
-        <div className="modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>工事詳細情報</h2>
-            <div className="project-details">
-              <p><strong>会社名:</strong> {selectedProject.company_name}</p>
-              <p><strong>現場名:</strong> {selectedProject.location_name}</p>
-              <p><strong>開始日:</strong> {formatDate(selectedProject.start_date as string)}</p>
-              <p><strong>終了日:</strong> {formatDate(selectedProject.end_date as string)}</p>
-              <p><strong>ステータス:</strong> {selectedProject.status}</p>
-              {selectedProject.description && (
-                <p><strong>説明:</strong> {selectedProject.description}</p>
-              )}
-            </div>
-            <button onClick={() => setIsDetailModalOpen(false)}>閉じる</button>
-          </div>
-        </div>
-      )}
+      {/* 編集モーダル */}
+      <ProjectEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        project={selectedProject}
+        onUpdate={updateProject}
+        onProjectUpdate={handleProjectUpdate}
+      />
     </div>
   );
 };

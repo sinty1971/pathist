@@ -29,6 +29,11 @@ DaisyUI Calendar Styles
 }
 */
 
+html, body {
+  overflow: hidden;
+  height: 100%;
+}
+
 .app {
   height: 100vh;
   display: flex;
@@ -60,14 +65,14 @@ DaisyUI Calendar Styles
 .nav-logo h1 {
   margin: 0;
   color: #333;
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 500;
 }
 
 .page-title {
   color: #667eea;
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 700;
   margin-top: 0.5rem;
   text-shadow: 0 1px 2px rgba(102, 126, 234, 0.2);
 }
@@ -97,10 +102,11 @@ DaisyUI Calendar Styles
 }
 
 .main-content {
-  padding: 2rem;
+  padding: 0;
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .folder-container {

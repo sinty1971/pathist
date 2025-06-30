@@ -1,6 +1,10 @@
 import { Link, useLocation } from "react-router";
 
-export function Navigation() {
+interface NavigationProps {
+  projectCount?: number;
+}
+
+export function Navigation({ projectCount }: NavigationProps = {}) {
   const location = useLocation();
   
   // 現在のページタイトルを取得
@@ -9,7 +13,9 @@ export function Navigation() {
       case '/':
         return 'ファイル一覧';
       case '/projects':
-        return '工程表';
+        return `工程表${projectCount !== undefined ? ` (${projectCount}件)` : ''}`;
+      case '/gantt':
+        return 'ガントチャート';
       default:
         return 'ファイル管理';
     }
@@ -34,6 +40,12 @@ export function Navigation() {
             className={location.pathname === '/projects' ? 'nav-link active' : 'nav-link'}
           >
             工程表
+          </Link>
+          <Link 
+            to="/gantt" 
+            className={location.pathname === '/gantt' ? 'nav-link active' : 'nav-link'}
+          >
+            ガントチャート
           </Link>
         </div>
       </div>

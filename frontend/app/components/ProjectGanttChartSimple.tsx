@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getProjectRecent } from "../api/sdk.gen";
 import type { ModelsProject } from "../api/types.gen";
 import ProjectEditModal from "./ProjectEditModal";
+import { useProject } from "../contexts/ProjectContext";
 
 const ProjectGanttChartSimple = () => {
   const [projects, setProjects] = useState<ModelsProject[]>([]);
@@ -11,6 +12,8 @@ const ProjectGanttChartSimple = () => {
     null
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const { setProjectCount } = useProject();
 
   // 工事データを読み込み
   const loadProjects = async () => {
@@ -22,8 +25,10 @@ const ProjectGanttChartSimple = () => {
 
       if (response.data) {
         setProjects(response.data);
+        setProjectCount(response.data.length);
       } else {
         setProjects([]);
+        setProjectCount(0);
       }
     } catch (err) {
       console.error("Error loading kouji entries:", err);
@@ -170,36 +175,121 @@ const ProjectGanttChartSimple = () => {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
-      <div style={{ marginBottom: "20px" }}>
-        <p>取得した工事データ: {projects.length}件</p>
-      </div>
+    <div style={{ 
+      padding: "20px", 
+      paddingTop: "60px",
+      flex: 1,
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      boxSizing: "border-box"
+    }}>
+      {showHelp && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "15px",
+            backgroundColor: "#f0f8ff",
+            borderRadius: "4px",
+            border: "1px solid #b3d9ff",
+            position: "relative",
+            flexShrink: 0
+          }}
+        >
+          <button
+            onClick={() => setShowHelp(false)}
+            style={{
+              position: "absolute",
+              top: "10px",
+              right: "10px",
+              background: "none",
+              border: "none",
+              fontSize: "16px",
+              cursor: "pointer",
+              color: "#666"
+            }}
+            title="閉じる"
+          >
+            ×
+          </button>
+          
+          <h3 style={{ marginTop: 0 }}>使用方法</h3>
+          <p>
+            📝 <strong>リストをクリック</strong>して工事情報を編集できます
+          </p>
+          <p>✅ 開始日・終了日・説明・タグ・会社名・現場名を編集可能</p>
+          <p>💾 編集後は自動で保存されます</p>
 
+          <h3 style={{ marginTop: "15px" }}>開発状況</h3>
+          <p>✅ 工事データの取得</p>
+          <p>✅ 編集モーダル機能</p>
+          <p>🔄 工程表機能（次のステップ）</p>
+        </div>
+      )}
+      
       <div
         style={{
           border: "1px solid #ddd",
           borderRadius: "8px",
           overflow: "hidden",
+          position: "relative",
+          height: "calc(100vh - 240px)",
+          display: "flex",
+          flexDirection: "column"
         }}
       >
         <div
           style={{
             backgroundColor: "#f5f5f5",
-            padding: "10px",
+            padding: "10px 15px",
             fontWeight: "bold",
             borderBottom: "1px solid #ddd",
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            flexShrink: 0
           }}
         >
-          工程表
+          <div style={{ minWidth: "90px", textAlign: "center", fontSize: "14px" }}>開始日</div>
+          <div style={{ minWidth: "120px", fontSize: "14px" }}>会社名</div>
+          <div style={{ minWidth: "120px", fontSize: "14px" }}>現場名</div>
+          <div style={{ flex: 1 }}></div>
+          <div style={{ minWidth: "90px", textAlign: "center", fontSize: "14px", marginRight: "24px" }}>終了日</div>
+          <div style={{ minWidth: "80px", textAlign: "center", fontSize: "14px" }}>ステータス</div>
+          <button
+            onClick={() => setShowHelp(!showHelp)}
+            style={{
+              background: "none",
+              border: "1px solid #ccc",
+              borderRadius: "50%",
+              width: "24px",
+              height: "24px",
+              cursor: "pointer",
+              fontSize: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginLeft: "8px",
+              color: "#666"
+            }}
+            title="使用方法を表示"
+          >
+            ?
+          </button>
         </div>
 
-        {projects.length === 0 ? (
-          <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>
-            工事データが見つかりません
-          </div>
-        ) : (
-          <div>
-            {projects.map((project, index) => (
+        <div style={{ 
+          flex: 1,
+          overflowY: "auto",
+          minHeight: 0
+        }}>
+          {projects.length === 0 ? (
+            <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>
+              工事データが見つかりません
+            </div>
+          ) : (
+            <div>
+              {projects.map((project, index) => (
               <div
                 key={project.id || index}
                 style={{
@@ -221,35 +311,66 @@ const ProjectGanttChartSimple = () => {
                 }
                 title="クリックして編集"
               >
-                <div>
-                  <div style={{ fontWeight: "bold" }}>
-                    {project.company_name || "会社名未設定"} -{" "}
-                    {project.location_name || "現場名未設定"}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: "#666",
-                      marginTop: "5px",
-                    }}
-                  >
-                    開始:{" "}
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", width: "100%" }}>
+                  <div style={{ 
+                    fontWeight: "600", 
+                    fontSize: "14px", 
+                    color: "#fff",
+                    backgroundColor: "#1976d2",
+                    padding: "3px 8px",
+                    borderRadius: "4px",
+                    minWidth: "90px",
+                    textAlign: "center"
+                  }}>
                     {project.start_date
                       ? new Date(
-                          project.start_date as string
+                          typeof project.start_date === 'string' 
+                            ? project.start_date 
+                            : (project.start_date as any)['time.Time']
                         ).toLocaleDateString("ja-JP")
-                      : "未設定"}{" "}
-                    | 終了:{" "}
-                    {project.end_date
-                      ? new Date(project.end_date as string).toLocaleDateString(
-                          "ja-JP"
-                        )
+                      : "未設定"}
+                  </div>
+                  
+                  <div style={{ 
+                    fontWeight: "600", 
+                    fontSize: "16px", 
+                    minWidth: "120px"
+                  }}>
+                    {project.company_name || "会社名未設定"}
+                  </div>
+                  
+                  <div style={{ 
+                    fontWeight: "600", 
+                    fontSize: "16px", 
+                    minWidth: "120px"
+                  }}>
+                    {project.location_name || "現場名未設定"}
+                  </div>
+                  
+                  <div style={{ flex: 1 }}></div>
+                  
+                  <div style={{ 
+                    fontSize: "14px", 
+                    color: "#fff",
+                    backgroundColor: "#666",
+                    padding: "3px 8px",
+                    borderRadius: "4px",
+                    minWidth: "90px",
+                    textAlign: "center",
+                    marginRight: "24px"
+                  }}>
+                    ～{project.end_date
+                      ? new Date(
+                          typeof project.end_date === 'string' 
+                            ? project.end_date 
+                            : (project.end_date as any)['time.Time']
+                        ).toLocaleDateString("ja-JP")
                       : "未設定"}
                   </div>
                 </div>
                 <div
                   style={{
-                    padding: "4px 12px",
+                    padding: "4px 16px",
                     borderRadius: "4px",
                     backgroundColor:
                       project.status === "進行中"
@@ -261,36 +382,19 @@ const ProjectGanttChartSimple = () => {
                         : "#2196F3",
                     color: "white",
                     fontSize: "12px",
+                    minWidth: "80px",
+                    textAlign: "center"
                   }}
                 >
                   {project.status || "未設定"}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div
-        style={{
-          marginTop: "20px",
-          padding: "15px",
-          backgroundColor: "#f0f8ff",
-          borderRadius: "4px",
-        }}
-      >
-        <h3>使用方法</h3>
-        <p>
-          📝 <strong>リストをクリック</strong>して工事情報を編集できます
-        </p>
-        <p>✅ 開始日・終了日・説明・タグ・会社名・現場名を編集可能</p>
-        <p>💾 編集後は自動で保存されます</p>
-
-        <h3 style={{ marginTop: "15px" }}>開発状況</h3>
-        <p>✅ 工事データの取得</p>
-        <p>✅ 編集モーダル機能</p>
-        <p>🔄 工程表機能（次のステップ）</p>
-      </div>
 
       {/* 編集モーダル */}
       <ProjectEditModal

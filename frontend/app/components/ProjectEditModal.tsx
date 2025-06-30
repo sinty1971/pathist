@@ -512,9 +512,9 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>工事詳細編集</h2>
-          <button type="button" className="close-button" onClick={onClose}>
+        <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0 }}>工事詳細編集</h2>
+          <button type="button" className="close-button" onClick={onClose} style={{ position: 'relative', top: 'auto', right: 'auto' }}>
             ×
           </button>
         </div>
@@ -742,16 +742,6 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
             </div>
           )}
 
-          <div className="modal-action">
-            <button
-              type="button"
-              className="btn"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              閉じる
-            </button>
-          </div>
         </div>
       </div>
     </div>

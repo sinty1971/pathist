@@ -24,7 +24,7 @@ const ProjectGanttChart = () => {
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 10;
-  const DAY_WIDTH = 30; // ピクセル/日
+  const DAY_WIDTH = 10; // ピクセル/日
   const ROW_HEIGHT = 40; // ピクセル
 
   // 工事データを読み込み
@@ -216,7 +216,24 @@ const ProjectGanttChart = () => {
     });
 
     // 開始日昇順で10個を取得
-    const finalProjects = projectsFromBaselineDate.slice(0, ITEMS_PER_PAGE);
+    let finalProjects = projectsFromBaselineDate.slice(0, ITEMS_PER_PAGE);
+    
+    // もし表示件数が10件未満の場合は、開始日が最も新しいものから10件を抽出
+    if (finalProjects.length < ITEMS_PER_PAGE) {
+      // 全工事を開始日の新しい順（降順）でソート
+      const allProjectsDescending = [...projects].sort((a, b) => {
+        const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
+        const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+        return dateB - dateA; // 新しい順（降順）
+      });
+      
+      // 最新の10件を取得して、開始日の古い順（昇順）に並び替え
+      finalProjects = allProjectsDescending.slice(0, ITEMS_PER_PAGE).sort((a, b) => {
+        const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
+        const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+        return dateA - dateB; // 古い順（昇順）
+      });
+    }
 
     setVisibleProjects(finalProjects);
   };
@@ -390,6 +407,21 @@ const ProjectGanttChart = () => {
     }
   };
 
+  // 管理ファイルの変更が必要かチェック
+  const needsFileRename = (project: ModelsProject): boolean => {
+    if (!project.managed_files || project.managed_files.length === 0) {
+      return false;
+    }
+    
+    // managed_filesの中で現在の名前と推奨名が異なるものがあるかチェック
+    const needsRename = project.managed_files.some(file => {
+      // currentとrecommendedが両方存在し、異なる場合にtrueを返す
+      return file.current && file.recommended && file.current !== file.recommended;
+    });
+    
+    return needsRename;
+  };
+
   // 月のヘッダーを生成（正常順序・1日基準）
   const generateMonthHeaders = () => {
     const headers = [];
@@ -435,6 +467,24 @@ const ProjectGanttChart = () => {
     return headers;
   };
 
+  // 月境界線を生成（月の1日の位置）
+  const generateMonthBoundaries = () => {
+    const boundaries = [];
+    const current = new Date(viewStartDate.getFullYear(), viewStartDate.getMonth() + 1, 1); // 次月の1日から開始
+    
+    while (current <= viewEndDate) {
+      const startX = (current.getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH;
+      boundaries.push({
+        startX,
+        year: current.getFullYear(),
+        month: current.getMonth() + 1
+      });
+      current.setMonth(current.getMonth() + 1);
+    }
+    
+    return boundaries;
+  };
+
   // 日付フォーマット
   const formatDate = (dateString?: string | any) => {
     if (!dateString) return '';
@@ -456,6 +506,7 @@ const ProjectGanttChart = () => {
 
   const monthHeaders = generateMonthHeaders();
   const dayHeaders = generateDayHeaders();
+  const monthBoundaries = generateMonthBoundaries();
   const totalWidth = (viewEndDate.getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH;
 
   return (
@@ -534,8 +585,8 @@ const ProjectGanttChart = () => {
           })}
         </div>
 
-        <div className="gantt-chart-container" ref={scrollContainerRef} onScroll={handleScroll}>
-          <div className="gantt-chart" style={{ width: totalWidth }}>
+        <div className="gantt-chart-container" ref={scrollContainerRef} onScroll={handleScroll} style={{ backgroundColor: '#f5f5f5' }}>
+          <div className="gantt-chart" style={{ width: totalWidth, backgroundColor: '#f5f5f5' }}>
             {/* 月ヘッダー */}
             <div className="gantt-header month-header-row" style={{ height: "30px" }}>
               {monthHeaders.map((header, index) => (
@@ -582,7 +633,7 @@ const ProjectGanttChart = () => {
                     fontWeight: "500"
                   }}
                 >
-                  {header.date}日
+                  {header.date}
                 </div>
               ))}
             </div>
@@ -595,6 +646,18 @@ const ProjectGanttChart = () => {
                     key={index}
                     className="grid-line"
                     style={{ left: header.startX }}
+                  />
+                ))}
+              </div>
+
+              {/* 月境界線（太線） */}
+              <div className="gantt-month-boundaries">
+                {monthBoundaries.map((boundary, index) => (
+                  <div 
+                    key={`month-boundary-${index}`}
+                    className="month-boundary-line"
+                    style={{ left: boundary.startX }}
+                    title={`${boundary.year}年${boundary.month}月開始`}
                   />
                 ))}
               </div>
@@ -621,7 +684,7 @@ const ProjectGanttChart = () => {
                   style={{
                     left: item.startX,
                     width: item.width,
-                    top: index * ROW_HEIGHT,
+                    top: index * ROW_HEIGHT + 5,
                     height: ROW_HEIGHT - 10,
                     backgroundColor: getStatusColor(item.status)
                   }}
@@ -631,14 +694,29 @@ const ProjectGanttChart = () => {
                   <span className="gantt-bar-text">
                     {item.location_name}
                   </span>
+                  {needsFileRename(item) && (
+                    <span 
+                      className="gantt-bar-rename-indicator"
+                      title="管理ファイルの名前変更が必要です"
+                    >
+                      ⚠️
+                    </span>
+                  )}
                 </div>
               ))}
 
-              {/* 今日の線 */}
+              {/* 今日の範囲 */}
               <div 
-                className="today-line"
+                className="today-area"
                 style={{
-                  left: (new Date().getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH
+                  left: Math.floor((new Date().setHours(0, 0, 0, 0) - viewStartDate.getTime()) / (1000 * 60 * 60 * 24)) * DAY_WIDTH,
+                  width: DAY_WIDTH,
+                  height: '100%',
+                  backgroundColor: 'rgba(255, 192, 203, 0.3)', // 薄いピンク
+                  position: 'absolute',
+                  top: 0,
+                  pointerEvents: 'none',
+                  zIndex: 1
                 }}
               />
             </div>

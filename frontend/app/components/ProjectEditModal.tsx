@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Alert,
+  Paper,
+  IconButton,
+  CircularProgress
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import WarningIcon from '@mui/icons-material/Warning';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import type { ModelsProject, ModelsTimestamp, ModelsManagedFile } from '../api/types.gen';
 import { postProjectRenameManagedFile, getProjectGetByPath } from '../api/sdk.gen';
-import CallyCalendar from './CallyCalendar';
+import { DatePickerComponent } from './DatePickerComponent';
 
 interface ProjectEditModalProps {
   isOpen: boolean;
@@ -18,81 +35,7 @@ type ProjectFormData = Omit<ModelsProject, 'start_date' | 'end_date' | 'tags' | 
   tags?: string;
 };
 
-// DaisyUI Calendar コンポーネント
-interface DatePickerProps {
-  value: string;
-  onChange: (dateString: string) => void;
-  placeholder: string;
-  disabled?: boolean;
-  minDate?: string;
-}
-
-const DatePickerComponent: React.FC<DatePickerProps> = ({ value, onChange, placeholder, disabled }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(value || '');
-
-  const handleDateSelect = (dateString: string) => {
-    setSelectedDate(dateString);
-    onChange(dateString);
-    // 少し遅延を入れて確実に閉じる
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 100);
-  };
-
-
-  useEffect(() => {
-    setSelectedDate(value || '');
-  }, [value]);
-
-  // 外側クリックで閉じる
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (isOpen && !target.closest('.date-picker-container') && !target.closest('.cally-wrapper')) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  const formatDisplayDate = (dateStr: string) => {
-    if (!dateStr) return placeholder;
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('ja-JP');
-    } catch {
-      return dateStr;
-    }
-  };
-
-  return (
-    <div className="relative date-picker-container">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={disabled}
-        className="path-input w-full text-left"
-        style={{ width: '100%' }}
-      >
-        {formatDisplayDate(selectedDate)}
-      </button>
-      
-      {isOpen && (
-        <div className="absolute top-full left-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg p-3" style={{ width: '220px' }}>
-          <CallyCalendar 
-            onDateSelect={handleDateSelect}
-            selectedDate={selectedDate}
-          />
-        </div>
-      )}
-    </div>
-  );
-};
+// React DatePickerコンポーネントをインポート済み
 
 const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, project, onUpdate, onProjectUpdate }) => {
   const [formData, setFormData] = useState<ProjectFormData>({
@@ -176,16 +119,14 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // フォームデータを更新
+    // フォームデータを更新（UIの表示のみ）
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
     
-    // ファイル名関連フィールドの変更をチェック
-    if (name === 'company_name' || name === 'location_name') {
-      checkFilenameChanges({ ...formData, [name]: value });
-    }
+    // リアルタイムでのチェックや更新は一切行わない
+    // すべての更新処理はEnterキーまたはフォーカスアウト時のみ実行
   };
   
   // 推奨ファイル名を生成する関数
@@ -379,12 +320,23 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
   };
 
   // 非ファイル名関連フィールド用のblurハンドラー
-  const handleNonFilenameBlur = () => {
+  const handleNonFilenameBlur = (fieldName: string) => () => {
     // ファイル名変更が必要な場合は即時更新しない
     if (hasFilenameChanges) {
       return;
     }
-    handleFieldUpdateWithData(formData);
+    // description と tags のみ対象
+    if (fieldName === 'description' || fieldName === 'tags') {
+      handleFieldUpdateWithData(formData);
+    }
+  };
+
+  // ファイル名関連フィールド用のblurハンドラー
+  const handleFilenameBlur = (fieldName: string) => () => {
+    // ファイル名関連フィールドの変更をチェック
+    if (fieldName === 'company_name' || fieldName === 'location_name') {
+      checkFilenameChanges(formData);
+    }
   };
 
   // Enterキー押下時の処理
@@ -396,10 +348,13 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
   };
 
   // ファイル名関連フィールド用のキーダウンハンドラー
-  const handleFilenameKeyDown = (e: React.KeyboardEvent) => {
+  const handleFilenameKeyDown = (e: React.KeyboardEvent, fieldName: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // ファイル名関連フィールドではEnterでも更新しない
+      // Enterキーでファイル名変更チェックを実行
+      if (fieldName === 'company_name' || fieldName === 'location_name') {
+        checkFilenameChanges(formData);
+      }
     }
   };
 
@@ -507,40 +462,185 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
   };
 
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0 }}>工事詳細編集</h2>
-          <button type="button" className="close-button" onClick={onClose} style={{ position: 'relative', top: 'auto', right: 'auto' }}>
-            ×
-          </button>
-        </div>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            minHeight: '500px'
+          }
+        }
+      }}
+    >
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          pb: 1
+        }}
+      >
+        <Typography variant="h6" component="h2">
+          工事詳細編集
+        </Typography>
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            color: 'grey.500'
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
+      <DialogContent dividers>
         {error && (
-          <div className="error-message">
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
-          </div>
+          </Alert>
         )}
 
-        <div className="modal-body">
-          <div className="form-row">
-            <div className="form-group form-group-half">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8f9fa', padding: '8px', borderRadius: '4px', border: '2px solid #e3f2fd' }}>
-                <label style={{ minWidth: '60px', margin: 0, fontWeight: '600', color: '#1976d2' }}>開始日</label>
+        <Box sx={{ mt: 1 }}>
+          {/* 会社名・現場名セクション */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+            <Box sx={{ flex: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  backgroundColor: 'primary.50',
+                  border: '2px solid',
+                  borderColor: 'primary.200',
+                  borderRadius: 2
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'primary.main',
+                    fontWeight: 600,
+                    mb: 1
+                  }}
+                >
+                  会社名
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="company_name"
+                  value={formData.company_name}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => handleFilenameKeyDown(e, 'company_name')}
+                  onBlur={handleFilenameBlur('company_name')}
+                  required
+                  disabled={isLoading}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'white'
+                    }
+                  }}
+                />
+              </Paper>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  backgroundColor: 'primary.50',
+                  border: '2px solid',
+                  borderColor: 'primary.200',
+                  borderRadius: 2
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'primary.main',
+                    fontWeight: 600,
+                    mb: 1
+                  }}
+                >
+                  現場名
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="location_name"
+                  value={formData.location_name}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => handleFilenameKeyDown(e, 'location_name')}
+                  onBlur={handleFilenameBlur('location_name')}
+                  required
+                  disabled={isLoading}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'white'
+                    }
+                  }}
+                />
+              </Paper>
+            </Box>
+          </Box>
+
+          {/* 日付選択セクション */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+            <Box sx={{ flex: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  backgroundColor: 'primary.50',
+                  border: '2px solid',
+                  borderColor: 'primary.200',
+                  borderRadius: 2
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'primary.main',
+                    fontWeight: 600,
+                    mb: 1
+                  }}
+                >
+                  開始日
+                </Typography>
                 <DatePickerComponent
                   value={formData.start_date || ''}
                   onChange={(dateString) => handleDaisyDateChange(dateString, 'start_date')}
                   placeholder="開始日を選択"
                   disabled={isLoading}
                 />
-              </div>
-            </div>
-            <div className="form-group form-group-half">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ minWidth: '60px', margin: 0 }}>終了日</label>
+              </Paper>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  backgroundColor: 'grey.50',
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                  borderRadius: 2
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'text.primary',
+                    fontWeight: 500,
+                    mb: 1
+                  }}
+                >
+                  終了日
+                </Typography>
                 <DatePickerComponent
                   value={formData.end_date || ''}
                   onChange={(dateString) => handleDaisyDateChange(dateString, 'end_date')}
@@ -548,203 +648,202 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
                   disabled={isLoading}
                   minDate={formData.start_date}
                 />
-              </div>
-            </div>
-          </div>
+              </Paper>
+            </Box>
+          </Box>
 
-          <div className="form-row">
-            <div className="form-group form-group-half">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8f9fa', padding: '8px', borderRadius: '4px', border: '2px solid #e3f2fd' }}>
-                <label htmlFor="company_name" style={{ minWidth: '60px', margin: 0, fontWeight: '600', color: '#1976d2' }}>会社名</label>
-                <input
-                  type="text"
-                  id="company_name"
-                  name="company_name"
-                  value={formData.company_name}
-                  onChange={handleInputChange}
-                  onKeyDown={handleFilenameKeyDown}
-                  className="path-input"
-                  required
-                  disabled={isLoading}
-                  style={{ fontWeight: '500' }}
-                />
-              </div>
-            </div>
-            <div className="form-group form-group-half">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8f9fa', padding: '8px', borderRadius: '4px', border: '2px solid #e3f2fd' }}>
-                <label htmlFor="location_name" style={{ minWidth: '60px', margin: 0, fontWeight: '600', color: '#1976d2' }}>現場名</label>
-                <input
-                  type="text"
-                  id="location_name"
-                  name="location_name"
-                  value={formData.location_name}
-                  onChange={handleInputChange}
-                  onKeyDown={handleFilenameKeyDown}
-                  className="path-input"
-                  required
-                  disabled={isLoading}
-                  style={{ fontWeight: '500' }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <label htmlFor="description" style={{ minWidth: '60px', margin: 0, marginTop: '8px' }}>説明</label>
-              <textarea
-                id="description"
+          {/* 説明・タグセクション */}
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 500,
+                  mb: 1
+                }}
+              >
+                説明
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 onKeyDown={(e) => handleKeyDown(e, 'description')}
-                onBlur={handleNonFilenameBlur}
-                className="path-input"
-                rows={3}
+                onBlur={handleNonFilenameBlur('description')}
                 disabled={isLoading}
-                style={{ resize: 'vertical', width: '100%' }}
+                placeholder="工事の詳細説明を入力してください"
               />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label htmlFor="tags" style={{ minWidth: '60px', margin: 0 }}>タグ</label>
-              <input
-                type="text"
-                id="tags"
+            </Box>
+            <Box>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 500,
+                  mb: 1
+                }}
+              >
+                タグ
+              </Typography>
+              <TextField
+                fullWidth
                 name="tags"
                 value={formData.tags}
                 onChange={handleInputChange}
                 onKeyDown={(e) => handleKeyDown(e, 'tags')}
-                onBlur={handleNonFilenameBlur}
-                className="path-input"
+                onBlur={handleNonFilenameBlur('tags')}
                 placeholder="カンマ区切りで入力"
                 disabled={isLoading}
-                style={{ width: '100%' }}
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
 
           {/* ファイル名変更警告とボタン */}
           {hasFilenameChanges && (
-            <div style={{ 
-              backgroundColor: '#fff3cd', 
-              border: '1px solid #ffeaa7', 
-              borderRadius: '4px', 
-              padding: '12px', 
-              margin: '20px 0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>⚠️</span>
-                <span style={{ color: '#856404', fontWeight: '500' }}>
-                  ファイル名の変更が必要です。このボタンを押下して全ての変更をまとめて更新してください。
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleFilenameUpdate}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: '#ff9800',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '8px 16px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  marginLeft: '12px',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {isLoading ? '更新中...' : 'ファイル名を更新'}
-              </button>
-            </div>
+            <Alert
+              severity="warning"
+              sx={{ mb: 3 }}
+              icon={<WarningIcon />}
+              action={
+                <Button
+                  color="warning"
+                  variant="contained"
+                  size="small"
+                  onClick={handleFilenameUpdate}
+                  disabled={isLoading}
+                  startIcon={isLoading ? <CircularProgress size={16} /> : null}
+                >
+                  {isLoading ? '更新中...' : 'ファイル名を更新'}
+                </Button>
+              }
+            >
+              <Typography variant="body2" fontWeight={500}>
+                ファイル名の変更が必要です。このボタンを押下して全ての変更をまとめて更新してください。
+              </Typography>
+            </Alert>
           )}
 
           {/* 管理ファイル一覧 */}
           {currentProject?.managed_files && currentProject.managed_files.length > 0 && (
-            <div className="form-group">
-              <label>管理ファイル</label>
-              <div style={{ 
-                border: '1px solid #ddd', 
-                borderRadius: '6px', 
-                backgroundColor: '#fafafa',
-                padding: '16px'
-              }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 500,
+                  mb: 2
+                }}
+              >
+                管理ファイル
+              </Typography>
+              <Paper
+                elevation={0}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                  borderRadius: 2,
+                  backgroundColor: 'grey.50',
+                  p: 2
+                }}
+              >
                 {currentProject.managed_files.map((file: ModelsManagedFile, index: number) => {
                   const needsRename = file.current && file.recommended && file.current !== file.recommended;
                   return (
-                    <div key={index} style={{
-                      marginBottom: index < currentProject.managed_files!.length - 1 ? '16px' : '0',
-                      padding: '12px',
-                      backgroundColor: 'white',
-                      borderRadius: '4px',
-                      border: '1px solid #e0e0e0'
-                    }}>
+                    <Paper
+                      key={index}
+                      elevation={0}
+                      sx={{
+                        mb: index < currentProject.managed_files!.length - 1 ? 2 : 0,
+                        p: 2,
+                        backgroundColor: 'white',
+                        border: '1px solid',
+                        borderColor: 'grey.200',
+                        borderRadius: 1
+                      }}
+                    >
                       {/* 現在のファイル */}
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        marginBottom: file.recommended ? '8px' : '0',
-                        fontSize: '14px'
-                      }}>
-                        <span style={{ marginRight: '8px' }}>📎</span>
-                        <span style={{ fontWeight: '500', marginRight: '8px' }}>現在:</span>
-                        <span style={{ fontFamily: 'monospace', color: '#666' }}>{file.current}</span>
-                      </div>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: file.recommended ? 1 : 0 }}>
+                        <AttachFileIcon sx={{ mr: 1, color: 'grey.600', fontSize: '1rem' }} />
+                        <Typography variant="body2" fontWeight={500} sx={{ mr: 1 }}>
+                          現在:
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'grey.700' }}>
+                          {file.current}
+                        </Typography>
+                      </Box>
                       
                       {/* 推奨ファイル */}
                       {file.recommended && (
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between',
-                          fontSize: '14px'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <span style={{ marginRight: '8px' }}>💡</span>
-                            <span style={{ fontWeight: '500', marginRight: '8px' }}>推奨:</span>
-                            <span style={{ fontFamily: 'monospace', color: '#0066cc' }}>{file.recommended}</span>
-                          </div>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <LightbulbIcon sx={{ mr: 1, color: 'warning.main', fontSize: '1rem' }} />
+                            <Typography variant="body2" fontWeight={500} sx={{ mr: 1 }}>
+                              推奨:
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'primary.main' }}>
+                              {file.recommended}
+                            </Typography>
+                          </Box>
                           
                           {/* 変更ボタン */}
                           {needsRename && (
-                            <button
-                              type="button"
+                            <Button
+                              variant="contained"
+                              size="small"
                               onClick={handleRenameFiles}
                               disabled={isRenaming || isLoading}
-                              className="btn btn-primary btn-sm"
+                              startIcon={isRenaming ? <CircularProgress size={16} /> : null}
                             >
                               {isRenaming ? '変更中...' : '変更'}
-                            </button>
+                            </Button>
                           )}
-                        </div>
+                        </Box>
                       )}
-                    </div>
+                    </Paper>
                   );
                 })}
-              </div>
-            </div>
+              </Paper>
+            </Box>
           )}
           
           {/* 管理ファイルがない場合の表示 */}
           {currentProject && (!currentProject.managed_files || currentProject.managed_files.length === 0) && (
-            <div className="form-group">
-              <label>管理ファイル</label>
-              <div className="no-managed-files">
-                <span className="no-files-icon">📄</span>
-                <span>管理ファイルはありません</span>
-              </div>
-            </div>
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 500,
+                  mb: 2
+                }}
+              >
+                管理ファイル
+              </Typography>
+              <Paper
+                elevation={0}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                  borderRadius: 2,
+                  backgroundColor: 'grey.50',
+                  p: 3,
+                  textAlign: 'center'
+                }}
+              >
+                <AttachFileIcon sx={{ fontSize: '2rem', color: 'grey.400', mb: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  管理ファイルはありません
+                </Typography>
+              </Paper>
+            </Box>
           )}
-
-        </div>
-      </div>
-    </div>
+        </Box>
+      </DialogContent>
+    </Dialog>
   );
 };
 

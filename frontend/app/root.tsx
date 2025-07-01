@@ -21,7 +21,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "/app/styles/calendar.css",
+    href: "/app/styles/react-datepicker.css",
   },
 ];
 

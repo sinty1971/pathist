@@ -91,6 +91,21 @@ const ProjectGanttChartSimple = () => {
     setSelectedProject(null);
   };
 
+  // 管理ファイルの変更が必要かチェック
+  const needsFileRename = (project: ModelsProject): boolean => {
+    if (!project.managed_files || project.managed_files.length === 0) {
+      return false;
+    }
+    
+    // managed_filesの中で現在の名前と推奨名が異なるものがあるかチェック
+    const needsRename = project.managed_files.some(file => {
+      // currentとrecommendedが両方存在し、異なる場合にtrueを返す
+      return file.current && file.recommended && file.current !== file.recommended;
+    });
+    
+    return needsRename;
+  };
+
   // プロジェクトデータを更新
   const handleProjectUpdate = (updatedProject: ModelsProject) => {
     // 選択中のプロジェクトを更新
@@ -368,25 +383,38 @@ const ProjectGanttChartSimple = () => {
                       : "未設定"}
                   </div>
                 </div>
-                <div
-                  style={{
-                    padding: "4px 16px",
-                    borderRadius: "4px",
-                    backgroundColor:
-                      project.status === "進行中"
-                        ? "#4CAF50"
-                        : project.status === "完了"
-                        ? "#9E9E9E"
-                        : project.status === "予定"
-                        ? "#FF9800"
-                        : "#2196F3",
-                    color: "white",
-                    fontSize: "12px",
-                    minWidth: "80px",
-                    textAlign: "center"
-                  }}
-                >
-                  {project.status || "未設定"}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {needsFileRename(project) && (
+                    <span 
+                      style={{ 
+                        fontSize: "16px",
+                        filter: "drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))"
+                      }}
+                      title="管理ファイルの名前変更が必要です"
+                    >
+                      ⚠️
+                    </span>
+                  )}
+                  <div
+                    style={{
+                      padding: "4px 16px",
+                      borderRadius: "4px",
+                      backgroundColor:
+                        project.status === "進行中"
+                          ? "#4CAF50"
+                          : project.status === "完了"
+                          ? "#9E9E9E"
+                          : project.status === "予定"
+                          ? "#FF9800"
+                          : "#2196F3",
+                      color: "white",
+                      fontSize: "12px",
+                      minWidth: "80px",
+                      textAlign: "center"
+                    }}
+                  >
+                    {project.status || "未設定"}
+                  </div>
                 </div>
               </div>
               ))}

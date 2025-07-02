@@ -13,10 +13,12 @@ export function Navigation({ projectCount }: NavigationProps = {}) {
   const getPageTitle = () => {
     switch (location.pathname) {
       case '/':
+        return 'ホーム';
+      case '/files':
         return `ファイル一覧${fileCount > 0 ? ` (${fileCount}項目)` : ''}${currentPath ? ` - ${currentPath}` : ''}`;
       case '/projects':
         return `工程表${projectCount !== undefined ? ` (${projectCount}件)` : ''}`;
-      case '/gantt':
+      case '/projects/gantt':
         return 'ガントチャート';
       default:
         return 'ファイル管理';
@@ -35,19 +37,19 @@ export function Navigation({ projectCount }: NavigationProps = {}) {
             to="/" 
             className={location.pathname === '/' ? 'nav-link active' : 'nav-link'}
           >
-            フォルダー一覧
+            ホーム
+          </Link>
+          <Link 
+            to="/files" 
+            className={location.pathname === '/files' ? 'nav-link active' : 'nav-link'}
+          >
+            ファイル一覧
           </Link>
           <Link 
             to="/projects" 
             className={location.pathname === '/projects' ? 'nav-link active' : 'nav-link'}
           >
             工程表
-          </Link>
-          <Link 
-            to="/gantt" 
-            className={location.pathname === '/gantt' ? 'nav-link active' : 'nav-link'}
-          >
-            ガントチャート
           </Link>
         </div>
       </div>

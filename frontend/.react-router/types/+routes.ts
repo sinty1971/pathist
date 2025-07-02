@@ -13,10 +13,13 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/files": {
+    params: {};
+  };
   "/projects": {
     params: {};
   };
-  "/gantt": {
+  "/projects/gantt": {
     params: {};
   };
 };
@@ -24,15 +27,19 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/projects" | "/gantt";
+    page: "/" | "/files" | "/projects" | "/projects/gantt";
   };
   "routes/_layout.tsx": {
     id: "routes/_layout";
-    page: "/" | "/projects" | "/gantt";
+    page: "/" | "/files" | "/projects" | "/projects/gantt";
   };
   "routes/_layout._index.tsx": {
     id: "routes/_layout._index";
     page: "/";
+  };
+  "routes/_layout.files.tsx": {
+    id: "routes/_layout.files";
+    page: "/files";
   };
   "routes/_layout.projects.tsx": {
     id: "routes/_layout.projects";
@@ -40,6 +47,6 @@ type RouteFiles = {
   };
   "routes/_layout.gantt.tsx": {
     id: "routes/_layout.gantt";
-    page: "/gantt";
+    page: "/projects/gantt";
   };
 };

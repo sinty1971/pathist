@@ -1,13 +1,13 @@
 import React from 'react';
 import { timestampToString } from '../utils/timestamp';
 
-interface FileInfoModalProps {
+interface FileDetailModalProps {
   fileInfo: any | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const FileInfoModal: React.FC<FileInfoModalProps> = ({ fileInfo, isOpen, onClose }) => {
+export const FileDetailModal: React.FC<FileDetailModalProps> = ({ fileInfo, isOpen, onClose }) => {
   if (!isOpen || !fileInfo) return null;
 
   const formatSize = (bytes?: number): string => {

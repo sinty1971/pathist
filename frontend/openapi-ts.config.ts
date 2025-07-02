@@ -2,7 +2,6 @@ import { defineConfig } from '@hey-api/openapi-ts';
 
 export default defineConfig({
   client: {
-    name: '@hey-api/client-fetch',
     bundle: true,
   },
   input: '../schemas/openapi.yaml',

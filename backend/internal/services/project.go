@@ -7,13 +7,15 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // ProjectService は工事情報取得サービスを提供する
 type ProjectService struct {
-	FileService *FileService
-	YamlService *YamlService[models.Project]
-	DetailFile  string
+	FileService    *FileService
+	YamlService    *YamlService[models.Project]
+	CompanyService *CompanyService
+	DetailFile     string
 }
 
 // NewProjectService はProjectServiceを初期化する
@@ -27,11 +29,15 @@ func NewProjectService(projectsPath string) (*ProjectService, error) {
 
 	// YamlServiceを初期化
 	yamlService := NewYamlService[models.Project](fileService)
+	
+	// CompanyServiceを初期化
+	companyService := NewCompanyService()
 
 	return &ProjectService{
-		FileService: fileService,
-		YamlService: yamlService,
-		DetailFile:  ".detail.yaml",
+		FileService:    fileService,
+		YamlService:    yamlService,
+		CompanyService: companyService,
+		DetailFile:     ".detail.yaml",
 	}, nil
 }
 
@@ -79,7 +85,7 @@ func (s *ProjectService) GetProject(path string) (models.Project, error) {
 	return project, nil
 }
 
-// GetRecentProjects は指定されたパスから最近の工事一覧を取得する
+// GetRecentProjects は指定されたパスから最近の工事一覧を取得する（並行処理版）
 func (s *ProjectService) GetRecentProjects() []models.Project {
 	// ファイルシステムから工事一覧を取得
 	fileInfos, err := s.FileService.GetFileInfos()
@@ -87,48 +93,64 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 		return []models.Project{}
 	}
 
-	// 工事一覧を作成
-	projects := make([]models.Project, len(fileInfos))
-	count := 0
+	// 並行処理用のチャンネルとWaitGroupを設定
+	projectChan := make(chan models.Project, len(fileInfos))
+	var wg sync.WaitGroup
+
+	// 各工事情報を並行処理で取得
 	for _, fileInfo := range fileInfos {
-		// fileInfoから工事を作成
-		project, err := models.NewProject(fileInfo)
-		if err != nil {
-			continue
-		}
+		wg.Add(1)
+		go func(fi models.FileInfo) {
+			defer wg.Done()
+			
+			// fileInfoから工事を作成
+			project, err := models.NewProject(fi)
+			if err != nil {
+				return
+			}
 
-		// 管理ファイルの設定
-		s.SetManagedFiles(&project)
+			// 管理ファイルの設定
+			s.SetManagedFiles(&project)
 
-		// .detail.yamlと同期する
-		s.SyncDetailFile(&project)
+			// .detail.yamlと同期する
+			s.SyncDetailFile(&project)
 
-		// 工事を登録
-		projects[count] = project
-		count++
+			// チャンネルに送信
+			projectChan <- project
+		}(fileInfo)
+	}
 
+	// 全てのゴルーチンの完了を待つ
+	go func() {
+		wg.Wait()
+		close(projectChan)
+	}()
+
+	// チャンネルから結果を収集
+	projects := make([]models.Project, 0, len(fileInfos))
+	for project := range projectChan {
+		projects = append(projects, project)
 	}
 
 	// 工事開始日で降順ソート（新しいものが最初）
-	validProjects := projects[:count]
-	sort.Slice(validProjects, func(i, j int) bool {
+	sort.Slice(projects, func(i, j int) bool {
 		// 両方の開始日が有効な場合
-		if !validProjects[i].StartDate.IsZero() && !validProjects[j].StartDate.IsZero() {
-			return validProjects[i].StartDate.After(validProjects[j].StartDate.Time)
+		if !projects[i].StartDate.IsZero() && !projects[j].StartDate.IsZero() {
+			return projects[i].StartDate.After(projects[j].StartDate.Time)
 		}
 		// iの開始日が無効でjが有効な場合、jを先に
-		if validProjects[i].StartDate.IsZero() && !validProjects[j].StartDate.IsZero() {
+		if projects[i].StartDate.IsZero() && !projects[j].StartDate.IsZero() {
 			return false
 		}
 		// iの開始日が有効でjが無効な場合、iを先に
-		if !validProjects[i].StartDate.IsZero() && validProjects[j].StartDate.IsZero() {
+		if !projects[i].StartDate.IsZero() && projects[j].StartDate.IsZero() {
 			return true
 		}
 		// 両方の開始日が無効な場合、フォルダー名で降順
-		return validProjects[i].FileInfo.Name > validProjects[j].FileInfo.Name
+		return projects[i].FileInfo.Name > projects[j].FileInfo.Name
 	})
 
-	return validProjects
+	return projects
 }
 
 // SyncDetailFile は工事の詳細を.detail.yamlから取り込む
@@ -335,4 +357,62 @@ func (s *ProjectService) RenameManagedFile(project models.Project, currents []st
 		}
 	}
 	return renamedFiles[:count]
+}
+
+// EnrichProjectWithCompanyInfo enriches a project with company information
+func (s *ProjectService) EnrichProjectWithCompanyInfo(project *models.Project) error {
+	if project.CompanyName == "" {
+		return nil // No company name to lookup
+	}
+	
+	// Try to get or create company by name
+	company, err := s.CompanyService.GetOrCreateCompanyByName(project.CompanyName)
+	if err != nil {
+		return fmt.Errorf("failed to get/create company %s: %v", project.CompanyName, err)
+	}
+	
+	// Update project with company information
+	project.Company = company
+	project.CompanyID = company.ID
+	
+	return nil
+}
+
+// EnrichProjectsWithCompanyInfo enriches multiple projects with company information
+func (s *ProjectService) EnrichProjectsWithCompanyInfo(projects []models.Project) ([]models.Project, error) {
+	enrichedProjects := make([]models.Project, len(projects))
+	
+	for i, project := range projects {
+		enrichedProjects[i] = project
+		if err := s.EnrichProjectWithCompanyInfo(&enrichedProjects[i]); err != nil {
+			// Log error but continue with other projects
+			fmt.Printf("Warning: failed to enrich project %s with company info: %v\n", project.ID, err)
+		}
+	}
+	
+	return enrichedProjects, nil
+}
+
+// UpdateProjectCompanyInfo updates company information for a project
+func (s *ProjectService) UpdateProjectCompanyInfo(project *models.Project, companyInfo models.Company) error {
+	// Update or create the company
+	existing, err := s.CompanyService.GetCompanyByID(companyInfo.ID)
+	if err != nil || existing == nil {
+		// Create new company
+		if err := s.CompanyService.CreateCompany(companyInfo); err != nil {
+			return fmt.Errorf("failed to create company: %v", err)
+		}
+	} else {
+		// Update existing company
+		if err := s.CompanyService.UpdateCompany(companyInfo); err != nil {
+			return fmt.Errorf("failed to update company: %v", err)
+		}
+	}
+	
+	// Update project reference
+	project.CompanyID = companyInfo.ID
+	project.CompanyName = companyInfo.Name
+	project.Company = &companyInfo
+	
+	return nil
 }

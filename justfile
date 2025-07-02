@@ -44,6 +44,11 @@ generate-types:
     cd ./frontend && npm run generate-api
     @echo "TypeScript types generated at frontend/app/api/"
 
+# Generate React Router v7 route structure diagram
+generate-routes:
+    cd ./frontend && npm run generate-routes
+    @echo "Route structure diagram generated at frontend/route-structure-generated.md"
+
 # Build frontend for production (React Router v7)
 frontend-build:
     cd ./frontend && npm run build
@@ -63,6 +68,9 @@ dev:
 
 # Generate both API docs and TypeScript types
 generate-all: generate-api generate-types
+
+# Generate all documentation (API, types, and routes)
+generate-docs: generate-api generate-types generate-routes
 
 # Update all dependencies (Go and npm)
 update-all: backend-update frontend-update

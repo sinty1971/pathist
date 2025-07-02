@@ -6,7 +6,7 @@ import { TextField } from '@mui/material';
 import { ja } from 'date-fns/locale';
 
 
-interface DatePickerComponentProps {
+interface CalendarPickerProps {
   value: string;
   onChange: (dateString: string) => void;
   placeholder: string;
@@ -14,7 +14,7 @@ interface DatePickerComponentProps {
   minDate?: string;
 }
 
-export const DatePickerComponent: React.FC<DatePickerComponentProps> = ({
+export const CalendarPicker: React.FC<CalendarPickerProps> = ({
   value,
   onChange,
   placeholder,

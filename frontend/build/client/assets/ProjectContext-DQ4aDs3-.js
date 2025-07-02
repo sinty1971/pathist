@@ -1,0 +1,1 @@
+import{a as e,o as s}from"./chunk-QMGIS6GS-CRLmNMPd.js";const o=e.createContext(void 0);function u({children:t}){const[r,n]=e.useState(0);return s.jsx(o.Provider,{value:{projectCount:r,setProjectCount:n},children:t})}function i(){const t=e.useContext(o);if(t===void 0)throw new Error("useProject must be used within a ProjectProvider");return t}export{u as P,i as u};

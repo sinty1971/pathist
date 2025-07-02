@@ -1,12 +1,12 @@
-import ProjectGanttChartSimple from "../components/ProjectGanttChartSimple";
+import Projects from "../components/Projects";
 
-export default function GanttChart() {
+export default function ProjectsPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <ProjectGanttChartSimple />
+      <div className="bg-white border border-gray-200 rounded-lg">
+        <div className="p-6">
+          <Projects />
         </div>
       </div>
     </div>

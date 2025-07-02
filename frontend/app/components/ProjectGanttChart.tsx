@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getProjectRecent as getProjectsRecent } from '../api/sdk.gen';
 import type { ModelsProject } from '../api/types.gen';
-import ProjectEditModal from './ProjectEditModal';
+import ProjectDetailModal from './ProjectDetailModal';
 import '../styles/gantt.css';
 
 interface GanttItem extends ModelsProject {
@@ -768,7 +768,7 @@ const ProjectGanttChart = () => {
       </div>
 
       {/* 編集モーダル */}
-      <ProjectEditModal
+      <ProjectDetailModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         project={selectedProject}

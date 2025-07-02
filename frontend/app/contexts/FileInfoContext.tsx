@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 interface FileInfoContextType {
   fileCount: number;
@@ -9,7 +9,7 @@ interface FileInfoContextType {
 
 const FileInfoContext = createContext<FileInfoContextType | undefined>(undefined);
 
-export const FileInfoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const FileInfoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [fileCount, setFileCount] = useState(0);
   const [currentPath, setCurrentPath] = useState('');
 

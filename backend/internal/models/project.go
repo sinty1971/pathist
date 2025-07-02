@@ -18,8 +18,12 @@ type Project struct {
 
 	// Additional fields specific to Project folders
 	CompanyName  string    `json:"company_name,omitempty" yaml:"company_name" example:"豊田築炉"`
+	CompanyID    string    `json:"company_id,omitempty" yaml:"company_id" example:"C12345"`
 	LocationName string    `json:"location_name,omitempty" yaml:"location_name" example:"名和工場"`
 	StartDate    Timestamp `json:"start_date,omitempty" yaml:"start_date"`
+	
+	// Company information (populated when company details are available)
+	Company *Company `json:"company,omitempty" yaml:"-"` // Not stored in YAML, populated at runtime
 
 	// Detail
 	EndDate     Timestamp `json:"end_date,omitempty" yaml:"end_date"`

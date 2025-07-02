@@ -18,9 +18,9 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import type { ModelsProject, ModelsTimestamp, ModelsManagedFile } from '../api/types.gen';
 import { postProjectRenameManagedFile, getProjectGetByPath } from '../api/sdk.gen';
-import { DatePickerComponent } from './DatePickerComponent';
+import { CalendarPicker } from './CalendarPicker';
 
-interface ProjectEditModalProps {
+interface ProjectDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: ModelsProject | null;
@@ -35,9 +35,9 @@ type ProjectFormData = Omit<ModelsProject, 'start_date' | 'end_date' | 'tags' | 
   tags?: string;
 };
 
-// React DatePickerコンポーネントをインポート済み
+// CalendarPickerコンポーネントをインポート済み
 
-const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, project, onUpdate, onProjectUpdate }) => {
+const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose, project, onUpdate, onProjectUpdate }) => {
   const [formData, setFormData] = useState<ProjectFormData>({
     id: '',
     company_name: '',
@@ -612,7 +612,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
                 >
                   開始日
                 </Typography>
-                <DatePickerComponent
+                <CalendarPicker
                   value={formData.start_date || ''}
                   onChange={(dateString) => handleDaisyDateChange(dateString, 'start_date')}
                   placeholder="開始日を選択"
@@ -641,7 +641,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
                 >
                   終了日
                 </Typography>
-                <DatePickerComponent
+                <CalendarPicker
                   value={formData.end_date || ''}
                   onChange={(dateString) => handleDaisyDateChange(dateString, 'end_date')}
                   placeholder="終了日を選択"
@@ -848,4 +848,4 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
   );
 };
 
-export default ProjectEditModal;
+export default ProjectDetailModal;

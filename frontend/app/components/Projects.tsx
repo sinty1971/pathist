@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import { getProjectRecent } from "../api/sdk.gen";
 import type { ModelsProject } from "../api/types.gen";
-import ProjectEditModal from "./ProjectEditModal";
+import ProjectDetailModal from "./ProjectDetailModal";
 import { useProject } from "../contexts/ProjectContext";
 
-const ProjectGanttChartSimple = () => {
+const Projects = () => {
   const [projects, setProjects] = useState<ModelsProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -271,6 +272,29 @@ const ProjectGanttChartSimple = () => {
           <div style={{ flex: 1 }}></div>
           <div style={{ minWidth: "90px", textAlign: "center", fontSize: "14px", marginRight: "24px" }}>終了日</div>
           <div style={{ minWidth: "80px", textAlign: "center", fontSize: "14px" }}>ステータス</div>
+          <Link
+            to="/projects/gantt"
+            style={{
+              background: "#4CAF50",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              padding: "6px 12px",
+              fontSize: "12px",
+              textDecoration: "none",
+              cursor: "pointer",
+              transition: "background 0.2s",
+              marginRight: "8px"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#45a049";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#4CAF50";
+            }}
+          >
+            📈 ガントチャート
+          </Link>
           <button
             onClick={() => setShowHelp(!showHelp)}
             style={{
@@ -425,7 +449,7 @@ const ProjectGanttChartSimple = () => {
 
 
       {/* 編集モーダル */}
-      <ProjectEditModal
+      <ProjectDetailModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}
         project={selectedProject}
@@ -436,4 +460,4 @@ const ProjectGanttChartSimple = () => {
   );
 };
 
-export default ProjectGanttChartSimple;
+export default Projects;

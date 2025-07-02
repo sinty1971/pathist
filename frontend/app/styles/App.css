@@ -38,7 +38,7 @@ html, body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff;
   overflow: hidden;
 }
 
@@ -651,43 +651,3 @@ html, body {
   opacity: 0.5;
 }
 
-/* FileInfoGrid specific styles */
-.file-info-grid-wrapper {
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.file-info-grid-wrapper .folder-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 2rem;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.file-info-grid-wrapper .header {
-  flex-shrink: 0;
-  margin-bottom: 1rem;
-}
-
-
-.file-info-grid-wrapper .loading,
-.file-info-grid-wrapper .error {
-  flex-shrink: 0;
-}
-
-.file-info-grid-wrapper .folder-list {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-}

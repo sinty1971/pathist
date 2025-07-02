@@ -3,6 +3,7 @@ import { getProjectRecent as getProjectsRecent } from '../api/sdk.gen';
 import type { ModelsProject } from '../api/types.gen';
 import ProjectDetailModal from './ProjectDetailModal';
 import '../styles/gantt.css';
+import '../styles/utilities.css';
 
 interface GanttItem extends ModelsProject {
   startX: number;

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { useFileInfo } from "../contexts/FileInfoContext";
+import "../styles/Navigation.css";
 
 interface NavigationProps {
   projectCount?: number;

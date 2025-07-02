@@ -1,0 +1,26 @@
+/* Utility Classes */
+
+/* Loading and error states */
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error {
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c00;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.success {
+  background: #efe;
+  border: 1px solid #cfc;
+  color: #090;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}

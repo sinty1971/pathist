@@ -1,7 +1,12 @@
 import { Outlet } from "react-router";
+import type { LinksFunction } from "react-router";
 import { Navigation } from "../components/Navigation";
 import { ProjectProvider, useProject } from "../contexts/ProjectContext";
-import "../styles/App.css";
+import { FileInfoProvider } from "../contexts/FileInfoContext";
+
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: "/app/styles/App.css" },
+];
 
 function LayoutContent() {
   const { projectCount } = useProject();
@@ -19,7 +24,9 @@ function LayoutContent() {
 export default function Layout() {
   return (
     <ProjectProvider>
-      <LayoutContent />
+      <FileInfoProvider>
+        <LayoutContent />
+      </FileInfoProvider>
     </ProjectProvider>
   );
 }

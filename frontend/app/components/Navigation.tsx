@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router";
+import { useFileInfo } from "../contexts/FileInfoContext";
 
 interface NavigationProps {
   projectCount?: number;
@@ -6,12 +7,13 @@ interface NavigationProps {
 
 export function Navigation({ projectCount }: NavigationProps = {}) {
   const location = useLocation();
+  const { fileCount, currentPath } = useFileInfo();
   
   // 現在のページタイトルを取得
   const getPageTitle = () => {
     switch (location.pathname) {
       case '/':
-        return 'ファイル一覧';
+        return `ファイル一覧${fileCount > 0 ? ` (${fileCount}項目)` : ''}${currentPath ? ` - ${currentPath}` : ''}`;
       case '/projects':
         return `工程表${projectCount !== undefined ? ` (${projectCount}件)` : ''}`;
       case '/gantt':

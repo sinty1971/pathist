@@ -387,10 +387,53 @@ const ProjectGanttChart = () => {
 
   // プロジェクトデータを更新
   const handleProjectUpdate = (updatedProject: ModelsProject) => {
+    // プロジェクト一覧を更新
+    setProjects((prevProjects) => {
+      // まず、更新前のプロジェクトIDで探す
+      const existingIndex = prevProjects.findIndex(p => p.id === updatedProject.id);
+      
+      if (existingIndex !== -1) {
+        // IDが同じなら通常の更新
+        const updatedProjects = [...prevProjects];
+        updatedProjects[existingIndex] = updatedProject;
+        return updatedProjects;
+      }
+      
+      // IDが変わった場合（フォルダー名変更）
+      // selectedProjectのIDで古いプロジェクトを探して削除
+      if (selectedProject && selectedProject.id !== updatedProject.id) {
+        const oldProjectIndex = prevProjects.findIndex(p => p.id === selectedProject.id);
+        
+        if (oldProjectIndex !== -1) {
+          // 古いプロジェクトを削除して新しいものを追加
+          const updatedProjects = [...prevProjects];
+          updatedProjects.splice(oldProjectIndex, 1);
+          updatedProjects.push(updatedProject);
+          
+          // 開始日順でソート（古い順）
+          return updatedProjects.sort((a, b) => {
+            const dateA = a.start_date ? new Date(typeof a.start_date === 'string' ? a.start_date : (a.start_date as any)['time.Time']).getTime() : 0;
+            const dateB = b.start_date ? new Date(typeof b.start_date === 'string' ? b.start_date : (b.start_date as any)['time.Time']).getTime() : 0;
+            
+            // 開始日が設定されている方を優先
+            if (dateA > 0 && dateB === 0) return -1;
+            if (dateA === 0 && dateB > 0) return 1;
+            
+            // 両方開始日がある場合は古い順
+            if (dateA > 0 && dateB > 0) return dateA - dateB;
+            
+            // 両方開始日がない場合はフォルダー名で昇順
+            return (a.name || '').localeCompare(b.name || '');
+          });
+        }
+      }
+      
+      // 古いプロジェクトが見つからない場合は新規追加として扱う
+      return [...prevProjects, updatedProject];
+    });
+    
+    // 選択中のプロジェクトを更新
     setSelectedProject(updatedProject);
-    setProjects((prevProjects) =>
-      prevProjects.map((p) => (p.id === updatedProject.id ? updatedProject : p))
-    );
   };
 
   // ステータスによる色の取得

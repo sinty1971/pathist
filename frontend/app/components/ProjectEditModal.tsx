@@ -795,8 +795,9 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
                               variant="contained"
                               size="small"
                               onClick={handleRenameFiles}
-                              disabled={isRenaming || isLoading}
+                              disabled={isRenaming || isLoading || hasFilenameChanges}
                               startIcon={isRenaming ? <CircularProgress size={16} /> : null}
+                              title={hasFilenameChanges ? 'ファイル名の変更が必要です。上のボタンで更新してください。' : ''}
                             >
                               {isRenaming ? '変更中...' : '変更'}
                             </Button>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { getFileFileinfos } from '../api/sdk.gen';
 import { timestampToString } from '../utils/timestamp';
 import { FileInfoModal } from './FileInfoModal';
+import { useFileInfo } from '../contexts/FileInfoContext';
 
 export const FileInfoGrid: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ export const FileInfoGrid: React.FC = () => {
   const [pathInput, setPathInput] = useState('');
   const [selectedFileInfo, setSelectedFileInfo] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { setFileCount, setCurrentPath: setContextPath } = useFileInfo();
 
   // ファイルシステムルートからの相対パスに変換
   const convertToRelativePath = (frontendPath: string): string => {
@@ -50,23 +53,20 @@ export const FileInfoGrid: React.FC = () => {
     setError(null);
     
     try {
-      console.log('Loading file entries for frontend path:', frontendPath);
-      console.log('Converted to relative path:', relativePath);
-      
       // APIクライアントを使用
-      console.log('Calling API with query:', relativePath ? { path: relativePath } : {});
       const response = await getFileFileinfos({
         query: relativePath ? { path: relativePath } : {}
       });
       
-      console.log('API response:', response);
-      
       if (response.data) {
         // APIは直接配列を返す（実際のAPIでは日付は文字列として返される）
         const data = response.data as any[];
-        console.log('Received data:', data);
         setFileEntries(Array.isArray(data) ? data : []);
         setCurrentPath(frontendPath);
+        
+        // コンテキストを更新
+        setFileCount(Array.isArray(data) ? data.length : 0);
+        setContextPath(frontendPath || '~/penguin');
       } else if (response.error) {
         console.error('API returned error:', response.error);
         throw new Error('APIエラー: ' + JSON.stringify(response.error));
@@ -80,8 +80,14 @@ export const FileInfoGrid: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    loadFileEntries();
-  }, [loadFileEntries]);
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      loadFileEntries();
+    }
+  }, [mounted, loadFileEntries]);
 
   const handleFileInfoClick = (fileInfo: any) => {
     if (fileInfo.is_directory) {
@@ -151,18 +157,10 @@ export const FileInfoGrid: React.FC = () => {
     }
   };
 
-  // デバッグ用の表示
-  console.log('FileInfoGrid render:', { 
-    loading, 
-    error, 
-    fileInfosCount: fileInfos.length,
-    pathInput,
-    currentPath 
-  });
-
-  return (
-    <div className="folder-container">
-      <div className="header">
+    return (
+    <div className="file-info-grid-wrapper">
+      <div className="folder-container">
+        <div className="header">
         <form onSubmit={handlePathSubmit} className="path-form">
           <button type="button" onClick={handleGoBack} className="back-button">
             <span className="back-arrow">⮜</span>
@@ -176,11 +174,6 @@ export const FileInfoGrid: React.FC = () => {
           />
           <button type="submit" className="load-button">読み込み</button>
         </form>
-      </div>
-
-      <div className="folder-info">
-        <span className="folder-count">{fileInfos.length} 項目</span>
-        <span className="current-path">{currentPath || '~/penguin'}</span>
       </div>
 
       {loading && <div className="loading">読み込み中...</div>}
@@ -205,7 +198,7 @@ export const FileInfoGrid: React.FC = () => {
                   <span>{fileInfo.is_directory ? 'フォルダー' : 'ファイル'}</span>
                   <span className="folder-date">
                     {' · 更新: '}
-                    {timestampToString(fileInfo.modified_time) ? new Date(timestampToString(fileInfo.modified_time)!).toLocaleDateString('ja-JP', {
+                    {mounted && timestampToString(fileInfo.modified_time) ? new Date(timestampToString(fileInfo.modified_time)!).toLocaleDateString('ja-JP', {
                       year: 'numeric',
                       month: '2-digit',
                       day: '2-digit',
@@ -225,6 +218,7 @@ export const FileInfoGrid: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+      </div>
     </div>
   );
 };

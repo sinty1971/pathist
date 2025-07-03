@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getProjectRecent as getProjectsRecent } from '../api/sdk.gen';
 import type { ModelsProject } from '../api/types.gen';
 import ProjectDetailModal from './ProjectDetailModal';
-import '../styles/gantt.css';
+import '../styles/project-gantt.css';
 import '../styles/utilities.css';
 
 interface GanttItem extends ModelsProject {
@@ -24,7 +24,8 @@ const ProjectGanttChart = () => {
   const [visibleProjects, setVisibleProjects] = useState<ModelsProject[]>([]);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const ITEMS_PER_PAGE = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const MIN_ITEMS = 5;
   const DAY_WIDTH = 10; // ピクセル/日
   const ROW_HEIGHT = 40; // ピクセル
 
@@ -33,14 +34,8 @@ const ProjectGanttChart = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading projects...');
-      
       const response = await getProjectsRecent();
-      
-      console.log('API response:', response);
       const projects = response.data || [];
-      
-      console.log('Projects:', projects);
       setProjects(projects);
     } catch (err) {
       console.error('Error loading projects:', err);
@@ -216,11 +211,11 @@ const ProjectGanttChart = () => {
       return projectStartDate >= baselineDate;
     });
 
-    // 開始日昇順で10個を取得
-    let finalProjects = projectsFromBaselineDate.slice(0, ITEMS_PER_PAGE);
+    // 開始日昇順で表示件数分を取得
+    let finalProjects = projectsFromBaselineDate.slice(0, itemsPerPage);
     
-    // もし表示件数が10件未満の場合は、開始日が最も新しいものから10件を抽出
-    if (finalProjects.length < ITEMS_PER_PAGE) {
+    // もし表示件数が不足の場合は、開始日が最も新しいものから表示件数分を抽出
+    if (finalProjects.length < itemsPerPage) {
       // 全工事を開始日の新しい順（降順）でソート
       const allProjectsDescending = [...projects].sort((a, b) => {
         const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
@@ -228,8 +223,8 @@ const ProjectGanttChart = () => {
         return dateB - dateA; // 新しい順（降順）
       });
       
-      // 最新の10件を取得して、開始日の古い順（昇順）に並び替え
-      finalProjects = allProjectsDescending.slice(0, ITEMS_PER_PAGE).sort((a, b) => {
+      // 最新の表示件数分を取得して、開始日の古い順（昇順）に並び替え
+      finalProjects = allProjectsDescending.slice(0, itemsPerPage).sort((a, b) => {
         const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
         const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
         return dateA - dateB; // 古い順（昇順）
@@ -251,12 +246,28 @@ const ProjectGanttChart = () => {
     if (projects.length > 0 && scrollContainerRef.current) {
       updateVisibleProjects(scrollContainerRef.current.scrollLeft);
     }
-  }, [projects, viewStartDate]);
+  }, [projects, viewStartDate, itemsPerPage]);
 
-  // ウィンドウリサイズ時に表示工事を再計算
+  // 画面高さに基づいて表示件数を計算
+  const calculateItemsPerPage = () => {
+    if (!scrollContainerRef.current) return MIN_ITEMS;
+    
+    // ガントチャートエリアの高さを取得
+    const containerHeight = scrollContainerRef.current.clientHeight;
+    // ヘッダー分を除いた有効な高さ
+    const availableHeight = containerHeight - 55; // ヘッダー高さ（月ヘッダー30px + 日付ヘッダー25px）
+    // 行数を計算（最低5個、最大は画面に収まる範囲）
+    const maxItems = Math.floor(availableHeight / ROW_HEIGHT);
+    
+    return Math.max(MIN_ITEMS, maxItems);
+  };
+
+  // ウィンドウリサイズ時に表示工事と表示件数を再計算
   useEffect(() => {
     const handleResize = () => {
       if (scrollContainerRef.current) {
+        const newItemsPerPage = calculateItemsPerPage();
+        setItemsPerPage(newItemsPerPage);
         updateVisibleProjects(scrollContainerRef.current.scrollLeft);
       }
     };
@@ -264,6 +275,14 @@ const ProjectGanttChart = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [projects, viewStartDate]);
+
+  // 初回レンダリング後に表示件数を計算
+  useEffect(() => {
+    if (scrollContainerRef.current && ganttItems.length > 0) {
+      const newItemsPerPage = calculateItemsPerPage();
+      setItemsPerPage(newItemsPerPage);
+    }
+  }, [ganttItems.length]);
 
   // ガントチャートアイテムの計算
   useEffect(() => {
@@ -496,7 +515,7 @@ const ProjectGanttChart = () => {
     
     while (current <= viewEndDate) {
       const day = current.getDate();
-      if (day === 1 || day % 3 === 1) { // 1日、4日、7日、10日...
+      if ((day === 1 || day % 3 === 1) && day !== 31) { // 1日、4日、7日、10日...（31日は除外）
         headers.push({
           date: day,
           month: current.getMonth() + 1,
@@ -555,31 +574,31 @@ const ProjectGanttChart = () => {
 
   return (
     <div className="gantt-container">
-      <h1>工程表</h1>
-      
-      <div className="gantt-controls">
+      <div style={{ 
+        marginBottom: "20px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }}>
         <button 
           onClick={scrollToToday}
-          style={{
-            padding: "8px 16px",
-            background: "#FF5252",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "14px"
-          }}
+          className="gantt-today-button"
         >
-          今日へ移動
+          📅 今日へ移動
         </button>
-        <div className="info">
-          <span>表示中: {ganttItems.length}件 / 全{projects.length}件</span>
+        
+        <div style={{ 
+          fontSize: "16px",
+          color: "#666",
+          fontWeight: "500"
+        }}>
+          表示中: {ganttItems.length}件 / 全{projects.length}件
         </div>
       </div>
 
       <div className="gantt-wrapper">
         <div className="gantt-sidebar">
-          <div className="gantt-header-left">工事名</div>
+          <div className="gantt-header-left">会社名</div>
           {ganttItems.map((item, index) => {
             // 今日の日付が工事期間に含まれるかチェック
             const today = new Date();
@@ -605,24 +624,17 @@ const ProjectGanttChart = () => {
             return (
               <div 
                 key={`${item.id}-${index}`} 
-                className="gantt-row-label"
+                className={`gantt-row-label ${isActiveProject ? 'gantt-row-label-active' : ''}`}
                 style={{ 
-                  height: ROW_HEIGHT,
-                  backgroundColor: isActiveProject ? '#fff3cd' : 'transparent',
-                  borderLeft: isActiveProject ? '4px solid #ffc107' : 'none'
+                  height: ROW_HEIGHT
                 }}
               >
                 <div 
-                  className="project-name"
-                  style={{ 
-                    fontWeight: isActiveProject ? 'bold' : 'normal',
-                    color: isActiveProject ? '#856404' : 'inherit',
-                    cursor: 'pointer'
-                  }}
+                  className={`project-name project-name-clickable ${isActiveProject ? 'project-name-active' : ''}`}
                   onClick={() => handleProjectNameClick(item)}
                   title="クリックしてプロジェクト期間の中央に移動"
                 >
-                  {item.company_name} - {item.location_name}
+                  {item.company_name}
                 </div>
               </div>
             );
@@ -636,20 +648,10 @@ const ProjectGanttChart = () => {
               {monthHeaders.map((header, index) => (
                 <div 
                   key={index}
-                  className="month-header"
+                  className="month-header month-header-content"
                   style={{ 
-                    position: "absolute",
                     left: header.startX, 
-                    width: header.width,
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "#e8f4fd",
-                    borderRight: "1px solid #ddd",
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    color: "#0066cc"
+                    width: header.width
                   }}
                 >
                   {header.year}年{header.month}月
@@ -658,27 +660,34 @@ const ProjectGanttChart = () => {
             </div>
             
             {/* 日付ヘッダー */}
-            <div className="gantt-header day-header-row" style={{ height: "25px", borderBottom: "2px solid #333" }}>
+            <div className="gantt-header day-header-row" style={{ height: "25px", borderBottom: "1px solid #333" }}>
               {dayHeaders.map((header, index) => (
                 <div 
                   key={index}
-                  className="day-header"
+                  className="day-header day-header-content"
                   style={{ 
-                    position: "absolute",
                     left: header.startX, 
-                    width: header.width,
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "#f5f5f5",
-                    borderRight: "1px solid #ddd",
-                    fontSize: "11px",
-                    fontWeight: "500"
+                    width: header.width
                   }}
                 >
                   {header.date}
                 </div>
+              ))}
+            </div>
+
+            {/* 月境界線（太線） - 月ヘッダーから開始 */}
+            <div className="gantt-month-boundaries" style={{ top: 0, height: '100%' }}>
+              {monthBoundaries.map((boundary, index) => (
+                <div 
+                  key={`month-boundary-${index}`}
+                  className="month-boundary-line"
+                  style={{ 
+                    left: boundary.startX,
+                    top: 0,
+                    height: Math.max(400, itemsPerPage * ROW_HEIGHT + 55) // ヘッダー分も含む
+                  }}
+                  title={`${boundary.year}年${boundary.month}月開始`}
+                />
               ))}
             </div>
 
@@ -689,19 +698,10 @@ const ProjectGanttChart = () => {
                   <div 
                     key={index}
                     className="grid-line"
-                    style={{ left: header.startX }}
-                  />
-                ))}
-              </div>
-
-              {/* 月境界線（太線） */}
-              <div className="gantt-month-boundaries">
-                {monthBoundaries.map((boundary, index) => (
-                  <div 
-                    key={`month-boundary-${index}`}
-                    className="month-boundary-line"
-                    style={{ left: boundary.startX }}
-                    title={`${boundary.year}年${boundary.month}月開始`}
+                    style={{ 
+                      left: header.startX,
+                      height: Math.max(400, itemsPerPage * ROW_HEIGHT)
+                    }}
                   />
                 ))}
               </div>
@@ -720,7 +720,7 @@ const ProjectGanttChart = () => {
                 ))}
               </div>
 
-              {/* ガントバー */}
+              {/* 工事期間バー */}
               {ganttItems.map((item, index) => (
                 <div 
                   key={`${item.id}-${index}`}
@@ -728,8 +728,8 @@ const ProjectGanttChart = () => {
                   style={{
                     left: item.startX,
                     width: item.width,
-                    top: index * ROW_HEIGHT + 5,
-                    height: ROW_HEIGHT - 10,
+                    top: index * ROW_HEIGHT + 10,
+                    height: ROW_HEIGHT - 15,
                     backgroundColor: getStatusColor(item.status)
                   }}
                   onClick={() => handleProjectEdit(item)}
@@ -755,7 +755,7 @@ const ProjectGanttChart = () => {
                 style={{
                   left: Math.floor((new Date().setHours(0, 0, 0, 0) - viewStartDate.getTime()) / (1000 * 60 * 60 * 24)) * DAY_WIDTH,
                   width: DAY_WIDTH,
-                  height: '100%',
+                  height: Math.max(400, itemsPerPage * ROW_HEIGHT), // 動的な高さ
                   backgroundColor: 'rgba(255, 192, 203, 0.3)', // 薄いピンク
                   position: 'absolute',
                   top: 0,

@@ -5,7 +5,7 @@ import { ProjectProvider, useProject } from "../contexts/ProjectContext";
 import { FileInfoProvider } from "../contexts/FileInfoContext";
 
 export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: "/app/styles/App.css" },
+  { rel: "stylesheet", href: "/app/styles/app.css" },
 ];
 
 function LayoutContent() {
@@ -13,7 +13,7 @@ function LayoutContent() {
   
   return (
     <div className="app">
-      <Navigation projectCount={projectCount} />
+      <Navigation />
       <main className="main-content">
         <Outlet />
       </main>

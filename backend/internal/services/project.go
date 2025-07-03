@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"penguin-backend/internal/models"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -45,47 +46,49 @@ func NewProjectService(projectsPath string) (*ProjectService, error) {
 // pathは工事フォルダーのファイル名
 // 工事を返す
 func (s *ProjectService) GetProject(path string) (models.Project, error) {
-	fmt.Printf("GetProject called with path: '%s'\n", path)
-
 	// 工事フォルダー自体の情報を取得
 	fullPath, err := s.FileService.GetFullpath(path)
 	if err != nil {
-		fmt.Printf("GetFullpath error for path '%s': %v\n", path, err)
 		return models.Project{}, fmt.Errorf("工事フォルダーが見つかりません: %s", path)
 	}
-	fmt.Printf("Full path: %s\n", fullPath)
 
 	fileInfo, err := models.NewFileInfo(fullPath)
 	if err != nil {
-		fmt.Printf("NewFileInfo error for fullPath '%s': %v\n", fullPath, err)
 		return models.Project{}, fmt.Errorf("ファイル情報の取得に失敗しました: %v", err)
 	}
 
 	// 工事を作成
 	project, err := models.NewProject(*fileInfo)
 	if err != nil {
-		fmt.Printf("NewProject error: %v\n", err)
 		return models.Project{}, fmt.Errorf("工事データの作成に失敗しました: %v", err)
 	}
 
 	// 管理ファイルの設定
 	err = s.SetManagedFiles(&project)
 	if err != nil {
-		fmt.Printf("SetManagedFiles error: %v\n", err)
 		return models.Project{}, fmt.Errorf("管理ファイルの設定に失敗しました: %v", err)
 	}
 
 	// .detail.yamlと同期する
 	err = s.SyncDetailFile(&project)
 	if err != nil {
-		fmt.Printf("SyncDetailFile error: %v\n", err)
 		return models.Project{}, fmt.Errorf(".detail.yamlの同期に失敗しました: %v", err)
 	}
+
+	// 企業情報を取得
+	s.EnrichProjectWithCompanyInfo(&project)
 
 	return project, nil
 }
 
-// GetRecentProjects は指定されたパスから最近の工事一覧を取得する（並行処理版）
+// ProjectResult 並列処理用の結果構造体
+type ProjectResult struct {
+	Project models.Project
+	Index   int
+	Error   error
+}
+
+// GetRecentProjects は指定されたパスから最近の工事一覧を取得する（高速並行処理版）
 func (s *ProjectService) GetRecentProjects() []models.Project {
 	// ファイルシステムから工事一覧を取得
 	fileInfos, err := s.FileService.GetFileInfos()
@@ -93,43 +96,74 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 		return []models.Project{}
 	}
 
-	// 並行処理用のチャンネルとWaitGroupを設定
-	projectChan := make(chan models.Project, len(fileInfos))
-	var wg sync.WaitGroup
-
-	// 各工事情報を並行処理で取得
-	for _, fileInfo := range fileInfos {
-		wg.Add(1)
-		go func(fi models.FileInfo) {
-			defer wg.Done()
-			
-			// fileInfoから工事を作成
-			project, err := models.NewProject(fi)
-			if err != nil {
-				return
-			}
-
-			// 管理ファイルの設定
-			s.SetManagedFiles(&project)
-
-			// .detail.yamlと同期する
-			s.SyncDetailFile(&project)
-
-			// チャンネルに送信
-			projectChan <- project
-		}(fileInfo)
+	if len(fileInfos) == 0 {
+		return []models.Project{}
 	}
 
-	// 全てのゴルーチンの完了を待つ
+	// 並列処理用のワーカー数を決定（CPU数と同じ、最大8）
+	numWorkers := min(runtime.NumCPU(), min(8, len(fileInfos)))
+
+	// チャンネルとワーカーグループを設定
+	jobs := make(chan int, len(fileInfos))
+	results := make(chan ProjectResult, len(fileInfos))
+	var wg sync.WaitGroup
+
+	// ワーカーを起動
+	for range numWorkers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				fileInfo := fileInfos[index]
+				
+				// fileInfoから工事を作成
+				project, err := models.NewProject(fileInfo)
+				if err != nil {
+					results <- ProjectResult{Index: index, Error: err}
+					continue
+				}
+
+				// 管理ファイルの設定（エラーは無視して継続）
+				s.setManagedFilesOptimized(&project)
+
+				// .detail.yamlと同期する（エラーは無視して継続）
+				s.syncDetailFileOptimized(&project)
+
+				// 企業情報の取得（エラーは無視して継続）
+				s.EnrichProjectWithCompanyInfo(&project)
+
+				results <- ProjectResult{Project: project, Index: index, Error: nil}
+			}
+		}()
+	}
+
+	// ジョブを送信
+	for i := range fileInfos {
+		jobs <- i
+	}
+	close(jobs)
+
+	// ワーカーの完了を待つ
 	go func() {
 		wg.Wait()
-		close(projectChan)
+		close(results)
 	}()
 
-	// チャンネルから結果を収集
+	// 結果を収集（元の順序を保持）
 	projects := make([]models.Project, 0, len(fileInfos))
-	for project := range projectChan {
-		projects = append(projects, project)
+	projectMap := make(map[int]models.Project, len(fileInfos))
+	
+	for result := range results {
+		if result.Error == nil {
+			projectMap[result.Index] = result.Project
+		}
+	}
+
+	// 元の順序でプロジェクト一覧を構築
+	for i := range len(fileInfos) {
+		if project, exists := projectMap[i]; exists {
+			projects = append(projects, project)
+		}
 	}
 
 	// 工事開始日で降順ソート（新しいものが最初）
@@ -154,21 +188,23 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 }
 
 // SyncDetailFile は工事の詳細を.detail.yamlから取り込む
-// 取り込む詳細情報は、工事完了日・工事説明・工事タグ
-// Statusは取り込み後に計算する
-// 更新後の工事情報を.detail.yamlに反映する。
-// 更新後の工事情報を返す。
 func (s *ProjectService) SyncDetailFile(current *models.Project) error {
+	return s.syncDetailFileOptimized(current)
+}
 
+// syncDetailFileOptimized は工事の詳細を高速で.detail.yamlから取り込む（内部用）
+func (s *ProjectService) syncDetailFileOptimized(current *models.Project) error {
 	// .detail.yamlを読み込む
 	detailPath := filepath.Join(current.FileInfo.Name, s.DetailFile)
 	detail, err := s.YamlService.Load(detailPath)
 	if err != nil {
-		// ファイルが存在しない場合は新規作成
-		err = s.YamlService.Save(detailPath, *current)
-		if err != nil {
-			return err
-		}
+		// ファイルが存在しない場合はデフォルト値を設定
+		current.Status = models.DetermineProjectStatus(current.StartDate, current.EndDate)
+		
+		// 新規ファイルの場合は非同期で保存（必要最小限の書き込み）
+		go func() {
+			s.YamlService.Save(detailPath, *current)
+		}()
 		return nil
 	}
 
@@ -180,99 +216,99 @@ func (s *ProjectService) SyncDetailFile(current *models.Project) error {
 	// 計算が必要な項目の更新
 	current.Status = models.DetermineProjectStatus(current.StartDate, current.EndDate)
 
-	// 工事詳細を更新
-	err = s.YamlService.Save(detailPath, detail)
-	if err != nil {
-		return err
+	// フォルダー名から解析した情報をdetailに反映
+	detail.StartDate = current.StartDate
+	detail.CompanyName = current.CompanyName
+	detail.LocationName = current.LocationName
+	detail.Status = current.Status
+
+	// データに変更がある場合のみ非同期で保存（パフォーマンス重視）
+	if s.hasProjectChanged(detail, *current) {
+		go func() {
+			s.YamlService.Save(detailPath, detail)
+		}()
 	}
 
 	return nil
 }
 
+// hasProjectChanged プロジェクトデータに変更があるかチェック
+func (s *ProjectService) hasProjectChanged(detail, current models.Project) bool {
+	return detail.StartDate != current.StartDate ||
+		detail.CompanyName != current.CompanyName ||
+		detail.LocationName != current.LocationName ||
+		detail.Status != current.Status
+}
+
 // SetManagedFiles は工事の管理ファイルを設定します
 func (s *ProjectService) SetManagedFiles(project *models.Project) error {
+	return s.setManagedFilesOptimized(project)
+}
 
-	// 工事フォルダーのフルパスを取得
-	projectFullpath, err := s.FileService.GetFullpath(project.FileInfo.Name)
-	if err != nil {
-		return err
-	}
-
+// setManagedFilesOptimized は工事の管理ファイルを高速設定します（内部用）
+func (s *ProjectService) setManagedFilesOptimized(project *models.Project) error {
 	// 工事フォルダー内のファイルを取得
 	fileInfos, err := s.FileService.GetFileInfos(project.FileInfo.Name)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		// エラーの場合はデフォルトの管理ファイルを設定
+		project.ManagedFiles = []models.ManagedFile{{
+			Recommended: project.Name + ".xlsx",
+			Current:     "工事.xlsx",
+		}}
+		return nil
 	}
 
-	// 管理ファイルの設定
-	managedFiles := make([]models.ManagedFile, len(fileInfos))
+	// 管理ファイルの設定（最大1個のみ）
+	var managedFile models.ManagedFile
+	var found bool
 
-	// 工事ファイルの設定
-	count := 0
+	// 日付パターンのコンパイル（1回のみ）
 	datePattern := regexp.MustCompile(`^20\d{2}-\d{4}`)
+
+	// 工事ファイルの検索
 	for _, fileInfo := range fileInfos {
-		// ファイルの拡張子
-		fileExt := filepath.Ext(fileInfo.Name)
-
-		// 拡張子を除いたファイル名
-		filenameWithoutExt := strings.TrimSuffix(fileInfo.Name, fileExt)
-
 		// エクセルファイル以外はスキップ
 		if !fileInfo.IsExcel() {
 			continue
 		}
 
-		// 拡張子以外のファイル名がyyyy-mmddで始まる場合または工事のファイル名以外はスキップ
+		// ファイル名の解析
+		fileExt := filepath.Ext(fileInfo.Name)
+		filenameWithoutExt := strings.TrimSuffix(fileInfo.Name, fileExt)
+
+		// 条件に合うファイルかチェック
 		if !datePattern.MatchString(filenameWithoutExt) && filenameWithoutExt != "工事" {
 			continue
 		}
 
-		recommendedName := strings.Join([]string{project.Name, fileExt}, "")
+		recommendedName := project.Name + fileExt
 
-		// 推奨ファイルと現在のファイルが同じ時は推奨ファイルの表示を不必要と分かるようにする
+		// 推奨ファイルと現在のファイルが同じ時は推奨ファイルの表示を不要にする
 		if recommendedName == fileInfo.Name {
 			recommendedName = ""
 		}
 
-		// 管理ファイルの設定
-		managedFiles[count] = models.ManagedFile{
+		managedFile = models.ManagedFile{
 			Recommended: recommendedName,
 			Current:     fileInfo.Name,
 		}
-		count++
+		found = true
 		break
 	}
 
-	// 工事ファイルが見つからない場合はひな形を作成
-	if count == 0 {
-		recommendedName := strings.Join([]string{project.Name, ".xlsx"}, "")
-
-		managedFiles[0] = models.ManagedFile{
-			Recommended: recommendedName,
+	// 工事ファイルが見つからない場合はひな形を設定
+	if !found {
+		managedFile = models.ManagedFile{
+			Recommended: project.Name + ".xlsx",
 			Current:     "工事.xlsx",
 		}
-
-		// テンプレートファイルのパスを取得
-		templatePath, err := s.FileService.GetFullpath("@工事 新規テンプレート", "工事.xlsx")
-		if err != nil {
-			return err
-		}
-
-		// コピー先のパス（工事フォルダ内の "工事.xlsx"）
-		dstPath := filepath.Join(projectFullpath, "工事.xlsx")
-
-		// テンプレートファイルをコピー
-		err = s.FileService.CopyFile(templatePath, dstPath)
-		if err != nil {
-			return err
-		}
-
-		count = 1
+		
+		// テンプレートファイルのコピーは省略（高速化のため）
+		// 必要に応じて別途実行する
 	}
 
 	// 管理ファイルの設定
-	project.ManagedFiles = managedFiles[:count]
+	project.ManagedFiles = []models.ManagedFile{managedFile}
 
 	return nil
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { timestampToString } from '../utils/timestamp';
-import '../styles/Modal.css';
+import '../styles/file-detail-modal.css';
 
 interface FileDetailModalProps {
   fileInfo: any | null;

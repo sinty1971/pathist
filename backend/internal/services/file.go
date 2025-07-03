@@ -7,7 +7,9 @@ import (
 	"os/user"
 	"path/filepath"
 	"penguin-backend/internal/models"
+	"runtime"
 	"strings"
+	"sync"
 )
 
 // FileService is a service for managing the file system
@@ -38,6 +40,13 @@ func NewFileService(basePath string) (*FileService, error) {
 	}, nil
 }
 
+// FileInfoResult 並列処理用の結果構造体
+type FileInfoResult struct {
+	FileInfo *models.FileInfo
+	Index    int
+	Error    error
+}
+
 // GetFileInfos 指定されたディレクトリパス内のファイル情報を取得
 // 取得したファイル情報は実体のファイル情報を取得して判定したもの
 func (s *FileService) GetFileInfos(joinPaths ...string) ([]models.FileInfo, error) {
@@ -53,26 +62,67 @@ func (s *FileService) GetFileInfos(joinPaths ...string) ([]models.FileInfo, erro
 		return nil, err
 	}
 
-	// ファイル情報を作成
-	fileInfos := make([]models.FileInfo, len(entries))
-	var count int
-	for _, entry := range entries {
-		// ファイルパスを取得
-		entryFullpath := filepath.Join(fullpath, entry.Name())
-
-		// FileInfoを作成
-		fileInfo, err := models.NewFileInfo(entryFullpath)
-		if err != nil {
-			// ファイル情報の取得に失敗した場合はスキップ
-			continue
-		}
-
-		// ファイル情報の登録
-		fileInfos[count] = *fileInfo
-		count++
+	if len(entries) == 0 {
+		return []models.FileInfo{}, nil
 	}
 
-	return fileInfos[:count], nil
+	// 並列処理用のワーカー数を決定（CPU数の2倍、最大16）
+	numWorkers := min(min(runtime.NumCPU()*2, 16), len(entries))
+
+	// チャンネルとワーカーグループを設定
+	jobs := make(chan int, len(entries))
+	results := make(chan FileInfoResult, len(entries))
+	var wg sync.WaitGroup
+
+	// ワーカーを起動
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				entry := entries[index]
+				entryFullpath := filepath.Join(fullpath, entry.Name())
+
+				fileInfo, err := models.NewFileInfo(entryFullpath)
+				results <- FileInfoResult{
+					FileInfo: fileInfo,
+					Index:    index,
+					Error:    err,
+				}
+			}
+		}()
+	}
+
+	// ジョブを送信
+	for i := range entries {
+		jobs <- i
+	}
+	close(jobs)
+
+	// ワーカーの完了を待つ
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// 結果を収集（元の順序を保持）
+	fileInfos := make([]models.FileInfo, 0, len(entries))
+	resultMap := make(map[int]*models.FileInfo, len(entries))
+	
+	for result := range results {
+		if result.Error == nil && result.FileInfo != nil {
+			resultMap[result.Index] = result.FileInfo
+		}
+	}
+
+	// 元の順序でファイル情報を構築
+	for i := range len(entries) {
+		if fileInfo, exists := resultMap[i]; exists {
+			fileInfos = append(fileInfos, *fileInfo)
+		}
+	}
+
+	return fileInfos, nil
 }
 
 // GetFullpath BasePathに可変長引数の相対パスを追加したパスを返す

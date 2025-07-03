@@ -47,7 +47,7 @@ export default function HomePage() {
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
             transition: "all 0.2s ease",
             cursor: "pointer",
-            height: "180px",
+            height: "220px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -129,7 +129,7 @@ export default function HomePage() {
               marginBottom: "0.5rem",
               textAlign: "center"
             }}>
-              工程表
+              工事一覧
             </h3>
             <p style={{
               color: "#666",
@@ -172,7 +172,7 @@ export default function HomePage() {
               e.stopPropagation();
             }}
           >
-            📈 ガントチャートを見る
+            📈 工程表を見る
           </Link>
         </div>
 

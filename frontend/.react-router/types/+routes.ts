@@ -22,16 +22,19 @@ type Pages = {
   "/projects/gantt": {
     params: {};
   };
+  "/companies": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/files" | "/projects" | "/projects/gantt";
+    page: "/" | "/files" | "/projects" | "/projects/gantt" | "/companies";
   };
   "routes/_layout.tsx": {
     id: "routes/_layout";
-    page: "/" | "/files" | "/projects" | "/projects/gantt";
+    page: "/" | "/files" | "/projects" | "/projects/gantt" | "/companies";
   };
   "routes/_layout._index.tsx": {
     id: "routes/_layout._index";
@@ -48,5 +51,9 @@ type RouteFiles = {
   "routes/_layout.gantt.tsx": {
     id: "routes/_layout.gantt";
     page: "/projects/gantt";
+  };
+  "routes/_layout.companies.tsx": {
+    id: "routes/_layout.companies";
+    page: "/companies";
   };
 };

@@ -176,6 +176,54 @@ export default function HomePage() {
           </Link>
         </div>
 
+        {/* 会社一覧カード */}
+        <Link to="/companies" style={{ textDecoration: "none" }}>
+          <div className="feature-card" style={{
+            background: "rgba(255, 255, 255, 0.95)",
+            borderRadius: "12px",
+            padding: "1.5rem",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+            transition: "all 0.2s ease",
+            cursor: "pointer",
+            height: "220px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-3px)";
+            e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.15)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
+          }}>
+            <div style={{
+              fontSize: "2.5rem",
+              marginBottom: "0.5rem"
+            }}>
+              🏢
+            </div>
+            <h3 style={{
+              fontSize: "1.1rem",
+              color: "#333",
+              marginBottom: "0.5rem",
+              textAlign: "center"
+            }}>
+              会社一覧
+            </h3>
+            <p style={{
+              color: "#666",
+              fontSize: "0.85rem",
+              textAlign: "center",
+              lineHeight: "1.4"
+            }}>
+              取引先会社の情報管理
+            </p>
+          </div>
+        </Link>
+
       </div>
 
       <div style={{
@@ -198,7 +246,8 @@ export default function HomePage() {
           lineHeight: "1.8"
         }}>
           データ保存場所: ~/penguin<br />
-          工事プロジェクト: ~/penguin/豊田築炉/2-工事
+          工事プロジェクト: ~/penguin/豊田築炉/2-工事<br />
+          会社情報: ~/penguin/豊田築炉/1 会社
         </p>
       </div>
       </div>

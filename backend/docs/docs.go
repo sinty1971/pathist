@@ -15,6 +15,91 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/company/list": {
+            "get": {
+                "description": "会社フォルダーの一覧を取得します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "会社管理"
+                ],
+                "summary": "会社一覧の取得",
+                "responses": {
+                    "200": {
+                        "description": "正常なレスポンス",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Company"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "サーバーエラー",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/company/{id}": {
+            "get": {
+                "description": "指定されたIDの会社詳細を取得します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "会社管理"
+                ],
+                "summary": "会社詳細の取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "会社ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "正常なレスポンス",
+                        "schema": {
+                            "$ref": "#/definitions/models.Company"
+                        }
+                    },
+                    "404": {
+                        "description": "会社が見つからない",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "サーバーエラー",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/file/fileinfos": {
             "get": {
                 "description": "指定されたパスからファイルとフォルダーの一覧を取得します",
@@ -237,6 +322,89 @@ const docTemplate = `{
                 },
                 "project": {
                     "$ref": "#/definitions/models.Project"
+                }
+            }
+        },
+        "models.Company": {
+            "description": "工事会社の基本情報をファイル名から取得したモデル",
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "愛知県名古屋市熱田区三本松町1-1"
+                },
+                "business_type": {
+                    "type": "string",
+                    "example": "元請け"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "info@toyotachikuro.jp"
+                },
+                "full_name": {
+                    "description": "属性ファイルフィールド",
+                    "type": "string",
+                    "example": "有限会社 豊田築炉"
+                },
+                "id": {
+                    "description": "計算フィールド",
+                    "type": "string",
+                    "example": "TC001"
+                },
+                "is_directory": {
+                    "description": "Whether this item is a directory",
+                    "type": "boolean",
+                    "example": true
+                },
+                "modified_time": {
+                    "description": "Last modification time",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Timestamp"
+                        }
+                    ]
+                },
+                "name": {
+                    "description": "Name of the file or folder",
+                    "type": "string",
+                    "example": "2025-0618 豊田築炉 名和工場"
+                },
+                "path": {
+                    "description": "FileService.BasePathからの相対パス",
+                    "type": "string",
+                    "example": "豊田築炉/2-工事/2025-0618 豊田築炉 名和工場"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "052-681-8111"
+                },
+                "postal_code": {
+                    "type": "string",
+                    "example": "456-0001"
+                },
+                "short_name": {
+                    "description": "パス名からの固有フィールド",
+                    "type": "string",
+                    "example": "豊田築炉"
+                },
+                "size": {
+                    "description": "Size of the file in bytes",
+                    "type": "integer",
+                    "example": 4096
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "['元請け'",
+                        " '製造業']"
+                    ]
+                },
+                "website": {
+                    "type": "string",
+                    "example": "https://www.toyotachikuro.jp"
                 }
             }
         },

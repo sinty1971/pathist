@@ -9,6 +9,67 @@ definitions:
       project:
         $ref: '#/definitions/models.Project'
     type: object
+  models.Company:
+    description: 工事会社の基本情報をファイル名から取得したモデル
+    properties:
+      address:
+        example: 愛知県名古屋市熱田区三本松町1-1
+        type: string
+      business_type:
+        example: 元請け
+        type: string
+      email:
+        example: info@toyotachikuro.jp
+        type: string
+      full_name:
+        description: 属性ファイルフィールド
+        example: 有限会社 豊田築炉
+        type: string
+      id:
+        description: 計算フィールド
+        example: TC001
+        type: string
+      is_directory:
+        description: Whether this item is a directory
+        example: true
+        type: boolean
+      modified_time:
+        allOf:
+        - $ref: '#/definitions/models.Timestamp'
+        description: Last modification time
+      name:
+        description: Name of the file or folder
+        example: 2025-0618 豊田築炉 名和工場
+        type: string
+      path:
+        description: FileService.BasePathからの相対パス
+        example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
+        type: string
+      phone:
+        example: 052-681-8111
+        type: string
+      postal_code:
+        example: 456-0001
+        type: string
+      short_name:
+        description: パス名からの固有フィールド
+        example: 豊田築炉
+        type: string
+      size:
+        description: Size of the file in bytes
+        example: 4096
+        type: integer
+      tags:
+        example:
+        - '[''元請け'''
+        - ' ''製造業'']'
+        items:
+          type: string
+        type: array
+      website:
+        example: https://www.toyotachikuro.jp
+        type: string
+    type: object
   models.FileInfo:
     description: ファイルまたはディレクトリの情報
     properties:
@@ -116,6 +177,62 @@ info:
   title: Penguin ファイルシステム管理API
   version: 1.0.0
 paths:
+  /company/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 指定されたIDの会社詳細を取得します
+      parameters:
+      - description: 会社ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 正常なレスポンス
+          schema:
+            $ref: '#/definitions/models.Company'
+        "404":
+          description: 会社が見つからない
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: サーバーエラー
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 会社詳細の取得
+      tags:
+      - 会社管理
+  /company/list:
+    get:
+      consumes:
+      - application/json
+      description: 会社フォルダーの一覧を取得します
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 正常なレスポンス
+          schema:
+            items:
+              $ref: '#/definitions/models.Company'
+            type: array
+        "500":
+          description: サーバーエラー
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 会社一覧の取得
+      tags:
+      - 会社管理
   /file/fileinfos:
     get:
       consumes:

@@ -7,5 +7,6 @@ export default [
     route("files", "routes/_layout.files.tsx"),
     route("projects", "routes/_layout.projects.tsx"),
     route("projects/gantt", "routes/_layout.gantt.tsx"),
+    route("companies", "routes/_layout.companies.tsx"),
   ]),
 ] satisfies RouteConfig;

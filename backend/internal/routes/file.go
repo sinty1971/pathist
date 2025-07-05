@@ -10,14 +10,6 @@ import (
 func SetupFileRoutes(api fiber.Router, handler *handlers.FileHandler) {
 	file := api.Group("/file")
 
-	// ファイル情報の取得
-	// @Summary ファイル情報一覧取得
-	// @Description 指定されたパスのファイル情報一覧を取得
-	// @Tags file
-	// @Accept json
-	// @Produce json
-	// @Param path query string false "ファイルパス"
-	// @Success 200 {array} models.FileInfo
-	// @Router /file/fileinfos [get]
+	// ファイル情報取得
 	file.Get("/fileinfos", handler.GetFileInfos)
 }

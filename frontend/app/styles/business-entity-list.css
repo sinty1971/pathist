@@ -1,7 +1,7 @@
-/* プロジェクト一覧のスタイル */
+/* 一覧表示（プロジェクト・会社・メンバー等）共通スタイル */
 
 /* メインコンテナ */
-.projects-container {
+.business-entity-container {
   padding: 20px;
   padding-top: 60px;
   flex: 1;
@@ -12,7 +12,7 @@
 }
 
 /* 上部コントロール */
-.projects-controls {
+.business-entity-controls {
   margin-bottom: 20px;
   display: flex;
   justify-content: space-between;
@@ -20,7 +20,7 @@
 }
 
 /* 工程表ボタン */
-.projects-gantt-button {
+.business-entity-gantt-button {
   background: linear-gradient(135deg, #f8bbd9 0%, #e91e63 100%);
   color: white;
   border: none;
@@ -40,7 +40,7 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.projects-gantt-button::before {
+.business-entity-gantt-button::before {
   content: '';
   position: absolute;
   top: 0;
@@ -51,30 +51,30 @@
   transition: left 0.5s;
 }
 
-.projects-gantt-button:hover {
+.business-entity-gantt-button:hover {
   background: linear-gradient(135deg, #f06292 0%, #c2185b 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(233, 30, 99, 0.4);
 }
 
-.projects-gantt-button:hover::before {
+.business-entity-gantt-button:hover::before {
   left: 100%;
 }
 
-.projects-gantt-button:active {
+.business-entity-gantt-button:active {
   transform: translateY(0);
   box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
 }
 
 /* 件数表示 */
-.projects-count {
+.business-entity-count {
   font-size: 16px;
   color: #666;
   font-weight: 500;
 }
 
 /* ヘルプボックス */
-.projects-help-box {
+.business-entity-help-box {
   margin-bottom: 20px;
   padding: 15px;
   background-color: #f0f8ff;
@@ -84,7 +84,7 @@
   flex-shrink: 0;
 }
 
-.projects-help-close {
+.business-entity-help-close {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -96,7 +96,7 @@
 }
 
 /* リストコンテナ */
-.projects-list-container {
+.business-entity-list-container {
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
@@ -107,7 +107,7 @@
 }
 
 /* リストヘッダー */
-.projects-list-header {
+.business-entity-list-header {
   background-color: #f5f5f5;
   padding: 10px 15px;
   font-weight: bold;
@@ -118,34 +118,34 @@
   flex-shrink: 0;
 }
 
-.projects-header-date {
+.business-entity-header-date {
   min-width: 90px;
   text-align: center;
   font-size: 14px;
 }
 
-.projects-header-company {
+.business-entity-header-company {
   min-width: 120px;
   font-size: 14px;
 }
 
-.projects-header-location {
+.business-entity-header-location {
   min-width: 120px;
   font-size: 14px;
 }
 
-.projects-header-spacer {
+.business-entity-header-spacer {
   flex: 1;
 }
 
-.projects-header-status {
+.business-entity-header-status {
   min-width: 80px;
   text-align: center;
   font-size: 14px;
 }
 
 /* ヘルプボタン */
-.projects-help-button {
+.business-entity-help-button {
   background: none;
   border: 1px solid #ccc;
   border-radius: 50%;
@@ -161,14 +161,14 @@
 }
 
 /* スクロールエリア */
-.projects-scroll-area {
+.business-entity-scroll-area {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
 }
 
 /* プロジェクト行 */
-.project-row {
+.business-entity-item-row {
   padding: 15px;
   display: flex;
   justify-content: space-between;
@@ -177,23 +177,23 @@
   transition: background 0.2s;
 }
 
-.project-row:not(:last-child) {
+.business-entity-item-row:not(:last-child) {
   border-bottom: 1px solid #eee;
 }
 
-.project-row:hover {
+.business-entity-item-row:hover {
   background-color: #f0f0f0;
 }
 
 /* プロジェクト情報 */
-.project-info {
+.business-entity-item-info {
   display: flex;
   align-items: center;
   gap: 16px;
   flex: 1;
 }
 
-.project-info-date {
+.business-entity-item-info-date {
   min-width: 90px;
   text-align: center;
   font-size: 13px;
@@ -209,7 +209,7 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.project-info-date::before {
+.business-entity-item-info-date::before {
   content: '';
   position: absolute;
   top: 0;
@@ -220,30 +220,30 @@
   pointer-events: none;
 }
 
-.project-info-date:nth-child(1) {
+.business-entity-item-info-date:nth-child(1) {
   background: linear-gradient(135deg, #7fb069 0%, #588157 100%);
   box-shadow: 0 2px 8px rgba(127, 176, 105, 0.3);
 }
 
-.project-info-date.end-date {
+.business-entity-item-info-date.end-date {
   background: linear-gradient(135deg, #a68b8b 0%, #8b7575 100%);
   box-shadow: 0 2px 8px rgba(166, 139, 139, 0.3);
 }
 
-.project-info-company {
+.business-entity-item-info-company {
   min-width: 120px;
   font-weight: 500;
   font-size: 14px;
   color: #333;
 }
 
-.project-info-location {
+.business-entity-item-info-location {
   min-width: 120px;
   font-size: 14px;
   color: #555;
 }
 
-.project-info-description {
+.business-entity-item-info-description {
   flex: 1;
   font-size: 13px;
   color: #666;
@@ -256,7 +256,7 @@
 }
 
 /* ステータス表示 */
-.project-status {
+.business-entity-item-status {
   min-width: 80px;
   text-align: center;
   padding: 4px 12px;
@@ -265,47 +265,47 @@
   font-weight: 500;
 }
 
-.project-status-ongoing {
+.business-entity-item-status-ongoing {
   background-color: #e8f5e9;
   color: #2e7d32;
 }
 
-.project-status-completed {
+.business-entity-item-status-completed {
   background-color: #f5f5f5;
   color: #616161;
 }
 
-.project-status-planned {
+.business-entity-item-status-planned {
   background-color: #fff3e0;
   color: #ef6c00;
 }
 
 /* リネーム警告インジケーター */
-.project-rename-indicator {
+.business-entity-item-rename-indicator {
   font-size: 16px;
   margin-left: 8px;
 }
 
 /* ローディング・エラー状態 */
-.projects-loading,
-.projects-empty {
+.business-entity-loading,
+.business-entity-empty {
   padding: 20px;
   text-align: center;
   color: #666;
 }
 
-.projects-error {
+.business-entity-error {
   padding: 20px;
 }
 
-.projects-error-message {
+.business-entity-error-message {
   color: red;
   padding: 10px;
   background-color: #ffe6e6;
   border-radius: 4px;
 }
 
-.projects-retry-button {
+.business-entity-retry-button {
   margin-top: 10px;
   padding: 10px 20px;
   background: #2196F3;
@@ -316,6 +316,6 @@
   transition: background 0.2s;
 }
 
-.projects-retry-button:hover {
+.business-entity-retry-button:hover {
   background: #1976D2;
 }

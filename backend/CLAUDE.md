@@ -96,19 +96,55 @@ FileSystemとDatabaseのデータマージ処理
 
 ## API仕様生成
 
-### Swagger アノテーション
+### Swagger アノテーション記述ルール
+
+**重要**: Swaggerアノテーションは`internal/handlers/`内のファイルにのみ記述し、`internal/routes/`には記述しない。
+
+#### 記述場所
+- ✅ **handlers/*.go**: ハンドラー関数の直前に記述
+- ❌ **routes/*.go**: ルート定義のみ、Swaggerアノテーションは記述しない
+
+#### 標準テンプレート
 ```go
-// @Summary プロジェクト一覧取得
-// @Description 工事プロジェクトの一覧を取得
-// @Tags project
-// @Accept json
-// @Produce json
-// @Success 200 {array} models.Project
-// @Router /project/recent [get]
+// [ハンドラー名] godoc
+// @Summary      [機能の簡潔な説明]
+// @Description  [機能の詳細説明]
+// @Tags         [APIグループ名]
+// @Accept       json
+// @Produce      json
+// @Param        [パラメータ名] [in] [型] [必須] "[説明]"
+// @Success      200 {object/array} [レスポンス型] "[成功時の説明]"
+// @Failure      [ステータス] {object} map[string]string "[エラー時の説明]"
+// @Router       /[パス] [メソッド]
+func (h *Handler) FunctionName(c *fiber.Ctx) error {
+    // 実装
+}
+```
+
+#### タグの統一ルール
+- **ファイル管理**: `ファイル管理`
+- **プロジェクト管理**: `プロジェクト管理` / `工事 更新`
+- **会社管理**: `会社管理`
+
+#### 実例
+```go
+// GetCompanies godoc
+// @Summary      会社一覧の取得
+// @Description  会社フォルダーの一覧を取得します
+// @Tags         会社管理
+// @Accept       json
+// @Produce      json
+// @Success      200 {array} models.Company "正常なレスポンス"
+// @Failure      500 {object} map[string]string "サーバーエラー"
+// @Router       /company/list [get]
+func (h *CompanyHandler) GetCompanies(c *fiber.Ctx) error {
+    companies := h.CompanyService.GetCompanies()
+    return c.JSON(companies)
+}
 ```
 
 ### 生成ワークフロー
-1. Goコード内のSwaggerアノテーションから生成
+1. `internal/handlers/`内のSwaggerアノテーションから生成
 2. `just generate-api` でOpenAPI仕様を生成
 3. `schemas/openapi.{yaml,json}` に出力
 4. フロントエンドがこれを使ってTypeScript型を生成

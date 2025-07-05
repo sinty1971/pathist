@@ -6,6 +6,51 @@ export type HandlersRenameManagedFileRequest = {
 };
 
 /**
+ * 工事会社の基本情報をファイル名から取得したモデル
+ */
+export type ModelsCompany = {
+    address?: string;
+    business_type?: string;
+    email?: string;
+    /**
+     * 属性ファイルフィールド
+     */
+    full_name?: string;
+    /**
+     * 計算フィールド
+     */
+    id?: string;
+    /**
+     * Whether this item is a directory
+     */
+    is_directory?: boolean;
+    /**
+     * Last modification time
+     */
+    modified_time?: ModelsTimestamp;
+    /**
+     * Name of the file or folder
+     */
+    name?: string;
+    /**
+     * FileService.BasePathからの相対パス
+     */
+    path?: string;
+    phone?: string;
+    postal_code?: string;
+    /**
+     * パス名からの固有フィールド
+     */
+    short_name?: string;
+    /**
+     * Size of the file in bytes
+     */
+    size?: number;
+    tags?: Array<string>;
+    website?: string;
+};
+
+/**
  * ファイルまたはディレクトリの情報
  */
 export type ModelsFileInfo = {
@@ -92,6 +137,71 @@ export type ModelsProject = {
 export type ModelsTimestamp = {
     'time.Time'?: string;
 };
+
+export type GetCompanyByIdData = {
+    body?: never;
+    path: {
+        /**
+         * 会社ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/company/{id}';
+};
+
+export type GetCompanyByIdErrors = {
+    /**
+     * 会社が見つからない
+     */
+    404: {
+        [key: string]: string;
+    };
+    /**
+     * サーバーエラー
+     */
+    500: {
+        [key: string]: string;
+    };
+};
+
+export type GetCompanyByIdError = GetCompanyByIdErrors[keyof GetCompanyByIdErrors];
+
+export type GetCompanyByIdResponses = {
+    /**
+     * 正常なレスポンス
+     */
+    200: ModelsCompany;
+};
+
+export type GetCompanyByIdResponse = GetCompanyByIdResponses[keyof GetCompanyByIdResponses];
+
+export type GetCompanyListData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/company/list';
+};
+
+export type GetCompanyListErrors = {
+    /**
+     * サーバーエラー
+     */
+    500: {
+        [key: string]: string;
+    };
+};
+
+export type GetCompanyListError = GetCompanyListErrors[keyof GetCompanyListErrors];
+
+export type GetCompanyListResponses = {
+    /**
+     * 正常なレスポンス
+     */
+    200: Array<ModelsCompany>;
+};
+
+export type GetCompanyListResponse = GetCompanyListResponses[keyof GetCompanyListResponses];
 
 export type GetFileFileinfosData = {
     body?: never;

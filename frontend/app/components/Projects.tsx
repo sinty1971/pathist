@@ -4,7 +4,7 @@ import { getProjectRecent } from "../api/sdk.gen";
 import type { ModelsProject } from "../api/types.gen";
 import ProjectDetailModal from "./ProjectDetailModal";
 import { useProject } from "../contexts/ProjectContext";
-import "../styles/projects.css";
+import "../styles/business-entity-list.css";
 
 const Projects = () => {
   const [projects, setProjects] = useState<ModelsProject[]>([]);
@@ -162,7 +162,7 @@ const Projects = () => {
 
   if (loading) {
     return (
-      <div className="projects-loading">
+      <div className="business-entity-loading">
         <div>工事データを読み込み中...</div>
       </div>
     );
@@ -170,13 +170,13 @@ const Projects = () => {
 
   if (error) {
     return (
-      <div className="projects-error">
-        <div className="projects-error-message">
+      <div className="business-entity-error">
+        <div className="business-entity-error-message">
           {error}
         </div>
         <button
           onClick={loadProjects}
-          className="projects-retry-button"
+          className="business-entity-retry-button"
         >
           再試行
         </button>
@@ -185,25 +185,25 @@ const Projects = () => {
   }
 
   return (
-    <div className="projects-container">
-      <div className="projects-controls">
+    <div className="business-entity-container">
+      <div className="business-entity-controls">
         <Link
           to="/projects/gantt"
-          className="projects-gantt-button"
+          className="business-entity-gantt-button"
         >
           📊 工程表を表示
         </Link>
         
-        <div className="projects-count">
+        <div className="business-entity-count">
           全{projects.length}件
         </div>
       </div>
 
       {showHelp && (
-        <div className="projects-help-box">
+        <div className="business-entity-help-box">
           <button
             onClick={() => setShowHelp(false)}
-            className="projects-help-close"
+            className="business-entity-help-close"
             title="閉じる"
           >
             ×
@@ -223,26 +223,26 @@ const Projects = () => {
         </div>
       )}
       
-      <div className="projects-list-container">
-        <div className="projects-list-header">
-          <div className="projects-header-date">開始日</div>
-          <div className="projects-header-company">会社名</div>
-          <div className="projects-header-location">現場名</div>
-          <div className="projects-header-spacer"></div>
-          <div className="projects-header-date" style={{ marginRight: "24px" }}>終了日</div>
-          <div className="projects-header-status">ステータス</div>
+      <div className="business-entity-list-container">
+        <div className="business-entity-list-header">
+          <div className="business-entity-header-date">開始日</div>
+          <div className="business-entity-header-company">会社名</div>
+          <div className="business-entity-header-location">現場名</div>
+          <div className="business-entity-header-spacer"></div>
+          <div className="business-entity-header-date" style={{ marginRight: "24px" }}>終了日</div>
+          <div className="business-entity-header-status">ステータス</div>
           <button
             onClick={() => setShowHelp(!showHelp)}
-            className="projects-help-button"
+            className="business-entity-help-button"
             title="使用方法を表示"
           >
             ?
           </button>
         </div>
 
-        <div className="projects-scroll-area">
+        <div className="business-entity-scroll-area">
           {projects.length === 0 ? (
-            <div className="projects-empty">
+            <div className="business-entity-empty">
               工事データが見つかりません
             </div>
           ) : (
@@ -250,12 +250,12 @@ const Projects = () => {
               {projects.map((project, index) => (
               <div
                 key={project.id || index}
-                className="project-row"
+                className="business-entity-item-row"
                 onClick={() => handleProjectClick(project)}
                 title="クリックして編集"
               >
-                <div className="project-info">
-                  <div className="project-info-date">
+                <div className="business-entity-item-info">
+                  <div className="business-entity-item-info-date">
                     {project.start_date
                       ? new Date(
                           typeof project.start_date === 'string' 
@@ -265,19 +265,19 @@ const Projects = () => {
                       : "未設定"}
                   </div>
                   
-                  <div className="project-info-company">
+                  <div className="business-entity-item-info-company">
                     {project.company_name || "会社名未設定"}
                   </div>
                   
-                  <div className="project-info-location">
+                  <div className="business-entity-item-info-location">
                     {project.location_name || "現場名未設定"}
                   </div>
                   
-                  <div className="project-info-description">
+                  <div className="business-entity-item-info-description">
                     {project.description || ""}
                   </div>
                   
-                  <div className="project-info-date end-date" style={{ 
+                  <div className="business-entity-item-info-date end-date" style={{ 
                     marginRight: "24px"
                   }}>
                     ～{project.end_date
@@ -292,17 +292,17 @@ const Projects = () => {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   {needsFileRename(project) && (
                     <span 
-                      className="project-rename-indicator"
+                      className="business-entity-item-rename-indicator"
                       title="管理ファイルの名前変更が必要です"
                     >
                       ⚠️
                     </span>
                   )}
                   <div
-                    className={`project-status ${
-                      project.status === "進行中" ? "project-status-ongoing" :
-                      project.status === "完了" ? "project-status-completed" :
-                      project.status === "予定" ? "project-status-planned" :
+                    className={`business-entity-item-status ${
+                      project.status === "進行中" ? "business-entity-item-status-ongoing" :
+                      project.status === "完了" ? "business-entity-item-status-completed" :
+                      project.status === "予定" ? "business-entity-item-status-planned" :
                       ""
                     }`}
                   >

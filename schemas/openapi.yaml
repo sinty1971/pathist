@@ -45,10 +45,10 @@ definitions:
         type: string
     type: object
   models.Project:
-    description: Construction project folder information with extended attributes
+    description: 拡張属性を持つ工事プロジェクトフォルダー情報
     properties:
       company_name:
-        description: Additional fields specific to Project folders
+        description: パス名からの固有フィールド
         example: 豊田築炉
         type: string
       description:
@@ -57,9 +57,9 @@ definitions:
       end_date:
         allOf:
         - $ref: '#/definitions/models.Timestamp'
-        description: Detail
+        description: 属性ファイルフィールド
       id:
-        description: Calculated fields
+        description: 計算フィールド
         example: TC618
         type: string
       is_directory:
@@ -70,7 +70,6 @@ definitions:
         example: 名和工場
         type: string
       managed_files:
-        description: Managed files
         items:
           $ref: '#/definitions/models.ManagedFile'
         type: array
@@ -253,7 +252,7 @@ paths:
             type: object
       summary: Project.FileInfoで指定されたファイル情報をProjectのメンバ変数で更新
       tags:
-      - プロジェクト管理
+      - 工事 更新
 schemes:
 - http
 swagger: "2.0"

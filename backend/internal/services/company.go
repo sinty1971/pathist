@@ -14,10 +14,6 @@ type CompanyService struct {
 }
 
 // NewCompanyService creates a new CompanyService
-// @param businessFileService *FileService ビジネスデータのファイルサービス
-// @param folderName string フォルダー名
-// @return *CompanyService 会社サービス
-// @return error エラー
 func NewCompanyService(businessFileService *FileService, folderName string) (*CompanyService, error) {
 	cs := &CompanyService{}
 
@@ -43,9 +39,6 @@ func NewCompanyService(businessFileService *FileService, folderName string) (*Co
 }
 
 // GetCompany は指定されたパスから会社を取得する
-// @param folderName string 会社フォルダーのファイル名
-// @return models.Company 会社
-// @return error エラー
 func (cs *CompanyService) GetCompany(folderName string) (models.Company, error) {
 	// 会社フォルダーのフルパスを取得
 	folderPath, err := cs.FileService.GetFullpath(folderName)

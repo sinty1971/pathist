@@ -43,20 +43,20 @@ export type ModelsManagedFile = {
 };
 
 /**
- * Construction project folder information with extended attributes
+ * 拡張属性を持つ工事プロジェクトフォルダー情報
  */
 export type ModelsProject = {
     /**
-     * Additional fields specific to Project folders
+     * パス名からの固有フィールド
      */
     company_name?: string;
     description?: string;
     /**
-     * Detail
+     * 属性ファイルフィールド
      */
     end_date?: ModelsTimestamp;
     /**
-     * Calculated fields
+     * 計算フィールド
      */
     id?: string;
     /**
@@ -64,9 +64,6 @@ export type ModelsProject = {
      */
     is_directory?: boolean;
     location_name?: string;
-    /**
-     * Managed files
-     */
     managed_files?: Array<ModelsManagedFile>;
     /**
      * Last modification time

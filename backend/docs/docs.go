@@ -191,7 +191,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "プロジェクト管理"
+                    "工事 更新"
                 ],
                 "summary": "Project.FileInfoで指定されたファイル情報をProjectのメンバ変数で更新",
                 "parameters": [
@@ -290,11 +290,11 @@ const docTemplate = `{
             }
         },
         "models.Project": {
-            "description": "Construction project folder information with extended attributes",
+            "description": "拡張属性を持つ工事プロジェクトフォルダー情報",
             "type": "object",
             "properties": {
                 "company_name": {
-                    "description": "Additional fields specific to Project folders",
+                    "description": "パス名からの固有フィールド",
                     "type": "string",
                     "example": "豊田築炉"
                 },
@@ -303,7 +303,7 @@ const docTemplate = `{
                     "example": "工事関連の資料とドキュメント"
                 },
                 "end_date": {
-                    "description": "Detail",
+                    "description": "属性ファイルフィールド",
                     "allOf": [
                         {
                             "$ref": "#/definitions/models.Timestamp"
@@ -311,7 +311,7 @@ const docTemplate = `{
                     ]
                 },
                 "id": {
-                    "description": "Calculated fields",
+                    "description": "計算フィールド",
                     "type": "string",
                     "example": "TC618"
                 },
@@ -325,7 +325,6 @@ const docTemplate = `{
                     "example": "名和工場"
                 },
                 "managed_files": {
-                    "description": "Managed files",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.ManagedFile"

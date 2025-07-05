@@ -2,272 +2,176 @@ package services
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"penguin-backend/internal/models"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 // CompanyService handles company data operations
 type CompanyService struct {
-	basePath string
+	FileService      *FileService
+	AttributeService *AttributeService[*models.Company]
+	FolderName       string
 }
 
 // NewCompanyService creates a new CompanyService
-func NewCompanyService() *CompanyService {
-	// Default base path for company data
-	homeDir, _ := os.UserHomeDir()
-	basePath := filepath.Join(homeDir, "penguin", "豊田築炉", "1-会社情報")
-	
-	return &CompanyService{
-		basePath: basePath,
-	}
-}
+// @param businessFileService *FileService ビジネスデータのファイルサービス
+// @param folderName string フォルダー名
+// @return *CompanyService 会社サービス
+// @return error エラー
+func NewCompanyService(businessFileService *FileService, folderName string) (*CompanyService, error) {
+	cs := &CompanyService{}
 
-// SetBasePath sets the base path for company data
-func (cs *CompanyService) SetBasePath(path string) {
-	cs.basePath = path
-}
+	// フォルダー名を設定
+	cs.FolderName = folderName
 
-// GetCompaniesFilePath returns the path to the companies data file
-func (cs *CompanyService) GetCompaniesFilePath() string {
-	return filepath.Join(cs.basePath, "companies.yaml")
-}
-
-// LoadCompanies loads all companies from the YAML file
-func (cs *CompanyService) LoadCompanies() ([]models.Company, error) {
-	filePath := cs.GetCompaniesFilePath()
-	
-	// Check if file exists
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		// Return empty slice if file doesn't exist
-		return []models.Company{}, nil
-	}
-	
-	// Read the YAML file
-	data, err := os.ReadFile(filePath)
+	// フォルダーのフルパスの取得
+	folderPath, err := businessFileService.GetFullpath(folderName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read companies file: %v", err)
+		return nil, err
 	}
-	
-	var companies []models.Company
-	if err := yaml.Unmarshal(data, &companies); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal companies data: %v", err)
+
+	// FileServiceを初期化
+	cs.FileService, err = NewFileService(folderPath)
+	if err != nil {
+		return nil, err
 	}
-	
-	return companies, nil
+
+	// AttributeServiceを初期化
+	cs.AttributeService = NewAttributeService[*models.Company](cs.FileService, ".detail.yaml")
+
+	return cs, nil
 }
 
-// SaveCompanies saves all companies to the YAML file
-func (cs *CompanyService) SaveCompanies(companies []models.Company) error {
-	filePath := cs.GetCompaniesFilePath()
-	
-	// Ensure the directory exists
-	if err := os.MkdirAll(cs.basePath, 0755); err != nil {
-		return fmt.Errorf("failed to create companies directory: %v", err)
-	}
-	
-	// Marshal companies to YAML
-	data, err := yaml.Marshal(companies)
+// GetCompany は指定されたパスから会社を取得する
+// @param folderName string 会社フォルダーのファイル名
+// @return models.Company 会社
+// @return error エラー
+func (cs *CompanyService) GetCompany(folderName string) (models.Company, error) {
+	// 会社フォルダーのフルパスを取得
+	folderPath, err := cs.FileService.GetFullpath(folderName)
 	if err != nil {
-		return fmt.Errorf("failed to marshal companies data: %v", err)
+		return models.Company{}, err
 	}
-	
-	// Write to file
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write companies file: %v", err)
+
+	// 会社フォルダーのFileInfoを取得
+	folderInfo, err := models.NewFileInfo(folderPath)
+	if err != nil {
+		return models.Company{}, fmt.Errorf("会社フォルダー情報の取得に失敗しました: %v", err)
 	}
-	
+
+	// 会社データモデルを作成
+	company, err := models.NewCompany(*folderInfo)
+	if err != nil {
+		return models.Company{}, fmt.Errorf("会社データモデルの作成に失敗しました: %v", err)
+	}
+
+	// 属性ファイルと同期
+	err = cs.SyncAttributeFile(&company)
+	if err != nil {
+		return models.Company{}, fmt.Errorf("属性ファイルとの同期に失敗しました: %v", err)
+	}
+
+	return company, nil
+}
+
+// SyncAttributeFile は会社の属性データを読み込み、会社データモデルに反映する
+func (cs *CompanyService) SyncAttributeFile(company *models.Company) error {
+	// 会社の属性データを読み込む
+	attribute, err := cs.AttributeService.Load(company)
+	if err != nil {
+		// ファイルが存在しない場合は新規ファイルとして非同期で保存
+		go func() {
+			cs.AttributeService.Save(company)
+		}()
+		return nil
+	}
+
+	// 属性ファイルにしか保持されない内容をcompanyに反映
+	company.FullName = attribute.FullName
+	company.PostalCode = attribute.PostalCode
+	company.Address = attribute.Address
+	company.Phone = attribute.Phone
+	company.Email = attribute.Email
+	company.Website = attribute.Website
+	company.Tags = attribute.Tags
+
+	// フォルダー名から解析した情報を属性に反映
+	attribute.ShortName = company.ShortName
+	attribute.BusinessType = company.BusinessType
+
+	// データに変更がある場合のみ非同期で保存（パフォーマンス重視）
+	if cs.hasCompanyChanged(*attribute, *company) {
+		go func() {
+			cs.AttributeService.Save(attribute)
+		}()
+	}
+
 	return nil
+}
+
+// hasCompanyChanged 会社データに変更があるかチェック
+func (cs *CompanyService) hasCompanyChanged(attribute, current models.Company) bool {
+	return attribute.ShortName != current.ShortName ||
+		attribute.BusinessType != current.BusinessType
+}
+
+// GetRecentCompanies は最近の会社一覧を取得する
+func (cs *CompanyService) GetCompanies() []models.Company {
+	// ファイルシステムから会社フォルダー一覧を取得
+	fileInfos, err := cs.FileService.GetFileInfos()
+	if err != nil {
+		return []models.Company{}
+	}
+
+	companies := make([]models.Company, 0, len(fileInfos))
+	for _, fileInfo := range fileInfos {
+		company, err := models.NewCompany(fileInfo)
+		if err != nil {
+			continue
+		}
+
+		// 属性ファイルと同期（エラーは無視）
+		cs.SyncAttributeFile(&company)
+
+		companies = append(companies, company)
+	}
+
+	return companies
 }
 
 // GetCompanyByID retrieves a company by its ID
 func (cs *CompanyService) GetCompanyByID(id string) (*models.Company, error) {
-	companies, err := cs.LoadCompanies()
-	if err != nil {
-		return nil, err
-	}
-	
+	companies := cs.GetCompanies()
+
 	for _, company := range companies {
 		if company.ID == id {
 			return &company, nil
 		}
 	}
-	
+
 	return nil, fmt.Errorf("company with ID %s not found", id)
 }
 
 // GetCompanyByName retrieves a company by its name (case-insensitive)
 func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error) {
-	companies, err := cs.LoadCompanies()
-	if err != nil {
-		return nil, err
-	}
-	
+	companies := cs.GetCompanies()
+
 	name = strings.TrimSpace(strings.ToLower(name))
-	
+
 	for _, company := range companies {
-		if strings.ToLower(company.Name) == name || 
-		   strings.ToLower(company.ShortName) == name ||
-		   strings.ToLower(company.FullName) == name {
+		if strings.ToLower(company.Name) == name ||
+			strings.ToLower(company.ShortName) == name ||
+			strings.ToLower(company.FullName) == name {
 			return &company, nil
 		}
 	}
-	
+
 	return nil, nil // Return nil if not found (not an error)
 }
 
-// CreateCompany creates a new company
-func (cs *CompanyService) CreateCompany(company models.Company) error {
-	companies, err := cs.LoadCompanies()
-	if err != nil {
-		return err
-	}
-	
-	// Check if company with same ID or name already exists
-	for _, existing := range companies {
-		if existing.ID == company.ID {
-			return fmt.Errorf("company with ID %s already exists", company.ID)
-		}
-		if strings.EqualFold(existing.Name, company.Name) {
-			return fmt.Errorf("company with name %s already exists", company.Name)
-		}
-	}
-	
-	// Add the new company
-	companies = append(companies, company)
-	
-	return cs.SaveCompanies(companies)
-}
-
-// UpdateCompany updates an existing company
-func (cs *CompanyService) UpdateCompany(company models.Company) error {
-	companies, err := cs.LoadCompanies()
-	if err != nil {
-		return err
-	}
-	
-	// Find and update the company
-	found := false
-	for i, existing := range companies {
-		if existing.ID == company.ID {
-			company.UpdateTimestamp()
-			companies[i] = company
-			found = true
-			break
-		}
-	}
-	
-	if !found {
-		return fmt.Errorf("company with ID %s not found", company.ID)
-	}
-	
-	return cs.SaveCompanies(companies)
-}
-
-// DeleteCompany deletes a company by ID
-func (cs *CompanyService) DeleteCompany(id string) error {
-	companies, err := cs.LoadCompanies()
-	if err != nil {
-		return err
-	}
-	
-	// Find and remove the company
-	found := false
-	for i, company := range companies {
-		if company.ID == id {
-			companies = append(companies[:i], companies[i+1:]...)
-			found = true
-			break
-		}
-	}
-	
-	if !found {
-		return fmt.Errorf("company with ID %s not found", id)
-	}
-	
-	return cs.SaveCompanies(companies)
-}
-
-// GetOrCreateCompanyByName gets an existing company by name or creates a new one
-func (cs *CompanyService) GetOrCreateCompanyByName(name string) (*models.Company, error) {
-	// Try to get existing company
-	existing, err := cs.GetCompanyByName(name)
-	if err != nil {
-		return nil, err
-	}
-	
-	if existing != nil {
-		return existing, nil
-	}
-	
-	// Create new company
-	newCompany := models.NewCompany(name)
-	if err := cs.CreateCompany(newCompany); err != nil {
-		return nil, err
-	}
-	
-	return &newCompany, nil
-}
-
-// ListCompanies returns all companies with optional filtering
-func (cs *CompanyService) ListCompanies(filter string) ([]models.Company, error) {
-	companies, err := cs.LoadCompanies()
-	if err != nil {
-		return nil, err
-	}
-	
-	if filter == "" {
-		return companies, nil
-	}
-	
-	// Filter companies by name or business type
-	var filtered []models.Company
-	filter = strings.ToLower(filter)
-	
-	for _, company := range companies {
-		if strings.Contains(strings.ToLower(company.Name), filter) ||
-		   strings.Contains(strings.ToLower(company.FullName), filter) ||
-		   strings.Contains(strings.ToLower(company.BusinessType), filter) {
-			filtered = append(filtered, company)
-		}
-	}
-	
-	return filtered, nil
-}
-
-// GetCompanyStats returns statistics about companies
-func (cs *CompanyService) GetCompanyStats() (map[string]interface{}, error) {
-	companies, err := cs.LoadCompanies()
-	if err != nil {
-		return nil, err
-	}
-	
-	stats := map[string]interface{}{
-		"total_companies": len(companies),
-		"business_types":  make(map[string]int),
-		"complete_profiles": 0,
-	}
-	
-	businessTypes := stats["business_types"].(map[string]int)
-	completeProfiles := 0
-	
-	for _, company := range companies {
-		// Count business types
-		if company.BusinessType != "" {
-			businessTypes[company.BusinessType]++
-		}
-		
-		// Count complete profiles
-		if company.IsComplete() {
-			completeProfiles++
-		}
-	}
-	
-	stats["complete_profiles"] = completeProfiles
-	stats["completion_rate"] = float64(completeProfiles) / float64(len(companies)) * 100
-	
-	return stats, nil
+// UpdateCompanyFileInfo は会社情報を更新し、必要に応じてフォルダー名を変更します
+func (cs *CompanyService) UpdateCompanyFileInfo(company *models.Company) error {
+	// 現在の実装では、会社フォルダー名の変更は不要
+	// 属性ファイルのみ更新
+	return cs.AttributeService.Save(company)
 }

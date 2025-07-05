@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"penguin-backend/internal/handlers"
+	"penguin-backend/internal/routes"
 	"penguin-backend/internal/services"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,8 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
 	_ "penguin-backend/docs"
-
-	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 // @title Penguin ファイルシステム管理API
@@ -33,6 +31,7 @@ func main() {
 		},
 	})
 
+	// Middleware
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
@@ -40,42 +39,24 @@ func main() {
 		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
 
-	// Swagger documentation
-	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+	// containerServiceを作成
+	var err error
+	sc := &services.ServiceContainer{}
 
-	// FileServiceを作成
-	fileService, err := services.NewFileService("~/penguin")
+	sc.BusinessService, err = services.NewBusinessDataService("~/penguin/豊田築炉", ".detail.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// ProjectServiceを作成
-	projectService, err := services.NewProjectService("~/penguin/豊田築炉/2-工事")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// sc.MediaService, err := services.NewMediaDataService("~/penguin/homes/sinty/media", ".detail.yaml")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	// Create handlers
-	fileServiceHandler := handlers.NewFileHandler(fileService)
-	projectHandler := handlers.NewProjectHandler(projectService)
+	defer sc.Cleanup()
 
-	api := app.Group("/api")
-
-	// File entries routes
-	api.Get("/file/fileinfos", fileServiceHandler.GetFileInfos)
-
-	// Project routes
-	api.Get("/project/get/:path", projectHandler.GetProject)
-	api.Get("/project/recent", projectHandler.GetRecentProjects)
-	api.Post("/project/update", projectHandler.Update)
-	api.Post("/project/rename-managed-file", projectHandler.RenameManagedFile)
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "Penguin Backend API",
-			"version": "1.0.0",
-			"docs":    "/swagger/index.html",
-		})
-	})
+	// ルートを設定
+	routes.SetupRoutes(app, sc)
 
 	log.Println("Server starting on :8080")
 	log.Println("API documentation available at http://localhost:8080/swagger/index.html")

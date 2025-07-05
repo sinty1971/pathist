@@ -13,70 +13,70 @@ import (
 
 // ProjectService は工事情報取得サービスを提供する
 type ProjectService struct {
-	FileService    *FileService
-	YamlService    *YamlService[models.Project]
-	CompanyService *CompanyService
-	DetailFile     string
+	FileService      *FileService
+	AttributeService *AttributeService[*models.Project]
+	FolderName       string
 }
 
 // NewProjectService はProjectServiceを初期化する
-// @Param projectsPath query string true "プロジェクト一覧ファイルのパス" default("~/penguin/豊田築炉/2-工事")
-func NewProjectService(projectsPath string) (*ProjectService, error) {
-	// FileServiceを初期化
-	fileService, err := NewFileService(projectsPath)
+// @Param folderName query string true "フォルダー名(FileService.BasePathからの相対パス)" default("2-工事")
+func NewProjectService(businessFileService *FileService, folderName string) (*ProjectService, error) {
+	ps := &ProjectService{}
+
+	// フォルダー名を設定
+	ps.FolderName = folderName
+
+	// フォルダーのフルパスの取得
+	folderPath, err := businessFileService.GetFullpath(folderName)
 	if err != nil {
 		return nil, err
 	}
 
-	// YamlServiceを初期化
-	yamlService := NewYamlService[models.Project](fileService)
-	
-	// CompanyServiceを初期化
-	companyService := NewCompanyService()
+	// FileServiceを初期化
+	ps.FileService, err = NewFileService(folderPath)
+	if err != nil {
+		return nil, err
+	}
 
-	return &ProjectService{
-		FileService:    fileService,
-		YamlService:    yamlService,
-		CompanyService: companyService,
-		DetailFile:     ".detail.yaml",
-	}, nil
+	// AttributeServiceを初期化
+	ps.AttributeService = NewAttributeService[*models.Project](ps.FileService, ".detail.yaml")
+
+	return ps, nil
 }
 
 // GetProject は指定されたパスから工事を取得する
 // pathは工事フォルダーのファイル名
 // 工事を返す
-func (s *ProjectService) GetProject(path string) (models.Project, error) {
-	// 工事フォルダー自体の情報を取得
-	fullPath, err := s.FileService.GetFullpath(path)
+func (ps *ProjectService) GetProject(folderName string) (models.Project, error) {
+	// 工事フォルダーのフルパスを取得
+	folderPath, err := ps.FileService.GetFullpath(folderName)
 	if err != nil {
-		return models.Project{}, fmt.Errorf("工事フォルダーが見つかりません: %s", path)
+		return models.Project{}, fmt.Errorf("工事フォルダーが見つかりません: %s", folderName)
 	}
 
-	fileInfo, err := models.NewFileInfo(fullPath)
+	// 工事フォルダーのFileInfoを取得
+	folderInfo, err := models.NewFileInfo(folderPath)
 	if err != nil {
-		return models.Project{}, fmt.Errorf("ファイル情報の取得に失敗しました: %v", err)
+		return models.Project{}, fmt.Errorf("工事フォルダー情報の取得に失敗しました: %v", err)
 	}
 
-	// 工事を作成
-	project, err := models.NewProject(*fileInfo)
+	// 工事データモデルを作成
+	project, err := models.NewProject(*folderInfo)
 	if err != nil {
-		return models.Project{}, fmt.Errorf("工事データの作成に失敗しました: %v", err)
+		return models.Project{}, fmt.Errorf("工事データモデルの作成に失敗しました: %v", err)
 	}
 
 	// 管理ファイルの設定
-	err = s.SetManagedFiles(&project)
+	err = ps.SetManagedFiles(&project)
 	if err != nil {
 		return models.Project{}, fmt.Errorf("管理ファイルの設定に失敗しました: %v", err)
 	}
 
-	// .detail.yamlと同期する
-	err = s.SyncDetailFile(&project)
+	// 属性ファイルと同期する
+	err = ps.SyncAttributeFile(&project)
 	if err != nil {
-		return models.Project{}, fmt.Errorf(".detail.yamlの同期に失敗しました: %v", err)
+		return models.Project{}, fmt.Errorf("属性ファイルとの同期に失敗しました: %v", err)
 	}
-
-	// 企業情報を取得
-	s.EnrichProjectWithCompanyInfo(&project)
 
 	return project, nil
 }
@@ -88,10 +88,10 @@ type ProjectResult struct {
 	Error   error
 }
 
-// GetRecentProjects は指定されたパスから最近の工事一覧を取得する（高速並行処理版）
-func (s *ProjectService) GetRecentProjects() []models.Project {
-	// ファイルシステムから工事一覧を取得
-	fileInfos, err := s.FileService.GetFileInfos()
+// GetRecentProjects は指定されたパスから最近の工事データモデル一覧を取得する
+func (ps *ProjectService) GetRecentProjects() []models.Project {
+	// ファイルシステムから工事フォルダー一覧を取得
+	fileInfos, err := ps.FileService.GetFileInfos()
 	if err != nil {
 		return []models.Project{}
 	}
@@ -115,7 +115,7 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 			defer wg.Done()
 			for index := range jobs {
 				fileInfo := fileInfos[index]
-				
+
 				// fileInfoから工事を作成
 				project, err := models.NewProject(fileInfo)
 				if err != nil {
@@ -123,14 +123,11 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 					continue
 				}
 
-				// 管理ファイルの設定（エラーは無視して継続）
-				s.setManagedFilesOptimized(&project)
+				// 管理ファイルの設定、エラーは無視
+				ps.SetManagedFiles(&project)
 
-				// .detail.yamlと同期する（エラーは無視して継続）
-				s.syncDetailFileOptimized(&project)
-
-				// 企業情報の取得（エラーは無視して継続）
-				s.EnrichProjectWithCompanyInfo(&project)
+				// 属性ファイルと同期、エラーは無視
+				ps.SyncAttributeFile(&project)
 
 				results <- ProjectResult{Project: project, Index: index, Error: nil}
 			}
@@ -152,7 +149,7 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 	// 結果を収集（元の順序を保持）
 	projects := make([]models.Project, 0, len(fileInfos))
 	projectMap := make(map[int]models.Project, len(fileInfos))
-	
+
 	for result := range results {
 		if result.Error == nil {
 			projectMap[result.Index] = result.Project
@@ -187,45 +184,39 @@ func (s *ProjectService) GetRecentProjects() []models.Project {
 	return projects
 }
 
-// SyncDetailFile は工事の詳細を.detail.yamlから取り込む
-func (s *ProjectService) SyncDetailFile(current *models.Project) error {
-	return s.syncDetailFileOptimized(current)
-}
-
-// syncDetailFileOptimized は工事の詳細を高速で.detail.yamlから取り込む（内部用）
-func (s *ProjectService) syncDetailFileOptimized(current *models.Project) error {
-	// .detail.yamlを読み込む
-	detailPath := filepath.Join(current.FileInfo.Name, s.DetailFile)
-	detail, err := s.YamlService.Load(detailPath)
+// SyncAttributeFile は工事の属性データを読み込み、工事データモデルに反映する
+func (ps *ProjectService) SyncAttributeFile(project *models.Project) error {
+	// 工事の属性データを読み込む
+	attribute, err := ps.AttributeService.Load(project)
 	if err != nil {
 		// ファイルが存在しない場合はデフォルト値を設定
-		current.Status = models.DetermineProjectStatus(current.StartDate, current.EndDate)
-		
+		project.UpdateStatus()
+
 		// 新規ファイルの場合は非同期で保存（必要最小限の書き込み）
 		go func() {
-			s.YamlService.Save(detailPath, *current)
+			ps.AttributeService.Save(project)
 		}()
 		return nil
 	}
 
 	// detailにしか保持されない内容をprojectに反映
-	current.Description = detail.Description
-	current.EndDate = detail.EndDate
-	current.Tags = detail.Tags
+	project.Description = attribute.Description
+	project.EndDate = attribute.EndDate
+	project.Tags = attribute.Tags
 
 	// 計算が必要な項目の更新
-	current.Status = models.DetermineProjectStatus(current.StartDate, current.EndDate)
+	project.UpdateStatus()
 
 	// フォルダー名から解析した情報をdetailに反映
-	detail.StartDate = current.StartDate
-	detail.CompanyName = current.CompanyName
-	detail.LocationName = current.LocationName
-	detail.Status = current.Status
+	attribute.StartDate = project.StartDate
+	attribute.CompanyName = project.CompanyName
+	attribute.LocationName = project.LocationName
+	attribute.Status = project.Status
 
 	// データに変更がある場合のみ非同期で保存（パフォーマンス重視）
-	if s.hasProjectChanged(detail, *current) {
+	if ps.hasProjectChanged(*attribute, *project) {
 		go func() {
-			s.YamlService.Save(detailPath, detail)
+			ps.AttributeService.Save(attribute)
 		}()
 	}
 
@@ -233,7 +224,7 @@ func (s *ProjectService) syncDetailFileOptimized(current *models.Project) error 
 }
 
 // hasProjectChanged プロジェクトデータに変更があるかチェック
-func (s *ProjectService) hasProjectChanged(detail, current models.Project) bool {
+func (ps *ProjectService) hasProjectChanged(detail, current models.Project) bool {
 	return detail.StartDate != current.StartDate ||
 		detail.CompanyName != current.CompanyName ||
 		detail.LocationName != current.LocationName ||
@@ -241,14 +232,9 @@ func (s *ProjectService) hasProjectChanged(detail, current models.Project) bool 
 }
 
 // SetManagedFiles は工事の管理ファイルを設定します
-func (s *ProjectService) SetManagedFiles(project *models.Project) error {
-	return s.setManagedFilesOptimized(project)
-}
-
-// setManagedFilesOptimized は工事の管理ファイルを高速設定します（内部用）
-func (s *ProjectService) setManagedFilesOptimized(project *models.Project) error {
+func (ps *ProjectService) SetManagedFiles(project *models.Project) error {
 	// 工事フォルダー内のファイルを取得
-	fileInfos, err := s.FileService.GetFileInfos(project.FileInfo.Name)
+	fileInfos, err := ps.FileService.GetFileInfos(project.FileInfo.Name)
 	if err != nil {
 		// エラーの場合はデフォルトの管理ファイルを設定
 		project.ManagedFiles = []models.ManagedFile{{
@@ -302,7 +288,7 @@ func (s *ProjectService) setManagedFilesOptimized(project *models.Project) error
 			Recommended: project.Name + ".xlsx",
 			Current:     "工事.xlsx",
 		}
-		
+
 		// テンプレートファイルのコピーは省略（高速化のため）
 		// 必要に応じて別途実行する
 	}
@@ -315,7 +301,7 @@ func (s *ProjectService) setManagedFilesOptimized(project *models.Project) error
 
 // UpdateProjectFileInfo は工事情報 project.FileInfoの情報を更新します
 // projectの詳細情報で.detail.yamlを更新します
-func (s *ProjectService) UpdateProjectFileInfo(project *models.Project) error {
+func (ps *ProjectService) UpdateProjectFileInfo(project *models.Project) error {
 
 	// 工事開始日・会社名・現場名からフォルダー名を生成
 	updatesStartDate, err := project.StartDate.Format("2006-0102")
@@ -327,13 +313,13 @@ func (s *ProjectService) UpdateProjectFileInfo(project *models.Project) error {
 	// 生成されたフォルダー名とFileInfo.Nameを比較
 	if generatedFolderName != project.FileInfo.Name {
 		// フォルダー名の変更
-		err = s.FileService.MoveFile(project.FileInfo.Name, generatedFolderName)
+		err = ps.FileService.MoveFile(project.FileInfo.Name, generatedFolderName)
 		if err != nil {
 			return err
 		}
 
 		// FileInfoの作成
-		generatedFullpath, err := s.FileService.GetFullpath(generatedFolderName)
+		generatedFullpath, err := ps.FileService.GetFullpath(generatedFolderName)
 		if err != nil {
 			return err
 		}
@@ -351,14 +337,13 @@ func (s *ProjectService) UpdateProjectFileInfo(project *models.Project) error {
 	project.Status = models.DetermineProjectStatus(project.StartDate, project.EndDate)
 
 	// 管理ファイルを更新（推奨ファイル名が変更される可能性があるため）
-	err = s.SetManagedFiles(project)
+	err = ps.SetManagedFiles(project)
 	if err != nil {
 		return err
 	}
 
-	// 更新後の工事情報を.detail.yamlに反映
-	detailPath := filepath.Join(project.FileInfo.Name, s.DetailFile)
-	return s.YamlService.Save(detailPath, *project)
+	// 更新後の工事情報を属性ファイルに反映
+	return ps.AttributeService.Save(project)
 }
 
 // ProjectsToMapByID は[]Projectをmap[string]Projectに変換する
@@ -374,7 +359,7 @@ func ProjectsToMapByID(projects []models.Project) map[string]models.Project {
 // projectは工事データ
 // currentsは変更前の管理ファイル名
 // 変更後の管理ファイル名を返す
-func (s *ProjectService) RenameManagedFile(project models.Project, currents []string) []string {
+func (ps *ProjectService) RenameManagedFile(project models.Project, currents []string) []string {
 	renamedFiles := make([]string, len(currents))
 
 	count := 0
@@ -384,7 +369,7 @@ func (s *ProjectService) RenameManagedFile(project models.Project, currents []st
 				currentPath := filepath.Join(project.FileInfo.Name, current)
 				recommendedPath := filepath.Join(project.FileInfo.Name, managedFile.Recommended)
 				fmt.Printf("current: %s, recommended: %s\n", currentPath, recommendedPath)
-				err := s.FileService.MoveFile(currentPath, recommendedPath)
+				err := ps.FileService.MoveFile(currentPath, recommendedPath)
 				if err == nil {
 					renamedFiles[count] = recommendedPath
 					count++
@@ -393,62 +378,4 @@ func (s *ProjectService) RenameManagedFile(project models.Project, currents []st
 		}
 	}
 	return renamedFiles[:count]
-}
-
-// EnrichProjectWithCompanyInfo enriches a project with company information
-func (s *ProjectService) EnrichProjectWithCompanyInfo(project *models.Project) error {
-	if project.CompanyName == "" {
-		return nil // No company name to lookup
-	}
-	
-	// Try to get or create company by name
-	company, err := s.CompanyService.GetOrCreateCompanyByName(project.CompanyName)
-	if err != nil {
-		return fmt.Errorf("failed to get/create company %s: %v", project.CompanyName, err)
-	}
-	
-	// Update project with company information
-	project.Company = company
-	project.CompanyID = company.ID
-	
-	return nil
-}
-
-// EnrichProjectsWithCompanyInfo enriches multiple projects with company information
-func (s *ProjectService) EnrichProjectsWithCompanyInfo(projects []models.Project) ([]models.Project, error) {
-	enrichedProjects := make([]models.Project, len(projects))
-	
-	for i, project := range projects {
-		enrichedProjects[i] = project
-		if err := s.EnrichProjectWithCompanyInfo(&enrichedProjects[i]); err != nil {
-			// Log error but continue with other projects
-			fmt.Printf("Warning: failed to enrich project %s with company info: %v\n", project.ID, err)
-		}
-	}
-	
-	return enrichedProjects, nil
-}
-
-// UpdateProjectCompanyInfo updates company information for a project
-func (s *ProjectService) UpdateProjectCompanyInfo(project *models.Project, companyInfo models.Company) error {
-	// Update or create the company
-	existing, err := s.CompanyService.GetCompanyByID(companyInfo.ID)
-	if err != nil || existing == nil {
-		// Create new company
-		if err := s.CompanyService.CreateCompany(companyInfo); err != nil {
-			return fmt.Errorf("failed to create company: %v", err)
-		}
-	} else {
-		// Update existing company
-		if err := s.CompanyService.UpdateCompany(companyInfo); err != nil {
-			return fmt.Errorf("failed to update company: %v", err)
-		}
-	}
-	
-	// Update project reference
-	project.CompanyID = companyInfo.ID
-	project.CompanyName = companyInfo.Name
-	project.Company = &companyInfo
-	
-	return nil
 }

@@ -1,153 +1,145 @@
 package models
 
 import (
-	"fmt"
+	"errors"
+	"slices"
 	"strings"
-	"time"
 )
 
-// Company represents a construction company with detailed information
-// @Description Construction company information with contact details and business info
+// Company は工事会社の基本情報をファイル名から取得したモデルを表します
+// @Description 工事会社の基本情報をファイル名から取得したモデル
 type Company struct {
-	// Basic company information
-	ID   string `json:"id" yaml:"id" example:"TC001"`
-	Name string `json:"name" yaml:"name" example:"豊田築炉"`
-	
-	// Company details
-	FullName        string `json:"full_name,omitempty" yaml:"full_name" example:"豊田築炉株式会社"`
-	ShortName       string `json:"short_name,omitempty" yaml:"short_name" example:"豊田築炉"`
-	CompanyType     string `json:"company_type,omitempty" yaml:"company_type" example:"株式会社"`
-	RegistrationNum string `json:"registration_num,omitempty" yaml:"registration_num" example:"1234567890"`
-	
-	// Contact information
-	PostalCode string `json:"postal_code,omitempty" yaml:"postal_code" example:"456-0001"`
-	Address    string `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
-	Phone      string `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
-	Fax        string `json:"fax,omitempty" yaml:"fax" example:"052-681-8112"`
-	Email      string `json:"email,omitempty" yaml:"email" example:"info@toyoda-ro.co.jp"`
-	Website    string `json:"website,omitempty" yaml:"website" example:"https://www.toyoda-ro.co.jp"`
-	
-	// Business information
-	BusinessType string   `json:"business_type,omitempty" yaml:"business_type" example:"工業炉製造"`
-	Services     []string `json:"services,omitempty" yaml:"services" example:"['工業炉設計', '工業炉製造', '工業炉メンテナンス']"`
-	Specialties  []string `json:"specialties,omitempty" yaml:"specialties" example:"['高温炉', '熱処理炉', '焼成炉']"`
-	
-	// Timestamps
-	CreatedAt Timestamp `json:"created_at,omitempty" yaml:"created_at"`
-	UpdatedAt Timestamp `json:"updated_at,omitempty" yaml:"updated_at"`
-	
-	// Additional metadata
-	Notes  string            `json:"notes,omitempty" yaml:"notes" example:"主要取引先企業"`
-	Tags   []string          `json:"tags,omitempty" yaml:"tags" example:"['元請け', '製造業', '愛知県']"`
-	Custom map[string]string `json:"custom,omitempty" yaml:"custom" example:"{'担当者': '田中太郎', '契約種別': '年間契約'}"`
-	
-	// Project relationship
-	ProjectCount int `json:"project_count,omitempty" yaml:"-"` // Number of associated projects
+	// 基本のFileInfo構造体を埋め込み
+	FileInfo
+
+	// 計算フィールド
+	ID string `json:"id" yaml:"-" example:"TC001"`
+
+	// パス名からの固有フィールド
+	ShortName    string `json:"short_name,omitempty" yaml:"-" example:"豊田築炉"`
+	BusinessType string `json:"business_type,omitempty" yaml:"-" example:"元請け"`
+
+	// 属性ファイルフィールド
+	FullName   string   `json:"full_name,omitempty" yaml:"full_name" example:"有限会社 豊田築炉"`
+	PostalCode string   `json:"postal_code,omitempty" yaml:"postal_code" example:"456-0001"`
+	Address    string   `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
+	Phone      string   `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
+	Email      string   `json:"email,omitempty" yaml:"email" example:"info@toyotachikuro.jp"`
+	Website    string   `json:"website,omitempty" yaml:"website" example:"https://www.toyotachikuro.jp"`
+	Tags       []string `json:"tags,omitempty" yaml:"tags" example:"['元請け', '製造業']"`
 }
 
-// NewCompany creates a new Company from basic information
-func NewCompany(name string) Company {
-	now := Timestamp{Time: time.Now()}
-	
-	// Generate company ID from name
-	id := GenerateCompanyID(name)
-	
-	company := Company{
-		ID:           id,
-		Name:         name,
-		ShortName:    name,
-		BusinessType: "建設業",
-		CreatedAt:    now,
-		UpdatedAt:    now,
-		Tags:         []string{"会社", "建設"},
-		Custom:       make(map[string]string),
+// GetFileInfo AttributeServiceで使用するためのメソッド
+func (c *Company) GetFileInfo() FileInfo {
+	return c.FileInfo
+}
+
+// NewCompany FileInfoからCompanyを作成します
+func NewCompany(fileInfo FileInfo) (Company, error) {
+	// ファイル名の[0-9] [会社名]の規則を解析
+	parts, err := ParseCompanyName(fileInfo.Name)
+	if err != nil {
+		return Company{}, err
 	}
-	
-	return company
-}
 
-// GenerateCompanyID generates a unique ID for the company
-func GenerateCompanyID(name string) string {
-	// Remove spaces and generate ID from company name
-	cleanName := strings.ReplaceAll(name, " ", "")
-	idSource := fmt.Sprintf("company_%s_%d", cleanName, time.Now().Unix())
-	id := NewIDFromString(idSource)
-	return fmt.Sprintf("C%s", id.Len5())
-}
+	// 基本タグを作成
+	tags := []string{"会社", parts[0], parts[1]}
 
-// UpdateTimestamp updates the UpdatedAt timestamp to current time
-func (c *Company) UpdateTimestamp() {
-	c.UpdatedAt = Timestamp{Time: time.Now()}
-}
-
-// AddService adds a service to the company's services list
-func (c *Company) AddService(service string) {
-	for _, existing := range c.Services {
-		if existing == service {
-			return // Service already exists
+	// 会社名内にハイフンが含まれているときは関連会社名または業務内容をタグに追加
+	companyPart := fileInfo.Name[2:] // "0 " を除いた部分
+	if hyphenIndex := strings.Index(companyPart, "-"); hyphenIndex != -1 {
+		// ハイフン以降の文字列を取得
+		relatedInfo := companyPart[hyphenIndex+1:]
+		if relatedInfo != "" {
+			tags = append(tags, relatedInfo)
 		}
 	}
-	c.Services = append(c.Services, service)
-	c.UpdateTimestamp()
+
+	return Company{
+		FileInfo:     fileInfo,
+		ID:           NewIDFromString(parts[1]).Len5(),
+		FullName:     parts[1],
+		ShortName:    parts[1],
+		BusinessType: parts[0],
+		Tags:         tags,
+	}, nil
 }
 
-// AddSpecialty adds a specialty to the company's specialties list
-func (c *Company) AddSpecialty(specialty string) {
-	for _, existing := range c.Specialties {
-		if existing == specialty {
-			return // Specialty already exists
-		}
+// ParseCompanyName は"[0-9] [会社名]"形式のファイル名を解析します
+// 会社名内にハイフンが含まれている場合は関連会社名または業務内容として処理します
+// 戻り値: [0]業種, [1]会社名, error
+func ParseCompanyName(name string) ([2]string, error) {
+	var result [2]string
+
+	// 最小長チェック（"0 X"の最小3文字）
+	if len(name) < 3 {
+		return result, errors.New("ファイル名が短すぎます")
 	}
-	c.Specialties = append(c.Specialties, specialty)
-	c.UpdateTimestamp()
+
+	// 最初の文字が数字かチェック
+	if name[0] < '0' || name[0] > '9' {
+		return result, errors.New("最初の文字が数字ではありません")
+	}
+
+	// 2番目の文字がスペースかチェック
+	if name[1] != ' ' {
+		return result, errors.New("2番目の文字がスペースではありません")
+	}
+
+	// スペース以降の文字列を取得
+	companyPart := name[2:]
+
+	// 空文字チェック
+	if companyPart == "" {
+		return result, errors.New("会社名が空です")
+	}
+
+	// 会社名内にハイフンが含まれているかチェック
+	var shortName string
+	if hyphenIndex := strings.Index(companyPart, "-"); hyphenIndex != -1 {
+		// ハイフンが見つかった場合、ハイフン以前を会社名とする
+		shortName = companyPart[:hyphenIndex]
+	} else {
+		// ハイフンがない場合は全体を会社名とする
+		shortName = companyPart
+	}
+
+	result[0] = DetermineBusinessType(name[:1])
+	result[1] = shortName
+
+	return result, nil
+}
+
+func DetermineBusinessType(name string) string {
+	switch name {
+	case "0":
+		return "自社"
+	case "1":
+		return "下請会社"
+	case "2":
+		return "築炉会社"
+	case "3":
+		return "一人親方"
+	case "4":
+		return "元請け"
+	case "5":
+		return "リース会社"
+	case "6":
+		return "販売会社"
+	case "7":
+		return "販売会社"
+	case "8":
+		return "求人会社"
+	case "9":
+		return "その他"
+	}
+	return "不明"
 }
 
 // AddTag adds a tag to the company's tags list
 func (c *Company) AddTag(tag string) {
-	for _, existing := range c.Tags {
-		if existing == tag {
-			return // Tag already exists
-		}
+	if slices.Contains(c.Tags, tag) {
+		return // Tag already exists
 	}
 	c.Tags = append(c.Tags, tag)
-	c.UpdateTimestamp()
-}
-
-// SetCustomField sets a custom field value
-func (c *Company) SetCustomField(key, value string) {
-	if c.Custom == nil {
-		c.Custom = make(map[string]string)
-	}
-	c.Custom[key] = value
-	c.UpdateTimestamp()
-}
-
-// GetCustomField gets a custom field value
-func (c *Company) GetCustomField(key string) (string, bool) {
-	if c.Custom == nil {
-		return "", false
-	}
-	value, exists := c.Custom[key]
-	return value, exists
-}
-
-// IsComplete checks if the company has all required information
-func (c *Company) IsComplete() bool {
-	return c.Name != "" && c.Address != "" && c.Phone != ""
-}
-
-// GetDisplayName returns the display name for the company (FullName if available, otherwise Name)
-func (c *Company) GetDisplayName() string {
-	if c.FullName != "" {
-		return c.FullName
-	}
-	return c.Name
-}
-
-// GetShortDisplayName returns a short display name for the company
-func (c *Company) GetShortDisplayName() string {
-	if c.ShortName != "" {
-		return c.ShortName
-	}
-	return c.Name
 }

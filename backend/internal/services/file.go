@@ -12,28 +12,29 @@ import (
 	"sync"
 )
 
-// FileService is a service for managing the file system
+// FileService はファイルシステムを管理するサービス
 type FileService struct {
-	// BasePath is the base directory of the file system
+	// BasePath はファイルシステムの基底ディレクトリ
 	BasePath string `json:"base_path" yaml:"base_path" example:"~/penguin"`
 }
 
-// NewFileService creates a new FileService
+// NewFileService FileServiceを作成する
 func NewFileService(basePath string) (*FileService, error) {
-	// Expand ~ to home directory
+	// ホームディレクトリに展開
 	if strings.HasPrefix(basePath, "~/") {
 		usr, err := user.Current()
 		if err != nil {
 			return nil, err
 		}
 		basePath = filepath.Join(usr.HomeDir, basePath[2:])
-	} else {
-		absPath, err := filepath.Abs(basePath)
-		if err != nil {
-			return nil, err
-		}
-		basePath = absPath
 	}
+
+	// 絶対パスに変換（チェック）
+	absPath, err := filepath.Abs(basePath)
+	if err != nil {
+		return nil, err
+	}
+	basePath = absPath
 
 	return &FileService{
 		BasePath: basePath,
@@ -108,7 +109,7 @@ func (s *FileService) GetFileInfos(joinPaths ...string) ([]models.FileInfo, erro
 	// 結果を収集（元の順序を保持）
 	fileInfos := make([]models.FileInfo, 0, len(entries))
 	resultMap := make(map[int]*models.FileInfo, len(entries))
-	
+
 	for result := range results {
 		if result.Error == nil && result.FileInfo != nil {
 			resultMap[result.Index] = result.FileInfo
@@ -220,7 +221,7 @@ func (s *FileService) copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return os.Chmod(dst, srcInfo.Mode())
 }
 

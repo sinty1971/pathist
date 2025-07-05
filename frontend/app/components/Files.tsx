@@ -148,34 +148,40 @@ export const Files: React.FC = () => {
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentPath, setCurrentPath] = useState('~/penguin');
-  const [pathInput, setPathInput] = useState('~/penguin');
+  const [currentPath, setCurrentPath] = useState('~/penguin/豊田築炉');
+  const [pathInput, setPathInput] = useState('~/penguin/豊田築炉');
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expanded, setExpanded] = useState<string[]>([]);
   const { setFileCount, setCurrentPath: setContextPath } = useFileInfo();
 
   // パス変換関数
-  const convertToRelativePath = (frontendPath: string): string => {
-    if (!frontendPath || frontendPath === '~/penguin' || frontendPath === '/home/shin/penguin') {
+  const convertToRelativePath = (fullPath: string): string => {
+    if (!fullPath || fullPath === '~/penguin/豊田築炉' || fullPath === '/home/shin/penguin/豊田築炉') {
       return '';
     }
-    if (frontendPath.startsWith('~/penguin/')) {
-      return frontendPath.substring('~/penguin/'.length);
+    // フルパスの場合の処理を先に
+    if (fullPath.startsWith('/home/shin/penguin/豊田築炉/')) {
+      return fullPath.substring('/home/shin/penguin/豊田築炉/'.length);
     }
-    if (frontendPath.startsWith('/home/shin/penguin/')) {
-      return frontendPath.substring('/home/shin/penguin/'.length);
+    // 相対パスの場合
+    if (fullPath.startsWith('~/penguin/豊田築炉/')) {
+      return fullPath.substring('~/penguin/豊田築炉/'.length);
     }
-    return frontendPath;
+    // その他（すでに相対パスの場合など）
+    return fullPath;
   };
 
 
   // ファイルデータをTreeNode形式に変換
   const convertToTreeNode = (fileInfo: any, basePath: string): TreeNode => {
-    return {
-      id: `${basePath}/${fileInfo.name}`,
+    // fileInfo.pathがフルパスの場合はそのまま使用
+    const nodePath = fileInfo.path || `${basePath}/${fileInfo.name}`;
+    
+    const node = {
+      id: nodePath,  // フルパスをIDとして使用
       name: fileInfo.name,
-      path: fileInfo.path || `${basePath}/${fileInfo.name}`,
+      path: nodePath,
       isDirectory: fileInfo.is_directory,
       size: fileInfo.size,
       modifiedTime: fileInfo.modified_time,
@@ -183,12 +189,27 @@ export const Files: React.FC = () => {
       isLoaded: !fileInfo.is_directory,
       isLoading: false
     };
+    
+    return node;
   };
 
   // ファイル一覧を読み込み
   const loadFiles = useCallback(async (path?: string, isRefresh = false) => {
-    const frontendPath = path || '~/penguin';
-    const relativePath = convertToRelativePath(frontendPath);
+    const inputPath = path || '~/penguin/豊田築炉';
+    let relativePath = '';
+    
+    // パスの種類を判定して適切に処理
+    if (!path || path === '~/penguin/豊田築炉') {
+      // ルートレベルの場合
+      relativePath = '';
+    } else if (path.startsWith('/home/shin/penguin/豊田築炉/') || path.startsWith('~/penguin/豊田築炉/')) {
+      // フルパスの場合（ブレッドクラム、パス入力等から）
+      relativePath = convertToRelativePath(inputPath);
+    } else {
+      // すでに相対パスの場合（ディレクトリ展開から）
+      relativePath = path;
+    }
+    
     
     setLoading(true);
     setError(null);
@@ -200,15 +221,19 @@ export const Files: React.FC = () => {
       
       if (response.data) {
         const data = response.data as any[];
-        const nodes = data.map(fileInfo => convertToTreeNode(fileInfo, frontendPath));
         
-        if (path === '~/penguin' || !path || isRefresh) {
+        const nodes = data.map(fileInfo => {
+          // バックエンドから返されるpathはフルパスなので、そのまま使用
+          return convertToTreeNode(fileInfo, '');
+        });
+        
+        if (path === '~/penguin/豊田築炉' || !path || isRefresh) {
           // ルートレベルの読み込みまたはリフレッシュの場合のみツリーデータを置き換え
           setTreeData(nodes);
           // コンテキストを更新（ルートレベルまたはリフレッシュの場合のみ）
           setFileCount(data.length);
-          setContextPath(frontendPath);
-          setCurrentPath(frontendPath);
+          setContextPath(inputPath);
+          setCurrentPath(inputPath);
         }
         
         return nodes;
@@ -237,7 +262,10 @@ export const Files: React.FC = () => {
     setTreeData(prevData => updateNodeInTree(prevData, nodeId, { ...node, isLoading: true }));
 
     try {
-      const children = await loadFiles(node.path, false);
+      // node.pathはフルパスなので、相対パスに変換
+      const targetRelativePath = convertToRelativePath(node.path);
+      
+      const children = await loadFiles(targetRelativePath, false);
       
       // 子ノードを設定
       setTreeData(prevData => updateNodeInTree(prevData, nodeId, {
@@ -247,10 +275,11 @@ export const Files: React.FC = () => {
         isLoading: false
       }));
     } catch (err) {
+      console.error('handleNodeExpand error:', err);
       // エラー時はローディング状態を解除
       setTreeData(prevData => updateNodeInTree(prevData, nodeId, { ...node, isLoading: false }));
     }
-  }, [loadFiles]);
+  }, [loadFiles, convertToRelativePath]);
 
   // ツリー内のノードを更新するヘルパー関数
   const updateNodeInTree = (nodes: TreeNode[], targetId: string, updatedNode: TreeNode): TreeNode[] => {
@@ -332,20 +361,20 @@ export const Files: React.FC = () => {
 
   // ホームに戻る
   const handleGoHome = () => {
-    setPathInput('~/penguin');
+    setPathInput('~/penguin/豊田築炉');
     setTreeData([]);
     setExpanded([]);
-    loadFiles('~/penguin', true);
+    loadFiles('~/penguin/豊田築炉', true);
   };
 
   // パスのブレッドクラム
   const getBreadcrumbs = () => {
-    const parts = currentPath.replace('~/penguin', '').split('/').filter(Boolean);
+    const parts = currentPath.replace('~/penguin/豊田築炉', '').split('/').filter(Boolean);
     const breadcrumbs = [
-      { label: 'penguin', path: '~/penguin' }
+      { label: '豊田築炉', path: '~/penguin/豊田築炉' }
     ];
     
-    let accumulatedPath = '~/penguin';
+    let accumulatedPath = '~/penguin/豊田築炉';
     parts.forEach(part => {
       accumulatedPath += `/${part}`;
       breadcrumbs.push({ label: part, path: accumulatedPath });

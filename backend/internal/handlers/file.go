@@ -3,7 +3,7 @@ package handlers
 import (
 	"penguin-backend/internal/services"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 type FileHandler struct {
@@ -26,7 +26,7 @@ func NewFileHandler(fsService *services.FileService) *FileHandler {
 // @Success      200 {object} []models.FileInfo "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /file/fileinfos [get]
-func (h *FileHandler) GetFileInfos(c *fiber.Ctx) error {
+func (h *FileHandler) GetFileInfos(c fiber.Ctx) error {
 	fsPath := c.Query("path", "")
 
 	fileInfos, err := h.FileService.GetFileInfos(fsPath)

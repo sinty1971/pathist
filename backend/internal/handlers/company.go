@@ -3,7 +3,7 @@ package handlers
 import (
 	"penguin-backend/internal/services"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 type CompanyHandler struct {
@@ -27,7 +27,7 @@ func NewCompanyHandler(companyService *services.CompanyService) *CompanyHandler 
 // @Failure      404 {object} map[string]string "会社が見つからない"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /company/{id} [get]
-func (h *CompanyHandler) GetCompany(c *fiber.Ctx) error {
+func (h *CompanyHandler) GetCompanyByID(c fiber.Ctx) error {
 	company, err := h.CompanyService.GetCompanyByID(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -47,7 +47,7 @@ func (h *CompanyHandler) GetCompany(c *fiber.Ctx) error {
 // @Success      200 {array} models.Company "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /company/list [get]
-func (h *CompanyHandler) GetCompanies(c *fiber.Ctx) error {
+func (h *CompanyHandler) GetCompanies(c fiber.Ctx) error {
 	companies := h.CompanyService.GetCompanies()
 	return c.JSON(companies)
 }

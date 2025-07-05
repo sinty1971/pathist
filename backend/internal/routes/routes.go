@@ -4,17 +4,17 @@ import (
 	"penguin-backend/internal/handlers"
 	"penguin-backend/internal/services"
 
-	"github.com/gofiber/fiber/v2"
-	fiberSwagger "github.com/swaggo/fiber-swagger"
+	"github.com/gofiber/fiber/v3"
+	// fiberSwagger "github.com/swaggo/fiber-swagger" // v3対応待ち
 )
 
 // SetupRoutes はすべてのルートを設定します
 func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
-	// Swagger documentation
-	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+	// Swagger documentation (v3対応待ち)
+	// app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	// Root endpoint
-	app.Get("/", func(c *fiber.Ctx) error {
+	app.Get("/", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"message": "Penguin Backend API",
 			"version": "1.0.0",

@@ -6,7 +6,7 @@ import (
 	"penguin-backend/internal/models"
 	"penguin-backend/internal/services"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 // ProjectHandler 工事関連のHTTPリクエストを処理するハンドラー
@@ -31,7 +31,7 @@ func NewProjectHandler(projectService *services.ProjectService) *ProjectHandler 
 // @Success      200 {object} models.Project "Project"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /project/get/{path} [get]
-func (h *ProjectHandler) GetProject(c *fiber.Ctx) error {
+func (h *ProjectHandler) GetByPath(c fiber.Ctx) error {
 	// パスパラメータを取得
 	path := c.Params("path")
 	fmt.Printf("Handler received raw path: '%s'\n", path)
@@ -65,7 +65,7 @@ func (h *ProjectHandler) GetProject(c *fiber.Ctx) error {
 // @Success      200 {object} []models.Project "最近のプロジェクト一覧"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /project/recent [get]
-func (h *ProjectHandler) GetRecentProjects(c *fiber.Ctx) error {
+func (h *ProjectHandler) GetRecent(c fiber.Ctx) error {
 	// ProjectServiceを使用して最近のプロジェクト一覧を取得
 	projects := h.projectService.GetRecentProjects()
 
@@ -82,10 +82,10 @@ func (h *ProjectHandler) GetRecentProjects(c *fiber.Ctx) error {
 // @Success      200 {object} models.Project "更新後の工事データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /project/update [post]
-func (h *ProjectHandler) Update(c *fiber.Ctx) error {
+func (h *ProjectHandler) Update(c fiber.Ctx) error {
 	// リクエストボディから編集されたプロジェクトを取得
 	var project models.Project
-	if err := c.BodyParser(&project); err != nil {
+	if err := c.Bind().Body(&project); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "リクエストボディの解析に失敗しました",
 			"message": err.Error(),
@@ -120,10 +120,10 @@ type RenameManagedFileRequest struct {
 // @Success      200 {object} []string "更新後のファイル名リスト"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /project/rename-managed-file [post]
-func (h *ProjectHandler) RenameManagedFile(c *fiber.Ctx) error {
+func (h *ProjectHandler) RenameManagedFile(c fiber.Ctx) error {
 	// リクエストボディから編集されたプロジェクトを取得
 	var request RenameManagedFileRequest
-	if err := c.BodyParser(&request); err != nil {
+	if err := c.Bind().Body(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "リクエストボディの解析に失敗しました",
 			"message": err.Error(),

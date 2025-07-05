@@ -3,7 +3,7 @@ package routes
 import (
 	"penguin-backend/internal/handlers"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 // SetupCompanyRoutes 会社関連のルートを設定
@@ -14,5 +14,5 @@ func SetupCompanyRoutes(api fiber.Router, handler *handlers.CompanyHandler) {
 	company.Get("/list", handler.GetCompanies)
 
 	// 会社詳細取得
-	company.Get("/:id", handler.GetCompany)
+	company.Get("/:id", handler.GetCompanyByID)
 }

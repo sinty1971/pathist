@@ -162,9 +162,37 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 	return nil, nil // Return nil if not found (not an error)
 }
 
-// UpdateCompanyFileInfo は会社情報を更新し、必要に応じてフォルダー名を変更します
-func (cs *CompanyService) UpdateCompanyFileInfo(company *models.Company) error {
-	// 現在の実装では、会社フォルダー名の変更は不要
-	// 属性ファイルのみ更新
+// Update は会社情報を更新し、必要に応じてフォルダー名を変更します
+func (cs *CompanyService) Update(company *models.Company) error {
+	// 会社のショート名と業種からフォルダー名を生成
+	businessTypeNumber := models.GetBusinessTypeNumber(company.BusinessType)
+	generatedFolderName := fmt.Sprintf("%s %s", businessTypeNumber, company.ShortName)
+
+	// 生成されたフォルダー名とFileInfo.Nameを比較
+	if generatedFolderName != company.FileInfo.Name {
+		// フォルダー名の変更
+		err := cs.FileService.MoveFile(company.FileInfo.Name, generatedFolderName)
+		if err != nil {
+			return err
+		}
+
+		// FileInfoの作成
+		generatedFullpath, err := cs.FileService.GetFullpath(generatedFolderName)
+		if err != nil {
+			return err
+		}
+		generatedFileInfo, err := models.NewFileInfo(generatedFullpath)
+		if err != nil {
+			return err
+		}
+
+		// 詳細情報以外の更新
+		company.FileInfo = *generatedFileInfo
+	}
+
+	// 計算が必要な項目の更新
+	company.ID = models.NewIDFromString(company.ShortName).Len5()
+
+	// 更新後の会社情報を属性ファイルに反映
 	return cs.AttributeService.Save(company)
 }

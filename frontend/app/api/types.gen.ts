@@ -2,7 +2,7 @@
 
 export type HandlersRenameManagedFileRequest = {
     currents?: Array<string>;
-    project?: ModelsProject;
+    koji?: ModelsKoji;
 };
 
 /**
@@ -24,9 +24,6 @@ export type ModelsCompany = {
      * Whether this item is a directory
      */
     is_directory?: boolean;
-    /**
-     * Last modification time
-     */
     modified_time?: ModelsTimestamp;
     /**
      * Name of the file or folder
@@ -58,9 +55,6 @@ export type ModelsFileInfo = {
      * Whether this item is a directory
      */
     is_directory?: boolean;
-    /**
-     * Last modification time
-     */
     modified_time?: ModelsTimestamp;
     /**
      * Name of the file or folder
@@ -76,29 +70,15 @@ export type ModelsFileInfo = {
     size?: number;
 };
 
-export type ModelsManagedFile = {
-    /**
-     * FileService.BasePathからの相対パス
-     */
-    current?: string;
-    /**
-     * FileService.BasePathからの相対パス
-     */
-    recommended?: string;
-};
-
 /**
  * 拡張属性を持つ工事プロジェクトフォルダー情報
  */
-export type ModelsProject = {
+export type ModelsKoji = {
     /**
      * パス名からの固有フィールド
      */
     company_name?: string;
     description?: string;
-    /**
-     * 属性ファイルフィールド
-     */
     end_date?: ModelsTimestamp;
     /**
      * 計算フィールド
@@ -110,9 +90,6 @@ export type ModelsProject = {
     is_directory?: boolean;
     location_name?: string;
     managed_files?: Array<ModelsManagedFile>;
-    /**
-     * Last modification time
-     */
     modified_time?: ModelsTimestamp;
     /**
      * Name of the file or folder
@@ -131,14 +108,82 @@ export type ModelsProject = {
     tags?: Array<string>;
 };
 
+export type ModelsManagedFile = {
+    /**
+     * FileService.BasePathからの相対パス
+     */
+    current?: string;
+    /**
+     * FileService.BasePathからの相対パス
+     */
+    recommended?: string;
+};
+
 /**
- * Timestamp in RFC3339 format
+ * 属性ファイルフィールド
  */
 export type ModelsTimestamp = {
     'time.Time'?: string;
 };
 
-export type GetCompanyByIdData = {
+export type GetCompaniesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/companies';
+};
+
+export type GetCompaniesErrors = {
+    /**
+     * サーバーエラー
+     */
+    500: {
+        [key: string]: string;
+    };
+};
+
+export type GetCompaniesError = GetCompaniesErrors[keyof GetCompaniesErrors];
+
+export type GetCompaniesResponses = {
+    /**
+     * 正常なレスポンス
+     */
+    200: Array<ModelsCompany>;
+};
+
+export type GetCompaniesResponse = GetCompaniesResponses[keyof GetCompaniesResponses];
+
+export type PutCompaniesData = {
+    /**
+     * 会社データ
+     */
+    body: ModelsCompany;
+    path?: never;
+    query?: never;
+    url: '/companies';
+};
+
+export type PutCompaniesErrors = {
+    /**
+     * サーバーエラー
+     */
+    500: {
+        [key: string]: string;
+    };
+};
+
+export type PutCompaniesError = PutCompaniesErrors[keyof PutCompaniesErrors];
+
+export type PutCompaniesResponses = {
+    /**
+     * 更新後の会社データ
+     */
+    200: ModelsCompany;
+};
+
+export type PutCompaniesResponse = PutCompaniesResponses[keyof PutCompaniesResponses];
+
+export type GetCompaniesByIdData = {
     body?: never;
     path: {
         /**
@@ -147,10 +192,10 @@ export type GetCompanyByIdData = {
         id: string;
     };
     query?: never;
-    url: '/company/{id}';
+    url: '/companies/{id}';
 };
 
-export type GetCompanyByIdErrors = {
+export type GetCompaniesByIdErrors = {
     /**
      * 会社が見つからない
      */
@@ -165,45 +210,18 @@ export type GetCompanyByIdErrors = {
     };
 };
 
-export type GetCompanyByIdError = GetCompanyByIdErrors[keyof GetCompanyByIdErrors];
+export type GetCompaniesByIdError = GetCompaniesByIdErrors[keyof GetCompaniesByIdErrors];
 
-export type GetCompanyByIdResponses = {
+export type GetCompaniesByIdResponses = {
     /**
      * 正常なレスポンス
      */
     200: ModelsCompany;
 };
 
-export type GetCompanyByIdResponse = GetCompanyByIdResponses[keyof GetCompanyByIdResponses];
+export type GetCompaniesByIdResponse = GetCompaniesByIdResponses[keyof GetCompaniesByIdResponses];
 
-export type GetCompanyListData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/company/list';
-};
-
-export type GetCompanyListErrors = {
-    /**
-     * サーバーエラー
-     */
-    500: {
-        [key: string]: string;
-    };
-};
-
-export type GetCompanyListError = GetCompanyListErrors[keyof GetCompanyListErrors];
-
-export type GetCompanyListResponses = {
-    /**
-     * 正常なレスポンス
-     */
-    200: Array<ModelsCompany>;
-};
-
-export type GetCompanyListResponse = GetCompanyListResponses[keyof GetCompanyListResponses];
-
-export type GetFileFileinfosData = {
+export type GetFilesData = {
     body?: never;
     path?: never;
     query?: {
@@ -212,10 +230,10 @@ export type GetFileFileinfosData = {
          */
         path?: string;
     };
-    url: '/file/fileinfos';
+    url: '/files';
 };
 
-export type GetFileFileinfosErrors = {
+export type GetFilesErrors = {
     /**
      * サーバーエラー
      */
@@ -224,30 +242,92 @@ export type GetFileFileinfosErrors = {
     };
 };
 
-export type GetFileFileinfosError = GetFileFileinfosErrors[keyof GetFileFileinfosErrors];
+export type GetFilesError = GetFilesErrors[keyof GetFilesErrors];
 
-export type GetFileFileinfosResponses = {
+export type GetFilesResponses = {
     /**
      * 正常なレスポンス
      */
     200: Array<ModelsFileInfo>;
 };
 
-export type GetFileFileinfosResponse = GetFileFileinfosResponses[keyof GetFileFileinfosResponses];
+export type GetFilesResponse = GetFilesResponses[keyof GetFilesResponses];
 
-export type GetProjectGetByPathData = {
+export type GetKojiesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * フィルター (recent: 最近の工事のみ)
+         */
+        filter?: string;
+    };
+    url: '/kojies';
+};
+
+export type GetKojiesErrors = {
+    /**
+     * サーバーエラー
+     */
+    500: {
+        [key: string]: string;
+    };
+};
+
+export type GetKojiesError = GetKojiesErrors[keyof GetKojiesErrors];
+
+export type GetKojiesResponses = {
+    /**
+     * 工事一覧
+     */
+    200: Array<ModelsKoji>;
+};
+
+export type GetKojiesResponse = GetKojiesResponses[keyof GetKojiesResponses];
+
+export type PutKojiesData = {
+    /**
+     * 工事データ
+     */
+    body: ModelsKoji;
+    path?: never;
+    query?: never;
+    url: '/kojies';
+};
+
+export type PutKojiesErrors = {
+    /**
+     * サーバーエラー
+     */
+    500: {
+        [key: string]: string;
+    };
+};
+
+export type PutKojiesError = PutKojiesErrors[keyof PutKojiesErrors];
+
+export type PutKojiesResponses = {
+    /**
+     * 更新後の工事データ
+     */
+    200: ModelsKoji;
+};
+
+export type PutKojiesResponse = PutKojiesResponses[keyof PutKojiesResponses];
+
+export type GetKojiesByPathData = {
     body?: never;
     path: {
         /**
-         * Projectフォルダーのファイル名
+         * Kojiフォルダーのファイル名
          */
         path: string;
     };
     query?: never;
-    url: '/project/get/{path}';
+    url: '/kojies/{path}';
 };
 
-export type GetProjectGetByPathErrors = {
+export type GetKojiesByPathErrors = {
     /**
      * サーバーエラー
      */
@@ -256,55 +336,28 @@ export type GetProjectGetByPathErrors = {
     };
 };
 
-export type GetProjectGetByPathError = GetProjectGetByPathErrors[keyof GetProjectGetByPathErrors];
+export type GetKojiesByPathError = GetKojiesByPathErrors[keyof GetKojiesByPathErrors];
 
-export type GetProjectGetByPathResponses = {
+export type GetKojiesByPathResponses = {
     /**
-     * Project
+     * Koji
      */
-    200: ModelsProject;
+    200: ModelsKoji;
 };
 
-export type GetProjectGetByPathResponse = GetProjectGetByPathResponses[keyof GetProjectGetByPathResponses];
+export type GetKojiesByPathResponse = GetKojiesByPathResponses[keyof GetKojiesByPathResponses];
 
-export type GetProjectRecentData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/project/recent';
-};
-
-export type GetProjectRecentErrors = {
-    /**
-     * サーバーエラー
-     */
-    500: {
-        [key: string]: string;
-    };
-};
-
-export type GetProjectRecentError = GetProjectRecentErrors[keyof GetProjectRecentErrors];
-
-export type GetProjectRecentResponses = {
-    /**
-     * 最近のプロジェクト一覧
-     */
-    200: Array<ModelsProject>;
-};
-
-export type GetProjectRecentResponse = GetProjectRecentResponses[keyof GetProjectRecentResponses];
-
-export type PostProjectRenameManagedFileData = {
+export type PutKojiesManagedFilesData = {
     /**
      * 工事データと管理ファイル
      */
     body: HandlersRenameManagedFileRequest;
     path?: never;
     query?: never;
-    url: '/project/rename-managed-file';
+    url: '/kojies/managed-files';
 };
 
-export type PostProjectRenameManagedFileErrors = {
+export type PutKojiesManagedFilesErrors = {
     /**
      * サーバーエラー
      */
@@ -313,46 +366,16 @@ export type PostProjectRenameManagedFileErrors = {
     };
 };
 
-export type PostProjectRenameManagedFileError = PostProjectRenameManagedFileErrors[keyof PostProjectRenameManagedFileErrors];
+export type PutKojiesManagedFilesError = PutKojiesManagedFilesErrors[keyof PutKojiesManagedFilesErrors];
 
-export type PostProjectRenameManagedFileResponses = {
+export type PutKojiesManagedFilesResponses = {
     /**
      * 更新後のファイル名リスト
      */
     200: Array<string>;
 };
 
-export type PostProjectRenameManagedFileResponse = PostProjectRenameManagedFileResponses[keyof PostProjectRenameManagedFileResponses];
-
-export type PostProjectUpdateData = {
-    /**
-     * 工事データ
-     */
-    body: ModelsProject;
-    path?: never;
-    query?: never;
-    url: '/project/update';
-};
-
-export type PostProjectUpdateErrors = {
-    /**
-     * サーバーエラー
-     */
-    500: {
-        [key: string]: string;
-    };
-};
-
-export type PostProjectUpdateError = PostProjectUpdateErrors[keyof PostProjectUpdateErrors];
-
-export type PostProjectUpdateResponses = {
-    /**
-     * 更新後の工事データ
-     */
-    200: ModelsProject;
-};
-
-export type PostProjectUpdateResponse = PostProjectUpdateResponses[keyof PostProjectUpdateResponses];
+export type PutKojiesManagedFilesResponse = PutKojiesManagedFilesResponses[keyof PutKojiesManagedFilesResponses];
 
 export type ClientOptions = {
     baseUrl: 'http://localhost:8080/api' | (string & {});

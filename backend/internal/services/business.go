@@ -7,7 +7,7 @@ type BusinessDataService struct {
 	FileService *FileService
 
 	// 工事データ管理サービス
-	ProjectService *ProjectService
+	KojiService *KojiService
 
 	// 企業データ管理サービス
 	CompanyService *CompanyService
@@ -33,8 +33,8 @@ func NewBusinessDataService(businessFilePath, attributeFilename string) (*Busine
 		return nil, err
 	}
 
-	// ProjectServiceを初期化（CompanyService依存なしで）
-	projectService, err := NewProjectService(fileService, "2 工事")
+	// KojiServiceを初期化（CompanyService依存なしで）
+	kojiService, err := NewKojiService(fileService, "2 工事")
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func NewBusinessDataService(businessFilePath, attributeFilename string) (*Busine
 
 	return &BusinessDataService{
 		FileService:       fileService,
-		ProjectService:    projectService,
+		KojiService:       kojiService,
 		CompanyService:    companyService,
 		AttributeFilename: attributeFilename,
 	}, nil

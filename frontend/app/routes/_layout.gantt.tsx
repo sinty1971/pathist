@@ -1,5 +1,5 @@
-import ProjectGanttChart from "../components/ProjectGanttChart";
+import KojiGanttChart from "../components/KojiGanttChart";
 
 export default function GanttChartPage() {
-  return <ProjectGanttChart />;
+  return <KojiGanttChart />;
 }

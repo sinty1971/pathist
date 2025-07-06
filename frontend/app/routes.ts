@@ -5,8 +5,8 @@ export default [
   layout("routes/_layout.tsx", [
     index("routes/_layout._index.tsx"),
     route("files", "routes/_layout.files.tsx"),
-    route("projects", "routes/_layout.projects.tsx"),
-    route("projects/gantt", "routes/_layout.gantt.tsx"),
+    route("kojies", "routes/_layout.kojies.tsx"),
+    route("kojies/gantt", "routes/_layout.gantt.tsx"),
     route("companies", "routes/_layout.companies.tsx"),
   ]),
 ] satisfies RouteConfig;

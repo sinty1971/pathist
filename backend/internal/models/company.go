@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -110,30 +111,55 @@ func ParseCompanyName(name string) ([2]string, error) {
 	return result, nil
 }
 
-func DetermineBusinessType(name string) string {
-	switch name {
-	case "0":
-		return "自社"
-	case "1":
-		return "下請会社"
-	case "2":
-		return "築炉会社"
-	case "3":
-		return "一人親方"
-	case "4":
-		return "元請け"
-	case "5":
-		return "リース会社"
-	case "6":
-		return "販売会社"
-	case "7":
-		return "販売会社"
-	case "8":
-		return "求人会社"
-	case "9":
-		return "その他"
+// businessTypeMap は数字から業種名への変換マップ
+var businessTypeMap = map[string]string{
+	"0": "自社",
+	"1": "下請会社",
+	"2": "築炉会社",
+	"3": "一人親方",
+	"4": "元請け",
+	"5": "リース会社",
+	"6": "販売会社",
+	"7": "販売会社",
+	"8": "求人会社",
+	"9": "その他",
+}
+
+// businessTypeReverseMap は業種名から数字への変換マップ（逆引き用）
+var businessTypeReverseMap map[string]string
+
+// init関数で逆引きマップを初期化
+func init() {
+	businessTypeReverseMap = make(map[string]string)
+	for number, typeName := range businessTypeMap {
+		// 重複する場合は最初の値を優先（"販売会社"は"6"が優先される）
+		if _, exists := businessTypeReverseMap[typeName]; !exists {
+			businessTypeReverseMap[typeName] = number
+		}
+	}
+}
+
+// DetermineBusinessType は数字から業種名に変換します
+func DetermineBusinessType(number string) string {
+	if typeName, exists := businessTypeMap[number]; exists {
+		return typeName
 	}
 	return "不明"
+}
+
+// GetBusinessTypeNumber は業種名から数字に変換します
+func GetBusinessTypeNumber(typeName string) string {
+	if number, exists := businessTypeReverseMap[typeName]; exists {
+		return number
+	}
+	return "9" // デフォルトは"その他"
+}
+
+// GetAllBusinessTypes は利用可能な全ての業種を返します
+func GetAllBusinessTypes() map[string]string {
+	result := make(map[string]string)
+	maps.Copy(result, businessTypeMap)
+	return result
 }
 
 // AddTag adds a tag to the company's tags list

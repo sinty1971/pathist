@@ -1,27 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
-import { getProjectRecent as getProjectsRecent } from '../api/sdk.gen';
-import type { ModelsProject } from '../api/types.gen';
-import ProjectDetailModal from './ProjectDetailModal';
-import '../styles/project-gantt.css';
+import { getKojiRecent as getKojiesRecent } from '../api/sdk.gen';
+import type { ModelsKoji } from '../api/types.gen';
+import KojiDetailModal from './KojiDetailModal';
+import '../styles/koji-gantt.css';
 import '../styles/utilities.css';
 
-interface GanttItem extends ModelsProject {
+interface GanttItem extends ModelsKoji {
   startX: number;
   width: number;
   row: number;
 }
 
-const ProjectGanttChart = () => {
-  const [projects, setProjects] = useState<ModelsProject[]>([]);
+const KojiGanttChart = () => {
+  const [kojies, setKojies] = useState<ModelsKoji[]>([]);
   const [ganttItems, setGanttItems] = useState<GanttItem[]>([]);
-  const [selectedProject, setSelectedProject] = useState<ModelsProject | null>(null);
+  const [selectedKoji, setSelectedKoji] = useState<ModelsKoji | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewStartDate, setViewStartDate] = useState(new Date());
   const [viewEndDate, setViewEndDate] = useState(new Date());
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [visibleProjects, setVisibleProjects] = useState<ModelsProject[]>([]);
+  const [visibleKojies, setVisibleKojies] = useState<ModelsKoji[]>([]);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -30,15 +30,15 @@ const ProjectGanttChart = () => {
   const ROW_HEIGHT = 40; // ピクセル
 
   // 工事データを読み込み
-  const loadProjects = async () => {
+  const loadKojies = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getProjectsRecent();
-      const projects = response.data || [];
-      setProjects(projects);
+      const response = await getKojiesRecent();
+      const kojies = response.data || [];
+      setKojies(kojies);
     } catch (err) {
-      console.error('Error loading projects:', err);
+      console.error('Error loading kojies:', err);
       setError(`工事データの読み込みに失敗しました: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
@@ -47,7 +47,7 @@ const ProjectGanttChart = () => {
 
   // 初期ロード
   useEffect(() => {
-    loadProjects();
+    loadKojies();
     // ページが表示されるたびに初期スクロール状態をリセット
     setHasInitialScrolled(false);
   }, []);
@@ -74,16 +74,16 @@ const ProjectGanttChart = () => {
 
   // 表示期間の計算（全工事の最小～最大期間）- 正常順序
   useEffect(() => {
-    if (projects.length === 0) return;
+    if (kojies.length === 0) return;
 
     let minDate = new Date();
     let maxDate = new Date();
     let hasValidDate = false;
 
-    projects.forEach(project => {
+    kojies.forEach(koji => {
       try {
-        const startDate = project.start_date ? new Date(project.start_date as string) : null;
-        const endDate = project.end_date ? new Date(project.end_date as string) : null;
+        const startDate = koji.start_date ? new Date(koji.start_date as string) : null;
+        const endDate = koji.end_date ? new Date(koji.end_date as string) : null;
 
         if (startDate && !isNaN(startDate.getTime())) {
           if (!hasValidDate || startDate < minDate) {
@@ -117,11 +117,11 @@ const ProjectGanttChart = () => {
       setViewStartDate(start);
       setViewEndDate(end);
     }
-  }, [projects]);
+  }, [kojies]);
 
   // 表示範囲内で一番古い工事を基準にして、その開始日以降の工事を開始日昇順で10個表示
-  const updateVisibleProjects = (scrollLeft: number = 0) => {
-    if (projects.length === 0 || !scrollContainerRef.current) return;
+  const updateVisibleKojies = (scrollLeft: number = 0) => {
+    if (kojies.length === 0 || !scrollContainerRef.current) return;
 
     // 現在の画面表示範囲を計算
     const containerWidth = scrollContainerRef.current.clientWidth;
@@ -133,20 +133,20 @@ const ProjectGanttChart = () => {
     const visibleEndDate = new Date(viewStartDate.getTime() + visibleEndDays * 24 * 60 * 60 * 1000);
     
     // 現在の画面表示範囲に含まれる工事をフィルタリング
-    const relevantProjects = projects.filter(project => {
+    const relevantKojies = kojies.filter(koji => {
       try {
-        const projectStart = project.start_date ? new Date(project.start_date as string) : new Date();
-        const projectEnd = project.end_date ? new Date(project.end_date as string) : new Date(projectStart.getTime() + 90 * 24 * 60 * 60 * 1000);
+        const kojiStart = koji.start_date ? new Date(koji.start_date as string) : new Date();
+        const kojiEnd = koji.end_date ? new Date(koji.end_date as string) : new Date(kojiStart.getTime() + 90 * 24 * 60 * 60 * 1000);
         
-        // プロジェクトが画面表示範囲と重複するかチェック
-        return (projectStart <= visibleEndDate && projectEnd >= visibleStartDate);
+        // 工事が画面表示範囲と重複するかチェック
+        return (kojiStart <= visibleEndDate && kojiEnd >= visibleStartDate);
       } catch {
         return false;
       }
     });
 
     // 表示範囲内の工事を開始日順でソートして、一番古い工事を取得
-    const sortedRelevantProjects = relevantProjects.sort((a, b) => {
+    const sortedRelevantKojies = relevantKojies.sort((a, b) => {
       const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
       const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
       return dateA - dateB; // 古い順
@@ -154,99 +154,99 @@ const ProjectGanttChart = () => {
 
     // 表示範囲内で一番古い工事の開始日を基準にする
     let baselineDate: number;
-    if (sortedRelevantProjects.length > 0) {
-      baselineDate = sortedRelevantProjects[0].start_date 
-        ? new Date(sortedRelevantProjects[0].start_date as string).getTime()
+    if (sortedRelevantKojies.length > 0) {
+      baselineDate = sortedRelevantKojies[0].start_date 
+        ? new Date(sortedRelevantKojies[0].start_date as string).getTime()
         : 0;
     } else {
       // 表示範囲内に工事がない場合は、表示範囲の開始日以前で最も近い工事を基準にする
       const visibleStartTime = visibleStartDate.getTime();
       
       // 表示範囲の開始日以前の工事を取得
-      const projectsBeforeVisible = projects.filter(project => {
-        const projectStartDate = project.start_date 
-          ? new Date(project.start_date as string).getTime()
+      const kojiesBeforeVisible = kojies.filter(koji => {
+        const kojiStartDate = koji.start_date 
+          ? new Date(koji.start_date as string).getTime()
           : 0;
-        return projectStartDate <= visibleStartTime;
+        return kojiStartDate <= visibleStartTime;
       });
       
-      if (projectsBeforeVisible.length > 0) {
+      if (kojiesBeforeVisible.length > 0) {
         // 表示範囲の開始日に最も近い工事を選択（開始日が最も新しい工事）
-        const closestProject = projectsBeforeVisible.sort((a, b) => {
+        const closestKoji = kojiesBeforeVisible.sort((a, b) => {
           const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
           const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
           return dateB - dateA; // 新しい順（降順）
         })[0];
         
-        baselineDate = closestProject.start_date 
-          ? new Date(closestProject.start_date as string).getTime()
+        baselineDate = closestKoji.start_date 
+          ? new Date(closestKoji.start_date as string).getTime()
           : 0;
       } else {
         // 表示範囲の開始日以前に工事がない場合は、全工事の最初の工事を基準にする
-        const allProjectsSorted = [...projects].sort((a, b) => {
+        const allKojiesSorted = [...kojies].sort((a, b) => {
           const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
           const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
           return dateA - dateB;
         });
         
-        if (allProjectsSorted.length === 0) return;
+        if (allKojiesSorted.length === 0) return;
         
-        baselineDate = allProjectsSorted[0].start_date 
-          ? new Date(allProjectsSorted[0].start_date as string).getTime()
+        baselineDate = allKojiesSorted[0].start_date 
+          ? new Date(allKojiesSorted[0].start_date as string).getTime()
           : 0;
       }
     }
 
     // 基準日以降の全工事を開始日昇順で取得
-    const allProjectsSorted = [...projects].sort((a, b) => {
+    const allKojiesSorted = [...kojies].sort((a, b) => {
       const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
       const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
       return dateA - dateB; // 古い順（昇順）
     });
 
-    const projectsFromBaselineDate = allProjectsSorted.filter(project => {
-      const projectStartDate = project.start_date 
-        ? new Date(project.start_date as string).getTime()
+    const kojiesFromBaselineDate = allKojiesSorted.filter(koji => {
+      const kojiStartDate = koji.start_date 
+        ? new Date(koji.start_date as string).getTime()
         : 0;
-      return projectStartDate >= baselineDate;
+      return kojiStartDate >= baselineDate;
     });
 
     // 開始日昇順で表示件数分を取得
-    let finalProjects = projectsFromBaselineDate.slice(0, itemsPerPage);
+    let finalKojies = kojiesFromBaselineDate.slice(0, itemsPerPage);
     
     // もし表示件数が不足の場合は、開始日が最も新しいものから表示件数分を抽出
-    if (finalProjects.length < itemsPerPage) {
+    if (finalKojies.length < itemsPerPage) {
       // 全工事を開始日の新しい順（降順）でソート
-      const allProjectsDescending = [...projects].sort((a, b) => {
+      const allKojiesDescending = [...kojies].sort((a, b) => {
         const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
         const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
         return dateB - dateA; // 新しい順（降順）
       });
       
       // 最新の表示件数分を取得して、開始日の古い順（昇順）に並び替え
-      finalProjects = allProjectsDescending.slice(0, itemsPerPage).sort((a, b) => {
+      finalKojies = allKojiesDescending.slice(0, itemsPerPage).sort((a, b) => {
         const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
         const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
         return dateA - dateB; // 古い順（昇順）
       });
     }
 
-    setVisibleProjects(finalProjects);
+    setVisibleKojies(finalKojies);
   };
 
   // スクロールイベントハンドラ
   const handleScroll = () => {
     if (scrollContainerRef.current) {
-      updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+      updateVisibleKojies(scrollContainerRef.current.scrollLeft);
     }
   };
 
-  // プロジェクトデータ変更時に初期表示を更新
+  // 工事データ変更時に初期表示を更新
   useEffect(() => {
-    if (projects.length > 0 && scrollContainerRef.current) {
-      updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+    if (kojies.length > 0 && scrollContainerRef.current) {
+      updateVisibleKojies(scrollContainerRef.current.scrollLeft);
     }
-  }, [projects, viewStartDate, itemsPerPage]);
+  }, [kojies, viewStartDate, itemsPerPage]);
 
   // 画面高さに基づいて表示件数を計算
   const calculateItemsPerPage = () => {
@@ -268,13 +268,13 @@ const ProjectGanttChart = () => {
       if (scrollContainerRef.current) {
         const newItemsPerPage = calculateItemsPerPage();
         setItemsPerPage(newItemsPerPage);
-        updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+        updateVisibleKojies(scrollContainerRef.current.scrollLeft);
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [projects, viewStartDate]);
+  }, [kojies, viewStartDate]);
 
   // 初回レンダリング後に表示件数を計算
   useEffect(() => {
@@ -286,15 +286,15 @@ const ProjectGanttChart = () => {
 
   // ガントチャートアイテムの計算
   useEffect(() => {
-    if (visibleProjects.length === 0) return;
+    if (visibleKojies.length === 0) return;
 
-    const items: GanttItem[] = visibleProjects.map((project, index) => {
+    const items: GanttItem[] = visibleKojies.map((koji, index) => {
       // 安全な日付処理
       let startDate: Date;
       let endDate: Date;
       
       try {
-        startDate = project.start_date ? new Date(project.start_date as string) : new Date();
+        startDate = koji.start_date ? new Date(koji.start_date as string) : new Date();
         // 無効な日付をチェック
         if (isNaN(startDate.getTime())) {
           startDate = new Date();
@@ -304,7 +304,7 @@ const ProjectGanttChart = () => {
       }
       
       try {
-        endDate = project.end_date ? new Date(project.end_date as string) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+        endDate = koji.end_date ? new Date(koji.end_date as string) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
         // 無効な日付をチェック
         if (isNaN(endDate.getTime())) {
           endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -322,7 +322,7 @@ const ProjectGanttChart = () => {
       const width = Math.max(DAY_WIDTH, endX - startX);
 
       return {
-        ...project,
+        ...koji,
         startX: isNaN(startX) ? 0 : startX,
         width: isNaN(width) ? DAY_WIDTH : width,
         row: index
@@ -330,38 +330,38 @@ const ProjectGanttChart = () => {
     });
 
     setGanttItems(items);
-  }, [visibleProjects, viewStartDate]);
+  }, [visibleKojies, viewStartDate]);
 
-  // プロジェクトクリック処理（詳細表示）
-  const handleProjectClick = (project: ModelsProject) => {
-    setSelectedProject(project);
+  // 工事クリック処理（詳細表示）
+  const handleKojiClick = (koji: ModelsKoji) => {
+    setSelectedKoji(koji);
     setIsDetailModalOpen(true);
   };
 
-  // プロジェクト編集処理
-  const handleProjectEdit = (project: ModelsProject) => {
-    setSelectedProject(project);
+  // 工事編集処理
+  const handleKojiEdit = (koji: ModelsKoji) => {
+    setSelectedKoji(koji);
     setIsEditModalOpen(true);
   };
 
   // 工事名エリアクリック処理（中央に移動）- 正常順序
-  const handleProjectNameClick = (project: ModelsProject) => {
+  const handleKojiNameClick = (koji: ModelsKoji) => {
     if (!scrollContainerRef.current) return;
     
     try {
-      const projectStart = project.start_date ? new Date(project.start_date as string) : new Date();
-      const projectEnd = project.end_date ? new Date(project.end_date as string) : new Date(projectStart.getTime() + 90 * 24 * 60 * 60 * 1000);
+      const kojiStart = koji.start_date ? new Date(koji.start_date as string) : new Date();
+      const kojiEnd = koji.end_date ? new Date(koji.end_date as string) : new Date(kojiStart.getTime() + 90 * 24 * 60 * 60 * 1000);
       
-      // プロジェクトの中央位置を計算（正常順序）
-      const projectMiddle = new Date((projectStart.getTime() + projectEnd.getTime()) / 2);
-      const middleX = (projectMiddle.getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH;
+      // 工事の中央位置を計算（正常順序）
+      const kojiMiddle = new Date((kojiStart.getTime() + kojiEnd.getTime()) / 2);
+      const middleX = (kojiMiddle.getTime() - viewStartDate.getTime()) / (1000 * 60 * 60 * 24) * DAY_WIDTH;
       
       // 画面中央に表示するためのスクロール位置を計算
       const containerWidth = scrollContainerRef.current.clientWidth;
       const scrollPosition = Math.max(0, middleX - containerWidth / 2);
       scrollContainerRef.current.scrollLeft = scrollPosition;
     } catch (error) {
-      console.error('Error calculating project center:', error);
+      console.error('Error calculating koji center:', error);
     }
   };
 
@@ -375,15 +375,15 @@ const ProjectGanttChart = () => {
     scrollContainerRef.current.scrollLeft = scrollPosition;
   };
 
-  // プロジェクト更新処理（APIコール）
-  const updateProject = async (updatedProject: ModelsProject): Promise<ModelsProject> => {
+  // 工事更新処理（APIコール）
+  const updateKoji = async (updatedKoji: ModelsKoji): Promise<ModelsKoji> => {
     try {
-      const response = await fetch("http://localhost:8080/api/project/update", {
-        method: "POST",
+      const response = await fetch("http://localhost:8080/api/kojies", {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedProject),
+        body: JSON.stringify(updatedKoji),
       });
 
       if (!response.ok) {
@@ -391,47 +391,47 @@ const ProjectGanttChart = () => {
         throw new Error(errorData.message || "更新に失敗しました");
       }
 
-      const savedProject = await response.json();
+      const savedKoji = await response.json();
 
-      // プロジェクト一覧を更新
-      setProjects((prevProjects) =>
-        prevProjects.map((p) => (p.id === savedProject.id ? savedProject : p))
+      // 工事一覧を更新
+      setKojies((prevKojies) =>
+        prevKojies.map((k) => (k.id === savedKoji.id ? savedKoji : k))
       );
 
-      return savedProject;
+      return savedKoji;
     } catch (err) {
-      console.error("Error updating project:", err);
+      console.error("Error updating koji:", err);
       throw err;
     }
   };
 
-  // プロジェクトデータを更新
-  const handleProjectUpdate = (updatedProject: ModelsProject) => {
-    // プロジェクト一覧を更新
-    setProjects((prevProjects) => {
-      // まず、更新前のプロジェクトIDで探す
-      const existingIndex = prevProjects.findIndex(p => p.id === updatedProject.id);
+  // 工事データを更新
+  const handleKojiUpdate = (updatedKoji: ModelsKoji) => {
+    // 工事一覧を更新
+    setKojies((prevKojies) => {
+      // まず、更新前の工事IDで探す
+      const existingIndex = prevKojies.findIndex(k => k.id === updatedKoji.id);
       
       if (existingIndex !== -1) {
         // IDが同じなら通常の更新
-        const updatedProjects = [...prevProjects];
-        updatedProjects[existingIndex] = updatedProject;
-        return updatedProjects;
+        const updatedKojies = [...prevKojies];
+        updatedKojies[existingIndex] = updatedKoji;
+        return updatedKojies;
       }
       
       // IDが変わった場合（フォルダー名変更）
-      // selectedProjectのIDで古いプロジェクトを探して削除
-      if (selectedProject && selectedProject.id !== updatedProject.id) {
-        const oldProjectIndex = prevProjects.findIndex(p => p.id === selectedProject.id);
+      // selectedKojiのIDで古い工事を探して削除
+      if (selectedKoji && selectedKoji.id !== updatedKoji.id) {
+        const oldKojiIndex = prevKojies.findIndex(k => k.id === selectedKoji.id);
         
-        if (oldProjectIndex !== -1) {
-          // 古いプロジェクトを削除して新しいものを追加
-          const updatedProjects = [...prevProjects];
-          updatedProjects.splice(oldProjectIndex, 1);
-          updatedProjects.push(updatedProject);
+        if (oldKojiIndex !== -1) {
+          // 古い工事を削除して新しいものを追加
+          const updatedKojies = [...prevKojies];
+          updatedKojies.splice(oldKojiIndex, 1);
+          updatedKojies.push(updatedKoji);
           
           // 開始日順でソート（古い順）
-          return updatedProjects.sort((a, b) => {
+          return updatedKojies.sort((a, b) => {
             const dateA = a.start_date ? new Date(typeof a.start_date === 'string' ? a.start_date : (a.start_date as any)['time.Time']).getTime() : 0;
             const dateB = b.start_date ? new Date(typeof b.start_date === 'string' ? b.start_date : (b.start_date as any)['time.Time']).getTime() : 0;
             
@@ -448,12 +448,12 @@ const ProjectGanttChart = () => {
         }
       }
       
-      // 古いプロジェクトが見つからない場合は新規追加として扱う
-      return [...prevProjects, updatedProject];
+      // 古い工事が見つからない場合は新規追加として扱う
+      return [...prevKojies, updatedKoji];
     });
     
-    // 選択中のプロジェクトを更新
-    setSelectedProject(updatedProject);
+    // 選択中の工事を更新
+    setSelectedKoji(updatedKoji);
   };
 
   // ステータスによる色の取得
@@ -471,13 +471,13 @@ const ProjectGanttChart = () => {
   };
 
   // 管理ファイルの変更が必要かチェック
-  const needsFileRename = (project: ModelsProject): boolean => {
-    if (!project.managed_files || project.managed_files.length === 0) {
+  const needsFileRename = (koji: ModelsKoji): boolean => {
+    if (!koji.managed_files || koji.managed_files.length === 0) {
       return false;
     }
     
     // managed_filesの中で現在の名前と推奨名が異なるものがあるかチェック
-    const needsRename = project.managed_files.some(file => {
+    const needsRename = koji.managed_files.some(file => {
       // currentとrecommendedが両方存在し、異なる場合にtrueを返す
       return file.current && file.recommended && file.current !== file.recommended;
     });
@@ -592,7 +592,7 @@ const ProjectGanttChart = () => {
           color: "#666",
           fontWeight: "500"
         }}>
-          表示中: {ganttItems.length}件 / 全{projects.length}件
+          表示中: {ganttItems.length}件 / 全{kojies.length}件
         </div>
       </div>
 
@@ -619,20 +619,20 @@ const ProjectGanttChart = () => {
               endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
             }
             
-            const isActiveProject = today >= startDate && today <= endDate;
+            const isActiveKoji = today >= startDate && today <= endDate;
             
             return (
               <div 
                 key={`${item.id}-${index}`} 
-                className={`gantt-row-label ${isActiveProject ? 'gantt-row-label-active' : ''}`}
+                className={`gantt-row-label ${isActiveKoji ? 'gantt-row-label-active' : ''}`}
                 style={{ 
                   height: ROW_HEIGHT
                 }}
               >
                 <div 
-                  className={`project-name project-name-clickable ${isActiveProject ? 'project-name-active' : ''}`}
-                  onClick={() => handleProjectNameClick(item)}
-                  title="クリックしてプロジェクト期間の中央に移動"
+                  className={`koji-name koji-name-clickable ${isActiveKoji ? 'koji-name-active' : ''}`}
+                  onClick={() => handleKojiNameClick(item)}
+                  title="クリックして工事期間の中央に移動"
                 >
                   {item.company_name}
                 </div>
@@ -706,7 +706,7 @@ const ProjectGanttChart = () => {
                 ))}
               </div>
 
-              {/* 水平線（プロジェクト行ごと） */}
+              {/* 水平線（工事行ごと） */}
               <div className="gantt-horizontal-grid">
                 {ganttItems.map((_, index) => (
                   <div
@@ -732,7 +732,7 @@ const ProjectGanttChart = () => {
                     height: ROW_HEIGHT - 15,
                     backgroundColor: getStatusColor(item.status)
                   }}
-                  onClick={() => handleProjectEdit(item)}
+                  onClick={() => handleKojiEdit(item)}
                   title={`${item.company_name} - ${item.location_name} (クリックして編集)`}
                 >
                   <span className="gantt-bar-text">
@@ -769,15 +769,15 @@ const ProjectGanttChart = () => {
       </div>
 
       {/* 編集モーダル */}
-      <ProjectDetailModal
+      <KojiDetailModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        project={selectedProject}
-        onUpdate={updateProject}
-        onProjectUpdate={handleProjectUpdate}
+        koji={selectedKoji}
+        onUpdate={updateKoji}
+        onKojiUpdate={handleKojiUpdate}
       />
     </div>
   );
 };
 
-export default ProjectGanttChart;
+export default KojiGanttChart;

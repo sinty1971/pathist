@@ -38,7 +38,7 @@ just frontend-lint   # ESLintを実行
 just stop-frontend   # フロントエンドサーバーを停止
 ```
 
-## プロジェクト構造
+## ディレクトリ構造
 
 ```
 frontend/
@@ -49,19 +49,19 @@ frontend/
 │   │   ├── _layout.tsx             # メインレイアウト
 │   │   ├── _layout._index.tsx      # ホームページ（機能紹介）
 │   │   ├── _layout.files.tsx       # ファイル一覧ページ
-│   │   ├── _layout.projects.tsx    # 工程表ページ
-│   │   └── _layout.gantt.tsx       # ガントチャートページ（/projects/gantt）
+│   │   ├── _layout.kojies.tsx      # 工事一覧ページ
+│   │   └── _layout.gantt.tsx       # ガントチャートページ（/kojies/gantt）
 │   ├── components/                 # UIコンポーネント
 │   │   ├── Files.tsx               # TreeViewベースのファイルブラウザ
 │   │   ├── FileDetailModal.tsx     # ファイル詳細モーダル
-│   │   ├── Projects.tsx            # 工程表一覧
-│   │   ├── ProjectDetailModal.tsx  # プロジェクト詳細編集モーダル
-│   │   ├── ProjectGanttChart.tsx   # ガントチャート表示
+│   │   ├── Kojies.tsx              # 工事一覧
+│   │   ├── KojiDetailModal.tsx     # 工事詳細編集モーダル
+│   │   ├── KojiGanttChart.tsx      # ガントチャート表示
 │   │   ├── CalendarPicker.tsx      # MUI DatePickerベースのカレンダー
 │   │   └── Navigation.tsx          # ナビゲーション
 │   ├── contexts/                   # React Context
 │   │   ├── FileInfoContext.tsx     # ファイル情報共有
-│   │   └── ProjectContext.tsx      # プロジェクト情報共有
+│   │   └── KojiContext.tsx         # 工事情報共有
 │   ├── api/                        # 自動生成APIクライアント
 │   │   ├── client/                 # APIクライアント実装
 │   │   ├── client.gen.ts           # 自動生成されたクライアント設定
@@ -69,8 +69,8 @@ frontend/
 │   │   └── types.gen.ts            # 自動生成されたTypeScript型定義
 │   ├── styles/                     # CSS ファイル
 │   │   ├── App.css                 # メインスタイル
-│   │   ├── gantt.css               # ガントチャート専用
-│   │   └── modal.css               # モーダル専用
+│   │   ├── koji-gantt.css          # ガントチャート専用
+│   │   └── koji-detail-modal.css   # 工事モーダル専用
 │   ├── utils/                      # ユーティリティ関数
 │   │   ├── date.ts                 # 日付処理
 │   │   └── timestamp.ts            # タイムスタンプ処理
@@ -91,8 +91,8 @@ frontend/
 ```
 / (ホーム)
 ├── /files (ファイル一覧)
-├── /projects (工程表)
-└── /projects/gantt (ガントチャート)
+├── /kojies (工事一覧)
+└── /kojies/gantt (ガントチャート)
 ```
 
 ### ルーティング変更時の注意事項
@@ -113,14 +113,14 @@ frontend/
 - **アイコン表示**: ファイル拡張子に基づく自動判定
 - **検索・ナビゲーション**: パス入力、ブレッドクラム、ホーム/リフレッシュボタン
 
-### 工程表管理 (Projects.tsx)
-- **プロジェクト一覧**: 開始日順ソート（新しい順）
-- **編集機能**: 行クリックでProjectDetailModalを表示
+### 工事管理 (Kojies.tsx)
+- **工事一覧**: 開始日順ソート（新しい順）
+- **編集機能**: 行クリックでKojiDetailModalを表示
 - **ガントチャートリンク**: ヘッダーにアクセスボタン
 - **ステータス表示**: 完了/進行中/予定の色分け
 - **ファイル名変更**: 管理ファイルのリネーム機能
 
-### プロジェクト詳細 (ProjectDetailModal.tsx)
+### 工事詳細 (KojiDetailModal.tsx)
 - **MUI Dialog**: フルスクリーンモーダル
 - **CalendarPicker**: 日本語対応の日付選択
 - **水平レイアウト**: 全フィールドでタイトルと入力欄を水平配置
@@ -128,9 +128,9 @@ frontend/
 - **推奨ファイル名生成**: 開始日・会社名・現場名変更時に自動生成
 - **段階的更新**: ファイル名影響フィールド変更時は専用ボタンで更新
 
-### ガントチャート (ProjectGanttChart.tsx)
+### ガントチャート (KojiGanttChart.tsx)
 - **カスタム実装**: Canvas/SVGベースの時系列表示
-- **プロジェクト表示**: 期間バーとマイルストーン
+- **工事表示**: 期間バーとマイルストーン
 - **インタラクション**: クリックで詳細編集
 - **レスポンシブ**: 画面サイズに応じた表示調整
 
@@ -142,7 +142,7 @@ frontend/
 - **ローディング状態**: CircularProgressでローディング表示
 
 ### 状態管理
-- **React Context**: FileInfoContext, ProjectContext
+- **React Context**: FileInfoContext, KojiContext
 - **useState**: コンポーネントローカル状態
 - **useEffect**: 副作用とライフサイクル管理
 - **useCallback**: パフォーマンス最適化
@@ -150,7 +150,7 @@ frontend/
 ### データ形式
 - **日時**: ModelsTimestamp型（オブジェクト形式）で扱う
 - **ファイル情報**: name, path, size, isDirectory等のプロパティ
-- **プロジェクト**: id, company_name, location_name等の拡張プロパティ
+- **工事**: id, company_name, location_name等の拡張プロパティ
 
 ## UI/UX 設計
 
@@ -200,7 +200,7 @@ frontend/
 ## 開発時の注意事項
 
 ### ファイル命名規則
-- **コンポーネント**: PascalCase (例: ProjectDetailModal.tsx)
+- **コンポーネント**: PascalCase (例: KojiDetailModal.tsx)
 - **ユーティリティ**: camelCase (例: timestamp.ts)
 - **CSS**: kebab-case (例: gantt.css)
 
@@ -218,7 +218,7 @@ frontend/
 
 - CalendarPickerはMUI DatePickerベースのプロフェッショナルなカレンダー
 - ファイル名変更時は推奨ファイル名を自動生成する
-- 工程表の表示は開始日順でソートされている
+- 工事一覧の表示は開始日順でソートされている
 - UIの一貫性を保つため水平レイアウトを採用
-- ガントチャートは`/projects/gantt`に配置（projectsの下位ルート）
+- ガントチャートは`/kojies/gantt`に配置（kojiesの下位ルート）
 - TreeViewの展開状態はReact.useCallbackで最適化済み

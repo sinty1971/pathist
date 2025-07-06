@@ -36,12 +36,12 @@ func setupTestApp() *fiber.App {
 
 	// ハンドラー初期化
 	fileHandler := handlers.NewFileHandler(businessDataService.FileService)
-	projectHandler := handlers.NewProjectHandler(businessDataService.ProjectService)
+	kojiHandler := handlers.NewKojiHandler(businessDataService.KojiService)
 	companyHandler := handlers.NewCompanyHandler(businessDataService.CompanyService)
 
 	// ルート設定
 	routes.SetupFileRoutes(app, fileHandler)
-	routes.SetupProjectRoutes(app, projectHandler)
+	routes.SetupKojiRoutes(app, kojiHandler)
 	routes.SetupCompanyRoutes(app, companyHandler)
 
 	return app
@@ -64,15 +64,15 @@ func BenchmarkGetFileInfos(b *testing.B) {
 	}
 }
 
-// GET /api/project/recent のベンチマーク
-func BenchmarkGetProjectRecent(b *testing.B) {
+// GET /api/kojies のベンチマーク
+func BenchmarkGetKojiRecent(b *testing.B) {
 	app := setupTestApp()
 
 	b.ResetTimer()
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		req := httptest.NewRequest("GET", "/api/project/recent", nil)
+		req := httptest.NewRequest("GET", "/api/kojies", nil)
 		resp, err := app.Test(req)
 		if err != nil {
 			b.Fatal(err)
@@ -81,7 +81,7 @@ func BenchmarkGetProjectRecent(b *testing.B) {
 	}
 }
 
-// GET /api/company/list のベンチマーク
+// GET /api/companies のベンチマーク
 func BenchmarkGetCompanyList(b *testing.B) {
 	app := setupTestApp()
 
@@ -89,7 +89,7 @@ func BenchmarkGetCompanyList(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		req := httptest.NewRequest("GET", "/api/company/list", nil)
+		req := httptest.NewRequest("GET", "/api/companies", nil)
 		resp, err := app.Test(req)
 		if err != nil {
 			b.Fatal(err)
@@ -120,13 +120,13 @@ func BenchmarkHealthCheck(b *testing.B) {
 	}
 }
 
-// POST /api/project/update のベンチマーク
-func BenchmarkPostProjectUpdate(b *testing.B) {
+// POST /api/kojies のベンチマーク
+func BenchmarkPostKojiUpdate(b *testing.B) {
 	app := setupTestApp()
 
 	// テスト用のプロジェクトデータ
-	projectData := map[string]interface{}{
-		"id":            "test-project-id",
+	kojiData := map[string]interface{}{
+		"id":            "test-koji-id",
 		"company_name":  "テスト会社",
 		"location_name": "テスト現場",
 		"description":   "テスト説明",
@@ -135,13 +135,13 @@ func BenchmarkPostProjectUpdate(b *testing.B) {
 		"end_date":      map[string]string{"time.Time": "2025-12-31T23:59:59+09:00"},
 	}
 
-	jsonData, _ := json.Marshal(projectData)
+	jsonData, _ := json.Marshal(kojiData)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		req := httptest.NewRequest("POST", "/api/project/update", bytes.NewBuffer(jsonData))
+		req := httptest.NewRequest("POST", "/api/kojies", bytes.NewBuffer(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req)
 		if err != nil {
@@ -163,8 +163,8 @@ func BenchmarkMixedRequests(b *testing.B) {
 	endpoints := []string{
 		"/health",
 		"/api/file/fileinfos",
-		"/api/project/recent",
-		"/api/company/list",
+		"/api/kojies",
+		"/api/companies",
 	}
 
 	b.ResetTimer()
@@ -198,8 +198,8 @@ func BenchmarkMemoryUsage(b *testing.B) {
 		requests := []string{
 			"/health",
 			"/api/file/fileinfos",
-			"/api/project/recent",
-			"/api/company/list",
+			"/api/kojies",
+			"/api/companies",
 		}
 
 		for _, endpoint := range requests {
@@ -238,14 +238,14 @@ func TestAPIFunctionality(t *testing.T) {
 	resp.Body.Close()
 
 	// プロジェクト一覧API
-	req = httptest.NewRequest("GET", "/api/project/recent", nil)
+	req = httptest.NewRequest("GET", "/api/kojies", nil)
 	resp, err = app.Test(req)
 	assert.NoError(t, err)
 	assert.True(t, resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusInternalServerError)
 	resp.Body.Close()
 
 	// 会社一覧API
-	req = httptest.NewRequest("GET", "/api/company/list", nil)
+	req = httptest.NewRequest("GET", "/api/companies", nil)
 	resp, err = app.Test(req)
 	assert.NoError(t, err)
 	assert.True(t, resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusInternalServerError)

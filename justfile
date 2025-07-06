@@ -1,8 +1,12 @@
 # Penguin Backend & Frontend Commands
 
-# Start the backend server
+# Start the backend server (HTTP/1.1)
 backend:
     cd ./backend && go run cmd/main.go
+
+# Start the backend server with HTTP/2 + HTTPS
+backend-http2:
+    cd ./backend && go run main_http2.go
 
 # Start the frontend development server (React Router v7)
 frontend:
@@ -12,20 +16,26 @@ frontend:
 backend-deps:
     cd ./backend && go mod tidy
 
+# Generate SSL certificate for HTTP/2
+generate-cert:
+    cd ./backend && ./generate-cert.sh
+
 # Update all Go packages to latest versions
 # ただしメジャーなバージョンは更新しない
 backend-update:
     cd ./backend && go get -u ./...
     cd ./backend && go mod tidy
 
-# Generate OpenAPI documentation from Go code
+# Generate OpenAPI documentation from Go code (using swag v2.0.0-rc4)
 generate-api:
-    cd ./backend && swag init -g cmd/main.go
+    cd ./backend && go run github.com/swaggo/swag/v2/cmd/swag@v2.0.0-rc4 init -g cmd/main.go --v3.1
     cp ./backend/docs/swagger.yaml ./schemas/openapi.yaml
     cp ./backend/docs/swagger.json ./schemas/openapi.json
-    @echo "OpenAPI documentation generated and copied to schemas/"
+    cp ./backend/docs/swagger.yaml ./schemas/openapi-v3.yaml
+    cp ./backend/docs/swagger.json ./schemas/openapi-v3.json
+    @echo "✅ OpenAPI 3.1 documentation generated and copied to schemas/"
 
-# Convert Swagger 2.0 to OpenAPI 3.0
+# Convert Swagger 2.0 to OpenAPI 3.0 (legacy - no longer needed with swag v2)
 convert-openapi3:
     cd ./backend/scripts && node convert-to-openapi3.js
     @echo "OpenAPI 3.0 documentation generated at schemas/openapi-v3.{yaml,json}"
@@ -91,6 +101,18 @@ stop-backend:
     lsof -ti:8080 | xargs -r kill -9 2>/dev/null
     echo "Backend server stopped"
 
+# Stop HTTP/2 backend server
+stop-backend-http2:
+    #!/bin/bash
+    set +e
+    echo "Stopping HTTP/2 backend server..."
+    pkill -f "go run main_http2.go" 2>/dev/null
+    pkill -f "main_http2.go" 2>/dev/null
+    lsof -ti:8443 | xargs -r kill -15 2>/dev/null
+    sleep 1
+    lsof -ti:8443 | xargs -r kill -9 2>/dev/null
+    echo "HTTP/2 backend server stopped"
+
 # Stop frontend development server (React Router v7 / Vite)
 stop-frontend:
     #!/bin/bash
@@ -110,7 +132,7 @@ stop-frontend:
     echo "Frontend development server stopped"
 
 # Stop both backend and frontend servers
-stop-all: stop-backend stop-frontend
+stop-all: stop-backend stop-backend-http2 stop-frontend
     @echo "All servers stopped"
 
 # Kill process running on port 8080 (legacy command)
@@ -130,10 +152,15 @@ architecture:
     @echo "Opening architecture diagram..."
     @xdg-open "https://mermaid.live/edit#$(cat doc/backend-architecture.md | grep -A 100 '```mermaid' | grep -B 100 '```' | grep -v '```' | base64 -w 0)" 2>/dev/null || open "https://mermaid.live/" 2>/dev/null || echo "Please visit https://mermaid.live/ and paste the mermaid code from doc/backend-architecture.md"
 
-# Open Swagger UI documentation in browser
+# Open Swagger UI documentation in browser (HTTP/1.1)
 swagger:
     @echo "Opening Swagger UI documentation..."
     @xdg-open "http://localhost:8080/swagger/index.html" 2>/dev/null || open "http://localhost:8080/swagger/index.html" 2>/dev/null || echo "Please visit http://localhost:8080/swagger/index.html"
+
+# Open Swagger UI documentation in browser (HTTP/2 + HTTPS)
+swagger-http2:
+    @echo "Opening Swagger UI documentation (HTTP/2)..."
+    @xdg-open "https://localhost:8443/swagger/index.html" 2>/dev/null || open "https://localhost:8443/swagger/index.html" 2>/dev/null || echo "Please visit https://localhost:8443/swagger/index.html"
 
 # Show available commands
 help:

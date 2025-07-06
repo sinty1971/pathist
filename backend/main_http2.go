@@ -1,7 +1,11 @@
+// HTTP/2版のメインファイル - main.goとは別に実行する
+// 実行方法: go run main_http2.go
 package main
 
 import (
+	"crypto/tls"
 	"log"
+	"net"
 	"penguin-backend/internal/routes"
 	"penguin-backend/internal/services"
 	"time"
@@ -14,16 +18,16 @@ import (
 	_ "penguin-backend/docs"
 )
 
-// @title Penguin ファイルシステム管理API
+// @title Penguin ファイルシステム管理API (HTTP/2)
 // @version 1.0.0
-// @description ファイルエントリの管理と閲覧のためのAPI
-// @servers.url http://localhost:8080/api
+// @description ファイルエントリの管理と閲覧のためのAPI (HTTP/2 + HTTPS対応)
+// @servers.url https://localhost:8443/api
 func main() {
 	app := fiber.New(fiber.Config{
 		// HTTP/2サポートを有効化
 		EnableIPValidation: true,
-		ServerHeader:       "Penguin-Backend/1.0",
-		AppName:           "Penguin Backend API",
+		ServerHeader:       "Penguin-Backend/1.0-HTTP2",
+		AppName:           "Penguin Backend API HTTP/2",
 		
 		// パフォーマンス設定
 		ReadTimeout:       time.Second * 15,
@@ -49,7 +53,6 @@ func main() {
 	// 1. 圧縮ミドルウェア（最初に適用）
 	app.Use(compress.New(compress.Config{
 		Level: compress.LevelBestSpeed, // パフォーマンス重視
-		// Level: compress.LevelBestCompression, // 圧縮率重視の場合
 	}))
 	
 	// 2. キャッシュミドルウェア（無効化）
@@ -72,7 +75,7 @@ func main() {
 	
 	// 4. ログ（最後に適用）
 	app.Use(logger.New(logger.Config{
-		Format: "[${time}] ${status} - ${method} ${path} - ${latency}\n",
+		Format: "[${time}] ${status} - ${method} ${path} - ${latency} - HTTP/2\n",
 		TimeFormat: "2006-01-02 15:04:05",
 	}))
 
@@ -85,20 +88,43 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// sc.MediaService, err := services.NewMediaDataService("~/penguin/homes/sinty/media", ".detail.yaml")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	defer sc.Cleanup()
 
 	// ルートを設定
 	routes.SetupRoutes(app, sc)
 
-	log.Println("Server starting on :8080")
-	log.Println("API documentation available at http://localhost:8080/swagger/index.html")
+	log.Println("🚀 HTTP/2 + HTTPS Server starting on :8443")
+	log.Println("📖 API documentation: https://localhost:8443/swagger/index.html")
+	log.Println("🔒 Using self-signed certificate (cert.pem + key.pem)")
 	
-	// HTTP/1.1での起動（開発環境）
-	// 本番環境ではHTTPS + HTTP/2を使用
-	log.Fatal(app.Listen(":8080"))
+	log.Println("🌟 Features enabled:")
+	log.Println("  ✅ HTTP/2 (h2) - Fiber v3 auto-enables")
+	log.Println("  ✅ TLS 1.2+")
+	log.Println("  ✅ Gzip compression")
+	log.Println("  ✅ Intelligent caching")
+	log.Println("  ✅ CORS")
+
+	// HTTP/2 + HTTPSで起動
+	// 証明書を読み込み
+	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+	if err != nil {
+		log.Fatalf("証明書の読み込みに失敗: %v", err)
+	}
+
+	// TLS設定
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		NextProtos:   []string{"h2", "http/1.1"}, // HTTP/2を優先
+	}
+
+	// リスナーを作成
+	ln, err := net.Listen("tcp", ":8443")
+	if err != nil {
+		log.Fatalf("リスナーの作成に失敗: %v", err)
+	}
+
+	// TLSリスナーでラップ
+	tlsLn := tls.NewListener(ln, tlsConfig)
+
+	log.Fatal(app.Listener(tlsLn))
 }

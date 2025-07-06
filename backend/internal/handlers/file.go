@@ -16,16 +16,15 @@ func NewFileHandler(fsService *services.FileService) *FileHandler {
 	}
 }
 
-// GetEntries godoc
+// GetFileInfos godoc
 // @Summary      ファイルエントリ一覧の取得
 // @Description  指定されたパスからファイルとフォルダーの一覧を取得します
 // @Tags         ファイル管理
-// @Accept       json
 // @Produce      json
-// @Param        path query string false "取得するディレクトリのパス" default(~/penguin)
-// @Success      200 {object} []models.FileInfo "正常なレスポンス"
+// @Param        path query string false "取得するディレクトリのパス" default(2 工事)
+// @Success      200 {array} models.FileInfo "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /file/fileinfos [get]
+// @Router       /files [get]
 func (h *FileHandler) GetFileInfos(c fiber.Ctx) error {
 	fsPath := c.Query("path", "")
 

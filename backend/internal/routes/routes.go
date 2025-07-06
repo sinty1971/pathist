@@ -1,17 +1,41 @@
 package routes
 
 import (
+	"net/http"
+	"strings"
+
+	_ "penguin-backend/docs" // swaggo generated docs
 	"penguin-backend/internal/handlers"
 	"penguin-backend/internal/services"
 
 	"github.com/gofiber/fiber/v3"
-	// fiberSwagger "github.com/swaggo/fiber-swagger" // v3対応待ち
 )
 
 // SetupRoutes はすべてのルートを設定します
 func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
-	// Swagger documentation (v3対応待ち)
-	// app.Get("/swagger/*", fiberSwagger.WrapHandler)
+	// Swagger UI - カスタム実装（Fiber v3対応）+ OpenAPI 3.0対応
+	app.Get("/swagger/*", func(c fiber.Ctx) error {
+		path := strings.TrimPrefix(c.Path(), "/swagger")
+		
+		// OpenAPI 3.0 仕様ファイル
+		if path == "/openapi-v3.json" {
+			return c.SendFile("../schemas/openapi-v3.json")
+		}
+		
+		if path == "/openapi-v3.yaml" {
+			return c.SendFile("../schemas/openapi-v3.yaml")
+		}
+		
+		// デフォルトページ
+		if path == "" || path == "/" || path == "/index.html" {
+			return c.SendFile("./templates/swagger.html")
+		}
+		
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{
+			"error": "Not found",
+		})
+	})
+
 
 	// Root endpoint
 	app.Get("/", func(c fiber.Ctx) error {
@@ -29,12 +53,12 @@ func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
 	if container.BusinessService != nil {
 		// Initialize handlers
 		fileHandler := handlers.NewFileHandler(container.BusinessService.FileService)
-		projectHandler := handlers.NewProjectHandler(container.BusinessService.ProjectService)
+		kojiHandler := handlers.NewKojiHandler(container.BusinessService.KojiService)
 		companyHandler := handlers.NewCompanyHandler(container.BusinessService.CompanyService)
 
 		// Setup routes for each domain
 		SetupFileRoutes(api, fileHandler)
-		SetupProjectRoutes(api, projectHandler)
+		SetupKojiRoutes(api, kojiHandler)
 		SetupCompanyRoutes(api, companyHandler)
 	}
 
@@ -44,3 +68,5 @@ func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
 	//     SetupMediaRoutes(api, mediaHandler)
 	// }
 }
+
+

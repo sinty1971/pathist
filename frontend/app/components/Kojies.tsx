@@ -1,36 +1,36 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { getProjectRecent } from "../api/sdk.gen";
-import type { ModelsProject } from "../api/types.gen";
-import ProjectDetailModal from "./ProjectDetailModal";
-import { useProject } from "../contexts/ProjectContext";
+import { getKojiRecent } from "../api/sdk.gen";
+import type { ModelsKoji } from "../api/types.gen";
+import KojiDetailModal from "./KojiDetailModal";
+import { useKoji } from "../contexts/KojiContext";
 import "../styles/business-entity-list.css";
 
-const Projects = () => {
-  const [projects, setProjects] = useState<ModelsProject[]>([]);
+const Kojies = () => {
+  const [kojies, setKojies] = useState<ModelsKoji[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProject, setSelectedProject] = useState<ModelsProject | null>(
+  const [selectedKoji, setSelectedKoji] = useState<ModelsKoji | null>(
     null
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const { setProjectCount } = useProject();
+  const { setKojiCount } = useKoji();
 
   // 工事データを読み込み
-  const loadProjects = async () => {
+  const loadKojies = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await getProjectRecent();
+      const response = await getKojiRecent();
 
       if (response.data) {
-        setProjects(response.data);
-        setProjectCount(response.data.length);
+        setKojies(response.data);
+        setKojiCount(response.data.length);
       } else {
-        setProjects([]);
-        setProjectCount(0);
+        setKojies([]);
+        setKojiCount(0);
       }
     } catch (err) {
       console.error("Error loading kouji entries:", err);
@@ -45,25 +45,25 @@ const Projects = () => {
   };
 
   useEffect(() => {
-    loadProjects();
+    loadKojies();
   }, []);
 
-  // プロジェクトクリック処理
-  const handleProjectClick = (project: ModelsProject) => {
-    setSelectedProject(project);
+  // 工事クリック処理
+  const handleKojiClick = (koji: ModelsKoji) => {
+    setSelectedKoji(koji);
     setIsEditModalOpen(true);
   };
 
-  // プロジェクト更新処理（APIコール）
-  const updateProject = async (updatedProject: ModelsProject): Promise<ModelsProject> => {
+  // 工事更新処理（APIコール）
+  const updateKoji = async (updatedKoji: ModelsKoji): Promise<ModelsKoji> => {
     try {
       // バックエンドに更新リクエストを送信
-      const response = await fetch("http://localhost:8080/api/project/update", {
-        method: "POST",
+      const response = await fetch("http://localhost:8080/api/kojies", {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedProject),
+        body: JSON.stringify(updatedKoji),
       });
 
       if (!response.ok) {
@@ -71,18 +71,18 @@ const Projects = () => {
         throw new Error(errorData.message || "更新に失敗しました");
       }
 
-      // レスポンスから更新されたプロジェクトデータを取得
-      const savedProject = await response.json();
+      // レスポンスから更新された工事データを取得
+      const savedKoji = await response.json();
 
-      // プロジェクト一覧を更新
-      setProjects((prevProjects) =>
-        prevProjects.map((p) => (p.id === savedProject.id ? savedProject : p))
+      // 工事一覧を更新
+      setKojies((prevKojies) =>
+        prevKojies.map((k) => (k.id === savedKoji.id ? savedKoji : k))
       );
 
-      // 更新されたプロジェクトデータを返す
-      return savedProject;
+      // 更新された工事データを返す
+      return savedKoji;
     } catch (err) {
-      console.error("Error updating project:", err);
+      console.error("Error updating koji:", err);
       throw err; // エラーをモーダルに伝播
     }
   };
@@ -90,17 +90,17 @@ const Projects = () => {
   // モーダルを閉じる
   const closeEditModal = () => {
     setIsEditModalOpen(false);
-    setSelectedProject(null);
+    setSelectedKoji(null);
   };
 
   // 管理ファイルの変更が必要かチェック
-  const needsFileRename = (project: ModelsProject): boolean => {
-    if (!project.managed_files || project.managed_files.length === 0) {
+  const needsFileRename = (koji: ModelsKoji): boolean => {
+    if (!koji.managed_files || koji.managed_files.length === 0) {
       return false;
     }
     
     // managed_filesの中で現在の名前と推奨名が異なるものがあるかチェック
-    const needsRename = project.managed_files.some(file => {
+    const needsRename = koji.managed_files.some(file => {
       // currentとrecommendedが両方存在し、異なる場合にtrueを返す
       return file.current && file.recommended && file.current !== file.recommended;
     });
@@ -108,37 +108,37 @@ const Projects = () => {
     return needsRename;
   };
 
-  // プロジェクトデータを更新
-  const handleProjectUpdate = (updatedProject: ModelsProject) => {
-    // 選択中のプロジェクトを更新
-    setSelectedProject(updatedProject);
+  // 工事データを更新
+  const handleKojiUpdate = (updatedKoji: ModelsKoji) => {
+    // 選択中の工事を更新
+    setSelectedKoji(updatedKoji);
 
-    // プロジェクト一覧を更新
-    setProjects((prevProjects) => {
-      // 既存のプロジェクトを探す（IDで照合）
-      const existingIndex = prevProjects.findIndex(p => p.id === updatedProject.id);
+    // 工事一覧を更新
+    setKojies((prevKojies) => {
+      // 既存の工事を探す（IDで照合）
+      const existingIndex = prevKojies.findIndex(k => k.id === updatedKoji.id);
       
       if (existingIndex !== -1) {
-        // 既存のプロジェクトを更新
-        const updatedProjects = [...prevProjects];
-        updatedProjects[existingIndex] = updatedProject;
-        return updatedProjects;
+        // 既存の工事を更新
+        const updatedKojies = [...prevKojies];
+        updatedKojies[existingIndex] = updatedKoji;
+        return updatedKojies;
       } else {
-        // フォルダー名が変更された可能性があるため、元のプロジェクトを探して削除し、新しいものを追加
+        // フォルダー名が変更された可能性があるため、元の工事を探して削除し、新しいものを追加
         // 同じ会社名・現場名で探す
-        const oldProjectIndex = prevProjects.findIndex(p => 
-          p.company_name === updatedProject.company_name && 
-          p.location_name === updatedProject.location_name &&
-          p.id !== updatedProject.id
+        const oldKojiIndex = prevKojies.findIndex(k => 
+          k.company_name === updatedKoji.company_name && 
+          k.location_name === updatedKoji.location_name &&
+          k.id !== updatedKoji.id
         );
         
-        if (oldProjectIndex !== -1) {
-          // 古いプロジェクトを削除して新しいものを追加
-          const updatedProjects = [...prevProjects];
-          updatedProjects.splice(oldProjectIndex, 1);
-          updatedProjects.push(updatedProject);
+        if (oldKojiIndex !== -1) {
+          // 古い工事を削除して新しいものを追加
+          const updatedKojies = [...prevKojies];
+          updatedKojies.splice(oldKojiIndex, 1);
+          updatedKojies.push(updatedKoji);
           // 開始日順でソート（新しい順）
-          return updatedProjects.sort((a, b) => {
+          return updatedKojies.sort((a, b) => {
             const dateA = a.start_date ? new Date(typeof a.start_date === 'string' ? a.start_date : (a.start_date as any)['time.Time']).getTime() : 0;
             const dateB = b.start_date ? new Date(typeof b.start_date === 'string' ? b.start_date : (b.start_date as any)['time.Time']).getTime() : 0;
             
@@ -154,7 +154,7 @@ const Projects = () => {
           });
         } else {
           // 新規追加
-          return [...prevProjects, updatedProject];
+          return [...prevKojies, updatedKoji];
         }
       }
     });
@@ -175,7 +175,7 @@ const Projects = () => {
           {error}
         </div>
         <button
-          onClick={loadProjects}
+          onClick={loadKojies}
           className="business-entity-retry-button"
         >
           再試行
@@ -188,14 +188,14 @@ const Projects = () => {
     <div className="business-entity-container">
       <div className="business-entity-controls">
         <Link
-          to="/projects/gantt"
+          to="/kojies/gantt"
           className="business-entity-gantt-button"
         >
           📊 工程表を表示
         </Link>
         
         <div className="business-entity-count">
-          全{projects.length}件
+          全{kojies.length}件
         </div>
       </div>
 
@@ -241,56 +241,56 @@ const Projects = () => {
         </div>
 
         <div className="business-entity-scroll-area">
-          {projects.length === 0 ? (
+          {kojies.length === 0 ? (
             <div className="business-entity-empty">
               工事データが見つかりません
             </div>
           ) : (
             <div>
-              {projects.map((project, index) => (
+              {kojies.map((koji, index) => (
               <div
-                key={project.id || index}
+                key={koji.id || index}
                 className="business-entity-item-row"
-                onClick={() => handleProjectClick(project)}
+                onClick={() => handleKojiClick(koji)}
                 title="クリックして編集"
               >
                 <div className="business-entity-item-info">
                   <div className="business-entity-item-info-date">
-                    {project.start_date
+                    {koji.start_date
                       ? new Date(
-                          typeof project.start_date === 'string' 
-                            ? project.start_date 
-                            : (project.start_date as any)['time.Time']
+                          typeof koji.start_date === 'string' 
+                            ? koji.start_date 
+                            : (koji.start_date as any)['time.Time']
                         ).toLocaleDateString("ja-JP")
                       : "未設定"}
                   </div>
                   
                   <div className="business-entity-item-info-company">
-                    {project.company_name || "会社名未設定"}
+                    {koji.company_name || "会社名未設定"}
                   </div>
                   
                   <div className="business-entity-item-info-location">
-                    {project.location_name || "現場名未設定"}
+                    {koji.location_name || "現場名未設定"}
                   </div>
                   
                   <div className="business-entity-item-info-description">
-                    {project.description || ""}
+                    {koji.description || ""}
                   </div>
                   
                   <div className="business-entity-item-info-date end-date" style={{ 
                     marginRight: "24px"
                   }}>
-                    ～{project.end_date
+                    ～{koji.end_date
                       ? new Date(
-                          typeof project.end_date === 'string' 
-                            ? project.end_date 
-                            : (project.end_date as any)['time.Time']
+                          typeof koji.end_date === 'string' 
+                            ? koji.end_date 
+                            : (koji.end_date as any)['time.Time']
                         ).toLocaleDateString("ja-JP")
                       : "未設定"}
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {needsFileRename(project) && (
+                  {needsFileRename(koji) && (
                     <span 
                       className="business-entity-item-rename-indicator"
                       title="管理ファイルの名前変更が必要です"
@@ -300,13 +300,13 @@ const Projects = () => {
                   )}
                   <div
                     className={`business-entity-item-status ${
-                      project.status === "進行中" ? "business-entity-item-status-ongoing" :
-                      project.status === "完了" ? "business-entity-item-status-completed" :
-                      project.status === "予定" ? "business-entity-item-status-planned" :
+                      koji.status === "進行中" ? "business-entity-item-status-ongoing" :
+                      koji.status === "完了" ? "business-entity-item-status-completed" :
+                      koji.status === "予定" ? "business-entity-item-status-planned" :
                       ""
                     }`}
                   >
-                    {project.status || "未設定"}
+                    {koji.status || "未設定"}
                   </div>
                 </div>
               </div>
@@ -318,15 +318,15 @@ const Projects = () => {
 
 
       {/* 編集モーダル */}
-      <ProjectDetailModal
+      <KojiDetailModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}
-        project={selectedProject}
-        onUpdate={updateProject}
-        onProjectUpdate={handleProjectUpdate}
+        koji={selectedKoji}
+        onUpdate={updateKoji}
+        onKojiUpdate={handleKojiUpdate}
       />
     </div>
   );
 };
 
-export default Projects;
+export default Kojies;

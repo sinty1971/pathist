@@ -74,7 +74,7 @@
   background: #fafafa;
 }
 
-.project-name {
+.koji-name {
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
@@ -243,13 +243,13 @@
   white-space: nowrap;
 }
 
-/* ガンチャート専用のプロジェクト詳細表示 */
-.gantt-project-details p {
+/* ガンチャート専用の工事詳細表示 */
+.gantt-koji-details p {
   margin: 10px 0;
   line-height: 1.6;
 }
 
-.gantt-project-details strong {
+.gantt-koji-details strong {
   display: inline-block;
   width: 100px;
   color: #666;
@@ -326,19 +326,19 @@
   font-weight: 500;
 }
 
-/* アクティブプロジェクト行 */
+/* アクティブ工事行 */
 .gantt-row-label-active {
   background-color: #fff3cd;
   border-left: 4px solid #ffc107;
 }
 
-/* アクティブプロジェクト名 */
-.project-name-active {
+/* アクティブ工事名 */
+.koji-name-active {
   font-weight: bold;
   color: #856404;
 }
 
-.project-name-clickable {
+.koji-name-clickable {
   cursor: pointer;
 }
 

@@ -1,7 +1,7 @@
 import { Outlet } from "react-router";
 import type { LinksFunction } from "react-router";
 import { Navigation } from "../components/Navigation";
-import { ProjectProvider, useProject } from "../contexts/ProjectContext";
+import { KojiProvider, useKoji } from "../contexts/KojiContext";
 import { FileInfoProvider } from "../contexts/FileInfoContext";
 
 export const links: LinksFunction = () => [
@@ -9,7 +9,7 @@ export const links: LinksFunction = () => [
 ];
 
 function LayoutContent() {
-  const { projectCount } = useProject();
+  const { kojiCount } = useKoji();
   
   return (
     <div className="app">
@@ -23,10 +23,10 @@ function LayoutContent() {
 
 export default function Layout() {
   return (
-    <ProjectProvider>
+    <KojiProvider>
       <FileInfoProvider>
         <LayoutContent />
       </FileInfoProvider>
-    </ProjectProvider>
+    </KojiProvider>
   );
 }

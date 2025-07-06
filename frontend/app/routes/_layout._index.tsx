@@ -108,7 +108,7 @@ export default function HomePage() {
           e.currentTarget.style.transform = "translateY(0)";
           e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
         }}>
-          <Link to="/projects" style={{ 
+          <Link to="/kojies" style={{ 
             textDecoration: "none", 
             display: "flex",
             flexDirection: "column",
@@ -144,7 +144,7 @@ export default function HomePage() {
           
           {/* ガントチャートリンク */}
           <Link 
-            to="/projects/gantt" 
+            to="/kojies/gantt" 
             style={{
               color: "#667eea",
               fontSize: "0.8rem",

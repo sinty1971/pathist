@@ -1,11 +1,11 @@
 # BACKEND.md
 
-バックエンド（Go + Fiber v2）の詳細情報とガイダンス
+バックエンド（Go + Fiber v3）の詳細情報とガイダンス
 
 ## 技術スタック
 
 - **言語**: Go 1.21+
-- **フレームワーク**: Fiber v2
+- **フレームワーク**: Fiber v3
 - **API仕様**: Swagger 2.0 (OpenAPI 2.0)
 - **CORS**: 全オリジン許可
 
@@ -25,7 +25,7 @@ just swagger         # Swagger UIをブラウザで開く
 just stop-backend    # バックエンドサーバーを停止
 ```
 
-## プロジェクト構造
+## ディレクトリ構造
 
 ```
 backend/
@@ -33,36 +33,44 @@ backend/
 │   └── main.go                 # エントリーポイント、CORSを持つFiberサーバー
 ├── internal/
 │   ├── handlers/               # HTTPリクエストハンドラー
-│   │   ├── project.go          # プロジェクト関連API
-│   │   └── time.go             # 時刻関連API
+│   │   ├── koji.go             # 工事関連API
+│   │   └── company.go          # 会社関連API
 │   ├── services/               # ビジネスロジック
 │   │   ├── file.go             # ファイル操作
-│   │   ├── project.go          # プロジェクト管理
-│   │   └── yaml.go             # YAML操作
+│   │   ├── koji.go             # 工事管理
+│   │   └── business.go         # ビジネスデータ管理
 │   └── models/                 # データモデル
 │       ├── file.go             # ファイル関連モデル
-│       ├── project.go          # プロジェクト関連モデル
+│       ├── koji.go             # 工事関連モデル
+│       ├── company.go          # 会社関連モデル
 │       ├── id.go               # ID生成
-│       ├── time.go             # 時刻関連モデル
 │       └── timestamp.go        # タイムスタンプ処理
 └── docs/                       # Swagger生成ファイル（一時的）
 ```
 
 ## API エンドポイント
 
-バックエンドは `http://localhost:8080/api` でREST APIを提供します。
+バックエンドは `http://localhost:8080/api` でRESTful APIを提供します。
 
 ### ファイル管理
-- `GET /api/file/fileinfos?path=<オプション-パス>` - フォルダーの内容を返す
+- `GET /api/files?path=<オプション-パス>` - ファイル・フォルダーの一覧を返す
 
-### プロジェクト管理
-- `GET /api/project/recent` - 工事プロジェクトの一覧を返す
-- `POST /api/project/update` - 工事プロジェクト情報をYAMLファイルに保存
-- `POST /api/project/rename-managed-file` - 管理ファイルの名前変更
+### 工事管理
+- `GET /api/kojies?filter=recent` - 工事一覧を返す（filter=recentで最近の工事のみ）
+- `GET /api/kojies/{path}` - 指定パスの工事を取得
+- `PUT /api/kojies` - 工事情報をYAMLファイルに保存
+- `PUT /api/kojies/managed-files` - 管理ファイルの名前変更
+
+### 会社管理
+- `GET /api/companies` - 会社一覧を返す
+- `GET /api/companies/{id}` - 指定IDの会社詳細を取得
+- `PUT /api/companies` - 会社情報を更新
 
 ### Swagger UI
 - URL: http://localhost:8080/swagger/index.html
 - コマンド: `just swagger` でブラウザで開く
+- **注意**: Fiber v3対応のため、カスタムHTML実装を使用（CDN経由でSwagger UI読み込み）
+- OpenAPI仕様: `/swagger/swagger.json`, `/swagger/swagger.yaml`で直接アクセス可能
 
 ## データソース定義
 
@@ -73,12 +81,12 @@ backend/
 
 ### Database (db)
 データベース（`.detail.yaml`ファイル）から取得した情報
-- 工事プロジェクトデータベースの保存場所: `~/penguin/豊田築炉/2-工事/.detail.yaml`
-- プロジェクト詳細情報（開始日、終了日、説明、タグ等）
+- 工事データベースの保存場所: `~/penguin/豊田築炉/2-工事/.detail.yaml`
+- 工事詳細情報（開始日、終了日、説明、タグ等）
 
 ### Merge (mg)
 FileSystemとDatabaseのデータマージ処理
-- この処理は工事プロジェクト管理において重要な役割を持つ
+- この処理は工事管理において重要な役割を持つ
 - 原則このデータをフロントエンドに提供する
 
 ## データ形式
@@ -88,11 +96,23 @@ FileSystemとDatabaseのデータマージ処理
 - **日時データ**: RFC3339Nano形式の文字列で保存
 - **パス**: 相対パス形式で管理
 
-### 工事プロジェクト
+### 工事情報
 - **フォルダー命名規則**: `YYYY-MMDD 会社名 現場名` (例: `2025-0618 豊田築炉 名和工場`)
 - **工事ID**: フォルダーのID+元請け会社名+現場名から一意ID生成
 - **データ永続化**: `.detail.yaml`ファイルで工事情報を保存
 - **タイムゾーン**: JST（ローカルタイム）で日時を保持
+
+### 会社管理
+- **フォルダー命名規則**: `[数字] 会社名` (例: `4 豊田築炉`)
+- **業種マップ**: 数字から業種名への変換マップを使用
+  - 0: 自社, 1: 下請会社, 2: 築炉会社, 3: 一人親方, 4: 元請け
+  - 5: リース会社, 6: 販売会社, 7: 販売会社, 8: 求人会社, 9: その他
+- **業種変換関数**:
+  - `DetermineBusinessType(number)`: 数字 → 業種名
+  - `GetBusinessTypeNumber(typeName)`: 業種名 → 数字
+  - `GetAllBusinessTypes()`: 全業種マップを取得
+- **会社ID**: 会社名から一意ID生成
+- **データ永続化**: `.detail.yaml`ファイルで会社詳細情報を保存
 
 ## API仕様生成
 
@@ -123,7 +143,7 @@ func (h *Handler) FunctionName(c *fiber.Ctx) error {
 
 #### タグの統一ルール
 - **ファイル管理**: `ファイル管理`
-- **プロジェクト管理**: `プロジェクト管理` / `工事 更新`
+- **工事管理**: `工事管理`
 - **会社管理**: `会社管理`
 
 #### 実例
@@ -166,132 +186,51 @@ app.Use(cors.New(cors.Config{
 }))
 ```
 
-## Fiber v3 移行計画
 
-### 移行準備（現在のブランチ: fiber-v3-upgrade）
+## Prefork設定について
 
-#### 前提条件
-- **Go 1.24+**: Fiber v3は Go 1.24 以上が必要
-- **現在のシステム**: Go 1.24 使用中 ✅
+Preforkは、Fiberフレームワークの高性能機能の一つで、**マルチプロセスモード**を指します。
 
-#### 主な破壊的変更
+### Preforkの仕組み
 
-##### 1. インポートパスの変更
+通常、Goアプリケーションは1つのプロセスで動作しますが、Preforkを有効にすると：
+
+1. **親プロセス**が複数の**子プロセス**を事前に起動
+2. 各子プロセスが同じポートをリッスン（SO_REUSEPORTを使用）
+3. OSが自動的にリクエストを各プロセスに分散
+
+### 利点と欠点
+
+#### 利点 ✅
+- **高負荷対応**: CPUコアを最大限活用
+- **パフォーマンス向上**: リクエストを並列処理
+- **障害耐性**: 1つのプロセスがクラッシュしても他は継続
+
+#### 欠点 ❌
+- **メモリ使用量増加**: プロセス数分のメモリが必要
+- **ステート共有不可**: プロセス間でメモリ共有できない
+- **開発環境では不要**: デバッグが複雑になる
+
+### 設定方法
+
 ```go
-// v2
-import "github.com/gofiber/fiber/v2"
-
-// v3
-import "github.com/gofiber/fiber/v3"
-```
-
-##### 2. コンテキスト・バインディングの変更
-```go
-// v2
-err := c.BodyParser(&data)
-
-// v3
-err := c.Bind().Body(&data)
-```
-
-##### 3. リダイレクト処理の変更
-```go
-// v2
-return c.Redirect("/path")
-
-// v3
-return c.Redirect().To("/path")
-```
-
-##### 4. 設定変更
-```go
-// v2
 app := fiber.New(fiber.Config{
-    EnableTrustedProxyCheck: true,
-    TrustedProxies: []string{"192.168.1.0/24"},
-})
-
-// v3
-app := fiber.New(fiber.Config{
-    TrustProxy: fiber.TrustProxyConfig{
-        Proxies: []string{"192.168.1.0/24"},
-    },
+    Prefork: true,  // Preforkを有効化
 })
 ```
 
-##### 5. ミドルウェアの変更
-- **Monitor ミドルウェア**: gofiber/contrib パッケージに移行
-- **Static ミドルウェア**: 統一化（filesystem ミドルウェアは削除）
-- **Session ミドルウェア**: 新しいハンドラー方式
-- **Proxy ミドルウェア**: TlsConfig → TLSConfig に変更
+### 現在の設定
 
-#### 移行作業リスト
+現在の設定では`Prefork: Disabled`なので、シングルプロセスで動作しています。開発環境ではこれが推奨設定です。
 
-1. **依存関係の更新**
-   - `go.mod` でFiber v2 → v3に変更
-   - 関連パッケージのバージョン確認
-
-2. **コード修正**
-   - インポートパスの一括変更
-   - `c.BodyParser()` → `c.Bind().Body()` の変更
-   - CORS設定の確認・更新
-   - ハンドラー関数の修正
-
-3. **テスト・検証**
-   - 全APIエンドポイントの動作確認
-   - フロントエンドとの連携テスト
-   - パフォーマンステスト
-
-#### 影響範囲
-
-##### ファイル修正対象
-- `cmd/main.go`: アプリケーション設定とCORS
-- `internal/handlers/*.go`: 全ハンドラー関数
-- `internal/routes/*.go`: ルート設定（必要に応じて）
-- `go.mod`: 依存関係
-
-##### API互換性
-- **エンドポイント**: 変更なし
-- **レスポンス形式**: 変更なし
-- **リクエスト形式**: 変更なし
-- **Swagger仕様**: 変更なし（内部実装のみ変更）
-
-#### リスク評価
-
-##### 低リスク
-- フロントエンドへの影響なし（APIインターフェース維持）
-- データベース構造への影響なし
-
-##### 中リスク
-- 新しいバインディング方式での予期しないエラー
-- ミドルウェア設定の微細な動作変更
-
-##### 高リスク
-- パフォーマンスの変化
-- エラーハンドリングの動作変更
-
-#### 移行戦略
-
-1. **段階的移行**
-   - 基本設定から開始
-   - ハンドラー単位で順次変更
-   - 各段階でテスト実行
-
-2. **ロールバック準備**
-   - 現在のmainブランチを保持
-   - 問題発生時は即座にv2に戻せる状態を維持
-
-3. **検証手順**
-   - 単体テスト（可能な範囲）
-   - API統合テスト
-   - フロントエンド連携テスト
-
-#### 新機能・改善点
-
-- **型安全性**: ジェネリクス活用でより安全な実装
-- **パフォーマンス**: v3での最適化された処理
-- **開発体験**: より良いエラーメッセージとデバッグ情報
-- **拡張性**: 新しいアドオンシステム
+サーバー起動時の出力例：
+```
+INFO Server started on:     http://127.0.0.1:8080 (bound on host 0.0.0.0 and port 8080)
+INFO Total handlers count:  10
+INFO Prefork:              Disabled
+INFO PID:                  373347
+INFO Total process count:  1
+```
 
 ## 開発時の注意事項
 

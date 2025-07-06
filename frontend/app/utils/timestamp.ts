@@ -196,29 +196,6 @@ export function stringToTimestamp(input?: string | Date): ModelsTimestamp | unde
   };
 }
 
-/**
- * プロジェクトのstart_dateとend_dateから文字列を取得
- */
-export function getProjectDates(project: { start_date?: ModelsTimestamp | string; end_date?: ModelsTimestamp | string }): { startDate?: string; endDate?: string } {
-  return {
-    startDate: timestampToString(project.start_date),
-    endDate: timestampToString(project.end_date)
-  };
-}
-
-/**
- * フォルダー名から日時と残りの文字列を抽出（バックエンドのParseTime相当）
- * 例："2025-0618 豊田築炉 名和工場" → { date: Date, companyAndLocation: "豊田築炉 名和工場" }
- */
-export function parseProjectFolderName(folderName: string): { date: Date; companyAndLocation: string } | null {
-  const result = parseTimeString(folderName);
-  if (!result) return null;
-  
-  return {
-    date: result.date,
-    companyAndLocation: result.remaining
-  };
-}
 
 /**
  * DateをRFC3339Nano形式の文字列に変換

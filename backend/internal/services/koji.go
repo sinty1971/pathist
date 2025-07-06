@@ -11,20 +11,20 @@ import (
 	"sync"
 )
 
-// ProjectService は工事情報取得サービスを提供する
-type ProjectService struct {
+// KojiService は工事情報取得サービスを提供する
+type KojiService struct {
 	FileService      *FileService
-	AttributeService *AttributeService[*models.Project]
+	AttributeService *AttributeService[*models.Koji]
 	FolderName       string
 }
 
-// NewProjectService はProjectServiceを初期化する
+// NewKojiService はKojiServiceを初期化する
 // @Param folderName query string true "フォルダー名(FileService.BasePathからの相対パス)" default("2-工事")
-func NewProjectService(businessFileService *FileService, folderName string) (*ProjectService, error) {
-	ps := &ProjectService{}
+func NewKojiService(businessFileService *FileService, folderName string) (*KojiService, error) {
+	ks := &KojiService{}
 
 	// フォルダー名を設定
-	ps.FolderName = folderName
+	ks.FolderName = folderName
 
 	// フォルダーのフルパスの取得
 	folderPath, err := businessFileService.GetFullpath(folderName)
@@ -33,71 +33,71 @@ func NewProjectService(businessFileService *FileService, folderName string) (*Pr
 	}
 
 	// FileServiceを初期化
-	ps.FileService, err = NewFileService(folderPath)
+	ks.FileService, err = NewFileService(folderPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// AttributeServiceを初期化
-	ps.AttributeService = NewAttributeService[*models.Project](ps.FileService, ".detail.yaml")
+	ks.AttributeService = NewAttributeService[*models.Koji](ks.FileService, ".detail.yaml")
 
-	return ps, nil
+	return ks, nil
 }
 
-// GetProject は指定されたパスから工事を取得する
+// GetKoji は指定されたパスから工事を取得する
 // pathは工事フォルダーのファイル名
 // 工事を返す
-func (ps *ProjectService) GetProject(folderName string) (models.Project, error) {
+func (ks *KojiService) GetKoji(folderName string) (models.Koji, error) {
 	// 工事フォルダーのフルパスを取得
-	folderPath, err := ps.FileService.GetFullpath(folderName)
+	folderPath, err := ks.FileService.GetFullpath(folderName)
 	if err != nil {
-		return models.Project{}, fmt.Errorf("工事フォルダーが見つかりません: %s", folderName)
+		return models.Koji{}, fmt.Errorf("工事フォルダーが見つかりません: %s", folderName)
 	}
 
 	// 工事フォルダーのFileInfoを取得
 	folderInfo, err := models.NewFileInfo(folderPath)
 	if err != nil {
-		return models.Project{}, fmt.Errorf("工事フォルダー情報の取得に失敗しました: %v", err)
+		return models.Koji{}, fmt.Errorf("工事フォルダー情報の取得に失敗しました: %v", err)
 	}
 
 	// 工事データモデルを作成
-	project, err := models.NewProject(*folderInfo)
+	koji, err := models.NewKoji(*folderInfo)
 	if err != nil {
-		return models.Project{}, fmt.Errorf("工事データモデルの作成に失敗しました: %v", err)
+		return models.Koji{}, fmt.Errorf("工事データモデルの作成に失敗しました: %v", err)
 	}
 
 	// 管理ファイルの設定
-	err = ps.SetManagedFiles(&project)
+	err = ks.SetManagedFiles(&koji)
 	if err != nil {
-		return models.Project{}, fmt.Errorf("管理ファイルの設定に失敗しました: %v", err)
+		return models.Koji{}, fmt.Errorf("管理ファイルの設定に失敗しました: %v", err)
 	}
 
 	// 属性ファイルと同期する
-	err = ps.SyncAttributeFile(&project)
+	err = ks.SyncAttributeFile(&koji)
 	if err != nil {
-		return models.Project{}, fmt.Errorf("属性ファイルとの同期に失敗しました: %v", err)
+		return models.Koji{}, fmt.Errorf("属性ファイルとの同期に失敗しました: %v", err)
 	}
 
-	return project, nil
+	return koji, nil
 }
 
-// ProjectResult 並列処理用の結果構造体
-type ProjectResult struct {
-	Project models.Project
-	Index   int
-	Error   error
+// KojiResult 並列処理用の結果構造体
+type KojiResult struct {
+	Koji  models.Koji
+	Index int
+	Error error
 }
 
-// GetRecentProjects は指定されたパスから最近の工事データモデル一覧を取得する
-func (ps *ProjectService) GetRecentProjects() []models.Project {
+// GetRecentKojies は指定されたパスから最近の工事データモデル一覧を取得する
+func (ks *KojiService) GetRecentKojies() []models.Koji {
 	// ファイルシステムから工事フォルダー一覧を取得
-	fileInfos, err := ps.FileService.GetFileInfos()
+	fileInfos, err := ks.FileService.GetFileInfos()
 	if err != nil {
-		return []models.Project{}
+		return []models.Koji{}
 	}
 
 	if len(fileInfos) == 0 {
-		return []models.Project{}
+		return []models.Koji{}
 	}
 
 	// 並列処理用のワーカー数を決定（CPU数と同じ、最大8）
@@ -105,7 +105,7 @@ func (ps *ProjectService) GetRecentProjects() []models.Project {
 
 	// チャンネルとワーカーグループを設定
 	jobs := make(chan int, len(fileInfos))
-	results := make(chan ProjectResult, len(fileInfos))
+	results := make(chan KojiResult, len(fileInfos))
 	var wg sync.WaitGroup
 
 	// ワーカーを起動
@@ -117,19 +117,19 @@ func (ps *ProjectService) GetRecentProjects() []models.Project {
 				fileInfo := fileInfos[index]
 
 				// fileInfoから工事を作成
-				project, err := models.NewProject(fileInfo)
+				koji, err := models.NewKoji(fileInfo)
 				if err != nil {
-					results <- ProjectResult{Index: index, Error: err}
+					results <- KojiResult{Index: index, Error: err}
 					continue
 				}
 
 				// 管理ファイルの設定、エラーは無視
-				ps.SetManagedFiles(&project)
+				ks.SetManagedFiles(&koji)
 
 				// 属性ファイルと同期、エラーは無視
-				ps.SyncAttributeFile(&project)
+				ks.SyncAttributeFile(&koji)
 
-				results <- ProjectResult{Project: project, Index: index, Error: nil}
+				results <- KojiResult{Koji: koji, Index: index, Error: nil}
 			}
 		}()
 	}
@@ -147,84 +147,84 @@ func (ps *ProjectService) GetRecentProjects() []models.Project {
 	}()
 
 	// 結果を収集（元の順序を保持）
-	projects := make([]models.Project, 0, len(fileInfos))
-	projectMap := make(map[int]models.Project, len(fileInfos))
+	kojies := make([]models.Koji, 0, len(fileInfos))
+	kojiMap := make(map[int]models.Koji, len(fileInfos))
 
 	for result := range results {
 		if result.Error == nil {
-			projectMap[result.Index] = result.Project
+			kojiMap[result.Index] = result.Koji
 		}
 	}
 
-	// 元の順序でプロジェクト一覧を構築
+	// 元の順序で工事一覧を構築
 	for i := range len(fileInfos) {
-		if project, exists := projectMap[i]; exists {
-			projects = append(projects, project)
+		if koji, exists := kojiMap[i]; exists {
+			kojies = append(kojies, koji)
 		}
 	}
 
 	// 工事開始日で降順ソート（新しいものが最初）
-	sort.Slice(projects, func(i, j int) bool {
+	sort.Slice(kojies, func(i, j int) bool {
 		// 両方の開始日が有効な場合
-		if !projects[i].StartDate.IsZero() && !projects[j].StartDate.IsZero() {
-			return projects[i].StartDate.After(projects[j].StartDate.Time)
+		if !kojies[i].StartDate.IsZero() && !kojies[j].StartDate.IsZero() {
+			return kojies[i].StartDate.After(kojies[j].StartDate.Time)
 		}
 		// iの開始日が無効でjが有効な場合、jを先に
-		if projects[i].StartDate.IsZero() && !projects[j].StartDate.IsZero() {
+		if kojies[i].StartDate.IsZero() && !kojies[j].StartDate.IsZero() {
 			return false
 		}
 		// iの開始日が有効でjが無効な場合、iを先に
-		if !projects[i].StartDate.IsZero() && projects[j].StartDate.IsZero() {
+		if !kojies[i].StartDate.IsZero() && kojies[j].StartDate.IsZero() {
 			return true
 		}
 		// 両方の開始日が無効な場合、フォルダー名で降順
-		return projects[i].FileInfo.Name > projects[j].FileInfo.Name
+		return kojies[i].FileInfo.Name > kojies[j].FileInfo.Name
 	})
 
-	return projects
+	return kojies
 }
 
 // SyncAttributeFile は工事の属性データを読み込み、工事データモデルに反映する
-func (ps *ProjectService) SyncAttributeFile(project *models.Project) error {
+func (ks *KojiService) SyncAttributeFile(koji *models.Koji) error {
 	// 工事の属性データを読み込む
-	attribute, err := ps.AttributeService.Load(project)
+	attribute, err := ks.AttributeService.Load(koji)
 	if err != nil {
 		// ファイルが存在しない場合はデフォルト値を設定
-		project.UpdateStatus()
+		koji.UpdateStatus()
 
 		// 新規ファイルの場合は非同期で保存（必要最小限の書き込み）
 		go func() {
-			ps.AttributeService.Save(project)
+			ks.AttributeService.Save(koji)
 		}()
 		return nil
 	}
 
-	// detailにしか保持されない内容をprojectに反映
-	project.Description = attribute.Description
-	project.EndDate = attribute.EndDate
-	project.Tags = attribute.Tags
+	// detailにしか保持されない内容をkojiに反映
+	koji.Description = attribute.Description
+	koji.EndDate = attribute.EndDate
+	koji.Tags = attribute.Tags
 
 	// 計算が必要な項目の更新
-	project.UpdateStatus()
+	koji.UpdateStatus()
 
 	// フォルダー名から解析した情報をdetailに反映
-	attribute.StartDate = project.StartDate
-	attribute.CompanyName = project.CompanyName
-	attribute.LocationName = project.LocationName
-	attribute.Status = project.Status
+	attribute.StartDate = koji.StartDate
+	attribute.CompanyName = koji.CompanyName
+	attribute.LocationName = koji.LocationName
+	attribute.Status = koji.Status
 
 	// データに変更がある場合のみ非同期で保存（パフォーマンス重視）
-	if ps.hasProjectChanged(*attribute, *project) {
+	if ks.hasKojiChanged(*attribute, *koji) {
 		go func() {
-			ps.AttributeService.Save(attribute)
+			ks.AttributeService.Save(attribute)
 		}()
 	}
 
 	return nil
 }
 
-// hasProjectChanged プロジェクトデータに変更があるかチェック
-func (ps *ProjectService) hasProjectChanged(detail, current models.Project) bool {
+// hasKojiChanged 工事データに変更があるかチェック
+func (ks *KojiService) hasKojiChanged(detail, current models.Koji) bool {
 	return detail.StartDate != current.StartDate ||
 		detail.CompanyName != current.CompanyName ||
 		detail.LocationName != current.LocationName ||
@@ -232,13 +232,13 @@ func (ps *ProjectService) hasProjectChanged(detail, current models.Project) bool
 }
 
 // SetManagedFiles は工事の管理ファイルを設定します
-func (ps *ProjectService) SetManagedFiles(project *models.Project) error {
+func (ks *KojiService) SetManagedFiles(koji *models.Koji) error {
 	// 工事フォルダー内のファイルを取得
-	fileInfos, err := ps.FileService.GetFileInfos(project.FileInfo.Name)
+	fileInfos, err := ks.FileService.GetFileInfos(koji.FileInfo.Name)
 	if err != nil {
 		// エラーの場合はデフォルトの管理ファイルを設定
-		project.ManagedFiles = []models.ManagedFile{{
-			Recommended: project.Name + ".xlsx",
+		koji.ManagedFiles = []models.ManagedFile{{
+			Recommended: koji.Name + ".xlsx",
 			Current:     "工事.xlsx",
 		}}
 		return nil
@@ -267,7 +267,7 @@ func (ps *ProjectService) SetManagedFiles(project *models.Project) error {
 			continue
 		}
 
-		recommendedName := project.Name + fileExt
+		recommendedName := koji.Name + fileExt
 
 		// 推奨ファイルと現在のファイルが同じ時は推奨ファイルの表示を不要にする
 		if recommendedName == fileInfo.Name {
@@ -285,7 +285,7 @@ func (ps *ProjectService) SetManagedFiles(project *models.Project) error {
 	// 工事ファイルが見つからない場合はひな形を設定
 	if !found {
 		managedFile = models.ManagedFile{
-			Recommended: project.Name + ".xlsx",
+			Recommended: koji.Name + ".xlsx",
 			Current:     "工事.xlsx",
 		}
 
@@ -294,32 +294,34 @@ func (ps *ProjectService) SetManagedFiles(project *models.Project) error {
 	}
 
 	// 管理ファイルの設定
-	project.ManagedFiles = []models.ManagedFile{managedFile}
+	koji.ManagedFiles = []models.ManagedFile{managedFile}
 
 	return nil
 }
 
-// UpdateProjectFileInfo は工事情報 project.FileInfoの情報を更新します
-// projectの詳細情報で.detail.yamlを更新します
-func (ps *ProjectService) UpdateProjectFileInfo(project *models.Project) error {
+// Update は工事情報 FileInfoの情報を更新
+// kojiの詳細情報で.detail.yamlを更新
+// 移動元フォルダー名：FileInfo.Name
+// 移動先フォルダー名：StartDate, CompanyName, LocationNameから生成されたフォルダー名
+func (ks *KojiService) Update(koji *models.Koji) error {
 
 	// 工事開始日・会社名・現場名からフォルダー名を生成
-	updatesStartDate, err := project.StartDate.Format("2006-0102")
+	updatesStartDate, err := koji.StartDate.Format("2006-0102")
 	if err != nil {
 		return err
 	}
-	generatedFolderName := fmt.Sprintf("%s %s %s", updatesStartDate, project.CompanyName, project.LocationName)
+	generatedFolderName := fmt.Sprintf("%s %s %s", updatesStartDate, koji.CompanyName, koji.LocationName)
 
 	// 生成されたフォルダー名とFileInfo.Nameを比較
-	if generatedFolderName != project.FileInfo.Name {
+	if generatedFolderName != koji.FileInfo.Name {
 		// フォルダー名の変更
-		err = ps.FileService.MoveFile(project.FileInfo.Name, generatedFolderName)
+		err = ks.FileService.MoveFile(koji.FileInfo.Name, generatedFolderName)
 		if err != nil {
 			return err
 		}
 
 		// FileInfoの作成
-		generatedFullpath, err := ps.FileService.GetFullpath(generatedFolderName)
+		generatedFullpath, err := ks.FileService.GetFullpath(generatedFolderName)
 		if err != nil {
 			return err
 		}
@@ -329,47 +331,46 @@ func (ps *ProjectService) UpdateProjectFileInfo(project *models.Project) error {
 		}
 
 		// 詳細情報以外の更新
-		project.FileInfo = *generatedFileInfo
+		koji.FileInfo = *generatedFileInfo
 	}
 
 	// 計算が必要な項目の更新
-	project.ID = models.GenerateProjectID(project.StartDate, project.CompanyName, project.LocationName)
-	project.Status = models.DetermineProjectStatus(project.StartDate, project.EndDate)
+	koji.ID = models.GenerateKojiID(koji.StartDate, koji.CompanyName, koji.LocationName)
+	koji.Status = models.DetermineKojiStatus(koji.StartDate, koji.EndDate)
 
 	// 管理ファイルを更新（推奨ファイル名が変更される可能性があるため）
-	err = ps.SetManagedFiles(project)
+	err = ks.SetManagedFiles(koji)
 	if err != nil {
 		return err
 	}
 
 	// 更新後の工事情報を属性ファイルに反映
-	return ps.AttributeService.Save(project)
+	return ks.AttributeService.Save(koji)
 }
 
-// ProjectsToMapByID は[]Projectをmap[string]Projectに変換する
-func ProjectsToMapByID(projects []models.Project) map[string]models.Project {
-	projectMap := make(map[string]models.Project, len(projects))
-	for _, project := range projects {
-		projectMap[project.ID] = project
+// KojiesToMapByID は[]KojiをMap[string]Kojiに変換する
+func KojiesToMapByID(kojies []models.Koji) map[string]models.Koji {
+	kojiMap := make(map[string]models.Koji, len(kojies))
+	for _, koji := range kojies {
+		kojiMap[koji.ID] = koji
 	}
-	return projectMap
+	return kojiMap
 }
 
 // RenameManagedFile は管理ファイルの名前を変更する
-// projectは工事データ
+// kojiは工事データ
 // currentsは変更前の管理ファイル名
 // 変更後の管理ファイル名を返す
-func (ps *ProjectService) RenameManagedFile(project models.Project, currents []string) []string {
+func (ks *KojiService) RenameManagedFile(koji models.Koji, currents []string) []string {
 	renamedFiles := make([]string, len(currents))
 
 	count := 0
 	for _, current := range currents {
-		for _, managedFile := range project.ManagedFiles {
+		for _, managedFile := range koji.ManagedFiles {
 			if managedFile.Current == current {
-				currentPath := filepath.Join(project.FileInfo.Name, current)
-				recommendedPath := filepath.Join(project.FileInfo.Name, managedFile.Recommended)
-				fmt.Printf("current: %s, recommended: %s\n", currentPath, recommendedPath)
-				err := ps.FileService.MoveFile(currentPath, recommendedPath)
+				currentPath := filepath.Join(koji.FileInfo.Name, current)
+				recommendedPath := filepath.Join(koji.FileInfo.Name, managedFile.Recommended)
+				err := ks.FileService.MoveFile(currentPath, recommendedPath)
 				if err == nil {
 					renamedFiles[count] = recommendedPath
 					count++

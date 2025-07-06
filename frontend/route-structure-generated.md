@@ -1,6 +1,6 @@
 # React Router v7 ルート階層構造
 
-> 🤖 自動生成日時: 2025/7/3 0:16:26  
+> 🤖 自動生成日時: 2025/7/6 17:36:15  
 > 📄 生成元: `app/routes.ts`
 
 ## Mermaid図
@@ -10,8 +10,9 @@ graph TD
     A[/"/" - Root] --> B[_layout.tsx]
     B --> C["/" - ホームページ（機能紹介）<br/>routes/_layout._index.tsx]
     B --> D["/files" - ファイル一覧（TreeView）<br/>routes/_layout.files.tsx]
-    B --> E["/projects" - 工程表（プロジェクト管理）<br/>routes/_layout.projects.tsx]
-    B --> F["/projects/gantt" - /projects/gantt<br/>routes/_layout.gantt.tsx]
+    B --> E["/kojies" - /kojies<br/>routes/_layout.kojies.tsx]
+    B --> F["/kojies/gantt" - /kojies/gantt<br/>routes/_layout.gantt.tsx]
+    B --> G["/companies" - /companies<br/>routes/_layout.companies.tsx]
 
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -19,6 +20,7 @@ graph TD
     style D fill:#e8f5e8
     style E fill:#e8f5e8
     style F fill:#e8f5e8
+    style G fill:#e8f5e8
 
 ```
 
@@ -29,8 +31,9 @@ graph TD
 └── _layout.tsx (共通レイアウト)
     ├── / (ホーム) → routes/_layout._index.tsx
     ├── /files (ファイル一覧) → routes/_layout.files.tsx
-    ├── /projects (工程表) → routes/_layout.projects.tsx
-    └── /projects/gantt (/projects/gantt) → routes/_layout.gantt.tsx
+    ├── /kojies (/kojies) → routes/_layout.kojies.tsx
+    ├── /kojies/gantt (/kojies/gantt) → routes/_layout.gantt.tsx
+    └── /companies (/companies) → routes/_layout.companies.tsx
 
 ```
 
@@ -40,8 +43,9 @@ graph TD
 |------|----------|------|------|
 | `/` | `routes/_layout._index.tsx` | ホームページ（機能紹介） | index |
 | `/files` | `routes/_layout.files.tsx` | ファイル一覧（TreeView） | route |
-| `/projects` | `routes/_layout.projects.tsx` | 工程表（プロジェクト管理） | route |
-| `/projects/gantt` | `routes/_layout.gantt.tsx` | /projects/gantt | route |
+| `/kojies` | `routes/_layout.kojies.tsx` | /kojies | route |
+| `/kojies/gantt` | `routes/_layout.gantt.tsx` | /kojies/gantt | route |
+| `/companies` | `routes/_layout.companies.tsx` | /companies | route |
 
 
 ## 実行方法

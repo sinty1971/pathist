@@ -1,375 +1,409 @@
-basePath: /api
-definitions:
-  handlers.RenameManagedFileRequest:
-    properties:
-      currents:
-        items:
+components:
+  schemas:
+    handlers.RenameManagedFileRequest:
+      properties:
+        currents:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        koji:
+          $ref: '#/components/schemas/models.Koji'
+      type: object
+    models.Company:
+      description: 工事会社の基本情報をファイル名から取得したモデル
+      properties:
+        address:
+          example: 愛知県名古屋市熱田区三本松町1-1
           type: string
-        type: array
-      project:
-        $ref: '#/definitions/models.Project'
-    type: object
-  models.Company:
-    description: 工事会社の基本情報をファイル名から取得したモデル
-    properties:
-      address:
-        example: 愛知県名古屋市熱田区三本松町1-1
-        type: string
-      business_type:
-        example: 元請け
-        type: string
-      email:
-        example: info@toyotachikuro.jp
-        type: string
-      full_name:
-        description: 属性ファイルフィールド
-        example: 有限会社 豊田築炉
-        type: string
-      id:
-        description: 計算フィールド
-        example: TC001
-        type: string
-      is_directory:
-        description: Whether this item is a directory
-        example: true
-        type: boolean
-      modified_time:
-        allOf:
-        - $ref: '#/definitions/models.Timestamp'
-        description: Last modification time
-      name:
-        description: Name of the file or folder
-        example: 2025-0618 豊田築炉 名和工場
-        type: string
-      path:
-        description: FileService.BasePathからの相対パス
-        example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
-        type: string
-      phone:
-        example: 052-681-8111
-        type: string
-      postal_code:
-        example: 456-0001
-        type: string
-      short_name:
-        description: パス名からの固有フィールド
-        example: 豊田築炉
-        type: string
-      size:
-        description: Size of the file in bytes
-        example: 4096
-        type: integer
-      tags:
-        example:
-        - '[''元請け'''
-        - ' ''製造業'']'
-        items:
+        business_type:
+          example: 元請け
           type: string
-        type: array
-      website:
-        example: https://www.toyotachikuro.jp
-        type: string
-    type: object
-  models.FileInfo:
-    description: ファイルまたはディレクトリの情報
-    properties:
-      is_directory:
-        description: Whether this item is a directory
-        example: true
-        type: boolean
-      modified_time:
-        allOf:
-        - $ref: '#/definitions/models.Timestamp'
-        description: Last modification time
-      name:
-        description: Name of the file or folder
-        example: 2025-0618 豊田築炉 名和工場
-        type: string
-      path:
-        description: FileService.BasePathからの相対パス
-        example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
-        type: string
-      size:
-        description: Size of the file in bytes
-        example: 4096
-        type: integer
-    type: object
-  models.ManagedFile:
-    properties:
-      current:
-        description: FileService.BasePathからの相対パス
-        example: 工事.xlsx
-        type: string
-      recommended:
-        description: FileService.BasePathからの相対パス
-        example: 2025-0618 豊田築炉 名和工場.xlsx
-        type: string
-    type: object
-  models.Project:
-    description: 拡張属性を持つ工事プロジェクトフォルダー情報
-    properties:
-      company_name:
-        description: パス名からの固有フィールド
-        example: 豊田築炉
-        type: string
-      description:
-        example: 工事関連の資料とドキュメント
-        type: string
-      end_date:
-        allOf:
-        - $ref: '#/definitions/models.Timestamp'
-        description: 属性ファイルフィールド
-      id:
-        description: 計算フィールド
-        example: TC618
-        type: string
-      is_directory:
-        description: Whether this item is a directory
-        example: true
-        type: boolean
-      location_name:
-        example: 名和工場
-        type: string
-      managed_files:
-        items:
-          $ref: '#/definitions/models.ManagedFile'
-        type: array
-      modified_time:
-        allOf:
-        - $ref: '#/definitions/models.Timestamp'
-        description: Last modification time
-      name:
-        description: Name of the file or folder
-        example: 2025-0618 豊田築炉 名和工場
-        type: string
-      path:
-        description: FileService.BasePathからの相対パス
-        example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
-        type: string
-      size:
-        description: Size of the file in bytes
-        example: 4096
-        type: integer
-      start_date:
-        $ref: '#/definitions/models.Timestamp'
-      status:
-        example: 進行中
-        type: string
-      tags:
-        example:
-        - '[''工事'''
-        - ' ''豊田築炉'''
-        - ' ''名和工場'']'
-        items:
+        email:
+          example: info@toyotachikuro.jp
           type: string
-        type: array
-    type: object
-  models.Timestamp:
-    description: Timestamp in RFC3339 format
-    properties:
-      time.Time:
-        type: string
-    type: object
-host: localhost:8080
+        full_name:
+          description: 属性ファイルフィールド
+          example: 有限会社 豊田築炉
+          type: string
+        id:
+          description: 計算フィールド
+          example: TC001
+          type: string
+        is_directory:
+          description: Whether this item is a directory
+          example: true
+          type: boolean
+        modified_time:
+          $ref: '#/components/schemas/models.Timestamp'
+        name:
+          description: Name of the file or folder
+          example: 2025-0618 豊田築炉 名和工場
+          type: string
+        path:
+          description: FileService.BasePathからの相対パス
+          example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
+          type: string
+        phone:
+          example: 052-681-8111
+          type: string
+        postal_code:
+          example: 456-0001
+          type: string
+        short_name:
+          description: パス名からの固有フィールド
+          example: 豊田築炉
+          type: string
+        size:
+          description: Size of the file in bytes
+          example: 4096
+          type: integer
+        tags:
+          example:
+          - '[''元請け'''
+          - ' ''製造業'']'
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        website:
+          example: https://www.toyotachikuro.jp
+          type: string
+      type: object
+    models.FileInfo:
+      description: ファイルまたはディレクトリの情報
+      properties:
+        is_directory:
+          description: Whether this item is a directory
+          example: true
+          type: boolean
+        modified_time:
+          $ref: '#/components/schemas/models.Timestamp'
+        name:
+          description: Name of the file or folder
+          example: 2025-0618 豊田築炉 名和工場
+          type: string
+        path:
+          description: FileService.BasePathからの相対パス
+          example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
+          type: string
+        size:
+          description: Size of the file in bytes
+          example: 4096
+          type: integer
+      type: object
+    models.Koji:
+      description: 拡張属性を持つ工事プロジェクトフォルダー情報
+      properties:
+        company_name:
+          description: パス名からの固有フィールド
+          example: 豊田築炉
+          type: string
+        description:
+          example: 工事関連の資料とドキュメント
+          type: string
+        end_date:
+          $ref: '#/components/schemas/models.Timestamp'
+        id:
+          description: 計算フィールド
+          example: TC618
+          type: string
+        is_directory:
+          description: Whether this item is a directory
+          example: true
+          type: boolean
+        location_name:
+          example: 名和工場
+          type: string
+        managed_files:
+          items:
+            $ref: '#/components/schemas/models.ManagedFile'
+          type: array
+          uniqueItems: false
+        modified_time:
+          $ref: '#/components/schemas/models.Timestamp'
+        name:
+          description: Name of the file or folder
+          example: 2025-0618 豊田築炉 名和工場
+          type: string
+        path:
+          description: FileService.BasePathからの相対パス
+          example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
+          type: string
+        size:
+          description: Size of the file in bytes
+          example: 4096
+          type: integer
+        start_date:
+          $ref: '#/components/schemas/models.Timestamp'
+        status:
+          example: 進行中
+          type: string
+        tags:
+          example:
+          - '[''工事'''
+          - ' ''豊田築炉'''
+          - ' ''名和工場'']'
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+      type: object
+    models.ManagedFile:
+      properties:
+        current:
+          description: FileService.BasePathからの相対パス
+          example: 工事.xlsx
+          type: string
+        recommended:
+          description: FileService.BasePathからの相対パス
+          example: 2025-0618 豊田築炉 名和工場.xlsx
+          type: string
+      type: object
+    models.Timestamp:
+      description: 属性ファイルフィールド
+      properties:
+        time.Time:
+          type: string
+      type: object
+externalDocs:
+  description: ""
+  url: ""
 info:
-  contact: {}
   description: ファイルエントリの管理と閲覧のためのAPI
   title: Penguin ファイルシステム管理API
   version: 1.0.0
+openapi: 3.1.0
 paths:
-  /company/{id}:
+  /companies:
     get:
-      consumes:
-      - application/json
+      description: 会社フォルダーの一覧を取得します
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/models.Company'
+                type: array
+          description: 正常なレスポンス
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: サーバーエラー
+      summary: 会社一覧の取得
+      tags:
+      - 会社管理
+    put:
+      description: 会社情報を更新し、必要に応じてフォルダー名を変更します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/models.Company'
+        description: 会社データ
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/models.Company'
+          description: 更新後の会社データ
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: サーバーエラー
+      summary: 会社情報の更新
+      tags:
+      - 会社管理
+  /companies/{id}:
+    get:
       description: 指定されたIDの会社詳細を取得します
       parameters:
       - description: 会社ID
         in: path
         name: id
         required: true
-        type: string
-      produces:
-      - application/json
+        schema:
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/models.Company'
           description: 正常なレスポンス
-          schema:
-            $ref: '#/definitions/models.Company'
         "404":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
           description: 会社が見つからない
-          schema:
-            additionalProperties:
-              type: string
-            type: object
         "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
           description: サーバーエラー
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: 会社詳細の取得
       tags:
       - 会社管理
-  /company/list:
+  /files:
     get:
-      consumes:
-      - application/json
-      description: 会社フォルダーの一覧を取得します
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 正常なレスポンス
-          schema:
-            items:
-              $ref: '#/definitions/models.Company'
-            type: array
-        "500":
-          description: サーバーエラー
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: 会社一覧の取得
-      tags:
-      - 会社管理
-  /file/fileinfos:
-    get:
-      consumes:
-      - application/json
       description: 指定されたパスからファイルとフォルダーの一覧を取得します
       parameters:
-      - default: ~/penguin
-        description: 取得するディレクトリのパス
+      - description: 取得するディレクトリのパス
         in: query
         name: path
-        type: string
-      produces:
-      - application/json
+        schema:
+          default: 2 工事
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/models.FileInfo'
+                type: array
           description: 正常なレスポンス
-          schema:
-            items:
-              $ref: '#/definitions/models.FileInfo'
-            type: array
         "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
           description: サーバーエラー
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: ファイルエントリ一覧の取得
       tags:
       - ファイル管理
-  /project/get/{path}:
+  /kojies:
     get:
-      consumes:
-      - application/json
-      description: Projectを取得します。
+      description: 工事一覧を取得します。filter=recentで最近の工事のみを取得できます。
       parameters:
-      - description: Projectフォルダーのファイル名
+      - description: 'フィルター (recent: 最近の工事のみ)'
+        in: query
+        name: filter
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/models.Koji'
+                type: array
+          description: 工事一覧
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: サーバーエラー
+      summary: 工事一覧の取得
+      tags:
+      - 工事管理
+    put:
+      description: 更新対象フォルダー（Koji.FileInfo）のファイル情報をKojiのメンバ変数で更新します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/models.Koji'
+        description: 工事データ
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/models.Koji'
+          description: 更新後の工事データ
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: サーバーエラー
+      summary: 更新対象フォルダー（Koji.FileInfo）のファイル情報をKojiのメンバ変数で更新
+      tags:
+      - 工事管理
+  /kojies/{path}:
+    get:
+      description: Kojiを取得します。
+      parameters:
+      - description: Kojiフォルダーのファイル名
         in: path
         name: path
         required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Project
-          schema:
-            $ref: '#/definitions/models.Project'
-        "500":
-          description: サーバーエラー
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Projectの取得
-      tags:
-      - プロジェクト管理
-  /project/recent:
-    get:
-      consumes:
-      - application/json
-      description: 最近の工事一覧を取得します。
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 最近のプロジェクト一覧
-          schema:
-            items:
-              $ref: '#/definitions/models.Project'
-            type: array
-        "500":
-          description: サーバーエラー
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: 最近の工事一覧の取得
-      tags:
-      - プロジェクト管理
-  /project/rename-managed-file:
-    post:
-      consumes:
-      - application/json
-      description: ManagedFileの名前を変更します。
-      parameters:
-      - description: 工事データと管理ファイル
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/handlers.RenameManagedFileRequest'
-      produces:
-      - application/json
+          type: string
       responses:
         "200":
-          description: 更新後のファイル名リスト
-          schema:
-            items:
-              type: string
-            type: array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/models.Koji'
+          description: Koji
         "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
           description: サーバーエラー
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+      summary: Kojiの取得
+      tags:
+      - 工事管理
+  /kojies/managed-files:
+    put:
+      description: ManagedFileの名前を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/handlers.RenameManagedFileRequest'
+        description: 工事データと管理ファイル
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                type: array
+          description: 更新後のファイル名リスト
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: サーバーエラー
       summary: ManagedFileの名前を変更
       tags:
-      - プロジェクト管理
-  /project/update:
-    post:
-      consumes:
-      - application/json
-      description: Project.FileInfoで指定されたファイル情報をProjectのメンバ変数で更新します。
-      parameters:
-      - description: 工事データ
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/models.Project'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 更新後の工事データ
-          schema:
-            $ref: '#/definitions/models.Project'
-        "500":
-          description: サーバーエラー
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Project.FileInfoで指定されたファイル情報をProjectのメンバ変数で更新
-      tags:
-      - 工事 更新
-schemes:
-- http
-swagger: "2.0"
+      - 工事管理
+servers:
+- url: http://localhost:8080/api

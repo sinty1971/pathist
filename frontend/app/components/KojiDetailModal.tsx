@@ -16,20 +16,20 @@ import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import type { ModelsProject, ModelsTimestamp, ModelsManagedFile } from '../api/types.gen';
-import { postProjectRenameManagedFile, getProjectGetByPath } from '../api/sdk.gen';
+import type { ModelsKoji, ModelsTimestamp, ModelsManagedFile } from '../api/types.gen';
+import { postKojiRenameManagedFile, getKojiGetByPath } from '../api/sdk.gen';
 import { CalendarPicker } from './CalendarPicker';
 
-interface ProjectDetailModalProps {
+interface KojiDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  project: ModelsProject | null;
-  onUpdate: (project: ModelsProject) => Promise<ModelsProject>;
-  onProjectUpdate?: (project: ModelsProject) => void;
+  koji: ModelsKoji | null;
+  onUpdate: (koji: ModelsKoji) => Promise<ModelsKoji>;
+  onKojiUpdate?: (koji: ModelsKoji) => void;
 }
 
 // フォーム用のデータ型（日付を文字列として扱う、ステータスは除外）
-type ProjectFormData = Omit<ModelsProject, 'start_date' | 'end_date' | 'tags' | 'status'> & {
+type KojiFormData = Omit<ModelsKoji, 'start_date' | 'end_date' | 'tags' | 'status'> & {
   start_date?: string;
   end_date?: string;
   tags?: string;
@@ -37,8 +37,8 @@ type ProjectFormData = Omit<ModelsProject, 'start_date' | 'end_date' | 'tags' | 
 
 // CalendarPickerコンポーネントをインポート済み
 
-const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose, project, onUpdate, onProjectUpdate }) => {
-  const [formData, setFormData] = useState<ProjectFormData>({
+const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji, onUpdate, onKojiUpdate }) => {
+  const [formData, setFormData] = useState<KojiFormData>({
     id: '',
     company_name: '',
     location_name: '',
@@ -47,7 +47,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
     start_date: '',
     end_date: ''
   });
-  const [currentProject, setCurrentProject] = useState<ModelsProject | null>(null);
+  const [currentKoji, setCurrentKoji] = useState<ModelsKoji | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -84,22 +84,22 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
     return '';
   };
 
-  // プロジェクトが変更されたときにフォームデータを更新
+  // 工事が変更されたときにフォームデータを更新
   useEffect(() => {
-    if (project) {
-      const startDate = extractDateString(project.start_date);
-      const endDate = extractDateString(project.end_date);
+    if (koji) {
+      const startDate = extractDateString(koji.start_date);
+      const endDate = extractDateString(koji.end_date);
       
-      const companyName = project.company_name || '';
-      const locationName = project.location_name || '';
+      const companyName = koji.company_name || '';
+      const locationName = koji.location_name || '';
       
-      setCurrentProject(project);
+      setCurrentKoji(koji);
       setFormData({
-        id: project.id || '',
+        id: koji.id || '',
         company_name: companyName,
         location_name: locationName,
-        description: project.description || '',
-        tags: Array.isArray(project.tags) ? project.tags.join(', ') : (project.tags || ''),
+        description: koji.description || '',
+        tags: Array.isArray(koji.tags) ? koji.tags.join(', ') : (koji.tags || ''),
         start_date: startDate,
         end_date: endDate
       });
@@ -114,7 +114,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
       setHasFilenameChanges(false);
       setError(null);
     }
-  }, [project]);
+  }, [koji]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -130,7 +130,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
   };
   
   // 推奨ファイル名を生成する関数
-  const generateRecommendedFileName = (originalFileName: string, formData: ProjectFormData): string => {
+  const generateRecommendedFileName = (originalFileName: string, formData: KojiFormData): string => {
     if (!formData.start_date || !formData.company_name || !formData.location_name) {
       return originalFileName;
     }
@@ -166,10 +166,10 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
   };
 
   // 管理ファイルの推奨名を更新する関数
-  const updateManagedFileRecommendations = (formData: ProjectFormData) => {
-    if (!currentProject?.managed_files) return;
+  const updateManagedFileRecommendations = (formData: KojiFormData) => {
+    if (!currentKoji?.managed_files) return;
 
-    const updatedManagedFiles = currentProject.managed_files.map(file => {
+    const updatedManagedFiles = currentKoji.managed_files.map(file => {
       if (file.current) {
         const recommendedName = generateRecommendedFileName(file.current, formData);
         return {
@@ -180,14 +180,14 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
       return file;
     });
 
-    setCurrentProject(prev => prev ? {
+    setCurrentKoji(prev => prev ? {
       ...prev,
       managed_files: updatedManagedFiles
     } : null);
   };
 
   // ファイル名関連の変更をチェックする関数
-  const checkFilenameChanges = (currentFormData: ProjectFormData) => {
+  const checkFilenameChanges = (currentFormData: KojiFormData) => {
     const hasChanges = 
       currentFormData.start_date !== initialFilenameData.start_date ||
       currentFormData.company_name !== initialFilenameData.company_name ||
@@ -202,16 +202,16 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
   };
 
   // フィールド変更完了時の処理（指定されたフォームデータを使用）
-  const handleFieldUpdateWithData = async (useFormData: ProjectFormData) => {
-    if (!project) return;
+  const handleFieldUpdateWithData = async (useFormData: KojiFormData) => {
+    if (!koji) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // 指定されたフォームデータをModelsProject形式に変換
-      const updatedProject: ModelsProject = {
-        ...project,
+      // 指定されたフォームデータをModelsKoji形式に変換
+      const updatedKoji: ModelsKoji = {
+        ...koji,
         company_name: useFormData.company_name,
         location_name: useFormData.location_name,
         description: useFormData.description,
@@ -222,30 +222,30 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
       
 
       // 更新前のフォルダー名を保存
-      const originalFolderName = project.name;
+      const originalFolderName = koji.name;
       
-      // 更新して更新されたプロジェクトデータを取得
-      const savedProject = await onUpdate(updatedProject);
+      // 更新して更新された工事データを取得
+      const savedKoji = await onUpdate(updatedKoji);
       
       // フォルダー名が変更されたかチェック
-      const folderNameChanged = originalFolderName && savedProject.name && originalFolderName !== savedProject.name;
+      const folderNameChanged = originalFolderName && savedKoji.name && originalFolderName !== savedKoji.name;
       
-      // 更新後、最新のプロジェクトデータを再取得（管理ファイル情報を含む）
-      if (savedProject.name) {
-        const latestProjectResponse = await getProjectGetByPath({
+      // 更新後、最新の工事データを再取得（管理ファイル情報を含む）
+      if (savedKoji.name) {
+        const latestKojiResponse = await getKojiGetByPath({
           path: {
-            path: savedProject.name
+            path: savedKoji.name
           }
         });
         
-        if (latestProjectResponse.data) {
-          const latestProject = latestProjectResponse.data;
+        if (latestKojiResponse.data) {
+          const latestKoji = latestKojiResponse.data;
           
           // フォルダー名が変更された場合はモーダルを閉じる
           if (folderNameChanged) {
             // 親コンポーネントに最新データを渡してモーダルを閉じる
-            if (onProjectUpdate) {
-              onProjectUpdate(latestProject);
+            if (onKojiUpdate) {
+              onKojiUpdate(latestKoji);
             }
             
             // モーダルを閉じる
@@ -258,42 +258,42 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
           
           // フォルダー名が変更されていない場合は通常の更新処理
           // ローカルステートを更新（管理ファイル表示用）
-          setCurrentProject(latestProject);
+          setCurrentKoji(latestKoji);
           
-          // 成功した場合、最新のプロジェクトデータを更新
-          if (onProjectUpdate) {
-            onProjectUpdate(latestProject);
+          // 成功した場合、最新の工事データを更新
+          if (onKojiUpdate) {
+            onKojiUpdate(latestKoji);
           }
           
           // フォームデータも最新データで同期
-          const startDate = extractDateString(latestProject.start_date);
-          const endDate = extractDateString(latestProject.end_date);
+          const startDate = extractDateString(latestKoji.start_date);
+          const endDate = extractDateString(latestKoji.end_date);
           
           setFormData({
-            id: latestProject.id || '',
-            company_name: latestProject.company_name || '',
-            location_name: latestProject.location_name || '',
-            description: latestProject.description || '',
-            tags: Array.isArray(latestProject.tags) ? latestProject.tags.join(', ') : (latestProject.tags || ''),
+            id: latestKoji.id || '',
+            company_name: latestKoji.company_name || '',
+            location_name: latestKoji.location_name || '',
+            description: latestKoji.description || '',
+            tags: Array.isArray(latestKoji.tags) ? latestKoji.tags.join(', ') : (latestKoji.tags || ''),
             start_date: startDate,
             end_date: endDate
           });
         }
       } else {
         // name がない場合は従来の処理
-        if (onProjectUpdate) {
-          onProjectUpdate(savedProject);
+        if (onKojiUpdate) {
+          onKojiUpdate(savedKoji);
         }
         
-        const startDate = extractDateString(savedProject.start_date);
-        const endDate = extractDateString(savedProject.end_date);
+        const startDate = extractDateString(savedKoji.start_date);
+        const endDate = extractDateString(savedKoji.end_date);
         
         setFormData({
-          id: savedProject.id || '',
-          company_name: savedProject.company_name || '',
-          location_name: savedProject.location_name || '',
-          description: savedProject.description || '',
-          tags: Array.isArray(savedProject.tags) ? savedProject.tags.join(', ') : (savedProject.tags || ''),
+          id: savedKoji.id || '',
+          company_name: savedKoji.company_name || '',
+          location_name: savedKoji.location_name || '',
+          description: savedKoji.description || '',
+          tags: Array.isArray(savedKoji.tags) ? savedKoji.tags.join(', ') : (savedKoji.tags || ''),
           start_date: startDate,
           end_date: endDate
         });
@@ -397,14 +397,14 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
   };
 
   const handleRenameFiles = async () => {
-    if (!currentProject || !currentProject.managed_files) return;
+    if (!currentKoji || !currentKoji.managed_files) return;
 
     setIsRenaming(true);
     setError(null);
 
     try {
       // 現在のファイル名のリストを取得
-      const currentFiles = currentProject.managed_files
+      const currentFiles = currentKoji.managed_files
         .filter(file => file.current && file.recommended && file.current !== file.recommended)
         .map(file => file.current as string);
 
@@ -414,37 +414,37 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
       }
 
       // API呼び出し
-      const response = await postProjectRenameManagedFile({
+      const response = await postKojiRenameManagedFile({
         body: {
-          project: currentProject,
+          koji: currentKoji,
           currents: currentFiles
         }
       });
 
       if (response.data) {
-        // プロジェクトデータを再取得
-        if (currentProject.name) {
-          const updatedProjectResponse = await getProjectGetByPath({
+        // 工事データを再取得
+        if (currentKoji.name) {
+          const updatedKojiResponse = await getKojiGetByPath({
             path: {
-              path: currentProject.name
+              path: currentKoji.name
             }
           });
           
-          if (updatedProjectResponse.data && onProjectUpdate) {
+          if (updatedKojiResponse.data && onKojiUpdate) {
             // ローカルステートも更新
-            setCurrentProject(updatedProjectResponse.data);
-            // プロジェクトデータを更新
-            onProjectUpdate(updatedProjectResponse.data);
+            setCurrentKoji(updatedKojiResponse.data);
+            // 工事データを更新
+            onKojiUpdate(updatedKojiResponse.data);
             // フォームデータも更新
-            const startDate = extractDateString(updatedProjectResponse.data.start_date);
-            const endDate = extractDateString(updatedProjectResponse.data.end_date);
+            const startDate = extractDateString(updatedKojiResponse.data.start_date);
+            const endDate = extractDateString(updatedKojiResponse.data.end_date);
             
             setFormData({
-              id: updatedProjectResponse.data.id || '',
-              company_name: updatedProjectResponse.data.company_name || '',
-              location_name: updatedProjectResponse.data.location_name || '',
-              description: updatedProjectResponse.data.description || '',
-              tags: Array.isArray(updatedProjectResponse.data.tags) ? updatedProjectResponse.data.tags.join(', ') : (updatedProjectResponse.data.tags || ''),
+              id: updatedKojiResponse.data.id || '',
+              company_name: updatedKojiResponse.data.company_name || '',
+              location_name: updatedKojiResponse.data.location_name || '',
+              description: updatedKojiResponse.data.description || '',
+              tags: Array.isArray(updatedKojiResponse.data.tags) ? updatedKojiResponse.data.tags.join(', ') : (updatedKojiResponse.data.tags || ''),
               start_date: startDate,
               end_date: endDate
             });
@@ -728,7 +728,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
           )}
 
           {/* 管理ファイル一覧 */}
-          {currentProject?.managed_files && currentProject.managed_files.length > 0 && (
+          {currentKoji?.managed_files && currentKoji.managed_files.length > 0 && (
             <Box sx={{ mb: 3 }}>
               <Typography
                 variant="subtitle2"
@@ -750,14 +750,14 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
                   p: 2
                 }}
               >
-                {currentProject.managed_files.map((file: ModelsManagedFile, index: number) => {
+                {currentKoji.managed_files.map((file: ModelsManagedFile, index: number) => {
                   const needsRename = file.current && file.recommended && file.current !== file.recommended;
                   return (
                     <Paper
                       key={index}
                       elevation={0}
                       sx={{
-                        mb: index < currentProject.managed_files!.length - 1 ? 2 : 0,
+                        mb: index < currentKoji.managed_files!.length - 1 ? 2 : 0,
                         p: 2,
                         backgroundColor: 'white',
                         border: '1px solid',
@@ -812,7 +812,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
           )}
           
           {/* 管理ファイルがない場合の表示 */}
-          {currentProject && (!currentProject.managed_files || currentProject.managed_files.length === 0) && (
+          {currentKoji && (!currentKoji.managed_files || currentKoji.managed_files.length === 0) && (
             <Box sx={{ mb: 3 }}>
               <Typography
                 variant="subtitle2"
@@ -848,4 +848,4 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ isOpen, onClose
   );
 };
 
-export default ProjectDetailModal;
+export default KojiDetailModal;

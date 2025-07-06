@@ -22,8 +22,8 @@ export function Navigation() {
             ファイル一覧
           </Link>
           <Link 
-            to="/projects" 
-            className={location.pathname === '/projects' ? 'nav-link active' : 'nav-link'}
+            to="/kojies" 
+            className={location.pathname === '/kojies' ? 'nav-link active' : 'nav-link'}
           >
             工事一覧
           </Link>

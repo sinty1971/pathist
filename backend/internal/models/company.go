@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"maps"
 	"slices"
 	"strings"
 )
@@ -10,18 +9,16 @@ import (
 // Company は工事会社の基本情報をファイル名から取得したモデルを表します
 // @Description 工事会社の基本情報をファイル名から取得したモデル
 type Company struct {
-	// 基本のFileInfo構造体を埋め込み
-	FileInfo
-
-	// 計算フィールド
-	ID string `json:"id" yaml:"-" example:"TC001"`
+	// 基本フィールド
+	ID         string `json:"id" yaml:"-" example:"TC001"`
+	FolderName string `json:"folderName" example:"0 豊田築炉"`
 
 	// パス名からの固有フィールド
-	ShortName    string `json:"short_name,omitempty" yaml:"-" example:"豊田築炉"`
-	BusinessType string `json:"business_type,omitempty" yaml:"-" example:"元請け"`
+	ShortName    string      `json:"short_name,omitempty" yaml:"-" example:"豊田築炉"`
+	BusinessType CompanyType `json:"business_type,omitempty" yaml:"-" example:"4"`
 
 	// 属性ファイルフィールド
-	FullName   string   `json:"full_name,omitempty" yaml:"full_name" example:"有限会社 豊田築炉"`
+	LongName   string   `json:"long_name,omitempty" yaml:"long_name" example:"有限会社 豊田築炉"`
 	PostalCode string   `json:"postal_code,omitempty" yaml:"postal_code" example:"456-0001"`
 	Address    string   `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
 	Phone      string   `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
@@ -30,15 +27,35 @@ type Company struct {
 	Tags       []string `json:"tags,omitempty" yaml:"tags" example:"['元請け', '製造業']"`
 }
 
-// GetFileInfo AttributeServiceで使用するためのメソッド
-func (c *Company) GetFileInfo() FileInfo {
-	return c.FileInfo
+// GetFolderName フォルダー名を取得します
+// AttributeServiceで使用
+func (c *Company) GetFolderName() string {
+	return c.FolderName
 }
 
-// NewCompany FileInfoからCompanyを作成します
-func NewCompany(fileInfo FileInfo) (Company, error) {
+// UpdateFolderName ShortNameとBusinessTypeからFolderNameを更新します
+// input: 引数が2つの場合は、引数のフォルダー名と会社名を使用して更新します
+func (c *Company) UpdateFolderName(input ...string) error {
+	if len(input) == 2 {
+		c.FolderName = input[0] + " " + input[1]
+		c.BusinessType = ParseBusinessTypeFromCode(input[0])
+		c.ShortName = input[1]
+	} else {
+		c.FolderName = c.BusinessType.Code() + " " + c.ShortName
+	}
+	return nil
+}
+
+// NewCompany フォルダーパスからCompanyを作成します
+func NewCompany(folderPath string) (Company, error) {
+	// フォルダー名を取得（'/'が含まれている場合は最後の要素を取得）
+	folderName := folderPath
+	if lastSlash := strings.LastIndex(folderPath, "/"); lastSlash != -1 {
+		folderName = folderPath[lastSlash+1:]
+	}
+
 	// ファイル名の[0-9] [会社名]の規則を解析
-	parts, err := ParseCompanyName(fileInfo.Name)
+	parts, err := ParseCompanyName(folderName)
 	if err != nil {
 		return Company{}, err
 	}
@@ -47,7 +64,7 @@ func NewCompany(fileInfo FileInfo) (Company, error) {
 	tags := []string{"会社", parts[0], parts[1]}
 
 	// 会社名内にハイフンが含まれているときは関連会社名または業務内容をタグに追加
-	companyPart := fileInfo.Name[2:] // "0 " を除いた部分
+	companyPart := folderName[2:] // "0 " を除いた部分
 	if hyphenIndex := strings.Index(companyPart, "-"); hyphenIndex != -1 {
 		// ハイフン以降の文字列を取得
 		relatedInfo := companyPart[hyphenIndex+1:]
@@ -56,12 +73,14 @@ func NewCompany(fileInfo FileInfo) (Company, error) {
 		}
 	}
 
+	businessType := ParseBusinessTypeFromCode(folderName[:1])
+
 	return Company{
-		FileInfo:     fileInfo,
 		ID:           NewIDFromString(parts[1]).Len5(),
-		FullName:     parts[1],
+		FolderName:   folderName, // フォルダー名のみを格納
+		LongName:     parts[1],
 		ShortName:    parts[1],
-		BusinessType: parts[0],
+		BusinessType: businessType,
 		Tags:         tags,
 	}, nil
 }
@@ -105,60 +124,144 @@ func ParseCompanyName(name string) ([2]string, error) {
 		shortName = companyPart
 	}
 
-	result[0] = DetermineBusinessType(name[:1])
+	businessType := ParseBusinessTypeFromCode(name[:1])
+	result[0] = businessType.String()
 	result[1] = shortName
 
 	return result, nil
 }
 
-// businessTypeMap は数字から業種名への変換マップ
-var businessTypeMap = map[string]string{
-	"0": "自社",
-	"1": "下請会社",
-	"2": "築炉会社",
-	"3": "一人親方",
-	"4": "元請け",
-	"5": "リース会社",
-	"6": "販売会社",
-	"7": "販売会社",
-	"8": "求人会社",
-	"9": "その他",
+// CompanyType は業種を表すenum型
+type CompanyType int
+
+const (
+	CompanyTypeSpecial  CompanyType = iota // 0: 特別(自社・組合・未定)
+	CompanyTypeAgency                      // 1: 応援会社
+	CompanyTypePeer                        // 2: 同業者（築炉会社）
+	CompanyTypePersonal                    // 3: 一人親方
+	CompanyTypePrime                       // 4: 元請け
+	CompanyTypeLease                       // 5: リース会社
+	CompanyTypeSales                       // 6: 販売会社
+	CompanyTypeSales2                      // 7: 販売会社（重複）
+	CompanyTypeRecruit                     // 8: 求人会社
+	CompanyTypeOther                       // 9: その他
+)
+
+// String はBusinessTypeの文字列表現を返します
+func (bt CompanyType) String() string {
+	switch bt {
+	case CompanyTypeSpecial:
+		return "特別"
+	case CompanyTypeAgency:
+		return "下請会社"
+	case CompanyTypePeer:
+		return "築炉会社"
+	case CompanyTypePersonal:
+		return "一人親方"
+	case CompanyTypePrime:
+		return "元請け"
+	case CompanyTypeLease:
+		return "リース会社"
+	case CompanyTypeSales, CompanyTypeSales2:
+		return "販売会社"
+	case CompanyTypeRecruit:
+		return "求人会社"
+	case CompanyTypeOther:
+		return "その他"
+	default:
+		return "特別"
+	}
 }
 
-// businessTypeReverseMap は業種名から数字への変換マップ（逆引き用）
-var businessTypeReverseMap map[string]string
+// 事前計算されたコード文字列
+var companyTypeCodes = [10]string{
+	"0", // CompanyTypeSpecial
+	"1", // CompanyTypeAgency
+	"2", // CompanyTypePeer
+	"3", // CompanyTypePersonal
+	"4", // CompanyTypePrime
+	"5", // CompanyTypeLease
+	"6", // CompanyTypeSales
+	"7", // CompanyTypeSales2
+	"8", // CompanyTypeRecruit
+	"9", // CompanyTypeOther
+}
 
-// init関数で逆引きマップを初期化
-func init() {
-	businessTypeReverseMap = make(map[string]string)
-	for number, typeName := range businessTypeMap {
-		// 重複する場合は最初の値を優先（"販売会社"は"6"が優先される）
-		if _, exists := businessTypeReverseMap[typeName]; !exists {
-			businessTypeReverseMap[typeName] = number
+// Code はBusinessTypeの数字コードを返します（極限高速化版）
+//
+// 戻り値: "0"〜"9"の文字列、無効な値の場合は"0"
+func (bt CompanyType) Code() string {
+	if bt >= 0 && bt < 10 {
+		return companyTypeCodes[bt]
+	}
+	return "0" // 無効値のデフォルト
+}
+
+// IsValid はBusinessTypeが有効な値かチェックします
+func (bt CompanyType) IsValid() bool {
+	return bt >= CompanyTypeSpecial && bt <= CompanyTypeOther
+}
+
+// AllBusinessTypes は全ての有効なBusinessTypeを返します
+func AllBusinessTypes() []CompanyType {
+	return []CompanyType{
+		CompanyTypeSpecial,
+		CompanyTypeAgency,
+		CompanyTypePeer,
+		CompanyTypePersonal,
+		CompanyTypePrime,
+		CompanyTypeLease,
+		CompanyTypeSales,
+		CompanyTypeSales2,
+		CompanyTypeRecruit,
+		CompanyTypeOther,
+	}
+}
+
+// ParseBusinessTypeFromCode は数字コードからBusinessTypeに変換します
+func ParseBusinessTypeFromCode(code string) CompanyType {
+	switch code {
+	case "0":
+		return CompanyTypeSpecial
+	case "1":
+		return CompanyTypeAgency
+	case "2":
+		return CompanyTypePeer
+	case "3":
+		return CompanyTypePersonal
+	case "4":
+		return CompanyTypePrime
+	case "5":
+		return CompanyTypeLease
+	case "6":
+		return CompanyTypeSales
+	case "7":
+		return CompanyTypeSales2
+	case "8":
+		return CompanyTypeRecruit
+	case "9":
+		return CompanyTypeOther
+	default:
+		return CompanyTypeSpecial
+	}
+}
+
+// ParseBusinessTypeFromString は文字列からBusinessTypeに変換します
+func ParseBusinessTypeFromString(name string) CompanyType {
+	for _, bt := range AllBusinessTypes() {
+		if bt.String() == name {
+			return bt
 		}
 	}
+	return CompanyTypeOther
 }
 
-// DetermineBusinessType は数字から業種名に変換します
-func DetermineBusinessType(number string) string {
-	if typeName, exists := businessTypeMap[number]; exists {
-		return typeName
-	}
-	return "不明"
-}
-
-// GetBusinessTypeNumber は業種名から数字に変換します
-func GetBusinessTypeNumber(typeName string) string {
-	if number, exists := businessTypeReverseMap[typeName]; exists {
-		return number
-	}
-	return "9" // デフォルトは"その他"
-}
-
-// GetAllBusinessTypes は利用可能な全ての業種を返します
-func GetAllBusinessTypes() map[string]string {
+// GetAllBusinessTypesMap は互換性のためのマップを返します
+func GetAllBusinessTypesMap() map[string]string {
 	result := make(map[string]string)
-	maps.Copy(result, businessTypeMap)
+	for _, bt := range AllBusinessTypes() {
+		result[bt.Code()] = bt.String()
+	}
 	return result
 }
 

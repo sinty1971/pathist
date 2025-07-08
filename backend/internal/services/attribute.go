@@ -32,7 +32,7 @@ func (as *AttributeService[T]) Load(ref T) (T, error) {
 	var output T
 
 	// 属性ファイルのフルパスを取得
-	attributePath, err := as.FileService.GetFullpath(ref.GetFileInfo().Name, as.Filename)
+	attributePath, err := as.FileService.GetFullpath(ref.GetFolderName(), as.Filename)
 	if err != nil {
 		return output, fmt.Errorf("属性ファイルのフルパスの取得に失敗しました: %v", err)
 	}
@@ -56,7 +56,7 @@ func (as *AttributeService[T]) Load(ref T) (T, error) {
 func (as *AttributeService[T]) Save(input T) error {
 
 	// 属性ファイルのフルパスを取得
-	attributePath, err := as.FileService.GetFullpath(input.GetFileInfo().Name, as.Filename)
+	attributePath, err := as.FileService.GetFullpath(input.GetFolderName(), as.Filename)
 	if err != nil {
 		return fmt.Errorf("属性ファイルのフルパスの取得に失敗しました: %v", err)
 	}

@@ -1,16 +1,16 @@
 package services
 
-// BusinessDataService は統合ビジネスデータ管理サービス
+// BusinessService は統合ビジネスデータ管理サービス
 // ファイルサーバー内のファイル名から様々なビジネスデータを解析・提供する
-type BusinessDataService struct {
+type BusinessService struct {
 	// 基準ファイルサービス（ファイルアクセスはこれより下位のみ）
 	FileService *FileService
 
-	// 工事データ管理サービス
-	KojiService *KojiService
-
 	// 企業データ管理サービス
 	CompanyService *CompanyService
+
+	// 工事データ管理サービス
+	KojiService *KojiService
 
 	// メンバーデータ管理サービス（将来追加予定）
 	// 将来追加予定
@@ -23,18 +23,12 @@ type BusinessDataService struct {
 	AttributeFilename string
 }
 
-// NewBusinessDataService はBusinessDataServiceを初期化する
+// NewBusinessService はBusinessServiceを初期化する
 // @Param businessFilePath query string true "基準ファイルサービスのパス" default("~/penguin/豊田築炉")
 // @Param attributeFilename query string true "属性ファイルのファイル名" default(".detail.yaml")
-func NewBusinessDataService(businessFilePath, attributeFilename string) (*BusinessDataService, error) {
+func NewBusinessService(businessFilePath, attributeFilename string) (*BusinessService, error) {
 	// fileServiceを初期化
 	fileService, err := NewFileService(businessFilePath)
-	if err != nil {
-		return nil, err
-	}
-
-	// KojiServiceを初期化（CompanyService依存なしで）
-	kojiService, err := NewKojiService(fileService, "2 工事")
 	if err != nil {
 		return nil, err
 	}
@@ -45,10 +39,16 @@ func NewBusinessDataService(businessFilePath, attributeFilename string) (*Busine
 		return nil, err
 	}
 
-	return &BusinessDataService{
+	// KojiServiceを初期化（CompanyService依存なしで）
+	kojiService, err := NewKojiService(fileService, "2 工事")
+	if err != nil {
+		return nil, err
+	}
+
+	return &BusinessService{
 		FileService:       fileService,
-		KojiService:       kojiService,
 		CompanyService:    companyService,
+		KojiService:       kojiService,
 		AttributeFilename: attributeFilename,
 	}, nil
 }
@@ -56,22 +56,22 @@ func NewBusinessDataService(businessFilePath, attributeFilename string) (*Busine
 // 将来追加予定のメソッド
 /*
 // GetMembers は社員一覧を取得する
-func (s *BusinessDataService) GetMembers() ([]models.Member, error) {
+func (s *BusinessService) GetMembers() ([]models.Member, error) {
 	return s.MemberService.GetAllMembers()
 }
 
 // GetOrders は注文一覧を取得する
-func (s *BusinessDataService) GetOrders() ([]models.Order, error) {
+func (s *BusinessService) GetOrders() ([]models.Order, error) {
 	return s.OrderService.GetAllOrders()
 }
 
 // GetInvoices は請求一覧を取得する
-func (s *BusinessDataService) GetInvoices() ([]models.Invoice, error) {
+func (s *BusinessService) GetInvoices() ([]models.Invoice, error) {
 	return s.InvoiceService.GetAllInvoices()
 }
 
 // GetEstimates は見積一覧を取得する
-func (s *BusinessDataService) GetEstimates() ([]models.Estimate, error) {
+func (s *BusinessService) GetEstimates() ([]models.Estimate, error) {
 	return s.EstimateService.GetAllEstimates()
 }
 */

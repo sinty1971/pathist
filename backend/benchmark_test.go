@@ -28,21 +28,17 @@ func setupTestApp() *fiber.App {
 	}))
 
 	// サービス初期化（テスト用の簡易設定）
-	businessDataService, err := services.NewBusinessDataService("~/penguin/豊田築炉", ".detail.yaml")
+	businessService, err := services.NewBusinessService("~/penguin/豊田築炉", ".detail.yaml")
 	if err != nil {
 		// テスト環境でディレクトリが存在しない場合は、モックサービスを使用
-		businessDataService = &services.BusinessDataService{}
+		businessService = &services.BusinessService{}
 	}
 
 	// ハンドラー初期化
-	fileHandler := handlers.NewFileHandler(businessDataService.FileService)
-	kojiHandler := handlers.NewKojiHandler(businessDataService.KojiService)
-	companyHandler := handlers.NewCompanyHandler(businessDataService.CompanyService)
+	businessHandler := handlers.NewBusinessHandler(businessService)
 
 	// ルート設定
-	routes.SetupFileRoutes(app, fileHandler)
-	routes.SetupKojiRoutes(app, kojiHandler)
-	routes.SetupCompanyRoutes(app, companyHandler)
+	routes.SetupBusinessRoutes(app, businessHandler)
 
 	return app
 }

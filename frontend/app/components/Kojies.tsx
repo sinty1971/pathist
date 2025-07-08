@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { getKojiRecent } from "../api/sdk.gen";
+import { getBusinessKojies, putBusinessKojies } from "../api/sdk.gen";
 import type { ModelsKoji } from "../api/types.gen";
 import KojiDetailModal from "./KojiDetailModal";
 import { useKoji } from "../contexts/KojiContext";
@@ -15,6 +15,7 @@ const Kojies = () => {
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [shouldReloadOnClose, setShouldReloadOnClose] = useState(false);
   const { setKojiCount } = useKoji();
 
   // 工事データを読み込み
@@ -23,7 +24,7 @@ const Kojies = () => {
       setLoading(true);
       setError(null);
 
-      const response = await getKojiRecent();
+      const response = await getBusinessKojies();
 
       if (response.data) {
         setKojies(response.data);
@@ -57,30 +58,22 @@ const Kojies = () => {
   // 工事更新処理（APIコール）
   const updateKoji = async (updatedKoji: ModelsKoji): Promise<ModelsKoji> => {
     try {
-      // バックエンドに更新リクエストを送信
-      const response = await fetch("http://localhost:8080/api/kojies", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedKoji),
+      // 生成されたSDKを使用してバックエンドに更新リクエストを送信
+      const response = await putBusinessKojies({
+        body: updatedKoji,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "更新に失敗しました");
+      if (response.data) {
+        // 工事一覧を更新
+        setKojies((prevKojies) =>
+          prevKojies.map((k) => (k.path === response.data!.path ? response.data! : k))
+        );
+
+        // 更新された工事データを返す
+        return response.data;
+      } else {
+        throw new Error("更新に失敗しました");
       }
-
-      // レスポンスから更新された工事データを取得
-      const savedKoji = await response.json();
-
-      // 工事一覧を更新
-      setKojies((prevKojies) =>
-        prevKojies.map((k) => (k.id === savedKoji.id ? savedKoji : k))
-      );
-
-      // 更新された工事データを返す
-      return savedKoji;
     } catch (err) {
       console.error("Error updating koji:", err);
       throw err; // エラーをモーダルに伝播
@@ -112,11 +105,16 @@ const Kojies = () => {
   const handleKojiUpdate = (updatedKoji: ModelsKoji) => {
     // 選択中の工事を更新
     setSelectedKoji(updatedKoji);
+    
+    // ファイル名が変更された可能性がある場合、モーダルを閉じた後に再読み込みをする
+    if (selectedKoji && selectedKoji.path !== updatedKoji.path) {
+      setShouldReloadOnClose(true);
+    }
 
     // 工事一覧を更新
     setKojies((prevKojies) => {
-      // 既存の工事を探す（IDで照合）
-      const existingIndex = prevKojies.findIndex(k => k.id === updatedKoji.id);
+      // 既存の工事を探す（pathで照合）
+      const existingIndex = prevKojies.findIndex(k => k.path === updatedKoji.path);
       
       if (existingIndex !== -1) {
         // 既存の工事を更新
@@ -124,12 +122,10 @@ const Kojies = () => {
         updatedKojies[existingIndex] = updatedKoji;
         return updatedKojies;
       } else {
-        // フォルダー名が変更された可能性があるため、元の工事を探して削除し、新しいものを追加
-        // 同じ会社名・現場名で探す
+        // pathが変わった場合（フォルダー名変更時など）
+        // 選択中の工事のpathで元の工事を探す
         const oldKojiIndex = prevKojies.findIndex(k => 
-          k.company_name === updatedKoji.company_name && 
-          k.location_name === updatedKoji.location_name &&
-          k.id !== updatedKoji.id
+          selectedKoji && k.path === selectedKoji.path
         );
         
         if (oldKojiIndex !== -1) {
@@ -137,6 +133,7 @@ const Kojies = () => {
           const updatedKojies = [...prevKojies];
           updatedKojies.splice(oldKojiIndex, 1);
           updatedKojies.push(updatedKoji);
+          
           // 開始日順でソート（新しい順）
           return updatedKojies.sort((a, b) => {
             const dateA = a.start_date ? new Date(typeof a.start_date === 'string' ? a.start_date : (a.start_date as any)['time.Time']).getTime() : 0;
@@ -320,7 +317,14 @@ const Kojies = () => {
       {/* 編集モーダル */}
       <KojiDetailModal
         isOpen={isEditModalOpen}
-        onClose={closeEditModal}
+        onClose={() => {
+          closeEditModal();
+          // ファイル名が変更された場合のみ工事一覧を再読み込み
+          if (shouldReloadOnClose) {
+            loadKojies();
+            setShouldReloadOnClose(false);
+          }
+        }}
         koji={selectedKoji}
         onUpdate={updateKoji}
         onKojiUpdate={handleKojiUpdate}

@@ -6,7 +6,15 @@ backend:
 
 # Start the backend server with HTTP/2 + HTTPS
 backend-http2:
-    cd ./backend && go run main_http2.go
+    cd ./backend && go run cmd/main.go -http2
+
+# Start the backend server with custom port
+backend-port PORT:
+    cd ./backend && go run cmd/main.go -port={{PORT}}
+
+# Start the backend server with HTTP/2 on custom port
+backend-http2-port PORT:
+    cd ./backend && go run cmd/main.go -http2 -port={{PORT}}
 
 # Start the frontend development server (React Router v7)
 frontend:
@@ -106,8 +114,8 @@ stop-backend-http2:
     #!/bin/bash
     set +e
     echo "Stopping HTTP/2 backend server..."
-    pkill -f "go run main_http2.go" 2>/dev/null
-    pkill -f "main_http2.go" 2>/dev/null
+    pkill -f "go run cmd/main.go -http2" 2>/dev/null
+    pkill -f "main.go.*http2" 2>/dev/null
     lsof -ti:8443 | xargs -r kill -15 2>/dev/null
     sleep 1
     lsof -ti:8443 | xargs -r kill -9 2>/dev/null
@@ -160,7 +168,7 @@ swagger:
 # Open Swagger UI documentation in browser (HTTP/2 + HTTPS)
 swagger-http2:
     @echo "Opening Swagger UI documentation (HTTP/2)..."
-    @xdg-open "https://localhost:8443/swagger/index.html" 2>/dev/null || open "https://localhost:8443/swagger/index.html" 2>/dev/null || echo "Please visit https://localhost:8443/swagger/index.html"
+    @xdg-open "https://localhost:8080/swagger/index.html" 2>/dev/null || open "https://localhost:8080/swagger/index.html" 2>/dev/null || echo "Please visit https://localhost:8080/swagger/index.html"
 
 # Show available commands
 help:

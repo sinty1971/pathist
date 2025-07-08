@@ -19,14 +19,17 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import LanguageIcon from '@mui/icons-material/Language';
 import TagIcon from '@mui/icons-material/Tag';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import type { ModelsCompany } from '../api/types.gen';
+import { putBusinessCompanies } from '../api/sdk.gen';
 import "../styles/business-detail-modal.css";
 
 interface CompanyDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   company: ModelsCompany | null;
-  onUpdate?: (company: ModelsCompany) => Promise<ModelsCompany>;
   onCompanyUpdate?: (company: ModelsCompany) => void;
 }
 
@@ -48,7 +51,6 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
   isOpen, 
   onClose, 
   company, 
-  onUpdate, 
   onCompanyUpdate 
 }) => {
   const [formData, setFormData] = useState<CompanyFormData>({
@@ -66,12 +68,14 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
   const [currentCompany, setCurrentCompany] = useState<ModelsCompany | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // 会社データが変更されたときにフォームデータを更新
   useEffect(() => {
     if (company) {
       setCurrentCompany(company);
-      setFormData({
+      const newFormData = {
         id: company.id || '',
         name: company.name || '',
         short_name: company.short_name || '',
@@ -80,10 +84,12 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
         email: company.email || '',
         website: company.website || '',
         address: company.address || '',
-        description: company.description || '',
         tags: Array.isArray(company.tags) ? company.tags.join(', ') : (company.tags || '')
-      });
+      };
+      setFormData(newFormData);
       setError(null);
+      setIsEditing(false);
+      setHasChanges(false);
     }
   }, [company]);
 
@@ -93,12 +99,41 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
       ...prev,
       [name]: value
     }));
+    setHasChanges(true);
   };
 
-  // 更新処理（将来の実装用）
+  // 編集モード切り替え
+  const handleEditToggle = () => {
+    if (isEditing && hasChanges) {
+      // 編集中で変更がある場合は確認
+      if (confirm('変更を破棄しますか？')) {
+        // 元のデータに戻す
+        if (company) {
+          setFormData({
+            id: company.id || '',
+            name: company.name || '',
+            short_name: company.short_name || '',
+            business_type: company.business_type || '',
+            phone: company.phone || '',
+            email: company.email || '',
+            website: company.website || '',
+            address: company.address || '',
+            tags: Array.isArray(company.tags) ? company.tags.join(', ') : (company.tags || '')
+          });
+        }
+        setIsEditing(false);
+        setHasChanges(false);
+      }
+    } else {
+      setIsEditing(!isEditing);
+      setHasChanges(false);
+    }
+  };
+
+  // 更新処理
   const handleUpdate = async () => {
-    if (!company || !onUpdate) {
-      console.log('更新機能は未実装です');
+    if (!company) {
+      setError('会社データがありません');
       return;
     }
 
@@ -106,7 +141,12 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
     setError(null);
 
     try {
-      // 更新処理（未実装）
+      // タグをカンマ区切りから配列に変換
+      const tagsArray = formData.tags 
+        ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) 
+        : [];
+
+      // 更新用の会社データを作成
       const updatedCompany: ModelsCompany = {
         ...company,
         name: formData.name,
@@ -116,17 +156,32 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
         email: formData.email,
         website: formData.website,
         address: formData.address,
-        description: formData.description,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : []
+        tags: tagsArray
       };
 
-      const savedCompany = await onUpdate(updatedCompany);
-      
-      if (onCompanyUpdate) {
-        onCompanyUpdate(savedCompany);
+      // API呼び出し
+      const response = await putBusinessCompanies({
+        body: updatedCompany
+      });
+
+      if (response.data) {
+        // 成功時の処理
+        setCurrentCompany(response.data);
+        setIsEditing(false);
+        setHasChanges(false);
+        
+        if (onCompanyUpdate) {
+          onCompanyUpdate(response.data);
+        }
+        
+        // 成功メッセージ（一時的に表示）
+        setError(null);
+        
+        // モーダルを閉じる（オプション）
+        // onClose();
+      } else {
+        throw new Error('更新レスポンスが無効です');
       }
-      
-      onClose();
     } catch (err) {
       console.error('Error updating company:', err);
       setError(err instanceof Error ? err.message : '会社情報の更新に失敗しました');
@@ -162,18 +217,39 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
           pb: 1
         }}
       >
-        <Typography variant="h6" component="h2">
-          会社詳細情報
-        </Typography>
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{
-            color: 'grey.500'
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h6" component="h2">
+            会社詳細情報
+          </Typography>
+          {isEditing && (
+            <Chip 
+              label="編集中" 
+              color="warning" 
+              size="small"
+              icon={<EditIcon />}
+            />
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant={isEditing ? "outlined" : "contained"}
+            size="small"
+            onClick={handleEditToggle}
+            startIcon={isEditing ? <CancelIcon /> : <EditIcon />}
+            color={isEditing ? "secondary" : "primary"}
+          >
+            {isEditing ? 'キャンセル' : '編集'}
+          </Button>
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              color: 'grey.500'
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </DialogTitle>
 
       <DialogContent dividers>
@@ -217,10 +293,10 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={isLoading || !isEditing}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'white'
+                      backgroundColor: isEditing ? 'white' : 'grey.50'
                     }
                   }}
                 />
@@ -253,10 +329,10 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                   name="short_name"
                   value={formData.short_name}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={isLoading || !isEditing}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'white'
+                      backgroundColor: isEditing ? 'white' : 'grey.50'
                     }
                   }}
                 />
@@ -293,10 +369,10 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                   name="business_type"
                   value={formData.business_type}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={isLoading || !isEditing}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'white'
+                      backgroundColor: isEditing ? 'white' : 'grey.50'
                     }
                   }}
                 />
@@ -374,10 +450,10 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={isLoading || !isEditing}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'white'
+                      backgroundColor: isEditing ? 'white' : 'grey.50'
                     }
                   }}
                 />
@@ -415,10 +491,10 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={isLoading || !isEditing}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'white'
+                      backgroundColor: isEditing ? 'white' : 'grey.50'
                     }
                   }}
                 />
@@ -460,10 +536,10 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                   type="url"
                   value={formData.website}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={isLoading || !isEditing}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'white'
+                      backgroundColor: isEditing ? 'white' : 'grey.50'
                     }
                   }}
                 />
@@ -529,8 +605,13 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                disabled={isLoading}
+                disabled={isLoading || !isEditing}
                 placeholder="会社の詳細説明を入力してください"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: isEditing ? 'white' : 'grey.50'
+                  }
+                }}
               />
             </Box>
             <Box>
@@ -554,7 +635,12 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                 value={formData.tags}
                 onChange={handleInputChange}
                 placeholder="カンマ区切りで入力"
-                disabled={isLoading}
+                disabled={isLoading || !isEditing}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: isEditing ? 'white' : 'grey.50'
+                  }
+                }}
               />
               
               {/* 現在のタグ表示 */}
@@ -579,32 +665,34 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
             </Box>
           </Box>
 
-          {/* 更新機能未実装の注意書き */}
-          <Alert severity="info" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              会社情報の編集機能は現在開発中です。詳細情報の表示のみ可能です。
-            </Typography>
-          </Alert>
-
-          {/* 将来の更新ボタン */}
-          {onUpdate && (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          {/* 編集時の保存ボタン */}
+          {isEditing && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
               <Button
                 variant="outlined"
-                onClick={onClose}
+                onClick={handleEditToggle}
                 disabled={isLoading}
+                startIcon={<CancelIcon />}
               >
-                閉じる
+                キャンセル
               </Button>
               <Button
                 variant="contained"
                 onClick={handleUpdate}
-                disabled={isLoading || true} // 現在は無効化
-                startIcon={isLoading ? <CircularProgress size={16} /> : null}
+                disabled={isLoading || !hasChanges}
+                startIcon={isLoading ? <CircularProgress size={16} /> : <SaveIcon />}
+                color="primary"
               >
-                {isLoading ? '更新中...' : '更新（未実装）'}
+                {isLoading ? '保存中...' : '保存'}
               </Button>
             </Box>
+          )}
+
+          {/* 更新成功メッセージ */}
+          {!isEditing && hasChanges === false && currentCompany && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              会社情報が正常に更新されました。
+            </Alert>
           )}
         </Box>
       </DialogContent>

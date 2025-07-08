@@ -306,11 +306,10 @@ func (ks *KojiService) SetManagedFiles(koji *models.Koji) error {
 func (ks *KojiService) Update(koji *models.Koji) error {
 
 	// 工事開始日・会社名・現場名からフォルダー名を生成
-	updatesStartDate, err := koji.StartDate.Format("2006-0102")
+	generatedFolderName, err := models.GenerateKojiFolderName(koji.StartDate, koji.CompanyName, koji.LocationName)
 	if err != nil {
 		return err
 	}
-	generatedFolderName := fmt.Sprintf("%s %s %s", updatesStartDate, koji.CompanyName, koji.LocationName)
 
 	// 生成されたフォルダー名とFileInfo.Nameを比較
 	if generatedFolderName != koji.FileInfo.Name {
@@ -357,7 +356,7 @@ func KojiesToMapByID(kojies []models.Koji) map[string]models.Koji {
 	return kojiMap
 }
 
-// RenameManagedFile は管理ファイルの名前を変更する
+// RenameManagedFile は管理ファイルの名前を変更し、工事データも更新する
 // kojiは工事データ
 // currentsは変更前の管理ファイル名
 // 変更後の管理ファイル名を返す
@@ -378,5 +377,16 @@ func (ks *KojiService) RenameManagedFile(koji models.Koji, currents []string) []
 			}
 		}
 	}
+
+	// ファイル名変更後、工事の管理ファイル情報を更新
+	if count > 0 {
+		// 管理ファイル情報を再設定
+		err := ks.SetManagedFiles(&koji)
+		if err == nil {
+			// 属性ファイルに反映
+			ks.AttributeService.Save(&koji)
+		}
+	}
+
 	return renamedFiles[:count]
 }

@@ -6,7 +6,7 @@ type ServiceContainer struct {
 	FileService *FileService
 
 	// ビジネスデータ管理サービス
-	BusinessService *BusinessDataService
+	BusinessService *BusinessService
 
 	// メディアデータ管理サービス（将来実装）
 	// MediaService *MediaDataService
@@ -16,8 +16,8 @@ type ServiceContainer struct {
 	// NotificationService *NotificationService
 }
 
-// GetBusinessDataService はBusinessDataServiceを取得する
-func (sc *ServiceContainer) GetBusinessDataService() *BusinessDataService {
+// GetBusinessService はBusinessServiceを取得する
+func (sc *ServiceContainer) GetBusinessService() *BusinessService {
 	return sc.BusinessService
 }
 

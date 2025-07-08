@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ModelsCompany } from "../api/types.gen";
-import { getCompanyList } from "../api/sdk.gen";
+import { getBusinessCompanies } from "../api/sdk.gen";
 import CompanyDetailModal from "./CompanyDetailModal";
 import "../styles/business-entity-list.css";
 
@@ -18,7 +18,7 @@ const Companies = () => {
       setLoading(true);
       setError(null);
 
-      const response = await getCompanyList();
+      const response = await getBusinessCompanies();
 
       if (response.data) {
         setCompanies(response.data);
@@ -53,18 +53,11 @@ const Companies = () => {
     setSelectedCompany(null);
   };
 
-  // 会社情報更新処理（将来の実装用）
-  const updateCompany = async (updatedCompany: ModelsCompany): Promise<ModelsCompany> => {
-    // 未実装
-    console.log('会社情報更新:', updatedCompany);
-    return updatedCompany;
-  };
-
   // 会社データを更新
   const handleCompanyUpdate = (updatedCompany: ModelsCompany) => {
     setSelectedCompany(updatedCompany);
     setCompanies(prevCompanies => 
-      prevCompanies.map(c => c.id === updatedCompany.id ? updatedCompany : c)
+      prevCompanies.map(c => c.name === updatedCompany.name ? updatedCompany : c)
     );
   };
 
@@ -202,7 +195,6 @@ const Companies = () => {
         isOpen={isDetailModalOpen}
         onClose={closeDetailModal}
         company={selectedCompany}
-        onUpdate={updateCompany}
         onCompanyUpdate={handleCompanyUpdate}
       />
     </div>

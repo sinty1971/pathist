@@ -1,4 +1,4 @@
-import { jsx, jsxs } from "react/jsx-runtime";
+import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
 import { ServerRouter, UNSAFE_withComponentProps, Outlet, Meta, Links, ScrollRestoration, Scripts, useLocation, Link } from "react-router";
@@ -6,8 +6,8 @@ import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 import React, { createContext, useState, useContext, useCallback, useEffect, useRef } from "react";
 import { TreeItem, SimpleTreeView } from "@mui/x-tree-view";
-import { Box, Typography, CircularProgress, Chip, Paper, Toolbar, IconButton, TextField, Breadcrumbs, Link as Link$1, Alert, Dialog, DialogTitle, DialogContent, Button } from "@mui/material";
-import { FolderOpen, Folder, InsertDriveFile, Home, Refresh, Search } from "@mui/icons-material";
+import { Box, Typography, Chip, Paper, Toolbar, IconButton, Breadcrumbs, Link as Link$1, Alert, CircularProgress, TextField, Dialog, DialogTitle, DialogContent, Button } from "@mui/material";
+import { ExpandMore, ChevronRight, InsertDriveFile, Home, Refresh } from "@mui/icons-material";
 import CloseIcon from "@mui/icons-material/Close";
 import WarningIcon from "@mui/icons-material/Warning";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
@@ -16,6 +16,14 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ja } from "date-fns/locale";
+import BusinessIcon from "@mui/icons-material/Business";
+import PhoneIcon from "@mui/icons-material/Phone";
+import EmailIcon from "@mui/icons-material/Email";
+import LanguageIcon from "@mui/icons-material/Language";
+import TagIcon from "@mui/icons-material/Tag";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Cancel";
 const streamTimeout = 5e3;
 function handleRequest(request, responseStatusCode, responseHeaders, routerContext, loadContext) {
   return new Promise((resolve, reject) => {
@@ -94,41 +102,9 @@ const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   default: root,
   links: links$1
 }, Symbol.toStringTag, { value: "Module" }));
-const FileInfoContext = createContext(void 0);
-const FileInfoProvider = ({ children }) => {
-  const [fileCount, setFileCount] = useState(0);
-  const [currentPath, setCurrentPath] = useState("");
-  return /* @__PURE__ */ jsx(FileInfoContext.Provider, { value: { fileCount, currentPath, setFileCount, setCurrentPath }, children });
-};
-const useFileInfo = () => {
-  const context = useContext(FileInfoContext);
-  if (!context) {
-    throw new Error("useFileInfo must be used within a FileInfoProvider");
-  }
-  return context;
-};
-function Navigation({ projectCount } = {}) {
+function Navigation() {
   const location = useLocation();
-  const { fileCount, currentPath } = useFileInfo();
-  const getPageTitle = () => {
-    switch (location.pathname) {
-      case "/":
-        return "ホーム";
-      case "/files":
-        return `ファイル一覧${fileCount > 0 ? ` (${fileCount}項目)` : ""}${currentPath ? ` - ${currentPath}` : ""}`;
-      case "/projects":
-        return `工程表${projectCount !== void 0 ? ` (${projectCount}件)` : ""}`;
-      case "/projects/gantt":
-        return "ガントチャート";
-      default:
-        return "ファイル管理";
-    }
-  };
   return /* @__PURE__ */ jsx("nav", { className: "navigation", children: /* @__PURE__ */ jsxs("div", { className: "nav-container", children: [
-    /* @__PURE__ */ jsxs("div", { className: "nav-logo", children: [
-      /* @__PURE__ */ jsx("h1", { children: "Penguin フォルダー管理" }),
-      /* @__PURE__ */ jsx("div", { className: "page-title", children: getPageTitle() })
-    ] }),
     /* @__PURE__ */ jsxs("div", { className: "nav-links", children: [
       /* @__PURE__ */ jsx(
         Link,
@@ -149,46 +125,66 @@ function Navigation({ projectCount } = {}) {
       /* @__PURE__ */ jsx(
         Link,
         {
-          to: "/projects",
-          className: location.pathname === "/projects" ? "nav-link active" : "nav-link",
-          children: "工程表"
+          to: "/kojies",
+          className: location.pathname === "/kojies" ? "nav-link active" : "nav-link",
+          children: "工事一覧"
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        Link,
+        {
+          to: "/companies",
+          className: location.pathname === "/companies" ? "nav-link active" : "nav-link",
+          children: "会社一覧"
         }
       )
-    ] })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "nav-logo", children: /* @__PURE__ */ jsx("h1", { children: "Penguin フォルダー管理" }) })
   ] }) });
 }
-const ProjectContext = createContext(void 0);
-function ProjectProvider({ children }) {
-  const [projectCount, setProjectCount] = useState(0);
-  return /* @__PURE__ */ jsx(ProjectContext.Provider, { value: { projectCount, setProjectCount }, children });
+const KojiContext = createContext(void 0);
+function KojiProvider({ children }) {
+  const [kojiCount, setKojiCount] = useState(0);
+  return /* @__PURE__ */ jsx(KojiContext.Provider, { value: { kojiCount, setKojiCount }, children });
 }
-function useProject() {
-  const context = useContext(ProjectContext);
+function useKoji() {
+  const context = useContext(KojiContext);
   if (context === void 0) {
-    throw new Error("useProject must be used within a ProjectProvider");
+    throw new Error("useKoji must be used within a KojiProvider");
   }
   return context;
 }
+const FileInfoContext = createContext(void 0);
+const FileInfoProvider = ({ children }) => {
+  const [fileCount, setFileCount] = useState(0);
+  const [currentPath, setCurrentPath] = useState("");
+  return /* @__PURE__ */ jsx(FileInfoContext.Provider, { value: { fileCount, currentPath, setFileCount, setCurrentPath }, children });
+};
+const useFileInfo = () => {
+  const context = useContext(FileInfoContext);
+  if (!context) {
+    throw new Error("useFileInfo must be used within a FileInfoProvider");
+  }
+  return context;
+};
 const links = () => [{
   rel: "stylesheet",
-  href: "/app/styles/App.css"
+  href: "/app/styles/app.css"
 }];
 function LayoutContent() {
   const {
-    projectCount
-  } = useProject();
+    kojiCount
+  } = useKoji();
   return /* @__PURE__ */ jsxs("div", {
     className: "app",
-    children: [/* @__PURE__ */ jsx(Navigation, {
-      projectCount
-    }), /* @__PURE__ */ jsx("main", {
+    children: [/* @__PURE__ */ jsx(Navigation, {}), /* @__PURE__ */ jsx("main", {
       className: "main-content",
       children: /* @__PURE__ */ jsx(Outlet, {})
     })]
   });
 }
 const _layout = UNSAFE_withComponentProps(function Layout2() {
-  return /* @__PURE__ */ jsx(ProjectProvider, {
+  return /* @__PURE__ */ jsx(KojiProvider, {
     children: /* @__PURE__ */ jsx(FileInfoProvider, {
       children: /* @__PURE__ */ jsx(LayoutContent, {})
     })
@@ -253,7 +249,7 @@ const _layout__index = UNSAFE_withComponentProps(function HomePage() {
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
               transition: "all 0.2s ease",
               cursor: "pointer",
-              height: "180px",
+              height: "220px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -315,7 +311,7 @@ const _layout__index = UNSAFE_withComponentProps(function HomePage() {
             e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
           },
           children: [/* @__PURE__ */ jsxs(Link, {
-            to: "/projects",
+            to: "/kojies",
             style: {
               textDecoration: "none",
               display: "flex",
@@ -338,7 +334,7 @@ const _layout__index = UNSAFE_withComponentProps(function HomePage() {
                 marginBottom: "0.5rem",
                 textAlign: "center"
               },
-              children: "工程表"
+              children: "工事一覧"
             }), /* @__PURE__ */ jsx("p", {
               style: {
                 color: "#666",
@@ -350,7 +346,7 @@ const _layout__index = UNSAFE_withComponentProps(function HomePage() {
               children: "工事プロジェクトの一覧管理"
             })]
           }), /* @__PURE__ */ jsx(Link, {
-            to: "/projects/gantt",
+            to: "/kojies/gantt",
             style: {
               color: "#667eea",
               fontSize: "0.8rem",
@@ -377,8 +373,60 @@ const _layout__index = UNSAFE_withComponentProps(function HomePage() {
             onClick: (e) => {
               e.stopPropagation();
             },
-            children: "📈 ガントチャートを見る"
+            children: "📈 工程表を見る"
           })]
+        }), /* @__PURE__ */ jsx(Link, {
+          to: "/companies",
+          style: {
+            textDecoration: "none"
+          },
+          children: /* @__PURE__ */ jsxs("div", {
+            className: "feature-card",
+            style: {
+              background: "rgba(255, 255, 255, 0.95)",
+              borderRadius: "12px",
+              padding: "1.5rem",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+              transition: "all 0.2s ease",
+              cursor: "pointer",
+              height: "220px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center"
+            },
+            onMouseEnter: (e) => {
+              e.currentTarget.style.transform = "translateY(-3px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.15)";
+            },
+            onMouseLeave: (e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
+            },
+            children: [/* @__PURE__ */ jsx("div", {
+              style: {
+                fontSize: "2.5rem",
+                marginBottom: "0.5rem"
+              },
+              children: "🏢"
+            }), /* @__PURE__ */ jsx("h3", {
+              style: {
+                fontSize: "1.1rem",
+                color: "#333",
+                marginBottom: "0.5rem",
+                textAlign: "center"
+              },
+              children: "会社一覧"
+            }), /* @__PURE__ */ jsx("p", {
+              style: {
+                color: "#666",
+                fontSize: "0.85rem",
+                textAlign: "center",
+                lineHeight: "1.4"
+              },
+              children: "取引先会社の情報管理"
+            })]
+          })
         })]
       }), /* @__PURE__ */ jsxs("div", {
         style: {
@@ -401,7 +449,7 @@ const _layout__index = UNSAFE_withComponentProps(function HomePage() {
             color: "#666",
             lineHeight: "1.8"
           },
-          children: ["データ保存場所: ~/penguin", /* @__PURE__ */ jsx("br", {}), "工事プロジェクト: ~/penguin/豊田築炉/2-工事"]
+          children: ["データ保存場所: ~/penguin", /* @__PURE__ */ jsx("br", {}), "工事プロジェクト: ~/penguin/豊田築炉/2-工事", /* @__PURE__ */ jsx("br", {}), "会社情報: ~/penguin/豊田築炉/1 会社"]
         })]
       })]
     })
@@ -973,32 +1021,64 @@ const createClient = (config = {}) => {
 const client = createClient(createConfig({
   baseUrl: "http://localhost:8080/api"
 }));
-const getFileFileinfos = (options) => {
+const getBusinessBasePath = (options) => {
   return (options?.client ?? client).get({
-    url: "/file/fileinfos",
+    url: "/business/base-path",
     ...options
   });
 };
-const getProjectGetByPath = (options) => {
-  return (options.client ?? client).get({
-    url: "/project/get/{path}",
-    ...options
-  });
-};
-const getProjectRecent = (options) => {
+const getBusinessCompanies = (options) => {
   return (options?.client ?? client).get({
-    url: "/project/recent",
+    url: "/business/companies",
     ...options
   });
 };
-const postProjectRenameManagedFile = (options) => {
-  return (options.client ?? client).post({
-    url: "/project/rename-managed-file",
+const putBusinessCompanies = (options) => {
+  return (options.client ?? client).put({
+    url: "/business/companies",
     ...options,
     headers: {
       "Content-Type": "application/json",
       ...options.headers
     }
+  });
+};
+const getBusinessFiles = (options) => {
+  return (options?.client ?? client).get({
+    url: "/business/files",
+    ...options
+  });
+};
+const getBusinessKojies = (options) => {
+  return (options?.client ?? client).get({
+    url: "/business/kojies",
+    ...options
+  });
+};
+const putBusinessKojies = (options) => {
+  return (options.client ?? client).put({
+    url: "/business/kojies",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers
+    }
+  });
+};
+const putBusinessKojiesManagedFiles = (options) => {
+  return (options.client ?? client).put({
+    url: "/business/kojies/managed-files",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers
+    }
+  });
+};
+const getKojiesByPath = (options) => {
+  return (options.client ?? client).get({
+    url: "/kojies/{path}",
+    ...options
   });
 };
 function timestampToString(timestamp) {
@@ -1055,123 +1135,161 @@ const FileDetailModal = ({ fileInfo, isOpen, onClose }) => {
     ] })
   ] }) });
 };
-const CustomTreeItem = React.memo(({
-  itemId,
-  node,
-  onNodeClick,
-  onNodeExpand,
-  ...props
-}) => {
-  const getNodeIcon = (node2, expanded = false) => {
-    if (node2.isDirectory) {
-      return expanded ? /* @__PURE__ */ jsx(FolderOpen, { color: "primary" }) : /* @__PURE__ */ jsx(Folder, { color: "primary" });
+const getNodeIcon = (node) => {
+  if (node.isDirectory) {
+    return null;
+  }
+  if (node.name === ".detail.yaml") {
+    return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "⚙️" });
+  }
+  const ext = node.name?.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "pdf":
+      return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "📄" });
+    case "xlsx":
+    case "xls":
+    case "xlsm":
+      return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "📊" });
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "gif":
+      return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "🖼️" });
+    case "mp4":
+    case "avi":
+    case "mov":
+      return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "🎬" });
+    case "mp3":
+    case "wav":
+      return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "🎵" });
+    default:
+      return /* @__PURE__ */ jsx(InsertDriveFile, { color: "action" });
+  }
+};
+const formatFileSize = (bytes) => {
+  if (!bytes || bytes === 0) return "";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = bytes;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  return ` (${size.toFixed(1)} ${units[unitIndex]})`;
+};
+const updateNodeInTree = (nodes, targetId, updatedNode) => {
+  return nodes.map((node) => {
+    if (node.id === targetId) {
+      return updatedNode;
     }
-    if (node2.name === ".detail.yaml") {
-      return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "⚙️" });
+    if (node.children) {
+      return {
+        ...node,
+        children: updateNodeInTree(node.children, targetId, updatedNode)
+      };
     }
-    const ext = node2.name?.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "pdf":
-        return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "📄" });
-      case "xlsx":
-      case "xls":
-      case "xlsm":
-        return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "📊" });
-      case "jpg":
-      case "jpeg":
-      case "png":
-      case "gif":
-        return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "🖼️" });
-      case "mp4":
-      case "avi":
-      case "mov":
-        return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "🎬" });
-      case "mp3":
-      case "wav":
-        return /* @__PURE__ */ jsx("span", { style: { fontSize: "16px" }, children: "🎵" });
-      default:
-        return /* @__PURE__ */ jsx(InsertDriveFile, { color: "action" });
-    }
-  };
-  const formatSize = (bytes) => {
-    if (!bytes || bytes === 0) return "";
-    const units = ["B", "KB", "MB", "GB"];
-    let size = bytes;
-    let unitIndex = 0;
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex++;
-    }
-    return ` (${size.toFixed(1)} ${units[unitIndex]})`;
-  };
-  const handleClick = React.useCallback((e) => {
-    e.stopPropagation();
-    onNodeClick(node);
-  }, [node, onNodeClick]);
-  return /* @__PURE__ */ jsx(
-    TreeItem,
-    {
-      itemId,
-      onClick: handleClick,
-      label: /* @__PURE__ */ jsxs(Box, { sx: { display: "flex", alignItems: "center", py: 0.5 }, children: [
-        getNodeIcon(node),
-        /* @__PURE__ */ jsxs(Typography, { variant: "body2", sx: { flexGrow: 1, mr: 1, ml: 1 }, children: [
-          node.name,
-          !node.isDirectory && formatSize(node.size)
-        ] }),
-        node.isLoading && /* @__PURE__ */ jsx(CircularProgress, { size: 16 }),
-        node.name === ".detail.yaml" && /* @__PURE__ */ jsx(
-          Chip,
-          {
-            label: "詳細",
-            size: "small",
-            color: "info",
-            variant: "outlined",
-            sx: { ml: 1, fontSize: "10px", height: "20px" }
+    return node;
+  });
+};
+const CustomTreeItem = React.memo(
+  ({
+    itemId,
+    node,
+    onNodeClick,
+    onNodeExpand,
+    isExpanded,
+    expanded,
+    ...props
+  }) => {
+    const handleClick = React.useCallback(
+      (e) => {
+        e.stopPropagation();
+        onNodeClick(node);
+      },
+      [node, onNodeClick]
+    );
+    return /* @__PURE__ */ jsx(
+      TreeItem,
+      {
+        itemId,
+        onClick: handleClick,
+        sx: {
+          // ローディング中のノードの視覚的フィードバックのみ
+          ...node.isLoading && {
+            "& .MuiTreeItem-content": {
+              opacity: 0.7
+            }
           }
-        )
-      ] }),
-      ...props,
-      children: node.children?.map((child) => /* @__PURE__ */ jsx(
-        CustomTreeItem,
-        {
-          itemId: child.id,
-          node: child,
-          onNodeClick,
-          onNodeExpand
         },
-        child.id
-      ))
-    }
-  );
-});
+        label: /* @__PURE__ */ jsxs(Box, { sx: { display: "flex", alignItems: "center", py: 0.5, pr: 2 }, children: [
+          node.isDirectory ? isExpanded ? /* @__PURE__ */ jsx(ExpandMore, { sx: { mr: 0.5 } }) : /* @__PURE__ */ jsx(ChevronRight, { sx: { mr: 0.5 } }) : getNodeIcon(node),
+          /* @__PURE__ */ jsxs(Typography, { variant: "body2", sx: { flexGrow: 1, mr: 1, ml: 1 }, children: [
+            node.name,
+            !node.isDirectory && formatFileSize(node.size)
+          ] }),
+          node.name === ".detail.yaml" && /* @__PURE__ */ jsx(
+            Chip,
+            {
+              label: "詳細",
+              size: "small",
+              color: "info",
+              variant: "outlined",
+              sx: { ml: 1, fontSize: "10px", height: "20px" }
+            }
+          )
+        ] }),
+        ...props,
+        children: node.children?.map((child) => /* @__PURE__ */ jsx(
+          CustomTreeItem,
+          {
+            itemId: child.id,
+            node: child,
+            onNodeClick,
+            onNodeExpand,
+            isExpanded: expanded.includes(child.id),
+            expanded
+          },
+          child.id
+        ))
+      }
+    );
+  }
+);
 const Files = () => {
   const [treeData, setTreeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [currentPath, setCurrentPath] = useState("~/penguin");
-  const [pathInput, setPathInput] = useState("~/penguin");
+  const [currentPath, setCurrentPath] = useState("");
+  const [basePath, setBasePath] = useState("");
+  const [basePathError, setBasePathError] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expanded, setExpanded] = useState([]);
   const { setFileCount, setCurrentPath: setContextPath } = useFileInfo();
-  const convertToRelativePath = (frontendPath) => {
-    if (frontendPath === "~/penguin" || frontendPath === "/home/shin/penguin") {
-      return "";
+  const loadBasePath = useCallback(async () => {
+    try {
+      const response = await getBusinessBasePath();
+      if (response.data && response.data.businessBasePath) {
+        setBasePath(response.data.businessBasePath);
+        setBasePathError(false);
+        return response.data.businessBasePath;
+      }
+      throw new Error("ベースパスが取得できませんでした");
+    } catch (err) {
+      setBasePathError(true);
+      setError("基準となるパスを取得できないため、一覧を表示できません");
+      return null;
     }
-    if (frontendPath.startsWith("~/penguin/")) {
-      return frontendPath.substring("~/penguin/".length);
-    }
-    if (frontendPath.startsWith("/home/shin/penguin/")) {
-      return frontendPath.substring("/home/shin/penguin/".length);
-    }
-    return frontendPath;
-  };
-  const convertToTreeNode = (fileInfo, basePath) => {
-    return {
-      id: `${basePath}/${fileInfo.name}`,
+  }, []);
+  const convertToTreeNode = (fileInfo) => {
+    const node = {
+      id: fileInfo.path,
+      // バックエンドからのpathをIDとして使用
       name: fileInfo.name,
-      path: fileInfo.path || `${basePath}/${fileInfo.name}`,
+      path: fileInfo.path,
+      // バックエンドからのpathをそのまま使用
+      relativePath: fileInfo.path.replace(basePath + "/", "") || "",
+      // 相対パス部分を保存
       isDirectory: fileInfo.is_directory,
       size: fileInfo.size,
       modifiedTime: fileInfo.modified_time,
@@ -1179,139 +1297,132 @@ const Files = () => {
       isLoaded: !fileInfo.is_directory,
       isLoading: false
     };
+    return node;
   };
-  const loadFiles = useCallback(async (path, isRefresh = false) => {
-    const frontendPath = path || "~/penguin";
-    const relativePath = convertToRelativePath(frontendPath);
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await getFileFileinfos({
-        query: relativePath ? { path: relativePath } : {}
-      });
-      if (response.data) {
-        const data = response.data;
-        const nodes = data.map((fileInfo) => convertToTreeNode(fileInfo, frontendPath));
-        if (path === "~/penguin" || !path || isRefresh) {
-          setTreeData(nodes);
-          setFileCount(data.length);
-          setContextPath(frontendPath);
-          setCurrentPath(frontendPath);
-        }
-        return nodes;
-      } else if (response.error) {
-        throw new Error("APIエラー: " + JSON.stringify(response.error));
-      }
-    } catch (err) {
-      console.error("Error loading files:", err);
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, [setFileCount, setContextPath]);
-  useEffect(() => {
-    loadFiles();
-  }, [loadFiles]);
-  const handleNodeExpand = useCallback(async (nodeId, node) => {
-    if (!node.isDirectory || node.isLoaded || node.isLoading) return;
-    setTreeData((prevData) => updateNodeInTree(prevData, nodeId, { ...node, isLoading: true }));
-    try {
-      const children = await loadFiles(node.path, false);
-      setTreeData((prevData) => updateNodeInTree(prevData, nodeId, {
-        ...node,
-        children,
-        isLoaded: true,
-        isLoading: false
-      }));
-    } catch (err) {
-      setTreeData((prevData) => updateNodeInTree(prevData, nodeId, { ...node, isLoading: false }));
-    }
-  }, [loadFiles]);
-  const updateNodeInTree = (nodes, targetId, updatedNode) => {
-    return nodes.map((node) => {
-      if (node.id === targetId) {
-        return updatedNode;
-      }
-      if (node.children) {
-        return {
-          ...node,
-          children: updateNodeInTree(node.children, targetId, updatedNode)
-        };
-      }
-      return node;
-    });
-  };
-  const handleNodeClick = useCallback((node) => {
-    if (!node.isDirectory) {
-      setSelectedNode(node);
-      setIsModalOpen(true);
-    } else {
-      setExpanded((prev) => {
-        const isExpanded = prev.includes(node.id);
-        if (isExpanded) {
-          return prev.filter((id) => id !== node.id);
-        } else {
-          const newExpanded = [...prev, node.id];
-          if (!node.isLoaded && !node.isLoading) {
-            setTimeout(() => handleNodeExpand(node.id, node), 0);
+  const loadFiles = useCallback(
+    async (relativePath, isRefresh = false) => {
+      const requestPath = relativePath || "";
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getBusinessFiles({
+          query: requestPath ? { path: requestPath } : {}
+        });
+        if (response.data) {
+          const data = response.data;
+          const nodes = data.map((fileInfo) => {
+            return convertToTreeNode(fileInfo);
+          });
+          if (!relativePath || isRefresh) {
+            setTreeData(nodes);
+            setFileCount(data.length);
+            setContextPath(basePath);
+            setCurrentPath(basePath);
           }
-          return newExpanded;
+          return nodes;
+        } else if (response.error) {
+          throw new Error("APIエラー: " + JSON.stringify(response.error));
         }
-      });
-    }
-  }, [handleNodeExpand]);
-  const handlePathSubmit = (e) => {
-    e.preventDefault();
-    if (pathInput !== currentPath) {
-      setTreeData([]);
-      setExpanded([]);
-      loadFiles(pathInput, true);
-    }
-  };
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "エラーが発生しました");
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [basePath, setFileCount, setContextPath]
+  );
+  useEffect(() => {
+    const initialize = async () => {
+      setLoading(true);
+      const basePathResult = await loadBasePath();
+      if (basePathResult) {
+        await loadFiles();
+      }
+      setLoading(false);
+    };
+    initialize();
+  }, [loadBasePath, loadFiles]);
+  const handleNodeExpand = useCallback(
+    async (nodeId, node) => {
+      if (!node.isDirectory || node.isLoaded || node.isLoading) return;
+      setTreeData(
+        (prevData) => updateNodeInTree(prevData, nodeId, { ...node, isLoading: true })
+      );
+      try {
+        const targetRelativePath = node.relativePath || "";
+        const children = await loadFiles(targetRelativePath, false);
+        setTreeData(
+          (prevData) => updateNodeInTree(prevData, nodeId, {
+            ...node,
+            children,
+            isLoaded: true,
+            isLoading: false
+          })
+        );
+      } catch (err) {
+        console.error("handleNodeExpand error:", err);
+        setTreeData(
+          (prevData) => updateNodeInTree(prevData, nodeId, { ...node, isLoading: false })
+        );
+      }
+    },
+    [loadFiles]
+  );
+  const handleNodeClick = useCallback(
+    (node) => {
+      if (!node.isDirectory) {
+        setSelectedNode(node);
+        setIsModalOpen(true);
+      } else {
+        setExpanded((prev) => {
+          const isExpanded = prev.includes(node.id);
+          if (isExpanded) {
+            return prev.filter((id) => id !== node.id);
+          } else {
+            const newExpanded = [...prev, node.id];
+            if (!node.isLoaded && !node.isLoading) {
+              setTimeout(() => handleNodeExpand(node.id, node), 0);
+            }
+            return newExpanded;
+          }
+        });
+      }
+    },
+    [handleNodeExpand]
+  );
   const handleRefresh = () => {
     setTreeData([]);
     setExpanded([]);
     loadFiles(currentPath, true);
   };
   const handleGoHome = () => {
-    setPathInput("~/penguin");
     setTreeData([]);
     setExpanded([]);
-    loadFiles("~/penguin", true);
+    loadFiles("", true);
   };
   const getBreadcrumbs = () => {
-    const parts = currentPath.replace("~/penguin", "").split("/").filter(Boolean);
+    const currentBasePath = currentPath || basePath;
+    const parts = currentBasePath.replace(basePath, "").split("/").filter(Boolean);
     const breadcrumbs = [
-      { label: "penguin", path: "~/penguin" }
+      { label: basePath.split("/").pop() || "ホーム", path: "" }
     ];
-    let accumulatedPath = "~/penguin";
+    let accumulatedPath = "";
     parts.forEach((part) => {
-      accumulatedPath += `/${part}`;
+      if (accumulatedPath === "") {
+        accumulatedPath = `${basePath}/${part}`;
+      } else {
+        accumulatedPath += `/${part}`;
+      }
       breadcrumbs.push({ label: part, path: accumulatedPath });
     });
     return breadcrumbs;
   };
-  return /* @__PURE__ */ jsxs(Box, { sx: { height: "100vh", display: "flex", flexDirection: "column" }, children: [
+  return /* @__PURE__ */ jsxs(Box, { sx: { height: "100%", display: "flex", flexDirection: "column" }, children: [
     /* @__PURE__ */ jsxs(Paper, { elevation: 1, sx: { mb: 1 }, children: [
       /* @__PURE__ */ jsxs(Toolbar, { variant: "dense", children: [
         /* @__PURE__ */ jsx(IconButton, { onClick: handleGoHome, size: "small", title: "ホームに戻る", children: /* @__PURE__ */ jsx(Home, {}) }),
-        /* @__PURE__ */ jsx(IconButton, { onClick: handleRefresh, size: "small", title: "リフレッシュ", children: /* @__PURE__ */ jsx(Refresh, {}) }),
-        /* @__PURE__ */ jsx(Box, { component: "form", onSubmit: handlePathSubmit, sx: { flexGrow: 1, mx: 2 }, children: /* @__PURE__ */ jsx(
-          TextField,
-          {
-            size: "small",
-            fullWidth: true,
-            value: pathInput,
-            onChange: (e) => setPathInput(e.target.value),
-            placeholder: "パスを入力",
-            slotProps: {
-              input: {
-                startAdornment: /* @__PURE__ */ jsx(Search, { sx: { mr: 1, color: "action.active" } })
-              }
-            }
-          }
-        ) })
+        /* @__PURE__ */ jsx(IconButton, { onClick: handleRefresh, size: "small", title: "リフレッシュ", children: /* @__PURE__ */ jsx(Refresh, {}) })
       ] }),
       /* @__PURE__ */ jsx(Box, { sx: { px: 2, pb: 1 }, children: /* @__PURE__ */ jsx(Breadcrumbs, { children: getBreadcrumbs().map((crumb, index) => /* @__PURE__ */ jsx(
         Link$1,
@@ -1320,7 +1431,6 @@ const Files = () => {
           variant: "body2",
           color: index === getBreadcrumbs().length - 1 ? "text.primary" : "inherit",
           onClick: () => {
-            setPathInput(crumb.path);
             if (crumb.path !== currentPath) {
               setTreeData([]);
               setExpanded([]);
@@ -1334,36 +1444,160 @@ const Files = () => {
       )) }) })
     ] }),
     error && /* @__PURE__ */ jsx(Alert, { severity: "error", sx: { mb: 1 }, children: error }),
-    /* @__PURE__ */ jsxs(Paper, { sx: { flex: 1, overflow: "auto", p: 1 }, children: [
-      loading && treeData.length === 0 ? /* @__PURE__ */ jsx(Box, { sx: { display: "flex", justifyContent: "center", p: 3 }, children: /* @__PURE__ */ jsx(CircularProgress, {}) }) : /* @__PURE__ */ jsx(
-        SimpleTreeView,
-        {
-          expandedItems: expanded,
-          onExpandedItemsChange: () => {
-          },
-          sx: {
-            flexGrow: 1,
-            overflowY: "auto",
-            "& .MuiTreeItem-content": {
-              "&:hover": {
-                backgroundColor: "action.hover"
-              }
-            }
-          },
-          children: treeData.map((node) => /* @__PURE__ */ jsx(
-            CustomTreeItem,
+    /* @__PURE__ */ jsxs(
+      Paper,
+      {
+        sx: {
+          flex: 1,
+          overflow: "auto",
+          p: 1,
+          position: "relative",
+          minHeight: 0
+        },
+        children: [
+          loading && treeData.length === 0 ? /* @__PURE__ */ jsxs(
+            Box,
             {
-              itemId: node.id,
-              node,
-              onNodeClick: handleNodeClick,
-              onNodeExpand: handleNodeExpand
-            },
-            node.id
-          ))
-        }
-      ),
-      treeData.length === 0 && !loading && /* @__PURE__ */ jsx(Box, { sx: { display: "flex", justifyContent: "center", p: 3 }, children: /* @__PURE__ */ jsx(Typography, { color: "text.secondary", children: "フォルダーが空です" }) })
-    ] }),
+              sx: {
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                p: 3
+              },
+              children: [
+                /* @__PURE__ */ jsxs(Box, { sx: { position: "relative", display: "inline-flex" }, children: [
+                  /* @__PURE__ */ jsx(
+                    CircularProgress,
+                    {
+                      size: 60,
+                      thickness: 1,
+                      sx: {
+                        color: "primary.main",
+                        animationDuration: "2s"
+                      }
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    CircularProgress,
+                    {
+                      variant: "determinate",
+                      size: 60,
+                      thickness: 2,
+                      value: 25,
+                      sx: {
+                        color: "grey.300",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        zIndex: 0
+                      }
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsx(Typography, { color: "text.secondary", sx: { mt: 2 }, children: "データ取得中..." }),
+                /* @__PURE__ */ jsx(
+                  Typography,
+                  {
+                    variant: "caption",
+                    color: "text.secondary",
+                    sx: { mt: 0.5 },
+                    children: "大量のファイルがある場合は時間がかかることがあります"
+                  }
+                )
+              ]
+            }
+          ) : basePathError ? /* @__PURE__ */ jsx(Box, { sx: { display: "flex", justifyContent: "center", p: 3 }, children: /* @__PURE__ */ jsx(Typography, { color: "error", children: "基準となるパスを取得できないため、一覧を表示できません" }) }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+            /* @__PURE__ */ jsx(
+              SimpleTreeView,
+              {
+                expandedItems: expanded,
+                onExpandedItemsChange: () => {
+                },
+                sx: {
+                  flexGrow: 1,
+                  overflowY: "auto",
+                  "& .MuiTreeItem-content": {
+                    "&:hover": {
+                      backgroundColor: "action.hover"
+                    }
+                  },
+                  "& .MuiTreeItem-iconContainer": {
+                    display: "none"
+                    // MUIのデフォルト展開アイコンを非表示（カスタムアイコンを使用）
+                  }
+                },
+                children: treeData.map((node) => /* @__PURE__ */ jsx(
+                  CustomTreeItem,
+                  {
+                    itemId: node.id,
+                    node,
+                    onNodeClick: handleNodeClick,
+                    onNodeExpand: handleNodeExpand,
+                    isExpanded: expanded.includes(node.id),
+                    expanded
+                  },
+                  node.id
+                ))
+              }
+            ),
+            treeData.some(
+              (node) => node.isLoading || node.children && node.children.some((child) => child.isLoading)
+            ) && /* @__PURE__ */ jsxs(
+              Box,
+              {
+                sx: {
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  borderRadius: 2,
+                  p: 3,
+                  boxShadow: 3,
+                  zIndex: 1e3,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  minWidth: 200
+                },
+                children: [
+                  /* @__PURE__ */ jsx(
+                    CircularProgress,
+                    {
+                      size: 48,
+                      thickness: 3,
+                      sx: {
+                        color: "primary.main"
+                      }
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    Typography,
+                    {
+                      color: "text.primary",
+                      sx: { mt: 2, fontWeight: 500 },
+                      children: "フォルダーを読み込んでいます..."
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    Typography,
+                    {
+                      variant: "caption",
+                      color: "text.secondary",
+                      sx: { mt: 0.5 },
+                      children: "大量のファイルがある場合は時間がかかります"
+                    }
+                  )
+                ]
+              }
+            )
+          ] }),
+          treeData.length === 0 && !loading && !basePathError && /* @__PURE__ */ jsx(Box, { sx: { display: "flex", justifyContent: "center", p: 3 }, children: /* @__PURE__ */ jsx(Typography, { color: "text.secondary", children: "フォルダーが空です" }) })
+        ]
+      }
+    ),
     /* @__PURE__ */ jsx(
       FileDetailModal,
       {
@@ -1453,7 +1687,7 @@ const CalendarPicker = ({
     }
   ) });
 };
-const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdate }) => {
+const KojiDetailModal = ({ isOpen, onClose, koji, onUpdate, onKojiUpdate }) => {
   const [formData, setFormData] = useState({
     id: "",
     company_name: "",
@@ -1463,7 +1697,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
     start_date: "",
     end_date: ""
   });
-  const [currentProject, setCurrentProject] = useState(null);
+  const [currentKoji, setCurrentKoji] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -1489,18 +1723,18 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
     return "";
   };
   useEffect(() => {
-    if (project) {
-      const startDate = extractDateString(project.start_date);
-      const endDate = extractDateString(project.end_date);
-      const companyName = project.company_name || "";
-      const locationName = project.location_name || "";
-      setCurrentProject(project);
+    if (koji) {
+      const startDate = extractDateString(koji.start_date);
+      const endDate = extractDateString(koji.end_date);
+      const companyName = koji.company_name || "";
+      const locationName = koji.location_name || "";
+      setCurrentKoji(koji);
       setFormData({
-        id: project.id || "",
+        id: koji.id || "",
         company_name: companyName,
         location_name: locationName,
-        description: project.description || "",
-        tags: Array.isArray(project.tags) ? project.tags.join(", ") : project.tags || "",
+        description: koji.description || "",
+        tags: Array.isArray(koji.tags) ? koji.tags.join(", ") : koji.tags || "",
         start_date: startDate,
         end_date: endDate
       });
@@ -1512,7 +1746,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
       setHasFilenameChanges(false);
       setError(null);
     }
-  }, [project]);
+  }, [koji]);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -1538,8 +1772,8 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
     }
   };
   const updateManagedFileRecommendations = (formData2) => {
-    if (!currentProject?.managed_files) return;
-    const updatedManagedFiles = currentProject.managed_files.map((file) => {
+    if (!currentKoji?.managed_files) return;
+    const updatedManagedFiles = currentKoji.managed_files.map((file) => {
       if (file.current) {
         const recommendedName = generateRecommendedFileName(file.current, formData2);
         return {
@@ -1549,7 +1783,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
       }
       return file;
     });
-    setCurrentProject((prev) => prev ? {
+    setCurrentKoji((prev) => prev ? {
       ...prev,
       managed_files: updatedManagedFiles
     } : null);
@@ -1562,12 +1796,12 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
     }
   };
   const handleFieldUpdateWithData = async (useFormData) => {
-    if (!project) return;
+    if (!koji) return;
     setIsLoading(true);
     setError(null);
     try {
-      const updatedProject = {
-        ...project,
+      const updatedKoji = {
+        ...koji,
         company_name: useFormData.company_name,
         location_name: useFormData.location_name,
         description: useFormData.description,
@@ -1575,57 +1809,28 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
         start_date: useFormData.start_date ? { "time.Time": `${useFormData.start_date}T00:00:00+09:00` } : void 0,
         end_date: useFormData.end_date ? { "time.Time": `${useFormData.end_date}T23:59:59+09:00` } : void 0
       };
-      const originalFolderName = project.name;
-      const savedProject = await onUpdate(updatedProject);
-      const folderNameChanged = originalFolderName && savedProject.name && originalFolderName !== savedProject.name;
-      if (savedProject.name) {
-        const latestProjectResponse = await getProjectGetByPath({
-          path: {
-            path: savedProject.name
-          }
-        });
-        if (latestProjectResponse.data) {
-          const latestProject = latestProjectResponse.data;
-          if (folderNameChanged) {
-            if (onProjectUpdate) {
-              onProjectUpdate(latestProject);
-            }
-            setTimeout(() => {
-              onClose();
-            }, 100);
-            return;
-          }
-          setCurrentProject(latestProject);
-          if (onProjectUpdate) {
-            onProjectUpdate(latestProject);
-          }
-          const startDate = extractDateString(latestProject.start_date);
-          const endDate = extractDateString(latestProject.end_date);
-          setFormData({
-            id: latestProject.id || "",
-            company_name: latestProject.company_name || "",
-            location_name: latestProject.location_name || "",
-            description: latestProject.description || "",
-            tags: Array.isArray(latestProject.tags) ? latestProject.tags.join(", ") : latestProject.tags || "",
-            start_date: startDate,
-            end_date: endDate
-          });
-        }
-      } else {
-        if (onProjectUpdate) {
-          onProjectUpdate(savedProject);
-        }
-        const startDate = extractDateString(savedProject.start_date);
-        const endDate = extractDateString(savedProject.end_date);
-        setFormData({
-          id: savedProject.id || "",
-          company_name: savedProject.company_name || "",
-          location_name: savedProject.location_name || "",
-          description: savedProject.description || "",
-          tags: Array.isArray(savedProject.tags) ? savedProject.tags.join(", ") : savedProject.tags || "",
-          start_date: startDate,
-          end_date: endDate
-        });
+      const originalFolderName = koji.name;
+      const savedKoji = await onUpdate(updatedKoji);
+      const folderNameChanged = originalFolderName && savedKoji.name && originalFolderName !== savedKoji.name;
+      setCurrentKoji(savedKoji);
+      if (onKojiUpdate) {
+        onKojiUpdate(savedKoji);
+      }
+      const startDate = extractDateString(savedKoji.start_date);
+      const endDate = extractDateString(savedKoji.end_date);
+      setFormData({
+        id: savedKoji.id || "",
+        company_name: savedKoji.company_name || "",
+        location_name: savedKoji.location_name || "",
+        description: savedKoji.description || "",
+        tags: Array.isArray(savedKoji.tags) ? savedKoji.tags.join(", ") : savedKoji.tags || "",
+        start_date: startDate,
+        end_date: endDate
+      });
+      if (folderNameChanged) {
+        setTimeout(() => {
+          onClose();
+        }, 100);
       }
     } catch (err) {
       console.error("Error updating field:", err);
@@ -1697,42 +1902,61 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
     });
   };
   const handleRenameFiles = async () => {
-    if (!currentProject || !currentProject.managed_files) return;
+    if (!currentKoji || !currentKoji.managed_files) return;
     setIsRenaming(true);
     setError(null);
     try {
-      const currentFiles = currentProject.managed_files.filter((file) => file.current && file.recommended && file.current !== file.recommended).map((file) => file.current);
+      const currentFiles = currentKoji.managed_files.filter((file) => file.current && file.recommended && file.current !== file.recommended).map((file) => file.current);
       if (currentFiles.length === 0) {
         setError("変更対象のファイルがありません");
         return;
       }
-      const response = await postProjectRenameManagedFile({
+      const response = await putBusinessKojiesManagedFiles({
         body: {
-          project: currentProject,
+          koji: currentKoji,
           currents: currentFiles
         }
       });
       if (response.data) {
-        if (currentProject.name) {
-          const updatedProjectResponse = await getProjectGetByPath({
-            path: {
-              path: currentProject.name
-            }
+        if (typeof response.data === "object" && response.data.id) {
+          const updatedKoji = response.data;
+          setCurrentKoji(updatedKoji);
+          if (onKojiUpdate) {
+            onKojiUpdate(updatedKoji);
+          }
+          const startDate = extractDateString(updatedKoji.start_date);
+          const endDate = extractDateString(updatedKoji.end_date);
+          setFormData({
+            id: updatedKoji.id || "",
+            company_name: updatedKoji.company_name || "",
+            location_name: updatedKoji.location_name || "",
+            description: updatedKoji.description || "",
+            tags: Array.isArray(updatedKoji.tags) ? updatedKoji.tags.join(", ") : updatedKoji.tags || "",
+            start_date: startDate,
+            end_date: endDate
           });
-          if (updatedProjectResponse.data && onProjectUpdate) {
-            setCurrentProject(updatedProjectResponse.data);
-            onProjectUpdate(updatedProjectResponse.data);
-            const startDate = extractDateString(updatedProjectResponse.data.start_date);
-            const endDate = extractDateString(updatedProjectResponse.data.end_date);
-            setFormData({
-              id: updatedProjectResponse.data.id || "",
-              company_name: updatedProjectResponse.data.company_name || "",
-              location_name: updatedProjectResponse.data.location_name || "",
-              description: updatedProjectResponse.data.description || "",
-              tags: Array.isArray(updatedProjectResponse.data.tags) ? updatedProjectResponse.data.tags.join(", ") : updatedProjectResponse.data.tags || "",
-              start_date: startDate,
-              end_date: endDate
+        } else {
+          if (currentKoji.name) {
+            const updatedKojiResponse = await getKojiesByPath({
+              query: {
+                path: currentKoji.name
+              }
             });
+            if (updatedKojiResponse.data && onKojiUpdate) {
+              setCurrentKoji(updatedKojiResponse.data);
+              onKojiUpdate(updatedKojiResponse.data);
+              const startDate = extractDateString(updatedKojiResponse.data.start_date);
+              const endDate = extractDateString(updatedKojiResponse.data.end_date);
+              setFormData({
+                id: updatedKojiResponse.data.id || "",
+                company_name: updatedKojiResponse.data.company_name || "",
+                location_name: updatedKojiResponse.data.location_name || "",
+                description: updatedKojiResponse.data.description || "",
+                tags: Array.isArray(updatedKojiResponse.data.tags) ? updatedKojiResponse.data.tags.join(", ") : updatedKojiResponse.data.tags || "",
+                start_date: startDate,
+                end_date: endDate
+              });
+            }
           }
         }
       } else if (response.error) {
@@ -2037,7 +2261,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
                 children: /* @__PURE__ */ jsx(Typography, { variant: "body2", fontWeight: 500, children: "ファイル名の変更が必要です。このボタンを押下して全ての変更をまとめて更新してください。" })
               }
             ),
-            currentProject?.managed_files && currentProject.managed_files.length > 0 && /* @__PURE__ */ jsxs(Box, { sx: { mb: 3 }, children: [
+            currentKoji?.managed_files && currentKoji.managed_files.length > 0 && /* @__PURE__ */ jsxs(Box, { sx: { mb: 3 }, children: [
               /* @__PURE__ */ jsx(
                 Typography,
                 {
@@ -2061,14 +2285,14 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
                     backgroundColor: "grey.50",
                     p: 2
                   },
-                  children: currentProject.managed_files.map((file, index) => {
+                  children: currentKoji.managed_files.map((file, index) => {
                     const needsRename = file.current && file.recommended && file.current !== file.recommended;
                     return /* @__PURE__ */ jsxs(
                       Paper,
                       {
                         elevation: 0,
                         sx: {
-                          mb: index < currentProject.managed_files.length - 1 ? 2 : 0,
+                          mb: index < currentKoji.managed_files.length - 1 ? 2 : 0,
                           p: 2,
                           backgroundColor: "white",
                           border: "1px solid",
@@ -2108,7 +2332,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
                 }
               )
             ] }),
-            currentProject && (!currentProject.managed_files || currentProject.managed_files.length === 0) && /* @__PURE__ */ jsxs(Box, { sx: { mb: 3 }, children: [
+            currentKoji && (!currentKoji.managed_files || currentKoji.managed_files.length === 0) && /* @__PURE__ */ jsxs(Box, { sx: { mb: 3 }, children: [
               /* @__PURE__ */ jsx(
                 Typography,
                 {
@@ -2146,27 +2370,28 @@ const ProjectDetailModal = ({ isOpen, onClose, project, onUpdate, onProjectUpdat
     }
   );
 };
-const Projects = () => {
-  const [projects, setProjects] = useState([]);
+const Kojies = () => {
+  const [kojies, setKojies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedProject, setSelectedProject] = useState(
+  const [selectedKoji, setSelectedKoji] = useState(
     null
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const { setProjectCount } = useProject();
-  const loadProjects = async () => {
+  const [shouldReloadOnClose, setShouldReloadOnClose] = useState(false);
+  const { setKojiCount } = useKoji();
+  const loadKojies = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getProjectRecent();
+      const response = await getBusinessKojies();
       if (response.data) {
-        setProjects(response.data);
-        setProjectCount(response.data.length);
+        setKojies(response.data);
+        setKojiCount(response.data.length);
       } else {
-        setProjects([]);
-        setProjectCount(0);
+        setKojies([]);
+        setKojiCount(0);
       }
     } catch (err) {
       console.error("Error loading kouji entries:", err);
@@ -2178,65 +2403,63 @@ const Projects = () => {
     }
   };
   useEffect(() => {
-    loadProjects();
+    loadKojies();
   }, []);
-  const handleProjectClick = (project) => {
-    setSelectedProject(project);
+  const handleKojiClick = (koji) => {
+    setSelectedKoji(koji);
     setIsEditModalOpen(true);
   };
-  const updateProject = async (updatedProject) => {
+  const updateKoji = async (updatedKoji) => {
     try {
-      const response = await fetch("http://localhost:8080/api/project/update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updatedProject)
+      const response = await putBusinessKojies({
+        body: updatedKoji
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "更新に失敗しました");
+      if (response.data) {
+        setKojies(
+          (prevKojies) => prevKojies.map((k) => k.path === response.data.path ? response.data : k)
+        );
+        return response.data;
+      } else {
+        throw new Error("更新に失敗しました");
       }
-      const savedProject = await response.json();
-      setProjects(
-        (prevProjects) => prevProjects.map((p) => p.id === savedProject.id ? savedProject : p)
-      );
-      return savedProject;
     } catch (err) {
-      console.error("Error updating project:", err);
+      console.error("Error updating koji:", err);
       throw err;
     }
   };
   const closeEditModal = () => {
     setIsEditModalOpen(false);
-    setSelectedProject(null);
+    setSelectedKoji(null);
   };
-  const needsFileRename = (project) => {
-    if (!project.managed_files || project.managed_files.length === 0) {
+  const needsFileRename = (koji) => {
+    if (!koji.managed_files || koji.managed_files.length === 0) {
       return false;
     }
-    const needsRename = project.managed_files.some((file) => {
+    const needsRename = koji.managed_files.some((file) => {
       return file.current && file.recommended && file.current !== file.recommended;
     });
     return needsRename;
   };
-  const handleProjectUpdate = (updatedProject) => {
-    setSelectedProject(updatedProject);
-    setProjects((prevProjects) => {
-      const existingIndex = prevProjects.findIndex((p) => p.id === updatedProject.id);
+  const handleKojiUpdate = (updatedKoji) => {
+    setSelectedKoji(updatedKoji);
+    if (selectedKoji && selectedKoji.path !== updatedKoji.path) {
+      setShouldReloadOnClose(true);
+    }
+    setKojies((prevKojies) => {
+      const existingIndex = prevKojies.findIndex((k) => k.path === updatedKoji.path);
       if (existingIndex !== -1) {
-        const updatedProjects = [...prevProjects];
-        updatedProjects[existingIndex] = updatedProject;
-        return updatedProjects;
+        const updatedKojies = [...prevKojies];
+        updatedKojies[existingIndex] = updatedKoji;
+        return updatedKojies;
       } else {
-        const oldProjectIndex = prevProjects.findIndex(
-          (p) => p.company_name === updatedProject.company_name && p.location_name === updatedProject.location_name && p.id !== updatedProject.id
+        const oldKojiIndex = prevKojies.findIndex(
+          (k) => selectedKoji && k.path === selectedKoji.path
         );
-        if (oldProjectIndex !== -1) {
-          const updatedProjects = [...prevProjects];
-          updatedProjects.splice(oldProjectIndex, 1);
-          updatedProjects.push(updatedProject);
-          return updatedProjects.sort((a, b) => {
+        if (oldKojiIndex !== -1) {
+          const updatedKojies = [...prevKojies];
+          updatedKojies.splice(oldKojiIndex, 1);
+          updatedKojies.push(updatedKoji);
+          return updatedKojies.sort((a, b) => {
             const dateA = a.start_date ? new Date(typeof a.start_date === "string" ? a.start_date : a.start_date["time.Time"]).getTime() : 0;
             const dateB = b.start_date ? new Date(typeof b.start_date === "string" ? b.start_date : b.start_date["time.Time"]).getTime() : 0;
             if (dateA > 0 && dateB === 0) return -1;
@@ -2245,334 +2468,186 @@ const Projects = () => {
             return (b.name || "").localeCompare(a.name || "");
           });
         } else {
-          return [...prevProjects, updatedProject];
+          return [...prevKojies, updatedKoji];
         }
       }
     });
   };
   if (loading) {
-    return /* @__PURE__ */ jsx("div", { style: { padding: "20px" }, children: /* @__PURE__ */ jsx("div", { children: "工事データを読み込み中..." }) });
+    return /* @__PURE__ */ jsx("div", { className: "business-entity-loading", children: /* @__PURE__ */ jsx("div", { children: "工事データを読み込み中..." }) });
   }
   if (error) {
-    return /* @__PURE__ */ jsxs("div", { style: { padding: "20px" }, children: [
-      /* @__PURE__ */ jsx(
-        "div",
-        {
-          style: {
-            color: "red",
-            padding: "10px",
-            backgroundColor: "#ffe6e6",
-            borderRadius: "4px"
-          },
-          children: error
-        }
-      ),
+    return /* @__PURE__ */ jsxs("div", { className: "business-entity-error", children: [
+      /* @__PURE__ */ jsx("div", { className: "business-entity-error-message", children: error }),
       /* @__PURE__ */ jsx(
         "button",
         {
-          onClick: loadProjects,
-          style: { marginTop: "10px", padding: "10px 20px" },
+          onClick: loadKojies,
+          className: "business-entity-retry-button",
           children: "再試行"
         }
       )
     ] });
   }
-  return /* @__PURE__ */ jsxs("div", { style: {
-    padding: "20px",
-    paddingTop: "60px",
-    flex: 1,
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    boxSizing: "border-box"
-  }, children: [
-    showHelp && /* @__PURE__ */ jsxs(
-      "div",
-      {
-        style: {
-          marginBottom: "20px",
-          padding: "15px",
-          backgroundColor: "#f0f8ff",
-          borderRadius: "4px",
-          border: "1px solid #b3d9ff",
-          position: "relative",
-          flexShrink: 0
+  return /* @__PURE__ */ jsxs("div", { className: "business-entity-container", children: [
+    /* @__PURE__ */ jsxs("div", { className: "business-entity-controls", children: [
+      /* @__PURE__ */ jsx(
+        Link,
+        {
+          to: "/kojies/gantt",
+          className: "business-entity-gantt-button",
+          children: "📊 工程表を表示"
+        }
+      ),
+      /* @__PURE__ */ jsxs("div", { className: "business-entity-count", children: [
+        "全",
+        kojies.length,
+        "件"
+      ] })
+    ] }),
+    showHelp && /* @__PURE__ */ jsxs("div", { className: "business-entity-help-box", children: [
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          onClick: () => setShowHelp(false),
+          className: "business-entity-help-close",
+          title: "閉じる",
+          children: "×"
+        }
+      ),
+      /* @__PURE__ */ jsx("h3", { style: { marginTop: 0 }, children: "使用方法" }),
+      /* @__PURE__ */ jsxs("p", { children: [
+        "📝 ",
+        /* @__PURE__ */ jsx("strong", { children: "リストをクリック" }),
+        "して工事情報を編集できます"
+      ] }),
+      /* @__PURE__ */ jsx("p", { children: "✅ 開始日・終了日・説明・タグ・会社名・現場名を編雈可能" }),
+      /* @__PURE__ */ jsx("p", { children: "💾 編集後は自動で保存されます" }),
+      /* @__PURE__ */ jsx("h3", { style: { marginTop: "15px" }, children: "開発状況" }),
+      /* @__PURE__ */ jsx("p", { children: "✅ 工事データの取得" }),
+      /* @__PURE__ */ jsx("p", { children: "✅ 編集モーダル機能" }),
+      /* @__PURE__ */ jsx("p", { children: "🔄 工程表機能（次のステップ）" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "business-entity-list-container", children: [
+      /* @__PURE__ */ jsxs("div", { className: "business-entity-list-header", children: [
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-date", children: "開始日" }),
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-company", children: "会社名" }),
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-location", children: "現場名" }),
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-spacer" }),
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-date", style: { marginRight: "24px" }, children: "終了日" }),
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-status", children: "ステータス" }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: () => setShowHelp(!showHelp),
+            className: "business-entity-help-button",
+            title: "使用方法を表示",
+            children: "?"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "business-entity-scroll-area", children: kojies.length === 0 ? /* @__PURE__ */ jsx("div", { className: "business-entity-empty", children: "工事データが見つかりません" }) : /* @__PURE__ */ jsx("div", { children: kojies.map((koji, index) => /* @__PURE__ */ jsxs(
+        "div",
+        {
+          className: "business-entity-item-row",
+          onClick: () => handleKojiClick(koji),
+          title: "クリックして編集",
+          children: [
+            /* @__PURE__ */ jsxs("div", { className: "business-entity-item-info", children: [
+              /* @__PURE__ */ jsx("div", { className: "business-entity-item-info-date", children: koji.start_date ? new Date(
+                typeof koji.start_date === "string" ? koji.start_date : koji.start_date["time.Time"]
+              ).toLocaleDateString("ja-JP") : "未設定" }),
+              /* @__PURE__ */ jsx("div", { className: "business-entity-item-info-company", children: koji.company_name || "会社名未設定" }),
+              /* @__PURE__ */ jsx("div", { className: "business-entity-item-info-location", children: koji.location_name || "現場名未設定" }),
+              /* @__PURE__ */ jsx("div", { className: "business-entity-item-info-description", children: koji.description || "" }),
+              /* @__PURE__ */ jsxs("div", { className: "business-entity-item-info-date end-date", style: {
+                marginRight: "24px"
+              }, children: [
+                "～",
+                koji.end_date ? new Date(
+                  typeof koji.end_date === "string" ? koji.end_date : koji.end_date["time.Time"]
+                ).toLocaleDateString("ja-JP") : "未設定"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
+              needsFileRename(koji) && /* @__PURE__ */ jsx(
+                "span",
+                {
+                  className: "business-entity-item-rename-indicator",
+                  title: "管理ファイルの名前変更が必要です",
+                  children: "⚠️"
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "div",
+                {
+                  className: `business-entity-item-status ${koji.status === "進行中" ? "business-entity-item-status-ongoing" : koji.status === "完了" ? "business-entity-item-status-completed" : koji.status === "予定" ? "business-entity-item-status-planned" : ""}`,
+                  children: koji.status || "未設定"
+                }
+              )
+            ] })
+          ]
         },
-        children: [
-          /* @__PURE__ */ jsx(
-            "button",
-            {
-              onClick: () => setShowHelp(false),
-              style: {
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                background: "none",
-                border: "none",
-                fontSize: "16px",
-                cursor: "pointer",
-                color: "#666"
-              },
-              title: "閉じる",
-              children: "×"
-            }
-          ),
-          /* @__PURE__ */ jsx("h3", { style: { marginTop: 0 }, children: "使用方法" }),
-          /* @__PURE__ */ jsxs("p", { children: [
-            "📝 ",
-            /* @__PURE__ */ jsx("strong", { children: "リストをクリック" }),
-            "して工事情報を編集できます"
-          ] }),
-          /* @__PURE__ */ jsx("p", { children: "✅ 開始日・終了日・説明・タグ・会社名・現場名を編集可能" }),
-          /* @__PURE__ */ jsx("p", { children: "💾 編集後は自動で保存されます" }),
-          /* @__PURE__ */ jsx("h3", { style: { marginTop: "15px" }, children: "開発状況" }),
-          /* @__PURE__ */ jsx("p", { children: "✅ 工事データの取得" }),
-          /* @__PURE__ */ jsx("p", { children: "✅ 編集モーダル機能" }),
-          /* @__PURE__ */ jsx("p", { children: "🔄 工程表機能（次のステップ）" })
-        ]
-      }
-    ),
-    /* @__PURE__ */ jsxs(
-      "div",
-      {
-        style: {
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          overflow: "hidden",
-          position: "relative",
-          height: "calc(100vh - 240px)",
-          display: "flex",
-          flexDirection: "column"
-        },
-        children: [
-          /* @__PURE__ */ jsxs(
-            "div",
-            {
-              style: {
-                backgroundColor: "#f5f5f5",
-                padding: "10px 15px",
-                fontWeight: "bold",
-                borderBottom: "1px solid #ddd",
-                display: "flex",
-                alignItems: "center",
-                gap: "16px",
-                flexShrink: 0
-              },
-              children: [
-                /* @__PURE__ */ jsx("div", { style: { minWidth: "90px", textAlign: "center", fontSize: "14px" }, children: "開始日" }),
-                /* @__PURE__ */ jsx("div", { style: { minWidth: "120px", fontSize: "14px" }, children: "会社名" }),
-                /* @__PURE__ */ jsx("div", { style: { minWidth: "120px", fontSize: "14px" }, children: "現場名" }),
-                /* @__PURE__ */ jsx("div", { style: { flex: 1 } }),
-                /* @__PURE__ */ jsx("div", { style: { minWidth: "90px", textAlign: "center", fontSize: "14px", marginRight: "24px" }, children: "終了日" }),
-                /* @__PURE__ */ jsx("div", { style: { minWidth: "80px", textAlign: "center", fontSize: "14px" }, children: "ステータス" }),
-                /* @__PURE__ */ jsx(
-                  Link,
-                  {
-                    to: "/projects/gantt",
-                    style: {
-                      background: "#4CAF50",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      padding: "6px 12px",
-                      fontSize: "12px",
-                      textDecoration: "none",
-                      cursor: "pointer",
-                      transition: "background 0.2s",
-                      marginRight: "8px"
-                    },
-                    onMouseEnter: (e) => {
-                      e.currentTarget.style.background = "#45a049";
-                    },
-                    onMouseLeave: (e) => {
-                      e.currentTarget.style.background = "#4CAF50";
-                    },
-                    children: "📈 ガントチャート"
-                  }
-                ),
-                /* @__PURE__ */ jsx(
-                  "button",
-                  {
-                    onClick: () => setShowHelp(!showHelp),
-                    style: {
-                      background: "none",
-                      border: "1px solid #ccc",
-                      borderRadius: "50%",
-                      width: "24px",
-                      height: "24px",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginLeft: "8px",
-                      color: "#666"
-                    },
-                    title: "使用方法を表示",
-                    children: "?"
-                  }
-                )
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsx("div", { style: {
-            flex: 1,
-            overflowY: "auto",
-            minHeight: 0
-          }, children: projects.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "20px", textAlign: "center", color: "#666" }, children: "工事データが見つかりません" }) : /* @__PURE__ */ jsx("div", { children: projects.map((project, index) => /* @__PURE__ */ jsxs(
-            "div",
-            {
-              style: {
-                padding: "15px",
-                borderBottom: index < projects.length - 1 ? "1px solid #eee" : "none",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                cursor: "pointer",
-                transition: "background-color 0.3s"
-              },
-              onClick: () => handleProjectClick(project),
-              onMouseEnter: (e) => e.currentTarget.style.backgroundColor = "#f8f9fa",
-              onMouseLeave: (e) => e.currentTarget.style.backgroundColor = "transparent",
-              title: "クリックして編集",
-              children: [
-                /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: "16px", width: "100%" }, children: [
-                  /* @__PURE__ */ jsx("div", { style: {
-                    fontWeight: "600",
-                    fontSize: "14px",
-                    color: "#fff",
-                    backgroundColor: "#1976d2",
-                    padding: "3px 8px",
-                    borderRadius: "4px",
-                    minWidth: "90px",
-                    textAlign: "center"
-                  }, children: project.start_date ? new Date(
-                    typeof project.start_date === "string" ? project.start_date : project.start_date["time.Time"]
-                  ).toLocaleDateString("ja-JP") : "未設定" }),
-                  /* @__PURE__ */ jsx("div", { style: {
-                    fontWeight: "600",
-                    fontSize: "16px",
-                    minWidth: "120px"
-                  }, children: project.company_name || "会社名未設定" }),
-                  /* @__PURE__ */ jsx("div", { style: {
-                    fontWeight: "600",
-                    fontSize: "16px",
-                    minWidth: "120px"
-                  }, children: project.location_name || "現場名未設定" }),
-                  /* @__PURE__ */ jsx("div", { style: { flex: 1 } }),
-                  /* @__PURE__ */ jsxs("div", { style: {
-                    fontSize: "14px",
-                    color: "#fff",
-                    backgroundColor: "#666",
-                    padding: "3px 8px",
-                    borderRadius: "4px",
-                    minWidth: "90px",
-                    textAlign: "center",
-                    marginRight: "24px"
-                  }, children: [
-                    "～",
-                    project.end_date ? new Date(
-                      typeof project.end_date === "string" ? project.end_date : project.end_date["time.Time"]
-                    ).toLocaleDateString("ja-JP") : "未設定"
-                  ] })
-                ] }),
-                /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
-                  needsFileRename(project) && /* @__PURE__ */ jsx(
-                    "span",
-                    {
-                      style: {
-                        fontSize: "16px",
-                        filter: "drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))"
-                      },
-                      title: "管理ファイルの名前変更が必要です",
-                      children: "⚠️"
-                    }
-                  ),
-                  /* @__PURE__ */ jsx(
-                    "div",
-                    {
-                      style: {
-                        padding: "4px 16px",
-                        borderRadius: "4px",
-                        backgroundColor: project.status === "進行中" ? "#4CAF50" : project.status === "完了" ? "#9E9E9E" : project.status === "予定" ? "#FF9800" : "#2196F3",
-                        color: "white",
-                        fontSize: "12px",
-                        minWidth: "80px",
-                        textAlign: "center"
-                      },
-                      children: project.status || "未設定"
-                    }
-                  )
-                ] })
-              ]
-            },
-            project.id || index
-          )) }) })
-        ]
-      }
-    ),
+        koji.id || index
+      )) }) })
+    ] }),
     /* @__PURE__ */ jsx(
-      ProjectDetailModal,
+      KojiDetailModal,
       {
         isOpen: isEditModalOpen,
-        onClose: closeEditModal,
-        project: selectedProject,
-        onUpdate: updateProject,
-        onProjectUpdate: handleProjectUpdate
+        onClose: () => {
+          closeEditModal();
+          if (shouldReloadOnClose) {
+            loadKojies();
+            setShouldReloadOnClose(false);
+          }
+        },
+        koji: selectedKoji,
+        onUpdate: updateKoji,
+        onKojiUpdate: handleKojiUpdate
       }
     )
   ] });
 };
-const _layout_projects = UNSAFE_withComponentProps(function ProjectsPage() {
-  return /* @__PURE__ */ jsx("div", {
-    className: "container mx-auto p-4",
-    children: /* @__PURE__ */ jsx("div", {
-      className: "bg-white border border-gray-200 rounded-lg",
-      children: /* @__PURE__ */ jsx("div", {
-        className: "p-6",
-        children: /* @__PURE__ */ jsx(Projects, {})
-      })
-    })
-  });
+const _layout_kojies = UNSAFE_withComponentProps(function KojiesPage() {
+  return /* @__PURE__ */ jsx(Kojies, {});
 });
 const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  default: _layout_projects
+  default: _layout_kojies
 }, Symbol.toStringTag, { value: "Module" }));
-const ProjectGanttChart = () => {
-  const [projects, setProjects] = useState([]);
+const KojiGanttChart = () => {
+  const [kojies, setKojies] = useState([]);
   const [ganttItems, setGanttItems] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedKoji, setSelectedKoji] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewStartDate, setViewStartDate] = useState(/* @__PURE__ */ new Date());
   const [viewEndDate, setViewEndDate] = useState(/* @__PURE__ */ new Date());
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [visibleProjects, setVisibleProjects] = useState([]);
+  const [visibleKojies, setVisibleKojies] = useState([]);
+  const [shouldReloadOnClose, setShouldReloadOnClose] = useState(false);
   const scrollContainerRef = useRef(null);
-  const ITEMS_PER_PAGE = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const MIN_ITEMS = 5;
   const DAY_WIDTH = 10;
   const ROW_HEIGHT = 40;
-  const loadProjects = async () => {
+  const loadKojies = async () => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Loading projects...");
-      const response = await getProjectRecent();
-      console.log("API response:", response);
-      const projects2 = response.data || [];
-      console.log("Projects:", projects2);
-      setProjects(projects2);
+      const response = await getBusinessKojies();
+      const kojies2 = response.data || [];
+      setKojies(kojies2);
     } catch (err) {
-      console.error("Error loading projects:", err);
+      console.error("Error loading kojies:", err);
       setError(`工事データの読み込みに失敗しました: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
       setLoading(false);
     }
   };
   useEffect(() => {
-    loadProjects();
+    loadKojies();
     setHasInitialScrolled(false);
   }, []);
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
@@ -2590,14 +2665,14 @@ const ProjectGanttChart = () => {
     }
   }, [viewStartDate, viewEndDate, ganttItems, hasInitialScrolled]);
   useEffect(() => {
-    if (projects.length === 0) return;
+    if (kojies.length === 0) return;
     let minDate = /* @__PURE__ */ new Date();
     let maxDate = /* @__PURE__ */ new Date();
     let hasValidDate = false;
-    projects.forEach((project) => {
+    kojies.forEach((koji) => {
       try {
-        const startDate = project.start_date ? new Date(project.start_date) : null;
-        const endDate = project.end_date ? new Date(project.end_date) : null;
+        const startDate = koji.start_date ? new Date(koji.start_date) : null;
+        const endDate = koji.end_date ? new Date(koji.end_date) : null;
         if (startDate && !isNaN(startDate.getTime())) {
           if (!hasValidDate || startDate < minDate) {
             minDate = startDate;
@@ -2625,104 +2700,119 @@ const ProjectGanttChart = () => {
       setViewStartDate(start);
       setViewEndDate(end);
     }
-  }, [projects]);
-  const updateVisibleProjects = (scrollLeft = 0) => {
-    if (projects.length === 0 || !scrollContainerRef.current) return;
+  }, [kojies]);
+  const updateVisibleKojies = (scrollLeft = 0) => {
+    if (kojies.length === 0 || !scrollContainerRef.current) return;
     const containerWidth = scrollContainerRef.current.clientWidth;
     const visibleStartDays = scrollLeft / DAY_WIDTH;
     const visibleEndDays = (scrollLeft + containerWidth) / DAY_WIDTH;
     const visibleStartDate = new Date(viewStartDate.getTime() + visibleStartDays * 24 * 60 * 60 * 1e3);
     const visibleEndDate = new Date(viewStartDate.getTime() + visibleEndDays * 24 * 60 * 60 * 1e3);
-    const relevantProjects = projects.filter((project) => {
+    const relevantKojies = kojies.filter((koji) => {
       try {
-        const projectStart = project.start_date ? new Date(project.start_date) : /* @__PURE__ */ new Date();
-        const projectEnd = project.end_date ? new Date(project.end_date) : new Date(projectStart.getTime() + 90 * 24 * 60 * 60 * 1e3);
-        return projectStart <= visibleEndDate && projectEnd >= visibleStartDate;
+        const kojiStart = koji.start_date ? new Date(koji.start_date) : /* @__PURE__ */ new Date();
+        const kojiEnd = koji.end_date ? new Date(koji.end_date) : new Date(kojiStart.getTime() + 90 * 24 * 60 * 60 * 1e3);
+        return kojiStart <= visibleEndDate && kojiEnd >= visibleStartDate;
       } catch {
         return false;
       }
     });
-    const sortedRelevantProjects = relevantProjects.sort((a, b) => {
+    const sortedRelevantKojies = relevantKojies.sort((a, b) => {
       const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
       const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
       return dateA - dateB;
     });
     let baselineDate;
-    if (sortedRelevantProjects.length > 0) {
-      baselineDate = sortedRelevantProjects[0].start_date ? new Date(sortedRelevantProjects[0].start_date).getTime() : 0;
+    if (sortedRelevantKojies.length > 0) {
+      baselineDate = sortedRelevantKojies[0].start_date ? new Date(sortedRelevantKojies[0].start_date).getTime() : 0;
     } else {
       const visibleStartTime = visibleStartDate.getTime();
-      const projectsBeforeVisible = projects.filter((project) => {
-        const projectStartDate = project.start_date ? new Date(project.start_date).getTime() : 0;
-        return projectStartDate <= visibleStartTime;
+      const kojiesBeforeVisible = kojies.filter((koji) => {
+        const kojiStartDate = koji.start_date ? new Date(koji.start_date).getTime() : 0;
+        return kojiStartDate <= visibleStartTime;
       });
-      if (projectsBeforeVisible.length > 0) {
-        const closestProject = projectsBeforeVisible.sort((a, b) => {
+      if (kojiesBeforeVisible.length > 0) {
+        const closestKoji = kojiesBeforeVisible.sort((a, b) => {
           const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
           const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
           return dateB - dateA;
         })[0];
-        baselineDate = closestProject.start_date ? new Date(closestProject.start_date).getTime() : 0;
+        baselineDate = closestKoji.start_date ? new Date(closestKoji.start_date).getTime() : 0;
       } else {
-        const allProjectsSorted2 = [...projects].sort((a, b) => {
+        const allKojiesSorted2 = [...kojies].sort((a, b) => {
           const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
           const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
           return dateA - dateB;
         });
-        if (allProjectsSorted2.length === 0) return;
-        baselineDate = allProjectsSorted2[0].start_date ? new Date(allProjectsSorted2[0].start_date).getTime() : 0;
+        if (allKojiesSorted2.length === 0) return;
+        baselineDate = allKojiesSorted2[0].start_date ? new Date(allKojiesSorted2[0].start_date).getTime() : 0;
       }
     }
-    const allProjectsSorted = [...projects].sort((a, b) => {
+    const allKojiesSorted = [...kojies].sort((a, b) => {
       const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
       const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
       return dateA - dateB;
     });
-    const projectsFromBaselineDate = allProjectsSorted.filter((project) => {
-      const projectStartDate = project.start_date ? new Date(project.start_date).getTime() : 0;
-      return projectStartDate >= baselineDate;
+    const kojiesFromBaselineDate = allKojiesSorted.filter((koji) => {
+      const kojiStartDate = koji.start_date ? new Date(koji.start_date).getTime() : 0;
+      return kojiStartDate >= baselineDate;
     });
-    let finalProjects = projectsFromBaselineDate.slice(0, ITEMS_PER_PAGE);
-    if (finalProjects.length < ITEMS_PER_PAGE) {
-      const allProjectsDescending = [...projects].sort((a, b) => {
+    let finalKojies = kojiesFromBaselineDate.slice(0, itemsPerPage);
+    if (finalKojies.length < itemsPerPage) {
+      const allKojiesDescending = [...kojies].sort((a, b) => {
         const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
         const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
         return dateB - dateA;
       });
-      finalProjects = allProjectsDescending.slice(0, ITEMS_PER_PAGE).sort((a, b) => {
+      finalKojies = allKojiesDescending.slice(0, itemsPerPage).sort((a, b) => {
         const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
         const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
         return dateA - dateB;
       });
     }
-    setVisibleProjects(finalProjects);
+    setVisibleKojies(finalKojies);
   };
   const handleScroll = () => {
     if (scrollContainerRef.current) {
-      updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+      updateVisibleKojies(scrollContainerRef.current.scrollLeft);
     }
   };
   useEffect(() => {
-    if (projects.length > 0 && scrollContainerRef.current) {
-      updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+    if (kojies.length > 0 && scrollContainerRef.current) {
+      updateVisibleKojies(scrollContainerRef.current.scrollLeft);
     }
-  }, [projects, viewStartDate]);
+  }, [kojies, viewStartDate, itemsPerPage]);
+  const calculateItemsPerPage = () => {
+    if (!scrollContainerRef.current) return MIN_ITEMS;
+    const containerHeight = scrollContainerRef.current.clientHeight;
+    const availableHeight = containerHeight - 55;
+    const maxItems = Math.floor(availableHeight / ROW_HEIGHT);
+    return Math.max(MIN_ITEMS, maxItems);
+  };
   useEffect(() => {
     const handleResize = () => {
       if (scrollContainerRef.current) {
-        updateVisibleProjects(scrollContainerRef.current.scrollLeft);
+        const newItemsPerPage = calculateItemsPerPage();
+        setItemsPerPage(newItemsPerPage);
+        updateVisibleKojies(scrollContainerRef.current.scrollLeft);
       }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [projects, viewStartDate]);
+  }, [kojies, viewStartDate]);
   useEffect(() => {
-    if (visibleProjects.length === 0) return;
-    const items = visibleProjects.map((project, index) => {
+    if (scrollContainerRef.current && ganttItems.length > 0) {
+      const newItemsPerPage = calculateItemsPerPage();
+      setItemsPerPage(newItemsPerPage);
+    }
+  }, [ganttItems.length]);
+  useEffect(() => {
+    if (visibleKojies.length === 0) return;
+    const items = visibleKojies.map((koji, index) => {
       let startDate;
       let endDate;
       try {
-        startDate = project.start_date ? new Date(project.start_date) : /* @__PURE__ */ new Date();
+        startDate = koji.start_date ? new Date(koji.start_date) : /* @__PURE__ */ new Date();
         if (isNaN(startDate.getTime())) {
           startDate = /* @__PURE__ */ new Date();
         }
@@ -2730,7 +2820,7 @@ const ProjectGanttChart = () => {
         startDate = /* @__PURE__ */ new Date();
       }
       try {
-        endDate = project.end_date ? new Date(project.end_date) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1e3);
+        endDate = koji.end_date ? new Date(koji.end_date) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1e3);
         if (isNaN(endDate.getTime())) {
           endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1e3);
         }
@@ -2743,30 +2833,30 @@ const ProjectGanttChart = () => {
       const endX = endDaysDiff * DAY_WIDTH;
       const width = Math.max(DAY_WIDTH, endX - startX);
       return {
-        ...project,
+        ...koji,
         startX: isNaN(startX) ? 0 : startX,
         width: isNaN(width) ? DAY_WIDTH : width,
         row: index
       };
     });
     setGanttItems(items);
-  }, [visibleProjects, viewStartDate]);
-  const handleProjectEdit = (project) => {
-    setSelectedProject(project);
+  }, [visibleKojies, viewStartDate]);
+  const handleKojiEdit = (koji) => {
+    setSelectedKoji(koji);
     setIsEditModalOpen(true);
   };
-  const handleProjectNameClick = (project) => {
+  const handleKojiNameClick = (koji) => {
     if (!scrollContainerRef.current) return;
     try {
-      const projectStart = project.start_date ? new Date(project.start_date) : /* @__PURE__ */ new Date();
-      const projectEnd = project.end_date ? new Date(project.end_date) : new Date(projectStart.getTime() + 90 * 24 * 60 * 60 * 1e3);
-      const projectMiddle = new Date((projectStart.getTime() + projectEnd.getTime()) / 2);
-      const middleX = (projectMiddle.getTime() - viewStartDate.getTime()) / (1e3 * 60 * 60 * 24) * DAY_WIDTH;
+      const kojiStart = koji.start_date ? new Date(koji.start_date) : /* @__PURE__ */ new Date();
+      const kojiEnd = koji.end_date ? new Date(koji.end_date) : new Date(kojiStart.getTime() + 90 * 24 * 60 * 60 * 1e3);
+      const kojiMiddle = new Date((kojiStart.getTime() + kojiEnd.getTime()) / 2);
+      const middleX = (kojiMiddle.getTime() - viewStartDate.getTime()) / (1e3 * 60 * 60 * 24) * DAY_WIDTH;
       const containerWidth = scrollContainerRef.current.clientWidth;
       const scrollPosition = Math.max(0, middleX - containerWidth / 2);
       scrollContainerRef.current.scrollLeft = scrollPosition;
     } catch (error2) {
-      console.error("Error calculating project center:", error2);
+      console.error("Error calculating koji center:", error2);
     }
   };
   const scrollToToday = () => {
@@ -2776,44 +2866,44 @@ const ProjectGanttChart = () => {
     const scrollPosition = Math.max(0, todayX - containerWidth / 2);
     scrollContainerRef.current.scrollLeft = scrollPosition;
   };
-  const updateProject = async (updatedProject) => {
+  const updateKoji = async (updatedKoji) => {
     try {
-      const response = await fetch("http://localhost:8080/api/project/update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updatedProject)
+      const response = await putBusinessKojies({
+        body: updatedKoji
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "更新に失敗しました");
+      if (response.data) {
+        setKojies(
+          (prevKojies) => prevKojies.map((k) => k.path === response.data.path ? response.data : k)
+        );
+        return response.data;
+      } else {
+        throw new Error("更新に失敗しました");
       }
-      const savedProject = await response.json();
-      setProjects(
-        (prevProjects) => prevProjects.map((p) => p.id === savedProject.id ? savedProject : p)
-      );
-      return savedProject;
     } catch (err) {
-      console.error("Error updating project:", err);
+      console.error("Error updating koji:", err);
       throw err;
     }
   };
-  const handleProjectUpdate = (updatedProject) => {
-    setProjects((prevProjects) => {
-      const existingIndex = prevProjects.findIndex((p) => p.id === updatedProject.id);
+  const handleKojiUpdate = (updatedKoji) => {
+    setSelectedKoji(updatedKoji);
+    if (selectedKoji && selectedKoji.path !== updatedKoji.path) {
+      setShouldReloadOnClose(true);
+    }
+    setKojies((prevKojies) => {
+      const existingIndex = prevKojies.findIndex((k) => k.path === updatedKoji.path);
       if (existingIndex !== -1) {
-        const updatedProjects = [...prevProjects];
-        updatedProjects[existingIndex] = updatedProject;
-        return updatedProjects;
-      }
-      if (selectedProject && selectedProject.id !== updatedProject.id) {
-        const oldProjectIndex = prevProjects.findIndex((p) => p.id === selectedProject.id);
-        if (oldProjectIndex !== -1) {
-          const updatedProjects = [...prevProjects];
-          updatedProjects.splice(oldProjectIndex, 1);
-          updatedProjects.push(updatedProject);
-          return updatedProjects.sort((a, b) => {
+        const updatedKojies = [...prevKojies];
+        updatedKojies[existingIndex] = updatedKoji;
+        return updatedKojies;
+      } else {
+        const oldKojiIndex = prevKojies.findIndex(
+          (k) => selectedKoji && k.path === selectedKoji.path
+        );
+        if (oldKojiIndex !== -1) {
+          const updatedKojies = [...prevKojies];
+          updatedKojies.splice(oldKojiIndex, 1);
+          updatedKojies.push(updatedKoji);
+          return updatedKojies.sort((a, b) => {
             const dateA = a.start_date ? new Date(typeof a.start_date === "string" ? a.start_date : a.start_date["time.Time"]).getTime() : 0;
             const dateB = b.start_date ? new Date(typeof b.start_date === "string" ? b.start_date : b.start_date["time.Time"]).getTime() : 0;
             if (dateA > 0 && dateB === 0) return -1;
@@ -2821,11 +2911,11 @@ const ProjectGanttChart = () => {
             if (dateA > 0 && dateB > 0) return dateA - dateB;
             return (a.name || "").localeCompare(b.name || "");
           });
+        } else {
+          return [...prevKojies, updatedKoji];
         }
       }
-      return [...prevProjects, updatedProject];
     });
-    setSelectedProject(updatedProject);
   };
   const getStatusColor = (status) => {
     switch (status) {
@@ -2839,11 +2929,11 @@ const ProjectGanttChart = () => {
         return "#2196F3";
     }
   };
-  const needsFileRename = (project) => {
-    if (!project.managed_files || project.managed_files.length === 0) {
+  const needsFileRename = (koji) => {
+    if (!koji.managed_files || koji.managed_files.length === 0) {
       return false;
     }
-    const needsRename = project.managed_files.some((file) => {
+    const needsRename = koji.managed_files.some((file) => {
       return file.current && file.recommended && file.current !== file.recommended;
     });
     return needsRename;
@@ -2870,7 +2960,7 @@ const ProjectGanttChart = () => {
     const current = new Date(viewStartDate);
     while (current <= viewEndDate) {
       const day = current.getDate();
-      if (day === 1 || day % 3 === 1) {
+      if ((day === 1 || day % 3 === 1) && day !== 31) {
         headers.push({
           date: day,
           month: current.getMonth() + 1,
@@ -2909,35 +2999,35 @@ const ProjectGanttChart = () => {
   const monthBoundaries = generateMonthBoundaries();
   const totalWidth = (viewEndDate.getTime() - viewStartDate.getTime()) / (1e3 * 60 * 60 * 24) * DAY_WIDTH;
   return /* @__PURE__ */ jsxs("div", { className: "gantt-container", children: [
-    /* @__PURE__ */ jsx("h1", { children: "工程表" }),
-    /* @__PURE__ */ jsxs("div", { className: "gantt-controls", children: [
+    /* @__PURE__ */ jsxs("div", { style: {
+      marginBottom: "20px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }, children: [
       /* @__PURE__ */ jsx(
         "button",
         {
           onClick: scrollToToday,
-          style: {
-            padding: "8px 16px",
-            background: "#FF5252",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "14px"
-          },
-          children: "今日へ移動"
+          className: "gantt-today-button",
+          children: "📅 今日へ移動"
         }
       ),
-      /* @__PURE__ */ jsx("div", { className: "info", children: /* @__PURE__ */ jsxs("span", { children: [
+      /* @__PURE__ */ jsxs("div", { style: {
+        fontSize: "16px",
+        color: "#666",
+        fontWeight: "500"
+      }, children: [
         "表示中: ",
         ganttItems.length,
         "件 / 全",
-        projects.length,
+        kojies.length,
         "件"
-      ] }) })
+      ] })
     ] }),
     /* @__PURE__ */ jsxs("div", { className: "gantt-wrapper", children: [
       /* @__PURE__ */ jsxs("div", { className: "gantt-sidebar", children: [
-        /* @__PURE__ */ jsx("div", { className: "gantt-header-left", children: "工事名" }),
+        /* @__PURE__ */ jsx("div", { className: "gantt-header-left", children: "会社名" }),
         ganttItems.map((item, index) => {
           const today = /* @__PURE__ */ new Date();
           let startDate;
@@ -2954,32 +3044,21 @@ const ProjectGanttChart = () => {
           } catch {
             endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1e3);
           }
-          const isActiveProject = today >= startDate && today <= endDate;
+          const isActiveKoji = today >= startDate && today <= endDate;
           return /* @__PURE__ */ jsx(
             "div",
             {
-              className: "gantt-row-label",
+              className: `gantt-row-label ${isActiveKoji ? "gantt-row-label-active" : ""}`,
               style: {
-                height: ROW_HEIGHT,
-                backgroundColor: isActiveProject ? "#fff3cd" : "transparent",
-                borderLeft: isActiveProject ? "4px solid #ffc107" : "none"
+                height: ROW_HEIGHT
               },
-              children: /* @__PURE__ */ jsxs(
+              children: /* @__PURE__ */ jsx(
                 "div",
                 {
-                  className: "project-name",
-                  style: {
-                    fontWeight: isActiveProject ? "bold" : "normal",
-                    color: isActiveProject ? "#856404" : "inherit",
-                    cursor: "pointer"
-                  },
-                  onClick: () => handleProjectNameClick(item),
-                  title: "クリックしてプロジェクト期間の中央に移動",
-                  children: [
-                    item.company_name,
-                    " - ",
-                    item.location_name
-                  ]
+                  className: `koji-name koji-name-clickable ${isActiveKoji ? "koji-name-active" : ""}`,
+                  onClick: () => handleKojiNameClick(item),
+                  title: "クリックして工事期間の中央に移動",
+                  children: item.company_name
                 }
               )
             },
@@ -2991,20 +3070,10 @@ const ProjectGanttChart = () => {
         /* @__PURE__ */ jsx("div", { className: "gantt-header month-header-row", style: { height: "30px" }, children: monthHeaders.map((header, index) => /* @__PURE__ */ jsxs(
           "div",
           {
-            className: "month-header",
+            className: "month-header month-header-content",
             style: {
-              position: "absolute",
               left: header.startX,
-              width: header.width,
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#e8f4fd",
-              borderRight: "1px solid #ddd",
-              fontWeight: "bold",
-              fontSize: "13px",
-              color: "#0066cc"
+              width: header.width
             },
             children: [
               header.year,
@@ -3015,44 +3084,43 @@ const ProjectGanttChart = () => {
           },
           index
         )) }),
-        /* @__PURE__ */ jsx("div", { className: "gantt-header day-header-row", style: { height: "25px", borderBottom: "2px solid #333" }, children: dayHeaders.map((header, index) => /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx("div", { className: "gantt-header day-header-row", style: { height: "25px", borderBottom: "1px solid #333" }, children: dayHeaders.map((header, index) => /* @__PURE__ */ jsx(
           "div",
           {
-            className: "day-header",
+            className: "day-header day-header-content",
             style: {
-              position: "absolute",
               left: header.startX,
-              width: header.width,
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#f5f5f5",
-              borderRight: "1px solid #ddd",
-              fontSize: "11px",
-              fontWeight: "500"
+              width: header.width
             },
             children: header.date
           },
           index
+        )) }),
+        /* @__PURE__ */ jsx("div", { className: "gantt-month-boundaries", style: { top: 0, height: "100%" }, children: monthBoundaries.map((boundary, index) => /* @__PURE__ */ jsx(
+          "div",
+          {
+            className: "month-boundary-line",
+            style: {
+              left: boundary.startX,
+              top: 0,
+              height: Math.max(400, itemsPerPage * ROW_HEIGHT + 55)
+              // ヘッダー分も含む
+            },
+            title: `${boundary.year}年${boundary.month}月開始`
+          },
+          `month-boundary-${index}`
         )) }),
         /* @__PURE__ */ jsxs("div", { className: "gantt-body", children: [
           /* @__PURE__ */ jsx("div", { className: "gantt-grid", children: dayHeaders.map((header, index) => /* @__PURE__ */ jsx(
             "div",
             {
               className: "grid-line",
-              style: { left: header.startX }
+              style: {
+                left: header.startX,
+                height: Math.max(400, itemsPerPage * ROW_HEIGHT)
+              }
             },
             index
-          )) }),
-          /* @__PURE__ */ jsx("div", { className: "gantt-month-boundaries", children: monthBoundaries.map((boundary, index) => /* @__PURE__ */ jsx(
-            "div",
-            {
-              className: "month-boundary-line",
-              style: { left: boundary.startX },
-              title: `${boundary.year}年${boundary.month}月開始`
-            },
-            `month-boundary-${index}`
           )) }),
           /* @__PURE__ */ jsx("div", { className: "gantt-horizontal-grid", children: ganttItems.map((_, index) => /* @__PURE__ */ jsx(
             "div",
@@ -3072,11 +3140,11 @@ const ProjectGanttChart = () => {
               style: {
                 left: item.startX,
                 width: item.width,
-                top: index * ROW_HEIGHT + 5,
-                height: ROW_HEIGHT - 10,
+                top: index * ROW_HEIGHT + 10,
+                height: ROW_HEIGHT - 15,
                 backgroundColor: getStatusColor(item.status)
               },
-              onClick: () => handleProjectEdit(item),
+              onClick: () => handleKojiEdit(item),
               title: `${item.company_name} - ${item.location_name} (クリックして編集)`,
               children: [
                 /* @__PURE__ */ jsx("span", { className: "gantt-bar-text", children: item.location_name }),
@@ -3099,7 +3167,8 @@ const ProjectGanttChart = () => {
               style: {
                 left: Math.floor(((/* @__PURE__ */ new Date()).setHours(0, 0, 0, 0) - viewStartDate.getTime()) / (1e3 * 60 * 60 * 24)) * DAY_WIDTH,
                 width: DAY_WIDTH,
-                height: "100%",
+                height: Math.max(400, itemsPerPage * ROW_HEIGHT),
+                // 動的な高さ
                 backgroundColor: "rgba(255, 192, 203, 0.3)",
                 // 薄いピンク
                 position: "absolute",
@@ -3113,34 +3182,871 @@ const ProjectGanttChart = () => {
       ] }) })
     ] }),
     /* @__PURE__ */ jsx(
-      ProjectDetailModal,
+      KojiDetailModal,
       {
         isOpen: isEditModalOpen,
-        onClose: () => setIsEditModalOpen(false),
-        project: selectedProject,
-        onUpdate: updateProject,
-        onProjectUpdate: handleProjectUpdate
+        onClose: () => {
+          setIsEditModalOpen(false);
+          if (shouldReloadOnClose) {
+            loadKojies();
+            setShouldReloadOnClose(false);
+          }
+        },
+        koji: selectedKoji,
+        onUpdate: updateKoji,
+        onKojiUpdate: handleKojiUpdate
       }
     )
   ] });
 };
 const _layout_gantt = UNSAFE_withComponentProps(function GanttChartPage() {
-  return /* @__PURE__ */ jsx("div", {
-    className: "container mx-auto p-4",
-    children: /* @__PURE__ */ jsx("div", {
-      className: "bg-white border border-gray-200 rounded-lg",
-      children: /* @__PURE__ */ jsx("div", {
-        className: "p-6",
-        children: /* @__PURE__ */ jsx(ProjectGanttChart, {})
-      })
-    })
-  });
+  return /* @__PURE__ */ jsx(KojiGanttChart, {});
 });
 const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: _layout_gantt
 }, Symbol.toStringTag, { value: "Module" }));
-const serverManifest = { "entry": { "module": "/assets/entry.client-BR_5jt8X.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/index-BXUbddt1.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/root-CmFF9zS-.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/index-BXUbddt1.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout": { "id": "routes/_layout", "parentId": "root", "path": void 0, "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout-BGsERk8U.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/FileInfoContext-NxQDI7MG.js", "/assets/ProjectContext-DQ4aDs3-.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout._index": { "id": "routes/_layout._index", "parentId": "routes/_layout", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout._index-BxvzRpYg.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout.files": { "id": "routes/_layout.files", "parentId": "routes/_layout", "path": "files", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout.files-3x5L2HQM.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/sdk.gen-C0JJsBdk.js", "/assets/FileInfoContext-NxQDI7MG.js", "/assets/index-BXUbddt1.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout.projects": { "id": "routes/_layout.projects", "parentId": "routes/_layout", "path": "projects", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout.projects-BhJjnzM-.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/sdk.gen-C0JJsBdk.js", "/assets/ProjectDetailModal-BfP-5M3c.js", "/assets/ProjectContext-DQ4aDs3-.js", "/assets/index-BXUbddt1.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout.gantt": { "id": "routes/_layout.gantt", "parentId": "routes/_layout", "path": "projects/gantt", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout.gantt-yY0nxKIi.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/sdk.gen-C0JJsBdk.js", "/assets/ProjectDetailModal-BfP-5M3c.js", "/assets/index-BXUbddt1.js"], "css": ["/assets/_layout-TDnedI-G.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-b0e28d63.js", "version": "b0e28d63", "sri": void 0 };
+const CompanyDetailModal = ({
+  isOpen,
+  onClose,
+  company,
+  onCompanyUpdate
+}) => {
+  const [formData, setFormData] = useState({
+    id: "",
+    name: "",
+    short_name: "",
+    business_type: "",
+    phone: "",
+    email: "",
+    website: "",
+    address: "",
+    description: "",
+    tags: ""
+  });
+  const [currentCompany, setCurrentCompany] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  useEffect(() => {
+    if (company) {
+      setCurrentCompany(company);
+      const newFormData = {
+        id: company.id || "",
+        name: company.name || "",
+        short_name: company.short_name || "",
+        business_type: company.business_type || "",
+        phone: company.phone || "",
+        email: company.email || "",
+        website: company.website || "",
+        address: company.address || "",
+        tags: Array.isArray(company.tags) ? company.tags.join(", ") : company.tags || ""
+      };
+      setFormData(newFormData);
+      setError(null);
+      setIsEditing(false);
+      setHasChanges(false);
+    }
+  }, [company]);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+    setHasChanges(true);
+  };
+  const handleEditToggle = () => {
+    if (isEditing && hasChanges) {
+      if (confirm("変更を破棄しますか？")) {
+        if (company) {
+          setFormData({
+            id: company.id || "",
+            name: company.name || "",
+            short_name: company.short_name || "",
+            business_type: company.business_type || "",
+            phone: company.phone || "",
+            email: company.email || "",
+            website: company.website || "",
+            address: company.address || "",
+            tags: Array.isArray(company.tags) ? company.tags.join(", ") : company.tags || ""
+          });
+        }
+        setIsEditing(false);
+        setHasChanges(false);
+      }
+    } else {
+      setIsEditing(!isEditing);
+      setHasChanges(false);
+    }
+  };
+  const handleUpdate = async () => {
+    if (!company) {
+      setError("会社データがありません");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const tagsArray = formData.tags ? formData.tags.split(",").map((tag) => tag.trim()).filter((tag) => tag.length > 0) : [];
+      const updatedCompany = {
+        ...company,
+        name: formData.name,
+        short_name: formData.short_name,
+        business_type: formData.business_type,
+        phone: formData.phone,
+        email: formData.email,
+        website: formData.website,
+        address: formData.address,
+        tags: tagsArray
+      };
+      const response = await putBusinessCompanies({
+        body: updatedCompany
+      });
+      if (response.data) {
+        setCurrentCompany(response.data);
+        setIsEditing(false);
+        setHasChanges(false);
+        if (onCompanyUpdate) {
+          onCompanyUpdate(response.data);
+        }
+        setError(null);
+      } else {
+        throw new Error("更新レスポンスが無効です");
+      }
+    } catch (err) {
+      console.error("Error updating company:", err);
+      setError(err instanceof Error ? err.message : "会社情報の更新に失敗しました");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const displayTags = currentCompany?.tags ? Array.isArray(currentCompany.tags) ? currentCompany.tags : [currentCompany.tags] : [];
+  return /* @__PURE__ */ jsxs(
+    Dialog,
+    {
+      open: isOpen,
+      onClose,
+      maxWidth: "md",
+      fullWidth: true,
+      slotProps: {
+        paper: {
+          sx: {
+            borderRadius: 2,
+            minHeight: "500px"
+          }
+        }
+      },
+      children: [
+        /* @__PURE__ */ jsxs(
+          DialogTitle,
+          {
+            sx: {
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              pb: 1
+            },
+            children: [
+              /* @__PURE__ */ jsxs(Box, { sx: { display: "flex", alignItems: "center", gap: 1 }, children: [
+                /* @__PURE__ */ jsx(Typography, { variant: "h6", component: "h2", children: "会社詳細情報" }),
+                isEditing && /* @__PURE__ */ jsx(
+                  Chip,
+                  {
+                    label: "編集中",
+                    color: "warning",
+                    size: "small",
+                    icon: /* @__PURE__ */ jsx(EditIcon, {})
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxs(Box, { sx: { display: "flex", gap: 1 }, children: [
+                /* @__PURE__ */ jsx(
+                  Button,
+                  {
+                    variant: isEditing ? "outlined" : "contained",
+                    size: "small",
+                    onClick: handleEditToggle,
+                    startIcon: isEditing ? /* @__PURE__ */ jsx(CancelIcon, {}) : /* @__PURE__ */ jsx(EditIcon, {}),
+                    color: isEditing ? "secondary" : "primary",
+                    children: isEditing ? "キャンセル" : "編集"
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  IconButton,
+                  {
+                    onClick: onClose,
+                    size: "small",
+                    sx: {
+                      color: "grey.500"
+                    },
+                    children: /* @__PURE__ */ jsx(CloseIcon, {})
+                  }
+                )
+              ] })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs(DialogContent, { dividers: true, children: [
+          error && /* @__PURE__ */ jsx(Alert, { severity: "error", sx: { mb: 2 }, children: error }),
+          /* @__PURE__ */ jsxs(Box, { sx: { mt: 1 }, children: [
+            /* @__PURE__ */ jsxs(Box, { sx: { display: "flex", gap: 2, mb: 3, flexDirection: { xs: "column", sm: "row" } }, children: [
+              /* @__PURE__ */ jsx(Box, { sx: { flex: 1 }, children: /* @__PURE__ */ jsxs(
+                Paper,
+                {
+                  elevation: 0,
+                  sx: {
+                    p: 2,
+                    backgroundColor: "primary.50",
+                    border: "2px solid",
+                    borderColor: "primary.200",
+                    borderRadius: 2
+                  },
+                  children: [
+                    /* @__PURE__ */ jsxs(
+                      Typography,
+                      {
+                        variant: "subtitle2",
+                        sx: {
+                          color: "primary.main",
+                          fontWeight: 600,
+                          mb: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1
+                        },
+                        children: [
+                          /* @__PURE__ */ jsx(BusinessIcon, { fontSize: "small" }),
+                          "会社名"
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      TextField,
+                      {
+                        fullWidth: true,
+                        size: "small",
+                        name: "name",
+                        value: formData.name,
+                        onChange: handleInputChange,
+                        disabled: isLoading || !isEditing,
+                        sx: {
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: isEditing ? "white" : "grey.50"
+                          }
+                        }
+                      }
+                    )
+                  ]
+                }
+              ) }),
+              /* @__PURE__ */ jsx(Box, { sx: { flex: 1 }, children: /* @__PURE__ */ jsxs(
+                Paper,
+                {
+                  elevation: 0,
+                  sx: {
+                    p: 2,
+                    backgroundColor: "grey.50",
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2
+                  },
+                  children: [
+                    /* @__PURE__ */ jsx(
+                      Typography,
+                      {
+                        variant: "subtitle2",
+                        sx: {
+                          color: "text.primary",
+                          fontWeight: 500,
+                          mb: 1
+                        },
+                        children: "略称"
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      TextField,
+                      {
+                        fullWidth: true,
+                        size: "small",
+                        name: "short_name",
+                        value: formData.short_name,
+                        onChange: handleInputChange,
+                        disabled: isLoading || !isEditing,
+                        sx: {
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: isEditing ? "white" : "grey.50"
+                          }
+                        }
+                      }
+                    )
+                  ]
+                }
+              ) })
+            ] }),
+            /* @__PURE__ */ jsxs(Box, { sx: { display: "flex", gap: 2, mb: 3, flexDirection: { xs: "column", sm: "row" } }, children: [
+              /* @__PURE__ */ jsx(Box, { sx: { flex: 1 }, children: /* @__PURE__ */ jsxs(
+                Paper,
+                {
+                  elevation: 0,
+                  sx: {
+                    p: 2,
+                    backgroundColor: "grey.50",
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2
+                  },
+                  children: [
+                    /* @__PURE__ */ jsx(
+                      Typography,
+                      {
+                        variant: "subtitle2",
+                        sx: {
+                          color: "text.primary",
+                          fontWeight: 500,
+                          mb: 1
+                        },
+                        children: "業種"
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      TextField,
+                      {
+                        fullWidth: true,
+                        size: "small",
+                        name: "business_type",
+                        value: formData.business_type,
+                        onChange: handleInputChange,
+                        disabled: isLoading || !isEditing,
+                        sx: {
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: isEditing ? "white" : "grey.50"
+                          }
+                        }
+                      }
+                    )
+                  ]
+                }
+              ) }),
+              /* @__PURE__ */ jsx(Box, { sx: { flex: 1 }, children: /* @__PURE__ */ jsxs(
+                Paper,
+                {
+                  elevation: 0,
+                  sx: {
+                    p: 2,
+                    backgroundColor: "grey.50",
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2
+                  },
+                  children: [
+                    /* @__PURE__ */ jsx(
+                      Typography,
+                      {
+                        variant: "subtitle2",
+                        sx: {
+                          color: "text.primary",
+                          fontWeight: 500,
+                          mb: 1
+                        },
+                        children: "ID"
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      Typography,
+                      {
+                        variant: "body2",
+                        sx: {
+                          fontFamily: "monospace",
+                          padding: "8px 12px",
+                          backgroundColor: "white",
+                          border: "1px solid",
+                          borderColor: "grey.300",
+                          borderRadius: 1,
+                          color: "grey.700"
+                        },
+                        children: formData.id || "ID未設定"
+                      }
+                    )
+                  ]
+                }
+              ) })
+            ] }),
+            /* @__PURE__ */ jsxs(Box, { sx: { display: "flex", gap: 2, mb: 3, flexDirection: { xs: "column", sm: "row" } }, children: [
+              /* @__PURE__ */ jsx(Box, { sx: { flex: 1 }, children: /* @__PURE__ */ jsxs(
+                Paper,
+                {
+                  elevation: 0,
+                  sx: {
+                    p: 2,
+                    backgroundColor: "grey.50",
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2
+                  },
+                  children: [
+                    /* @__PURE__ */ jsxs(
+                      Typography,
+                      {
+                        variant: "subtitle2",
+                        sx: {
+                          color: "text.primary",
+                          fontWeight: 500,
+                          mb: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1
+                        },
+                        children: [
+                          /* @__PURE__ */ jsx(PhoneIcon, { fontSize: "small" }),
+                          "電話番号"
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      TextField,
+                      {
+                        fullWidth: true,
+                        size: "small",
+                        name: "phone",
+                        value: formData.phone,
+                        onChange: handleInputChange,
+                        disabled: isLoading || !isEditing,
+                        sx: {
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: isEditing ? "white" : "grey.50"
+                          }
+                        }
+                      }
+                    )
+                  ]
+                }
+              ) }),
+              /* @__PURE__ */ jsx(Box, { sx: { flex: 1 }, children: /* @__PURE__ */ jsxs(
+                Paper,
+                {
+                  elevation: 0,
+                  sx: {
+                    p: 2,
+                    backgroundColor: "grey.50",
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2
+                  },
+                  children: [
+                    /* @__PURE__ */ jsxs(
+                      Typography,
+                      {
+                        variant: "subtitle2",
+                        sx: {
+                          color: "text.primary",
+                          fontWeight: 500,
+                          mb: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1
+                        },
+                        children: [
+                          /* @__PURE__ */ jsx(EmailIcon, { fontSize: "small" }),
+                          "メールアドレス"
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      TextField,
+                      {
+                        fullWidth: true,
+                        size: "small",
+                        name: "email",
+                        type: "email",
+                        value: formData.email,
+                        onChange: handleInputChange,
+                        disabled: isLoading || !isEditing,
+                        sx: {
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: isEditing ? "white" : "grey.50"
+                          }
+                        }
+                      }
+                    )
+                  ]
+                }
+              ) })
+            ] }),
+            /* @__PURE__ */ jsx(Box, { sx: { display: "flex", gap: 2, mb: 3, flexDirection: { xs: "column", sm: "row" } }, children: /* @__PURE__ */ jsx(Box, { sx: { flex: 1 }, children: /* @__PURE__ */ jsxs(
+              Paper,
+              {
+                elevation: 0,
+                sx: {
+                  p: 2,
+                  backgroundColor: "grey.50",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                  borderRadius: 2
+                },
+                children: [
+                  /* @__PURE__ */ jsxs(
+                    Typography,
+                    {
+                      variant: "subtitle2",
+                      sx: {
+                        color: "text.primary",
+                        fontWeight: 500,
+                        mb: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1
+                      },
+                      children: [
+                        /* @__PURE__ */ jsx(LanguageIcon, { fontSize: "small" }),
+                        "ウェブサイト"
+                      ]
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    TextField,
+                    {
+                      fullWidth: true,
+                      size: "small",
+                      name: "website",
+                      type: "url",
+                      value: formData.website,
+                      onChange: handleInputChange,
+                      disabled: isLoading || !isEditing,
+                      sx: {
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: isEditing ? "white" : "grey.50"
+                        }
+                      }
+                    }
+                  )
+                ]
+              }
+            ) }) }),
+            /* @__PURE__ */ jsx(Box, { sx: { mb: 3 }, children: /* @__PURE__ */ jsxs(
+              Paper,
+              {
+                elevation: 0,
+                sx: {
+                  p: 2,
+                  backgroundColor: "grey.50",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                  borderRadius: 2
+                },
+                children: [
+                  /* @__PURE__ */ jsx(
+                    Typography,
+                    {
+                      variant: "subtitle2",
+                      sx: {
+                        color: "text.primary",
+                        fontWeight: 500,
+                        mb: 1
+                      },
+                      children: "住所"
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    TextField,
+                    {
+                      fullWidth: true,
+                      size: "small",
+                      name: "address",
+                      value: formData.address,
+                      onChange: handleInputChange,
+                      disabled: isLoading,
+                      sx: {
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: "white"
+                        }
+                      }
+                    }
+                  )
+                ]
+              }
+            ) }),
+            /* @__PURE__ */ jsxs(Box, { sx: { mb: 3 }, children: [
+              /* @__PURE__ */ jsxs(Box, { sx: { mb: 2 }, children: [
+                /* @__PURE__ */ jsx(
+                  Typography,
+                  {
+                    variant: "subtitle2",
+                    sx: {
+                      color: "text.primary",
+                      fontWeight: 500,
+                      mb: 1
+                    },
+                    children: "説明"
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  TextField,
+                  {
+                    fullWidth: true,
+                    multiline: true,
+                    rows: 3,
+                    name: "description",
+                    value: formData.description,
+                    onChange: handleInputChange,
+                    disabled: isLoading || !isEditing,
+                    placeholder: "会社の詳細説明を入力してください",
+                    sx: {
+                      "& .MuiOutlinedInput-root": {
+                        backgroundColor: isEditing ? "white" : "grey.50"
+                      }
+                    }
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxs(Box, { children: [
+                /* @__PURE__ */ jsxs(
+                  Typography,
+                  {
+                    variant: "subtitle2",
+                    sx: {
+                      color: "text.primary",
+                      fontWeight: 500,
+                      mb: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1
+                    },
+                    children: [
+                      /* @__PURE__ */ jsx(TagIcon, { fontSize: "small" }),
+                      "タグ"
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  TextField,
+                  {
+                    fullWidth: true,
+                    name: "tags",
+                    value: formData.tags,
+                    onChange: handleInputChange,
+                    placeholder: "カンマ区切りで入力",
+                    disabled: isLoading || !isEditing,
+                    sx: {
+                      "& .MuiOutlinedInput-root": {
+                        backgroundColor: isEditing ? "white" : "grey.50"
+                      }
+                    }
+                  }
+                ),
+                displayTags.length > 0 && /* @__PURE__ */ jsxs(Box, { sx: { mt: 2 }, children: [
+                  /* @__PURE__ */ jsx(Typography, { variant: "body2", color: "text.secondary", sx: { mb: 1 }, children: "現在のタグ:" }),
+                  /* @__PURE__ */ jsx(Box, { sx: { display: "flex", flexWrap: "wrap", gap: 1 }, children: displayTags.map((tag, index) => /* @__PURE__ */ jsx(
+                    Chip,
+                    {
+                      label: tag,
+                      size: "small",
+                      color: "primary",
+                      variant: "outlined"
+                    },
+                    index
+                  )) })
+                ] })
+              ] })
+            ] }),
+            isEditing && /* @__PURE__ */ jsxs(Box, { sx: { display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }, children: [
+              /* @__PURE__ */ jsx(
+                Button,
+                {
+                  variant: "outlined",
+                  onClick: handleEditToggle,
+                  disabled: isLoading,
+                  startIcon: /* @__PURE__ */ jsx(CancelIcon, {}),
+                  children: "キャンセル"
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                Button,
+                {
+                  variant: "contained",
+                  onClick: handleUpdate,
+                  disabled: isLoading || !hasChanges,
+                  startIcon: isLoading ? /* @__PURE__ */ jsx(CircularProgress, { size: 16 }) : /* @__PURE__ */ jsx(SaveIcon, {}),
+                  color: "primary",
+                  children: isLoading ? "保存中..." : "保存"
+                }
+              )
+            ] }),
+            !isEditing && hasChanges === false && currentCompany && /* @__PURE__ */ jsx(Alert, { severity: "success", sx: { mt: 2 }, children: "会社情報が正常に更新されました。" })
+          ] })
+        ] })
+      ]
+    }
+  );
+};
+const Companies = () => {
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const loadCompanies = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getBusinessCompanies();
+      if (response.data) {
+        setCompanies(response.data);
+      } else {
+        setCompanies([]);
+      }
+    } catch (err) {
+      console.error("Error loading company entries:", err);
+      setError(
+        `会社データの読み込みに失敗しました: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+  const handleCompanyClick = (company) => {
+    setSelectedCompany(company);
+    setIsDetailModalOpen(true);
+  };
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedCompany(null);
+  };
+  const handleCompanyUpdate = (updatedCompany) => {
+    setSelectedCompany(updatedCompany);
+    setCompanies(
+      (prevCompanies) => prevCompanies.map((c) => c.name === updatedCompany.name ? updatedCompany : c)
+    );
+  };
+  if (loading) {
+    return /* @__PURE__ */ jsx("div", { className: "business-entity-loading", children: /* @__PURE__ */ jsx("div", { children: "会社データを読み込み中..." }) });
+  }
+  if (error) {
+    return /* @__PURE__ */ jsxs("div", { className: "business-entity-error", children: [
+      /* @__PURE__ */ jsx("div", { className: "business-entity-error-message", children: error }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          onClick: loadCompanies,
+          className: "business-entity-retry-button",
+          children: "再試行"
+        }
+      )
+    ] });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "business-entity-container", children: [
+    /* @__PURE__ */ jsx("div", { className: "business-entity-controls", children: /* @__PURE__ */ jsxs("div", { className: "business-entity-count", children: [
+      "全",
+      companies.length,
+      "件"
+    ] }) }),
+    showHelp && /* @__PURE__ */ jsxs("div", { className: "business-entity-help-box", children: [
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          onClick: () => setShowHelp(false),
+          className: "business-entity-help-close",
+          title: "閉じる",
+          children: "×"
+        }
+      ),
+      /* @__PURE__ */ jsx("h3", { style: { marginTop: 0 }, children: "使用方法" }),
+      /* @__PURE__ */ jsxs("p", { children: [
+        "📝 ",
+        /* @__PURE__ */ jsx("strong", { children: "会社情報表示" })
+      ] }),
+      /* @__PURE__ */ jsxs("p", { children: [
+        "🏢 ",
+        /* @__PURE__ */ jsx("strong", { children: "業種別分類" })
+      ] }),
+      /* @__PURE__ */ jsxs("p", { children: [
+        "📞 ",
+        /* @__PURE__ */ jsx("strong", { children: "連絡先情報" })
+      ] }),
+      /* @__PURE__ */ jsx("p", { children: "✅ 会社データの取得" }),
+      /* @__PURE__ */ jsx("p", { children: "✅ フォルダー名からの自動解析" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "business-entity-list-container", children: [
+      /* @__PURE__ */ jsxs("div", { className: "business-entity-list-header", children: [
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-company", children: "会社名" }),
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-company", children: "業種" }),
+        /* @__PURE__ */ jsx("div", { className: "business-entity-header-spacer" }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: () => setShowHelp(!showHelp),
+            className: "business-entity-help-button",
+            title: "使用方法を表示",
+            children: "?"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "business-entity-scroll-area", children: companies.length === 0 ? /* @__PURE__ */ jsx("div", { className: "business-entity-empty", children: "会社データが見つかりません" }) : /* @__PURE__ */ jsx("div", { children: companies.map((company, index) => /* @__PURE__ */ jsxs(
+        "div",
+        {
+          className: "business-entity-item-row",
+          onClick: () => handleCompanyClick(company),
+          title: "クリックして詳細表示",
+          style: { cursor: "pointer" },
+          children: [
+            /* @__PURE__ */ jsxs("div", { className: "business-entity-item-info", children: [
+              /* @__PURE__ */ jsx("div", { className: "business-entity-item-info-company", children: company.short_name || company.name || "会社名未設定" }),
+              /* @__PURE__ */ jsx("div", { className: "business-entity-item-info-company", children: company.business_type || "業種未設定" }),
+              /* @__PURE__ */ jsx("div", { className: "business-entity-item-info-spacer" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
+              company.tags && company.tags.length > 0 && /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: "4px", flexWrap: "wrap" }, children: [
+                company.tags.slice(0, 3).map((tag, tagIndex) => /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      fontSize: "0.7em",
+                      background: "#e3f2fd",
+                      color: "#1976d2",
+                      padding: "2px 6px",
+                      borderRadius: "10px",
+                      whiteSpace: "nowrap"
+                    },
+                    children: tag
+                  },
+                  tagIndex
+                )),
+                company.tags.length > 3 && /* @__PURE__ */ jsxs("span", { style: { fontSize: "0.7em", color: "#666" }, children: [
+                  "+",
+                  company.tags.length - 3
+                ] })
+              ] }),
+              /* @__PURE__ */ jsx("div", { className: "business-entity-item-status business-entity-item-status-completed", children: company.website ? "🌐" : "📁" })
+            ] })
+          ]
+        },
+        company.id || index
+      )) }) })
+    ] }),
+    /* @__PURE__ */ jsx(
+      CompanyDetailModal,
+      {
+        isOpen: isDetailModalOpen,
+        onClose: closeDetailModal,
+        company: selectedCompany,
+        onCompanyUpdate: handleCompanyUpdate
+      }
+    )
+  ] });
+};
+const _layout_companies = UNSAFE_withComponentProps(function CompaniesPage() {
+  return /* @__PURE__ */ jsx(Companies, {});
+});
+const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: _layout_companies
+}, Symbol.toStringTag, { value: "Module" }));
+const serverManifest = { "entry": { "module": "/assets/entry.client-BR_5jt8X.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/index-BXUbddt1.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/root-CmFF9zS-.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/index-BXUbddt1.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout": { "id": "routes/_layout", "parentId": "root", "path": void 0, "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout-CcL890Jn.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/KojiContext-CrloO4lv.js", "/assets/FileInfoContext-NxQDI7MG.js"], "css": ["/assets/_layout-Dt8MPuhg.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout._index": { "id": "routes/_layout._index", "parentId": "routes/_layout", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout._index-DfI2G5t0.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout.files": { "id": "routes/_layout.files", "parentId": "routes/_layout", "path": "files", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout.files-D4tx_qCC.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/sdk.gen-1y8RMMdH.js", "/assets/FileInfoContext-NxQDI7MG.js", "/assets/useThemeProps-Q2zdfQ03.js", "/assets/index-BXUbddt1.js"], "css": ["/assets/_layout-D3lNBCqO.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout.kojies": { "id": "routes/_layout.kojies", "parentId": "routes/_layout", "path": "kojies", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout.kojies-DDh5Z7KN.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/sdk.gen-1y8RMMdH.js", "/assets/KojiDetailModal-BnI-BK5R.js", "/assets/KojiContext-CrloO4lv.js", "/assets/index-BXUbddt1.js", "/assets/Close-XszXWwct.js", "/assets/useThemeProps-Q2zdfQ03.js"], "css": ["/assets/business-entity-list-D92NJj2m.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout.gantt": { "id": "routes/_layout.gantt", "parentId": "routes/_layout", "path": "kojies/gantt", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout.gantt-LxSOLQpK.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/sdk.gen-1y8RMMdH.js", "/assets/KojiDetailModal-BnI-BK5R.js", "/assets/index-BXUbddt1.js", "/assets/Close-XszXWwct.js", "/assets/useThemeProps-Q2zdfQ03.js"], "css": ["/assets/_layout-D9Nv6k78.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_layout.companies": { "id": "routes/_layout.companies", "parentId": "routes/_layout", "path": "companies", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/_layout.companies-BOobA9GM.js", "imports": ["/assets/chunk-QMGIS6GS-CRLmNMPd.js", "/assets/sdk.gen-1y8RMMdH.js", "/assets/Close-XszXWwct.js", "/assets/index-BXUbddt1.js"], "css": ["/assets/_layout-CM-RDp9U.css", "/assets/business-entity-list-D92NJj2m.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-1d339d91.js", "version": "1d339d91", "sri": void 0 };
 const assetsBuildDirectory = "build/client";
 const basename = "/";
 const future = { "unstable_middleware": false, "unstable_optimizeDeps": false, "unstable_splitRouteModules": false, "unstable_subResourceIntegrity": false, "unstable_viteEnvironmentApi": false };
@@ -3183,10 +4089,10 @@ const routes = {
     caseSensitive: void 0,
     module: route3
   },
-  "routes/_layout.projects": {
-    id: "routes/_layout.projects",
+  "routes/_layout.kojies": {
+    id: "routes/_layout.kojies",
     parentId: "routes/_layout",
-    path: "projects",
+    path: "kojies",
     index: void 0,
     caseSensitive: void 0,
     module: route4
@@ -3194,10 +4100,18 @@ const routes = {
   "routes/_layout.gantt": {
     id: "routes/_layout.gantt",
     parentId: "routes/_layout",
-    path: "projects/gantt",
+    path: "kojies/gantt",
     index: void 0,
     caseSensitive: void 0,
     module: route5
+  },
+  "routes/_layout.companies": {
+    id: "routes/_layout.companies",
+    parentId: "routes/_layout",
+    path: "companies",
+    index: void 0,
+    caseSensitive: void 0,
+    module: route6
   }
 };
 export {

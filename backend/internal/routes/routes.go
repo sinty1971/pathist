@@ -16,26 +16,25 @@ func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
 	// Swagger UI - カスタム実装（Fiber v3対応）+ OpenAPI 3.0対応
 	app.Get("/swagger/*", func(c fiber.Ctx) error {
 		path := strings.TrimPrefix(c.Path(), "/swagger")
-		
+
 		// OpenAPI 3.0 仕様ファイル
 		if path == "/openapi-v3.json" {
 			return c.SendFile("../schemas/openapi-v3.json")
 		}
-		
+
 		if path == "/openapi-v3.yaml" {
 			return c.SendFile("../schemas/openapi-v3.yaml")
 		}
-		
+
 		// デフォルトページ
 		if path == "" || path == "/" || path == "/index.html" {
 			return c.SendFile("./templates/swagger.html")
 		}
-		
+
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			"error": "Not found",
 		})
 	})
-
 
 	// Root endpoint
 	app.Get("/", func(c fiber.Ctx) error {
@@ -52,14 +51,10 @@ func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
 	// Business Data Services のルートを設定
 	if container.BusinessService != nil {
 		// Initialize handlers
-		fileHandler := handlers.NewFileHandler(container.BusinessService.FileService)
-		kojiHandler := handlers.NewKojiHandler(container.BusinessService.KojiService)
-		companyHandler := handlers.NewCompanyHandler(container.BusinessService.CompanyService)
+		businessHandler := handlers.NewBusinessHandler(container.BusinessService)
 
 		// Setup routes for each domain
-		SetupFileRoutes(api, fileHandler)
-		SetupKojiRoutes(api, kojiHandler)
-		SetupCompanyRoutes(api, companyHandler)
+		SetupBusinessRoutes(api.Group("/business"), businessHandler)
 	}
 
 	// Media Data Services のルートを設定（将来実装）
@@ -68,5 +63,3 @@ func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
 	//     SetupMediaRoutes(api, mediaHandler)
 	// }
 }
-
-

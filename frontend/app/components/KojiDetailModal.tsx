@@ -17,7 +17,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import type { ModelsKoji, ModelsTimestamp, ModelsManagedFile } from '../api/types.gen';
-import { postKojiRenameManagedFile, getKojiGetByPath } from '../api/sdk.gen';
+import { putBusinessKojiesManagedFiles, getKojiesByPath } from '../api/sdk.gen';
 import { CalendarPicker } from './CalendarPicker';
 
 interface KojiDetailModalProps {
@@ -230,73 +230,33 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
       // フォルダー名が変更されたかチェック
       const folderNameChanged = originalFolderName && savedKoji.name && originalFolderName !== savedKoji.name;
       
-      // 更新後、最新の工事データを再取得（管理ファイル情報を含む）
-      if (savedKoji.name) {
-        const latestKojiResponse = await getKojiGetByPath({
-          path: {
-            path: savedKoji.name
-          }
-        });
-        
-        if (latestKojiResponse.data) {
-          const latestKoji = latestKojiResponse.data;
-          
-          // フォルダー名が変更された場合はモーダルを閉じる
-          if (folderNameChanged) {
-            // 親コンポーネントに最新データを渡してモーダルを閉じる
-            if (onKojiUpdate) {
-              onKojiUpdate(latestKoji);
-            }
-            
-            // モーダルを閉じる
-            setTimeout(() => {
-              onClose();
-            }, 100);
-            
-            return;
-          }
-          
-          // フォルダー名が変更されていない場合は通常の更新処理
-          // ローカルステートを更新（管理ファイル表示用）
-          setCurrentKoji(latestKoji);
-          
-          // 成功した場合、最新の工事データを更新
-          if (onKojiUpdate) {
-            onKojiUpdate(latestKoji);
-          }
-          
-          // フォームデータも最新データで同期
-          const startDate = extractDateString(latestKoji.start_date);
-          const endDate = extractDateString(latestKoji.end_date);
-          
-          setFormData({
-            id: latestKoji.id || '',
-            company_name: latestKoji.company_name || '',
-            location_name: latestKoji.location_name || '',
-            description: latestKoji.description || '',
-            tags: Array.isArray(latestKoji.tags) ? latestKoji.tags.join(', ') : (latestKoji.tags || ''),
-            start_date: startDate,
-            end_date: endDate
-          });
-        }
-      } else {
-        // name がない場合は従来の処理
-        if (onKojiUpdate) {
-          onKojiUpdate(savedKoji);
-        }
-        
-        const startDate = extractDateString(savedKoji.start_date);
-        const endDate = extractDateString(savedKoji.end_date);
-        
-        setFormData({
-          id: savedKoji.id || '',
-          company_name: savedKoji.company_name || '',
-          location_name: savedKoji.location_name || '',
-          description: savedKoji.description || '',
-          tags: Array.isArray(savedKoji.tags) ? savedKoji.tags.join(', ') : (savedKoji.tags || ''),
-          start_date: startDate,
-          end_date: endDate
-        });
+      // ローカルステートを更新（管理ファイル表示用）
+      setCurrentKoji(savedKoji);
+      
+      // 親コンポーネントに最新データを渡す
+      if (onKojiUpdate) {
+        onKojiUpdate(savedKoji);
+      }
+      
+      // フォームデータも最新データで同期
+      const startDate = extractDateString(savedKoji.start_date);
+      const endDate = extractDateString(savedKoji.end_date);
+      
+      setFormData({
+        id: savedKoji.id || '',
+        company_name: savedKoji.company_name || '',
+        location_name: savedKoji.location_name || '',
+        description: savedKoji.description || '',
+        tags: Array.isArray(savedKoji.tags) ? savedKoji.tags.join(', ') : (savedKoji.tags || ''),
+        start_date: startDate,
+        end_date: endDate
+      });
+      
+      // フォルダー名が変更された場合はモーダルを閉じる
+      if (folderNameChanged) {
+        setTimeout(() => {
+          onClose();
+        }, 100);
       }
     } catch (err) {
       console.error('Error updating field:', err);
@@ -414,7 +374,7 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
       }
 
       // API呼び出し
-      const response = await postKojiRenameManagedFile({
+      const response = await putBusinessKojiesManagedFiles({
         body: {
           koji: currentKoji,
           currents: currentFiles
@@ -422,32 +382,61 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
       });
 
       if (response.data) {
-        // 工事データを再取得
-        if (currentKoji.name) {
-          const updatedKojiResponse = await getKojiGetByPath({
-            path: {
-              path: currentKoji.name
-            }
-          });
+        // APIレスポンスが更新された工事データ（または文字列配列）を含む
+        if (typeof response.data === 'object' && response.data.id) {
+          // 工事データが返された場合
+          const updatedKoji = response.data;
           
-          if (updatedKojiResponse.data && onKojiUpdate) {
-            // ローカルステートも更新
-            setCurrentKoji(updatedKojiResponse.data);
-            // 工事データを更新
-            onKojiUpdate(updatedKojiResponse.data);
-            // フォームデータも更新
-            const startDate = extractDateString(updatedKojiResponse.data.start_date);
-            const endDate = extractDateString(updatedKojiResponse.data.end_date);
-            
-            setFormData({
-              id: updatedKojiResponse.data.id || '',
-              company_name: updatedKojiResponse.data.company_name || '',
-              location_name: updatedKojiResponse.data.location_name || '',
-              description: updatedKojiResponse.data.description || '',
-              tags: Array.isArray(updatedKojiResponse.data.tags) ? updatedKojiResponse.data.tags.join(', ') : (updatedKojiResponse.data.tags || ''),
-              start_date: startDate,
-              end_date: endDate
+          // ローカルステートも更新
+          setCurrentKoji(updatedKoji);
+          
+          // 工事データを更新
+          if (onKojiUpdate) {
+            onKojiUpdate(updatedKoji);
+          }
+          
+          // フォームデータも更新
+          const startDate = extractDateString(updatedKoji.start_date);
+          const endDate = extractDateString(updatedKoji.end_date);
+          
+          setFormData({
+            id: updatedKoji.id || '',
+            company_name: updatedKoji.company_name || '',
+            location_name: updatedKoji.location_name || '',
+            description: updatedKoji.description || '',
+            tags: Array.isArray(updatedKoji.tags) ? updatedKoji.tags.join(', ') : (updatedKoji.tags || ''),
+            start_date: startDate,
+            end_date: endDate
+          });
+        } else {
+          // 文字列配列が返された場合（後方互換性）
+          // 工事データを再取得
+          if (currentKoji.name) {
+            const updatedKojiResponse = await getKojiesByPath({
+              query: {
+                path: currentKoji.name
+              }
             });
+            
+            if (updatedKojiResponse.data && onKojiUpdate) {
+              // ローカルステートも更新
+              setCurrentKoji(updatedKojiResponse.data);
+              // 工事データを更新
+              onKojiUpdate(updatedKojiResponse.data);
+              // フォームデータも更新
+              const startDate = extractDateString(updatedKojiResponse.data.start_date);
+              const endDate = extractDateString(updatedKojiResponse.data.end_date);
+              
+              setFormData({
+                id: updatedKojiResponse.data.id || '',
+                company_name: updatedKojiResponse.data.company_name || '',
+                location_name: updatedKojiResponse.data.location_name || '',
+                description: updatedKojiResponse.data.description || '',
+                tags: Array.isArray(updatedKojiResponse.data.tags) ? updatedKojiResponse.data.tags.join(', ') : (updatedKojiResponse.data.tags || ''),
+                start_date: startDate,
+                end_date: endDate
+              });
+            }
           }
         }
       } else if (response.error) {

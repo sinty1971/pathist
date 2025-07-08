@@ -40,20 +40,8 @@ func NewCompanyService(businessFileService *FileService, folderName string) (*Co
 
 // GetCompany は指定されたパスから会社を取得する
 func (cs *CompanyService) GetCompany(folderName string) (models.Company, error) {
-	// 会社フォルダーのフルパスを取得
-	folderPath, err := cs.FileService.GetFullpath(folderName)
-	if err != nil {
-		return models.Company{}, err
-	}
-
-	// 会社フォルダーのFileInfoを取得
-	folderInfo, err := models.NewFileInfo(folderPath)
-	if err != nil {
-		return models.Company{}, fmt.Errorf("会社フォルダー情報の取得に失敗しました: %v", err)
-	}
-
 	// 会社データモデルを作成
-	company, err := models.NewCompany(*folderInfo)
+	company, err := models.NewCompany(folderName)
 	if err != nil {
 		return models.Company{}, fmt.Errorf("会社データモデルの作成に失敗しました: %v", err)
 	}
@@ -80,7 +68,7 @@ func (cs *CompanyService) SyncAttributeFile(company *models.Company) error {
 	}
 
 	// 属性ファイルにしか保持されない内容をcompanyに反映
-	company.FullName = attribute.FullName
+	company.LongName = attribute.LongName
 	company.PostalCode = attribute.PostalCode
 	company.Address = attribute.Address
 	company.Phone = attribute.Phone
@@ -108,7 +96,7 @@ func (cs *CompanyService) hasCompanyChanged(attribute, current models.Company) b
 		attribute.BusinessType != current.BusinessType
 }
 
-// GetRecentCompanies は最近の会社一覧を取得する
+// GetCompanies は会社一覧を取得する
 func (cs *CompanyService) GetCompanies() []models.Company {
 	// ファイルシステムから会社フォルダー一覧を取得
 	fileInfos, err := cs.FileService.GetFileInfos()
@@ -118,7 +106,8 @@ func (cs *CompanyService) GetCompanies() []models.Company {
 
 	companies := make([]models.Company, 0, len(fileInfos))
 	for _, fileInfo := range fileInfos {
-		company, err := models.NewCompany(fileInfo)
+		// フォルダー名のみを使用
+		company, err := models.NewCompany(fileInfo.Name)
 		if err != nil {
 			continue
 		}
@@ -152,9 +141,8 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 	name = strings.TrimSpace(strings.ToLower(name))
 
 	for _, company := range companies {
-		if strings.ToLower(company.Name) == name ||
-			strings.ToLower(company.ShortName) == name ||
-			strings.ToLower(company.FullName) == name {
+		if strings.ToLower(company.ShortName) == name ||
+			strings.ToLower(company.LongName) == name {
 			return &company, nil
 		}
 	}
@@ -163,32 +151,26 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 }
 
 // Update は会社情報を更新し、必要に応じてフォルダー名を変更します
-func (cs *CompanyService) Update(company *models.Company) error {
-	// 会社のショート名と業種からフォルダー名を生成
-	businessTypeNumber := models.GetBusinessTypeNumber(company.BusinessType)
-	generatedFolderName := fmt.Sprintf("%s %s", businessTypeNumber, company.ShortName)
+// oldFolderName: 変更前のフォルダー名
+// company: 更新後の会社情報
+func (cs *CompanyService) Update(oldFolderName string, company *models.Company) error {
+	// 会社のショート名と業種から新しいフォルダー名を生成
+	newFolderName := fmt.Sprintf("%s %s", company.BusinessType.Code(), company.ShortName)
 
-	// 生成されたフォルダー名とFileInfo.Nameを比較
-	if generatedFolderName != company.FileInfo.Name {
+	// 新しいフォルダー名と古いフォルダー名を比較
+	if newFolderName != oldFolderName {
 		// フォルダー名の変更
-		err := cs.FileService.MoveFile(company.FileInfo.Name, generatedFolderName)
+		err := cs.FileService.MoveFile(oldFolderName, newFolderName)
 		if err != nil {
 			return err
 		}
 
-		// FileInfoの作成
-		generatedFullpath, err := cs.FileService.GetFullpath(generatedFolderName)
-		if err != nil {
-			return err
-		}
-		generatedFileInfo, err := models.NewFileInfo(generatedFullpath)
-		if err != nil {
-			return err
-		}
-
-		// 詳細情報以外の更新
-		company.FileInfo = *generatedFileInfo
+		// FolderNameを更新
+		company.FolderName = newFolderName
 	}
+
+	// UpdateFolderNameを呼び出してFolderNameを確実に更新
+	company.UpdateFolderName()
 
 	// 計算が必要な項目の更新
 	company.ID = models.NewIDFromString(company.ShortName).Len5()

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -169,4 +171,47 @@ func (km *Koji) UpdateID() {
 // UpdateStatus はプロジェクトステータスを更新する
 func (km *Koji) UpdateStatus() {
 	km.Status = DetermineKojiStatus(km.StartDate, km.EndDate)
+}
+
+// GenerateKojiFolderName は工事フォルダー名を生成する（高速化版）
+func GenerateKojiFolderName(startDate Timestamp, companyName string, locationName string) (string, error) {
+	if startDate.Time.IsZero() {
+		// 開始日が無効な場合の早期リターン
+		return "", errors.New("開始日が無効です")
+	}
+
+	t := startDate.Time
+
+	// 日付文字列を手動で構築（Format関数より高速）
+	year := t.Year()
+	month := int(t.Month())
+	day := t.Day()
+
+	// 事前に容量を計算してstrings.Builderを初期化（再アロケーション回避）
+	// 日付(9文字) + スペース(1文字) + 会社名 + スペース(1文字) + 現場名 の概算
+	estimatedSize := 9 + 1 + len(companyName) + 1 + len(locationName)
+	var builder strings.Builder
+	builder.Grow(estimatedSize)
+
+	// 日付部分を手動構築（YYYY-MMDD形式）
+	builder.WriteString(strconv.Itoa(year))
+	builder.WriteByte('-')
+
+	if month < 10 {
+		builder.WriteByte('0')
+	}
+	builder.WriteString(strconv.Itoa(month))
+
+	if day < 10 {
+		builder.WriteByte('0')
+	}
+	builder.WriteString(strconv.Itoa(day))
+
+	// 会社名と現場名を追加
+	builder.WriteByte(' ')
+	builder.WriteString(companyName)
+	builder.WriteByte(' ')
+	builder.WriteString(locationName)
+
+	return builder.String(), nil
 }

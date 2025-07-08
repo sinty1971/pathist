@@ -16,10 +16,10 @@ type Pages = {
   "/files": {
     params: {};
   };
-  "/projects": {
+  "/kojies": {
     params: {};
   };
-  "/projects/gantt": {
+  "/kojies/gantt": {
     params: {};
   };
   "/companies": {
@@ -30,11 +30,11 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/files" | "/projects" | "/projects/gantt" | "/companies";
+    page: "/" | "/files" | "/kojies" | "/kojies/gantt" | "/companies";
   };
   "routes/_layout.tsx": {
     id: "routes/_layout";
-    page: "/" | "/files" | "/projects" | "/projects/gantt" | "/companies";
+    page: "/" | "/files" | "/kojies" | "/kojies/gantt" | "/companies";
   };
   "routes/_layout._index.tsx": {
     id: "routes/_layout._index";
@@ -44,13 +44,13 @@ type RouteFiles = {
     id: "routes/_layout.files";
     page: "/files";
   };
-  "routes/_layout.projects.tsx": {
-    id: "routes/_layout.projects";
-    page: "/projects";
+  "routes/_layout.kojies.tsx": {
+    id: "routes/_layout.kojies";
+    page: "/kojies";
   };
   "routes/_layout.gantt.tsx": {
     id: "routes/_layout.gantt";
-    page: "/projects/gantt";
+    page: "/kojies/gantt";
   };
   "routes/_layout.companies.tsx": {
     id: "routes/_layout.companies";

@@ -1,1 +1,0 @@
-import{a as t,o as n}from"./chunk-QMGIS6GS-CRLmNMPd.js";const e=t.createContext(void 0);function u({children:o}){const[r,i]=t.useState(0);return n.jsx(e.Provider,{value:{kojiCount:r,setKojiCount:i},children:o})}function a(){const o=t.useContext(e);if(o===void 0)throw new Error("useKoji must be used within a KojiProvider");return o}export{u as K,a as u};

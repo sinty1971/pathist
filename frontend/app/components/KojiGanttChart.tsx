@@ -83,8 +83,8 @@ const KojiGanttChart = () => {
 
     kojies.forEach(koji => {
       try {
-        const startDate = koji.start_date ? new Date(koji.start_date as string) : null;
-        const endDate = koji.end_date ? new Date(koji.end_date as string) : null;
+        const startDate = koji.startDate ? new Date(koji.startDate as string) : null;
+        const endDate = koji.endDate ? new Date(koji.endDate as string) : null;
 
         if (startDate && !isNaN(startDate.getTime())) {
           if (!hasValidDate || startDate < minDate) {
@@ -136,8 +136,8 @@ const KojiGanttChart = () => {
     // 現在の画面表示範囲に含まれる工事をフィルタリング
     const relevantKojies = kojies.filter(koji => {
       try {
-        const kojiStart = koji.start_date ? new Date(koji.start_date as string) : new Date();
-        const kojiEnd = koji.end_date ? new Date(koji.end_date as string) : new Date(kojiStart.getTime() + 90 * 24 * 60 * 60 * 1000);
+        const kojiStart = koji.startDate ? new Date(koji.startDate as string) : new Date();
+        const kojiEnd = koji.endDate ? new Date(koji.endDate as string) : new Date(kojiStart.getTime() + 90 * 24 * 60 * 60 * 1000);
         
         // 工事が画面表示範囲と重複するかチェック
         return (kojiStart <= visibleEndDate && kojiEnd >= visibleStartDate);
@@ -148,16 +148,16 @@ const KojiGanttChart = () => {
 
     // 表示範囲内の工事を開始日順でソートして、一番古い工事を取得
     const sortedRelevantKojies = relevantKojies.sort((a, b) => {
-      const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
-      const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+      const dateA = a.startDate ? new Date(a.startDate as string).getTime() : 0;
+      const dateB = b.startDate ? new Date(b.startDate as string).getTime() : 0;
       return dateA - dateB; // 古い順
     });
 
     // 表示範囲内で一番古い工事の開始日を基準にする
     let baselineDate: number;
     if (sortedRelevantKojies.length > 0) {
-      baselineDate = sortedRelevantKojies[0].start_date 
-        ? new Date(sortedRelevantKojies[0].start_date as string).getTime()
+      baselineDate = sortedRelevantKojies[0].startDate 
+        ? new Date(sortedRelevantKojies[0].startDate as string).getTime()
         : 0;
     } else {
       // 表示範囲内に工事がない場合は、表示範囲の開始日以前で最も近い工事を基準にする
@@ -165,8 +165,8 @@ const KojiGanttChart = () => {
       
       // 表示範囲の開始日以前の工事を取得
       const kojiesBeforeVisible = kojies.filter(koji => {
-        const kojiStartDate = koji.start_date 
-          ? new Date(koji.start_date as string).getTime()
+        const kojiStartDate = koji.startDate 
+          ? new Date(koji.startDate as string).getTime()
           : 0;
         return kojiStartDate <= visibleStartTime;
       });
@@ -174,40 +174,40 @@ const KojiGanttChart = () => {
       if (kojiesBeforeVisible.length > 0) {
         // 表示範囲の開始日に最も近い工事を選択（開始日が最も新しい工事）
         const closestKoji = kojiesBeforeVisible.sort((a, b) => {
-          const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
-          const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+          const dateA = a.startDate ? new Date(a.startDate as string).getTime() : 0;
+          const dateB = b.startDate ? new Date(b.startDate as string).getTime() : 0;
           return dateB - dateA; // 新しい順（降順）
         })[0];
         
-        baselineDate = closestKoji.start_date 
-          ? new Date(closestKoji.start_date as string).getTime()
+        baselineDate = closestKoji.startDate 
+          ? new Date(closestKoji.startDate as string).getTime()
           : 0;
       } else {
         // 表示範囲の開始日以前に工事がない場合は、全工事の最初の工事を基準にする
         const allKojiesSorted = [...kojies].sort((a, b) => {
-          const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
-          const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+          const dateA = a.startDate ? new Date(a.startDate as string).getTime() : 0;
+          const dateB = b.startDate ? new Date(b.startDate as string).getTime() : 0;
           return dateA - dateB;
         });
         
         if (allKojiesSorted.length === 0) return;
         
-        baselineDate = allKojiesSorted[0].start_date 
-          ? new Date(allKojiesSorted[0].start_date as string).getTime()
+        baselineDate = allKojiesSorted[0].startDate 
+          ? new Date(allKojiesSorted[0].startDate as string).getTime()
           : 0;
       }
     }
 
     // 基準日以降の全工事を開始日昇順で取得
     const allKojiesSorted = [...kojies].sort((a, b) => {
-      const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
-      const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+      const dateA = a.startDate ? new Date(a.startDate as string).getTime() : 0;
+      const dateB = b.startDate ? new Date(b.startDate as string).getTime() : 0;
       return dateA - dateB; // 古い順（昇順）
     });
 
     const kojiesFromBaselineDate = allKojiesSorted.filter(koji => {
-      const kojiStartDate = koji.start_date 
-        ? new Date(koji.start_date as string).getTime()
+      const kojiStartDate = koji.startDate 
+        ? new Date(koji.startDate as string).getTime()
         : 0;
       return kojiStartDate >= baselineDate;
     });
@@ -219,15 +219,15 @@ const KojiGanttChart = () => {
     if (finalKojies.length < itemsPerPage) {
       // 全工事を開始日の新しい順（降順）でソート
       const allKojiesDescending = [...kojies].sort((a, b) => {
-        const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
-        const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+        const dateA = a.startDate ? new Date(a.startDate as string).getTime() : 0;
+        const dateB = b.startDate ? new Date(b.startDate as string).getTime() : 0;
         return dateB - dateA; // 新しい順（降順）
       });
       
       // 最新の表示件数分を取得して、開始日の古い順（昇順）に並び替え
       finalKojies = allKojiesDescending.slice(0, itemsPerPage).sort((a, b) => {
-        const dateA = a.start_date ? new Date(a.start_date as string).getTime() : 0;
-        const dateB = b.start_date ? new Date(b.start_date as string).getTime() : 0;
+        const dateA = a.startDate ? new Date(a.startDate as string).getTime() : 0;
+        const dateB = b.startDate ? new Date(b.startDate as string).getTime() : 0;
         return dateA - dateB; // 古い順（昇順）
       });
     }
@@ -295,7 +295,7 @@ const KojiGanttChart = () => {
       let endDate: Date;
       
       try {
-        startDate = koji.start_date ? new Date(koji.start_date as string) : new Date();
+        startDate = koji.startDate ? new Date(koji.startDate as string) : new Date();
         // 無効な日付をチェック
         if (isNaN(startDate.getTime())) {
           startDate = new Date();
@@ -305,7 +305,7 @@ const KojiGanttChart = () => {
       }
       
       try {
-        endDate = koji.end_date ? new Date(koji.end_date as string) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+        endDate = koji.endDate ? new Date(koji.endDate as string) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
         // 無効な日付をチェック
         if (isNaN(endDate.getTime())) {
           endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -350,8 +350,8 @@ const KojiGanttChart = () => {
     if (!scrollContainerRef.current) return;
     
     try {
-      const kojiStart = koji.start_date ? new Date(koji.start_date as string) : new Date();
-      const kojiEnd = koji.end_date ? new Date(koji.end_date as string) : new Date(kojiStart.getTime() + 90 * 24 * 60 * 60 * 1000);
+      const kojiStart = koji.startDate ? new Date(koji.startDate as string) : new Date();
+      const kojiEnd = koji.endDate ? new Date(koji.endDate as string) : new Date(kojiStart.getTime() + 90 * 24 * 60 * 60 * 1000);
       
       // 工事の中央位置を計算（正常順序）
       const kojiMiddle = new Date((kojiStart.getTime() + kojiEnd.getTime()) / 2);
@@ -436,8 +436,8 @@ const KojiGanttChart = () => {
           
           // 開始日順でソート（古い順）
           return updatedKojies.sort((a, b) => {
-            const dateA = a.start_date ? new Date(typeof a.start_date === 'string' ? a.start_date : (a.start_date as any)['time.Time']).getTime() : 0;
-            const dateB = b.start_date ? new Date(typeof b.start_date === 'string' ? b.start_date : (b.start_date as any)['time.Time']).getTime() : 0;
+            const dateA = a.startDate ? new Date(typeof a.startDate === 'string' ? a.startDate : (a.startDate as any)['time.Time']).getTime() : 0;
+            const dateB = b.startDate ? new Date(typeof b.startDate === 'string' ? b.startDate : (b.startDate as any)['time.Time']).getTime() : 0;
             
             // 開始日が設定されている方を優先
             if (dateA > 0 && dateB === 0) return -1;
@@ -607,14 +607,14 @@ const KojiGanttChart = () => {
             let endDate: Date;
             
             try {
-              startDate = item.start_date ? new Date(item.start_date as string) : new Date();
+              startDate = item.startDate ? new Date(item.startDate as string) : new Date();
               if (isNaN(startDate.getTime())) startDate = new Date();
             } catch {
               startDate = new Date();
             }
             
             try {
-              endDate = item.end_date ? new Date(item.end_date as string) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+              endDate = item.endDate ? new Date(item.endDate as string) : new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
               if (isNaN(endDate.getTime())) endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
             } catch {
               endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -635,7 +635,7 @@ const KojiGanttChart = () => {
                   onClick={() => handleKojiNameClick(item)}
                   title="クリックして工事期間の中央に移動"
                 >
-                  {item.company_name}
+                  {item.companyName}
                 </div>
               </div>
             );
@@ -734,10 +734,10 @@ const KojiGanttChart = () => {
                     backgroundColor: getStatusColor(item.status)
                   }}
                   onClick={() => handleKojiEdit(item)}
-                  title={`${item.company_name} - ${item.location_name} (クリックして編集)`}
+                  title={`${item.companyName} - ${item.locationName} (クリックして編集)`}
                 >
                   <span className="gantt-bar-text">
-                    {item.location_name}
+                    {item.locationName}
                   </span>
                   {needsFileRename(item) && (
                     <span 

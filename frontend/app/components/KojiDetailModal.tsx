@@ -29,9 +29,9 @@ interface KojiDetailModalProps {
 }
 
 // フォーム用のデータ型（日付を文字列として扱う、ステータスは除外）
-type KojiFormData = Omit<ModelsKoji, 'start_date' | 'end_date' | 'tags' | 'status'> & {
-  start_date?: string;
-  end_date?: string;
+type KojiFormData = Omit<ModelsKoji, 'startDate' | 'endDate' | 'tags' | 'status'> & {
+  startDate?: string;
+  endDate?: string;
   tags?: string;
 };
 
@@ -40,12 +40,12 @@ type KojiFormData = Omit<ModelsKoji, 'start_date' | 'end_date' | 'tags' | 'statu
 const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji, onUpdate, onKojiUpdate }) => {
   const [formData, setFormData] = useState<KojiFormData>({
     id: '',
-    company_name: '',
-    location_name: '',
+    companyName: '',
+    locationName: '',
     description: '',
     tags: '',
-    start_date: '',
-    end_date: ''
+    startDate: '',
+    endDate: ''
   });
   const [currentKoji, setCurrentKoji] = useState<ModelsKoji | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,10 +53,10 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
   const [isRenaming, setIsRenaming] = useState(false);
   const [hasFilenameChanges, setHasFilenameChanges] = useState(false);
   const [initialFilenameData, setInitialFilenameData] = useState<{
-    start_date: string;
-    company_name: string;
-    location_name: string;
-  }>({ start_date: '', company_name: '', location_name: '' });
+    startDate: string;
+    companyName: string;
+    locationName: string;
+  }>({ startDate: '', companyName: '', locationName: '' });
 
   // 日付を安全に変換する関数
   const extractDateString = (timestamp: any): string => {
@@ -87,28 +87,28 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
   // 工事が変更されたときにフォームデータを更新
   useEffect(() => {
     if (koji) {
-      const startDate = extractDateString(koji.start_date);
-      const endDate = extractDateString(koji.end_date);
+      const startDate = extractDateString(koji.startDate);
+      const endDate = extractDateString(koji.endDate);
       
-      const companyName = koji.company_name || '';
-      const locationName = koji.location_name || '';
+      const companyName = koji.companyName || '';
+      const locationName = koji.locationName || '';
       
       setCurrentKoji(koji);
       setFormData({
         id: koji.id || '',
-        company_name: companyName,
-        location_name: locationName,
+        companyName: companyName,
+        locationName: locationName,
         description: koji.description || '',
         tags: Array.isArray(koji.tags) ? koji.tags.join(', ') : (koji.tags || ''),
-        start_date: startDate,
-        end_date: endDate
+        startDate: startDate,
+        endDate: endDate
       });
       
       // 初期ファイル名関連データを保存
       setInitialFilenameData({
-        start_date: startDate,
-        company_name: companyName,
-        location_name: locationName
+        startDate: startDate,
+        companyName: companyName,
+        locationName: locationName
       });
       
       setHasFilenameChanges(false);
@@ -131,16 +131,16 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
   
   // 推奨ファイル名を生成する関数
   const generateRecommendedFileName = (originalFileName: string, formData: KojiFormData): string => {
-    if (!formData.start_date || !formData.company_name || !formData.location_name) {
+    if (!formData.startDate || !formData.companyName || !formData.locationName) {
       return originalFileName;
     }
 
     // 日付をYYYY-MMDD形式に変換
-    const datePart = formData.start_date.replace(/-/g, '').substring(0, 8); // YYYYMMDD
+    const datePart = formData.startDate.replace(/-/g, '').substring(0, 8); // YYYYMMDD
     const formattedDate = `${datePart.substring(0, 4)}-${datePart.substring(4, 8)}`; // YYYY-MMDD
     
     // 新しいプレフィックスを作成
-    const newPrefix = `${formattedDate} ${formData.company_name} ${formData.location_name}`;
+    const newPrefix = `${formattedDate} ${formData.companyName} ${formData.locationName}`;
     
     // 既存のファイル名から拡張子を取得
     const fileExtension = originalFileName.includes('.') 
@@ -189,9 +189,9 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
   // ファイル名関連の変更をチェックする関数
   const checkFilenameChanges = (currentFormData: KojiFormData) => {
     const hasChanges = 
-      currentFormData.start_date !== initialFilenameData.start_date ||
-      currentFormData.company_name !== initialFilenameData.company_name ||
-      currentFormData.location_name !== initialFilenameData.location_name;
+      currentFormData.startDate !== initialFilenameData.startDate ||
+      currentFormData.companyName !== initialFilenameData.companyName ||
+      currentFormData.locationName !== initialFilenameData.locationName;
     
     setHasFilenameChanges(hasChanges);
     
@@ -212,12 +212,12 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
       // 指定されたフォームデータをModelsKoji形式に変換
       const updatedKoji: ModelsKoji = {
         ...koji,
-        company_name: useFormData.company_name,
-        location_name: useFormData.location_name,
+        companyName: useFormData.companyName,
+        locationName: useFormData.locationName,
         description: useFormData.description,
         tags: useFormData.tags ? useFormData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [],
-        start_date: useFormData.start_date ? { 'time.Time': `${useFormData.start_date}T00:00:00+09:00` } as ModelsTimestamp : undefined,
-        end_date: useFormData.end_date ? { 'time.Time': `${useFormData.end_date}T23:59:59+09:00` } as ModelsTimestamp : undefined
+        startDate: useFormData.startDate ? { 'time.Time': `${useFormData.startDate}T00:00:00+09:00` } as ModelsTimestamp : undefined,
+        endDate: useFormData.endDate ? { 'time.Time': `${useFormData.endDate}T23:59:59+09:00` } as ModelsTimestamp : undefined
       };
       
 
@@ -239,17 +239,17 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
       }
       
       // フォームデータも最新データで同期
-      const startDate = extractDateString(savedKoji.start_date);
-      const endDate = extractDateString(savedKoji.end_date);
+      const startDate = extractDateString(savedKoji.startDate);
+      const endDate = extractDateString(savedKoji.endDate);
       
       setFormData({
         id: savedKoji.id || '',
-        company_name: savedKoji.company_name || '',
-        location_name: savedKoji.location_name || '',
+        companyName: savedKoji.companyName || '',
+        locationName: savedKoji.locationName || '',
         description: savedKoji.description || '',
         tags: Array.isArray(savedKoji.tags) ? savedKoji.tags.join(', ') : (savedKoji.tags || ''),
-        start_date: startDate,
-        end_date: endDate
+        startDate: startDate,
+        endDate: endDate
       });
       
       // フォルダー名が変更された場合はモーダルを閉じる
@@ -273,7 +273,7 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
       return;
     }
     // ファイル名関連フィールドの場合は更新しない
-    if (fieldName === 'company_name' || fieldName === 'location_name') {
+    if (fieldName === 'companyName' || fieldName === 'locationName') {
       return;
     }
     handleFieldUpdateWithData(formData);
@@ -294,7 +294,7 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
   // ファイル名関連フィールド用のblurハンドラー
   const handleFilenameBlur = (fieldName: string) => () => {
     // ファイル名関連フィールドの変更をチェック
-    if (fieldName === 'company_name' || fieldName === 'location_name') {
+    if (fieldName === 'companyName' || fieldName === 'locationName') {
       checkFilenameChanges(formData);
     }
   };
@@ -312,14 +312,14 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       // Enterキーでファイル名変更チェックを実行
-      if (fieldName === 'company_name' || fieldName === 'location_name') {
+      if (fieldName === 'companyName' || fieldName === 'locationName') {
         checkFilenameChanges(formData);
       }
     }
   };
 
   // DaisyUI日付ピッカー用のハンドラー
-  const handleDaisyDateChange = (dateString: string, fieldName: 'start_date' | 'end_date') => {
+  const handleDaisyDateChange = (dateString: string, fieldName: 'startDate' | 'endDate') => {
     // フォームデータを更新
     const newFormData = {
       ...formData,
@@ -328,7 +328,7 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
     setFormData(newFormData);
     
     // 開始日の場合はファイル名関連なので即座に更新しない
-    if (fieldName === 'start_date') {
+    if (fieldName === 'startDate') {
       checkFilenameChanges(newFormData);
       return;
     }
@@ -350,9 +350,9 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
     setHasFilenameChanges(false);
     // 新しい値を初期値として保存
     setInitialFilenameData({
-      start_date: formData.start_date || '',
-      company_name: formData.company_name || '',
-      location_name: formData.location_name || ''
+      startDate: formData.startDate || '',
+      companyName: formData.companyName || '',
+      locationName: formData.locationName || ''
     });
   };
 
@@ -396,17 +396,17 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
           }
           
           // フォームデータも更新
-          const startDate = extractDateString(updatedKoji.start_date);
-          const endDate = extractDateString(updatedKoji.end_date);
+          const startDate = extractDateString(updatedKoji.startDate);
+          const endDate = extractDateString(updatedKoji.endDate);
           
           setFormData({
             id: updatedKoji.id || '',
-            company_name: updatedKoji.company_name || '',
-            location_name: updatedKoji.location_name || '',
+            companyName: updatedKoji.companyName || '',
+            locationName: updatedKoji.locationName || '',
             description: updatedKoji.description || '',
             tags: Array.isArray(updatedKoji.tags) ? updatedKoji.tags.join(', ') : (updatedKoji.tags || ''),
-            start_date: startDate,
-            end_date: endDate
+            startDate: startDate,
+            endDate: endDate
           });
         } else {
           // 文字列配列が返された場合（後方互換性）
@@ -424,17 +424,17 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
               // 工事データを更新
               onKojiUpdate(updatedKojiResponse.data);
               // フォームデータも更新
-              const startDate = extractDateString(updatedKojiResponse.data.start_date);
-              const endDate = extractDateString(updatedKojiResponse.data.end_date);
+              const startDate = extractDateString(updatedKojiResponse.data.startDate);
+              const endDate = extractDateString(updatedKojiResponse.data.endDate);
               
               setFormData({
                 id: updatedKojiResponse.data.id || '',
-                company_name: updatedKojiResponse.data.company_name || '',
-                location_name: updatedKojiResponse.data.location_name || '',
+                companyName: updatedKojiResponse.data.companyName || '',
+                locationName: updatedKojiResponse.data.locationName || '',
                 description: updatedKojiResponse.data.description || '',
                 tags: Array.isArray(updatedKojiResponse.data.tags) ? updatedKojiResponse.data.tags.join(', ') : (updatedKojiResponse.data.tags || ''),
-                start_date: startDate,
-                end_date: endDate
+                startDate: startDate,
+                endDate: endDate
               });
             }
           }
@@ -522,11 +522,11 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
                 <TextField
                   fullWidth
                   size="small"
-                  name="company_name"
-                  value={formData.company_name}
+                  name="companyName"
+                  value={formData.companyName}
                   onChange={handleInputChange}
-                  onKeyDown={(e) => handleFilenameKeyDown(e, 'company_name')}
-                  onBlur={handleFilenameBlur('company_name')}
+                  onKeyDown={(e) => handleFilenameKeyDown(e, 'companyName')}
+                  onBlur={handleFilenameBlur('companyName')}
                   required
                   disabled={isLoading}
                   sx={{
@@ -561,11 +561,11 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
                 <TextField
                   fullWidth
                   size="small"
-                  name="location_name"
-                  value={formData.location_name}
+                  name="locationName"
+                  value={formData.locationName}
                   onChange={handleInputChange}
-                  onKeyDown={(e) => handleFilenameKeyDown(e, 'location_name')}
-                  onBlur={handleFilenameBlur('location_name')}
+                  onKeyDown={(e) => handleFilenameKeyDown(e, 'locationName')}
+                  onBlur={handleFilenameBlur('locationName')}
                   required
                   disabled={isLoading}
                   sx={{
@@ -602,8 +602,8 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
                   開始日
                 </Typography>
                 <CalendarPicker
-                  value={formData.start_date || ''}
-                  onChange={(dateString) => handleDaisyDateChange(dateString, 'start_date')}
+                  value={formData.startDate || ''}
+                  onChange={(dateString) => handleDaisyDateChange(dateString, 'startDate')}
                   placeholder="開始日を選択"
                   disabled={isLoading}
                 />
@@ -631,11 +631,11 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
                   終了日
                 </Typography>
                 <CalendarPicker
-                  value={formData.end_date || ''}
-                  onChange={(dateString) => handleDaisyDateChange(dateString, 'end_date')}
+                  value={formData.endDate || ''}
+                  onChange={(dateString) => handleDaisyDateChange(dateString, 'endDate')}
                   placeholder="終了日を選択"
                   disabled={isLoading}
-                  minDate={formData.start_date}
+                  minDate={formData.startDate}
                 />
               </Paper>
             </Box>

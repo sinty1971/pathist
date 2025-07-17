@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	_ "penguin-backend/docs" // swaggo generated docs
-	"penguin-backend/internal/handlers"
 	"penguin-backend/internal/services"
 
 	"github.com/gofiber/fiber/v3"
@@ -50,11 +49,8 @@ func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
 
 	// Business Data Services のルートを設定
 	if container.BusinessService != nil {
-		// Initialize handlers
-		businessHandler := handlers.NewBusinessHandler(container.BusinessService)
-
 		// Setup routes for each domain
-		SetupBusinessRoutes(api.Group("/business"), businessHandler)
+		SetupBusinessRoutes(api.Group("/business"), container.BusinessService)
 	}
 
 	// Media Data Services のルートを設定（将来実装）

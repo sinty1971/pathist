@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"penguin-backend/internal/models"
+	"penguin-backend/internal/utils"
 	"regexp"
-	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -13,67 +13,55 @@ import (
 
 // KojiService は工事情報取得サービスを提供する
 type KojiService struct {
-	FileService      *FileService
-	AttributeService *AttributeService[*models.Koji]
-	FolderName       string
+	FileService     *FileService
+	DatabaseService *DatabaseService[*models.Koji]
 }
 
 // NewKojiService はKojiServiceを初期化する
-// @Param folderName query string true "フォルダー名(FileService.BasePathからの相対パス)" default("2-工事")
+// businessFileService: ビジネスファイルサービス
+// folderName: 工事一覧フォルダーのファイル名(FileService.BasePathからの相対パス)
 func NewKojiService(businessFileService *FileService, folderName string) (*KojiService, error) {
-	ks := &KojiService{}
 
-	// フォルダー名を設定
-	ks.FolderName = folderName
-
-	// フォルダーのフルパスの取得
+	// 工事一覧フォルダーのフルパスの取得
 	folderPath, err := businessFileService.GetFullpath(folderName)
 	if err != nil {
 		return nil, err
 	}
 
 	// FileServiceを初期化
-	ks.FileService, err = NewFileService(folderPath)
+	fileService, err := NewFileService(folderPath)
 	if err != nil {
 		return nil, err
 	}
 
-	// AttributeServiceを初期化
-	ks.AttributeService = NewAttributeService[*models.Koji](ks.FileService, ".detail.yaml")
+	// DatabaseServiceを初期化
+	databaseService := NewDatabaseService[*models.Koji](fileService, ".detail.yaml")
 
-	return ks, nil
+	// KojiServiceのインスタンスを作成
+	return &KojiService{
+		FileService:     fileService,
+		DatabaseService: databaseService,
+	}, nil
 }
 
 // GetKoji は指定されたパスから工事を取得する
 // pathは工事フォルダーのファイル名
 // 工事を返す
 func (ks *KojiService) GetKoji(folderName string) (models.Koji, error) {
-	// 工事フォルダーのフルパスを取得
-	folderPath, err := ks.FileService.GetFullpath(folderName)
-	if err != nil {
-		return models.Koji{}, fmt.Errorf("工事フォルダーが見つかりません: %s", folderName)
-	}
-
-	// 工事フォルダーのFileInfoを取得
-	folderInfo, err := models.NewFileInfo(folderPath)
-	if err != nil {
-		return models.Koji{}, fmt.Errorf("工事フォルダー情報の取得に失敗しました: %v", err)
-	}
-
 	// 工事データモデルを作成
-	koji, err := models.NewKoji(*folderInfo)
+	koji, err := models.NewKoji(folderName)
 	if err != nil {
 		return models.Koji{}, fmt.Errorf("工事データモデルの作成に失敗しました: %v", err)
 	}
 
-	// 管理ファイルの設定
-	err = ks.SetManagedFiles(&koji)
+	// 補助ファイルの設定
+	err = ks.UpdateAssistFiles(&koji)
 	if err != nil {
-		return models.Koji{}, fmt.Errorf("管理ファイルの設定に失敗しました: %v", err)
+		return models.Koji{}, fmt.Errorf("補助ファイルの設定に失敗しました: %v", err)
 	}
 
 	// 属性ファイルと同期する
-	err = ks.SyncAttributeFile(&koji)
+	err = ks.ImportDatabaseFile(&koji)
 	if err != nil {
 		return models.Koji{}, fmt.Errorf("属性ファイルとの同期に失敗しました: %v", err)
 	}
@@ -83,200 +71,197 @@ func (ks *KojiService) GetKoji(folderName string) (models.Koji, error) {
 
 // KojiResult 並列処理用の結果構造体
 type KojiResult struct {
-	Koji  models.Koji
-	Index int
-	Error error
+	Koji    models.Koji
+	Success bool
 }
 
 // GetRecentKojies は指定されたパスから最近の工事データモデル一覧を取得する
 func (ks *KojiService) GetRecentKojies() []models.Koji {
-	// ファイルシステムから工事フォルダー一覧を取得
-	fileInfos, err := ks.FileService.GetFileInfos()
-	if err != nil {
-		return []models.Koji{}
+	// 工事フォルダー一覧をデータベースファイルと同期せずに取得
+	kojies := ks.GetRecentKojiesNoSyncDatabaseFile()
+
+	if len(kojies) == 0 {
+		return kojies
 	}
 
-	if len(fileInfos) == 0 {
-		return []models.Koji{}
-	}
+	// 並列処理用のワーカー数を決定
+	numWorkers := utils.DecideNumWorkers(len(kojies),
+		utils.WithMinWorkers(2),
+		utils.WithMaxWorkers(8), // SyncDatabaseFileはI/O処理なので少なめ
+		utils.WithCPUMultiplier(1),
+	)
 
-	// 並列処理用のワーカー数を決定（CPU数と同じ、最大8）
-	numWorkers := min(runtime.NumCPU(), min(8, len(fileInfos)))
-
-	// チャンネルとワーカーグループを設定
-	jobs := make(chan int, len(fileInfos))
-	results := make(chan KojiResult, len(fileInfos))
+	// ワーカープールでSyncDatabaseFileを並列実行
 	var wg sync.WaitGroup
+	jobs := make(chan int, len(kojies))
 
-	// ワーカーを起動
-	for range numWorkers {
-		wg.Add(1)
+	wg.Add(numWorkers)
+	for i := 0; i < numWorkers; i++ {
 		go func() {
 			defer wg.Done()
-			for index := range jobs {
-				fileInfo := fileInfos[index]
-
-				// fileInfoから工事を作成
-				koji, err := models.NewKoji(fileInfo)
-				if err != nil {
-					results <- KojiResult{Index: index, Error: err}
-					continue
-				}
-
-				// 管理ファイルの設定、エラーは無視
-				ks.SetManagedFiles(&koji)
-
-				// 属性ファイルと同期、エラーは無視
-				ks.SyncAttributeFile(&koji)
-
-				results <- KojiResult{Koji: koji, Index: index, Error: nil}
+			for idx := range jobs {
+				// データベースファイルと同期（エラーは無視）
+				_ = ks.ImportDatabaseFile(&kojies[idx])
 			}
 		}()
 	}
 
-	// ジョブを送信
-	for i := range fileInfos {
+	// ジョブを投入
+	for i := range kojies {
 		jobs <- i
 	}
 	close(jobs)
 
-	// ワーカーの完了を待つ
+	// 全ワーカーの完了を待つ
+	wg.Wait()
+
+	return kojies
+}
+
+// GetRecentKojiesNoSyncDatabaseFile は最近の工事データモデル一覧を取得する
+// データベースへのアクセスは行わない
+// goルーチンを使用して並列処理を行っています
+func (ks *KojiService) GetRecentKojiesNoSyncDatabaseFile() []models.Koji {
+	// ファイルシステムから工事フォルダー一覧を取得
+	fileInfos, err := ks.FileService.GetFileInfos()
+	if err != nil || len(fileInfos) == 0 {
+		return []models.Koji{}
+	}
+
+	// 並列処理用のワーカー数を決定
+	numWorkers := utils.DecideNumWorkers(len(fileInfos),
+		utils.WithMinWorkers(2),
+		utils.WithMaxWorkers(16),
+		utils.WithCPUMultiplier(2),
+	)
+
+	// バッファ付きチャンネルで効率化
+	jobs := make(chan int, len(fileInfos))
+	results := make(chan KojiResult, len(fileInfos))
+
+	// ワーカープールの起動
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+	for i := 0; i < numWorkers; i++ {
+		go func() {
+			defer wg.Done()
+			for idx := range jobs {
+				if koji, err := models.NewKoji(fileInfos[idx].Name); err == nil {
+					results <- KojiResult{Koji: koji, Success: true}
+				} else {
+					results <- KojiResult{Koji: models.Koji{}, Success: false}
+				}
+			}
+		}()
+	}
+
+	// ジョブの投入
+	go func() {
+		for i := range fileInfos {
+			jobs <- i
+		}
+		close(jobs)
+	}()
+
+	// 結果収集用のゴルーチン
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
 
-	// 結果を収集（元の順序を保持）
-	kojies := make([]models.Koji, 0, len(fileInfos))
-	kojiMap := make(map[int]models.Koji, len(fileInfos))
-
+	// 結果を収集（最大サイズで確保し、後でスライス）
+	kojies := make([]models.Koji, len(fileInfos))
+	count := 0
 	for result := range results {
-		if result.Error == nil {
-			kojiMap[result.Index] = result.Koji
+		if result.Success {
+			kojies[count] = result.Koji
+			count++
 		}
 	}
-
-	// 元の順序で工事一覧を構築
-	for i := range len(fileInfos) {
-		if koji, exists := kojiMap[i]; exists {
-			kojies = append(kojies, koji)
-		}
-	}
+	// 実際に成功した要素数にスライス
+	kojies = kojies[:count]
 
 	// 工事開始日で降順ソート（新しいものが最初）
 	sort.Slice(kojies, func(i, j int) bool {
-		// 両方の開始日が有効な場合
-		if !kojies[i].StartDate.IsZero() && !kojies[j].StartDate.IsZero() {
-			return kojies[i].StartDate.After(kojies[j].StartDate.Time)
+		// Compare関数を使用して比較（降順なので結果を反転）
+		cmp := kojies[i].StartDate.Compare(kojies[j].StartDate)
+		if cmp != 0 {
+			return cmp > 0
 		}
-		// iの開始日が無効でjが有効な場合、jを先に
-		if kojies[i].StartDate.IsZero() && !kojies[j].StartDate.IsZero() {
-			return false
-		}
-		// iの開始日が有効でjが無効な場合、iを先に
-		if !kojies[i].StartDate.IsZero() && kojies[j].StartDate.IsZero() {
-			return true
-		}
-		// 両方の開始日が無効な場合、フォルダー名で降順
-		return kojies[i].FileInfo.Name > kojies[j].FileInfo.Name
+		// 両方の開始日が同じ場合、フォルダー名で降順
+		return kojies[i].FolderName > kojies[j].FolderName
 	})
 
 	return kojies
 }
 
-// SyncAttributeFile は工事の属性データを読み込み、工事データモデルに反映する
-func (ks *KojiService) SyncAttributeFile(koji *models.Koji) error {
-	// 工事の属性データを読み込む
-	attribute, err := ks.AttributeService.Load(koji)
+// ImportDatabaseFile は工事データベースファイルからデータを取り込みます
+func (ks *KojiService) ImportDatabaseFile(target *models.Koji) error {
+	// 工事データベースファイルからデータを読み込む
+	database, err := ks.DatabaseService.Load(target)
 	if err != nil {
 		// ファイルが存在しない場合はデフォルト値を設定
-		koji.UpdateStatus()
+		target.UpdateStatus()
 
 		// 新規ファイルの場合は非同期で保存（必要最小限の書き込み）
 		go func() {
-			ks.AttributeService.Save(koji)
+			ks.DatabaseService.Save(target)
 		}()
 		return nil
 	}
 
-	// detailにしか保持されない内容をkojiに反映
-	koji.Description = attribute.Description
-	koji.EndDate = attribute.EndDate
-	koji.Tags = attribute.Tags
+	// データベースファイルにしか保持されない内容をtargetに反映
+	target.Description = database.Description
+	target.EndDate = database.EndDate
+	target.Tags = database.Tags
 
 	// 計算が必要な項目の更新
-	koji.UpdateStatus()
-
-	// フォルダー名から解析した情報をdetailに反映
-	attribute.StartDate = koji.StartDate
-	attribute.CompanyName = koji.CompanyName
-	attribute.LocationName = koji.LocationName
-	attribute.Status = koji.Status
-
-	// データに変更がある場合のみ非同期で保存（パフォーマンス重視）
-	if ks.hasKojiChanged(*attribute, *koji) {
-		go func() {
-			ks.AttributeService.Save(attribute)
-		}()
-	}
+	target.UpdateStatus()
 
 	return nil
 }
 
-// hasKojiChanged 工事データに変更があるかチェック
-func (ks *KojiService) hasKojiChanged(detail, current models.Koji) bool {
-	return detail.StartDate != current.StartDate ||
-		detail.CompanyName != current.CompanyName ||
-		detail.LocationName != current.LocationName ||
-		detail.Status != current.Status
-}
-
-// SetManagedFiles は工事の管理ファイルを設定します
-func (ks *KojiService) SetManagedFiles(koji *models.Koji) error {
+// UpdateAssistFiles は工事の補助ファイルを更新します
+func (ks *KojiService) UpdateAssistFiles(koji *models.Koji) error {
 	// 工事フォルダー内のファイルを取得
-	fileInfos, err := ks.FileService.GetFileInfos(koji.FileInfo.Name)
+	kojiFileInfos, err := ks.FileService.GetFileInfos(koji.FolderName)
 	if err != nil {
-		// エラーの場合はデフォルトの管理ファイルを設定
-		koji.ManagedFiles = []models.ManagedFile{{
-			Recommended: koji.Name + ".xlsx",
-			Current:     "工事.xlsx",
+		// エラーの場合はデフォルトの補助ファイルを設定
+		koji.Assists = []models.AssistFile{{
+			Desired: koji.FolderName + ".xlsx",
+			Current: "工事.xlsx",
 		}}
 		return nil
 	}
 
 	// 管理ファイルの設定（最大1個のみ）
-	var managedFile models.ManagedFile
+	var assistFile models.AssistFile
 	var found bool
 
 	// 日付パターンのコンパイル（1回のみ）
 	datePattern := regexp.MustCompile(`^20\d{2}-\d{4}`)
 
 	// 工事ファイルの検索
-	for _, fileInfo := range fileInfos {
+	for _, file := range kojiFileInfos {
 		// エクセルファイル以外はスキップ
-		if !fileInfo.IsExcel() {
+		if !file.IsExcel() {
 			continue
 		}
 
 		// ファイル名の解析
-		fileExt := filepath.Ext(fileInfo.Name)
-		filenameWithoutExt := strings.TrimSuffix(fileInfo.Name, fileExt)
+		extension := filepath.Ext(file.Name)
+		filenameWithoutExt := strings.TrimSuffix(file.Name, extension)
 
 		// 条件に合うファイルかチェック
 		if !datePattern.MatchString(filenameWithoutExt) && filenameWithoutExt != "工事" {
 			continue
 		}
 
-		recommendedName := koji.Name + fileExt
+		recommendedName := koji.FolderName + extension
 
-		// 推奨ファイルと現在のファイルが同じ時は推奨ファイルの表示を不要にする
-		if recommendedName == fileInfo.Name {
-			recommendedName = ""
-		}
-
-		managedFile = models.ManagedFile{
-			Recommended: recommendedName,
-			Current:     fileInfo.Name,
+		assistFile = models.AssistFile{
+			Desired: recommendedName,
+			Current: file.Name,
 		}
 		found = true
 		break
@@ -284,9 +269,9 @@ func (ks *KojiService) SetManagedFiles(koji *models.Koji) error {
 
 	// 工事ファイルが見つからない場合はひな形を設定
 	if !found {
-		managedFile = models.ManagedFile{
-			Recommended: koji.Name + ".xlsx",
-			Current:     "工事.xlsx",
+		assistFile = models.AssistFile{
+			Desired: koji.FolderName + ".xlsx",
+			Current: "工事.xlsx",
 		}
 
 		// テンプレートファイルのコピーは省略（高速化のため）
@@ -294,7 +279,7 @@ func (ks *KojiService) SetManagedFiles(koji *models.Koji) error {
 	}
 
 	// 管理ファイルの設定
-	koji.ManagedFiles = []models.ManagedFile{managedFile}
+	koji.Assists = []models.AssistFile{assistFile}
 
 	return nil
 }
@@ -303,72 +288,49 @@ func (ks *KojiService) SetManagedFiles(koji *models.Koji) error {
 // kojiの詳細情報で.detail.yamlを更新
 // 移動元フォルダー名：FileInfo.Name
 // 移動先フォルダー名：StartDate, CompanyName, LocationNameから生成されたフォルダー名
-func (ks *KojiService) Update(koji *models.Koji) error {
+func (ks *KojiService) Update(target *models.Koji) error {
+	// 更新前の工事情報を保存
+	temp := *target
 
-	// 工事開始日・会社名・現場名からフォルダー名を生成
-	generatedFolderName, err := models.GenerateKojiFolderName(koji.StartDate, koji.CompanyName, koji.LocationName)
-	if err != nil {
-		return err
+	// フォルダー名の変更
+	if temp.UpdateFolderName() {
+		// 工事IDの更新（フォルダー名の変更に伴う）
+		temp.UpdateID()
+
+		// 補助ファイル情報の更新（フォルダー名の変更に伴う）
+		if err := ks.UpdateAssistFiles(&temp); err != nil {
+			return err
+		}
+
+		// ファイルの移動
+		if err := ks.FileService.MoveFile(temp.FolderName, target.FolderName); err != nil {
+			return err
+		}
 	}
 
-	// 生成されたフォルダー名とFileInfo.Nameを比較
-	if generatedFolderName != koji.FileInfo.Name {
-		// フォルダー名の変更
-		err = ks.FileService.MoveFile(koji.FileInfo.Name, generatedFolderName)
-		if err != nil {
-			return err
-		}
-
-		// FileInfoの作成
-		generatedFullpath, err := ks.FileService.GetFullpath(generatedFolderName)
-		if err != nil {
-			return err
-		}
-		generatedFileInfo, err := models.NewFileInfo(generatedFullpath)
-		if err != nil {
-			return err
-		}
-
-		// 詳細情報以外の更新
-		koji.FileInfo = *generatedFileInfo
-	}
+	// フォルダー名の変更完了後、情報を更新
+	*target = temp
 
 	// 計算が必要な項目の更新
-	koji.ID = models.GenerateKojiID(koji.StartDate, koji.CompanyName, koji.LocationName)
-	koji.Status = models.DetermineKojiStatus(koji.StartDate, koji.EndDate)
-
-	// 管理ファイルを更新（推奨ファイル名が変更される可能性があるため）
-	err = ks.SetManagedFiles(koji)
-	if err != nil {
-		return err
-	}
+	target.UpdateStatus()
 
 	// 更新後の工事情報を属性ファイルに反映
-	return ks.AttributeService.Save(koji)
+	return ks.DatabaseService.Save(target)
 }
 
-// KojiesToMapByID は[]KojiをMap[string]Kojiに変換する
-func KojiesToMapByID(kojies []models.Koji) map[string]models.Koji {
-	kojiMap := make(map[string]models.Koji, len(kojies))
-	for _, koji := range kojies {
-		kojiMap[koji.ID] = koji
-	}
-	return kojiMap
-}
-
-// RenameManagedFile は管理ファイルの名前を変更し、工事データも更新する
+// RenameAssistFile は補助ファイルの名前を変更し、工事データも更新する
 // kojiは工事データ
-// currentsは変更前の管理ファイル名
-// 変更後の管理ファイル名を返す
-func (ks *KojiService) RenameManagedFile(koji models.Koji, currents []string) []string {
+// currentsは変更前の補助ファイル名
+// 変更後の補助ファイル名を返す
+func (ks *KojiService) RenameAssistFile(koji models.Koji, currents []string) []string {
 	renamedFiles := make([]string, len(currents))
 
 	count := 0
 	for _, current := range currents {
-		for _, managedFile := range koji.ManagedFiles {
-			if managedFile.Current == current {
-				currentPath := filepath.Join(koji.FileInfo.Name, current)
-				recommendedPath := filepath.Join(koji.FileInfo.Name, managedFile.Recommended)
+		for _, assistFile := range koji.Assists {
+			if assistFile.Current == current {
+				currentPath := filepath.Join(koji.FolderName, current)
+				recommendedPath := filepath.Join(koji.FolderName, assistFile.Desired)
 				err := ks.FileService.MoveFile(currentPath, recommendedPath)
 				if err == nil {
 					renamedFiles[count] = recommendedPath
@@ -378,13 +340,13 @@ func (ks *KojiService) RenameManagedFile(koji models.Koji, currents []string) []
 		}
 	}
 
-	// ファイル名変更後、工事の管理ファイル情報を更新
+	// ファイル名変更後、工事の補助ファイル情報を更新
 	if count > 0 {
-		// 管理ファイル情報を再設定
-		err := ks.SetManagedFiles(&koji)
+		// 補助ファイル情報を再設定
+		err := ks.UpdateAssistFiles(&koji)
 		if err == nil {
 			// 属性ファイルに反映
-			ks.AttributeService.Save(&koji)
+			ks.DatabaseService.Save(&koji)
 		}
 	}
 

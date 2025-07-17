@@ -3,42 +3,42 @@ package services
 import (
 	"fmt"
 	"penguin-backend/internal/models"
+	"slices"
 	"strings"
 )
 
-// CompanyService handles company data operations
+// CompanyService は会社データ操作を処理します
 type CompanyService struct {
-	FileService      *FileService
-	AttributeService *AttributeService[*models.Company]
-	FolderName       string
+	FileService     *FileService
+	DatabaseService *DatabaseService[*models.Company]
 }
 
-// NewCompanyService creates a new CompanyService
+// NewCompanyService は新しいCompanyServiceを作成します
 func NewCompanyService(businessFileService *FileService, folderName string) (*CompanyService, error) {
-	cs := &CompanyService{}
-
-	// フォルダー名を設定
-	cs.FolderName = folderName
-
-	// フォルダーのフルパスの取得
+	// 会社一覧フォルダーのフルパスを取得
 	folderPath, err := businessFileService.GetFullpath(folderName)
 	if err != nil {
 		return nil, err
 	}
 
-	// FileServiceを初期化
-	cs.FileService, err = NewFileService(folderPath)
+	// 会社一覧フォルダー基準のFileServiceを初期化
+	fileService, err := NewFileService(folderPath)
 	if err != nil {
 		return nil, err
 	}
 
-	// AttributeServiceを初期化
-	cs.AttributeService = NewAttributeService[*models.Company](cs.FileService, ".detail.yaml")
+	// 会社フォルダー基準のDatabaseServiceを初期化
+	databaseService := NewDatabaseService[*models.Company](fileService, ".detail.yaml")
 
-	return cs, nil
+	// CompanyServiceのインスタンスを作成
+	return &CompanyService{
+		FileService:     fileService,
+		DatabaseService: databaseService,
+	}, nil
 }
 
 // GetCompany は指定されたパスから会社を取得する
+// folderName: 会社フォルダー名
 func (cs *CompanyService) GetCompany(folderName string) (models.Company, error) {
 	// 会社データモデルを作成
 	company, err := models.NewCompany(folderName)
@@ -46,135 +46,143 @@ func (cs *CompanyService) GetCompany(folderName string) (models.Company, error) 
 		return models.Company{}, fmt.Errorf("会社データモデルの作成に失敗しました: %v", err)
 	}
 
-	// 属性ファイルと同期
-	err = cs.SyncAttributeFile(&company)
+	// データベースファイルと同期
+	err = cs.SyncDatabaseFile(&company)
 	if err != nil {
-		return models.Company{}, fmt.Errorf("属性ファイルとの同期に失敗しました: %v", err)
+		return models.Company{}, fmt.Errorf("データベースファイルとの同期に失敗しました: %v", err)
 	}
 
 	return company, nil
 }
 
-// SyncAttributeFile は会社の属性データを読み込み、会社データモデルに反映する
-func (cs *CompanyService) SyncAttributeFile(company *models.Company) error {
-	// 会社の属性データを読み込む
-	attribute, err := cs.AttributeService.Load(company)
-	if err != nil {
-		// ファイルが存在しない場合は新規ファイルとして非同期で保存
-		go func() {
-			cs.AttributeService.Save(company)
-		}()
-		return nil
-	}
-
-	// 属性ファイルにしか保持されない内容をcompanyに反映
-	company.LongName = attribute.LongName
-	company.PostalCode = attribute.PostalCode
-	company.Address = attribute.Address
-	company.Phone = attribute.Phone
-	company.Email = attribute.Email
-	company.Website = attribute.Website
-	company.Tags = attribute.Tags
-
-	// フォルダー名から解析した情報を属性に反映
-	attribute.ShortName = company.ShortName
-	attribute.BusinessType = company.BusinessType
-
-	// データに変更がある場合のみ非同期で保存（パフォーマンス重視）
-	if cs.hasCompanyChanged(*attribute, *company) {
-		go func() {
-			cs.AttributeService.Save(attribute)
-		}()
-	}
-
-	return nil
-}
-
-// hasCompanyChanged 会社データに変更があるかチェック
-func (cs *CompanyService) hasCompanyChanged(attribute, current models.Company) bool {
-	return attribute.ShortName != current.ShortName ||
-		attribute.BusinessType != current.BusinessType
-}
-
 // GetCompanies は会社一覧を取得する
 func (cs *CompanyService) GetCompanies() []models.Company {
-	// ファイルシステムから会社フォルダー一覧を取得
-	fileInfos, err := cs.FileService.GetFileInfos()
-	if err != nil {
-		return []models.Company{}
-	}
+	// 会社フォルダー一覧をデータベースファイルと同期せずに取得
+	companies := cs.GetCompaniesNoSyncDatabaseFile()
 
-	companies := make([]models.Company, 0, len(fileInfos))
-	for _, fileInfo := range fileInfos {
-		// フォルダー名のみを使用
-		company, err := models.NewCompany(fileInfo.Name)
-		if err != nil {
-			continue
-		}
-
-		// 属性ファイルと同期（エラーは無視）
-		cs.SyncAttributeFile(&company)
-
-		companies = append(companies, company)
+	for _, company := range companies {
+		// データベースファイルと同期（エラーは無視）
+		_ = cs.SyncDatabaseFile(&company)
 	}
 
 	return companies
 }
 
-// GetCompanyByID retrieves a company by its ID
-func (cs *CompanyService) GetCompanyByID(id string) (*models.Company, error) {
-	companies := cs.GetCompanies()
-
-	for _, company := range companies {
-		if company.ID == id {
-			return &company, nil
-		}
+// GetCompaniesNoSyncDatabaseFile は会社一覧を取得する、データベースへのアクセスは行わない
+func (cs *CompanyService) GetCompaniesNoSyncDatabaseFile() []models.Company {
+	// ファイルシステムから会社フォルダー一覧を取得
+	fileInfos, err := cs.FileService.GetFileInfos()
+	if err != nil || len(fileInfos) == 0 {
+		return []models.Company{}
 	}
 
-	return nil, fmt.Errorf("company with ID %s not found", id)
-}
-
-// GetCompanyByName retrieves a company by its name (case-insensitive)
-func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error) {
-	companies := cs.GetCompanies()
-
-	name = strings.TrimSpace(strings.ToLower(name))
-
-	for _, company := range companies {
-		if strings.ToLower(company.ShortName) == name ||
-			strings.ToLower(company.LongName) == name {
-			return &company, nil
-		}
-	}
-
-	return nil, nil // Return nil if not found (not an error)
-}
-
-// Update は会社情報を更新し、必要に応じてフォルダー名を変更します
-// oldFolderName: 変更前のフォルダー名
-// company: 更新後の会社情報
-func (cs *CompanyService) Update(oldFolderName string, company *models.Company) error {
-	// 会社のショート名と業種から新しいフォルダー名を生成
-	newFolderName := fmt.Sprintf("%s %s", company.BusinessType.Code(), company.ShortName)
-
-	// 新しいフォルダー名と古いフォルダー名を比較
-	if newFolderName != oldFolderName {
-		// フォルダー名の変更
-		err := cs.FileService.MoveFile(oldFolderName, newFolderName)
+	companies := make([]models.Company, len(fileInfos))
+	count := 0
+	for _, fileInfo := range fileInfos {
+		// 会社データモデルを作成、これはデータベースアクセスを行いません
+		company, err := models.NewCompany(fileInfo.Name)
 		if err != nil {
-			return err
+			continue
 		}
 
-		// FolderNameを更新
-		company.FolderName = newFolderName
+		companies[count] = company
+		count++
 	}
 
-	// UpdateFolderNameを呼び出してFolderNameを確実に更新
-	company.UpdateFolderName()
+	return companies[:count]
+}
 
-	// 計算が必要な項目の更新
-	company.ID = models.NewIDFromString(company.ShortName).Len5()
+// SyncDatabaseFile は会社の属性データを読み込み、会社データモデルに反映する
+func (cs *CompanyService) SyncDatabaseFile(target *models.Company) error {
+	// 会社の属性データを読み込む
+	database, err := cs.DatabaseService.Load(target)
+	if err != nil {
+		// ファイルが存在しない場合は新規ファイルとして非同期で保存
+		go func() {
+			cs.DatabaseService.Save(target)
+		}()
+		return nil
+	}
 
-	// 更新後の会社情報を属性ファイルに反映
-	return cs.AttributeService.Save(company)
+	// データベースにしか保持されない内容をtargetに反映
+	target.LegalName = database.LegalName
+	target.PostalCode = database.PostalCode
+	target.Address = database.Address
+	target.Phone = database.Phone
+	target.Email = database.Email
+	target.Website = database.Website
+	target.Tags = database.Tags
+
+	return nil
+}
+
+// GetCompanyByID は指定されたIDの会社を取得します
+func (cs *CompanyService) GetCompanyByID(id string) (*models.Company, error) {
+	// slices.IndexFuncを使用して高速化
+	companies := cs.GetCompaniesNoSyncDatabaseFile()
+
+	idx := slices.IndexFunc(companies, func(c models.Company) bool {
+		return c.ID == id
+	})
+	if idx == -1 {
+		return nil, fmt.Errorf("ID %s の会社が見つかりません", id)
+	}
+
+	company, err := cs.GetCompany(companies[idx].FolderName)
+	if err != nil {
+		return nil, err
+	}
+	return &company, nil
+}
+
+// GetCompanyByName は会社名で会社を取得します（大文字小文字を区別しない）
+func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error) {
+
+	// 会社一覧を取得、データベースファイルと同期は行わない
+	companies := cs.GetCompaniesNoSyncDatabaseFile()
+
+	// slices.IndexFuncを使用して高速化
+	idx := slices.IndexFunc(companies, func(c models.Company) bool {
+		return strings.ToLower(c.ShortName) == name ||
+			strings.ToLower(c.LegalName) == name
+	})
+	if idx == -1 {
+		return nil, fmt.Errorf("会社名 %s の会社が見つかりません", name)
+	}
+
+	// データベースファイルと同期
+	databasedCompany, err := cs.GetCompany(companies[idx].FolderName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &databasedCompany, nil
+}
+
+// Update は会社情報を更新し、必要に応じてフォルダー名も変更します
+// target: 更新対象の会社データモデル
+// target.FolderName: 変更前のフォルダー名を指定すること
+func (cs *CompanyService) Update(target *models.Company) error {
+	// 変更前のフォルダー名を取得
+	prevFolderName := target.FolderName
+
+	// 会社の業種とショート名から新しいアイデンティティフィールドを更新
+	err := target.UpdateIdentity()
+	if err != nil {
+		return err
+	}
+
+	// エラーがない場合はファイルの移動が必要
+	err = cs.FileService.MoveFile(prevFolderName, target.FolderName)
+	if err != nil {
+		return err
+	}
+
+	// 更新後の会社情報をデータベースファイルに反映
+	return cs.DatabaseService.Save(target)
+}
+
+// Categories は会社のカテゴリー一覧をマップ形式で取得
+func (cs *CompanyService) Categories() map[string]string {
+	return models.GetAllCompanyCategoriesMap()
 }

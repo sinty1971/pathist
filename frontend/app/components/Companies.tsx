@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ModelsCompany } from "../api/types.gen";
 import { getBusinessCompanies } from "../api/sdk.gen";
 import CompanyDetailModal from "./CompanyDetailModal";
+import { getCategoryName, getAllCategories, initializeCategories } from "../utils/company";
 import "../styles/business-entity-list.css";
 
 const Companies = () => {
@@ -11,6 +12,9 @@ const Companies = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<ModelsCompany | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<Set<number>>(new Set());
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   // 会社データを読み込み
   const loadCompanies = async () => {
@@ -38,8 +42,56 @@ const Companies = () => {
   };
 
   useEffect(() => {
-    loadCompanies();
+    const initialize = async () => {
+      // カテゴリーマッピングを初期化
+      await initializeCategories();
+      // 会社データを読み込み
+      await loadCompanies();
+    };
+    initialize();
   }, []);
+
+  // ドロップダウンの外側をクリックしたときに閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    };
+
+    if (showFilterDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showFilterDropdown]);
+
+  // フィルタリングされた会社リスト
+  const filteredCompanies = companies.filter(company => {
+    if (selectedCategories.size === 0) return true; // 何も選択されていない場合は全て表示
+    return company.category !== undefined && selectedCategories.has(company.category);
+  });
+
+  // カテゴリーの選択/解除
+  const toggleCategory = (category: number) => {
+    const newSelected = new Set(selectedCategories);
+    if (newSelected.has(category)) {
+      newSelected.delete(category);
+    } else {
+      newSelected.add(category);
+    }
+    setSelectedCategories(newSelected);
+  };
+
+  // 全選択/全解除
+  const toggleAllCategories = () => {
+    if (selectedCategories.size === getAllCategories().length) {
+      setSelectedCategories(new Set()); // 全解除
+    } else {
+      setSelectedCategories(new Set(getAllCategories().map(c => c.value))); // 全選択
+    }
+  };
 
   // 会社クリック処理
   const handleCompanyClick = (company: ModelsCompany) => {
@@ -57,7 +109,7 @@ const Companies = () => {
   const handleCompanyUpdate = (updatedCompany: ModelsCompany) => {
     setSelectedCompany(updatedCompany);
     setCompanies(prevCompanies => 
-      prevCompanies.map(c => c.name === updatedCompany.name ? updatedCompany : c)
+      prevCompanies.map(c => c.shortName === updatedCompany.shortName ? updatedCompany : c)
     );
   };
 
@@ -90,6 +142,93 @@ const Companies = () => {
       <div className="business-entity-controls">
         <div className="business-entity-count">
           全{companies.length}件
+          {selectedCategories.size > 0 && ` / 絞り込み: ${filteredCompanies.length}件`}
+        </div>
+        
+        <div ref={filterDropdownRef} style={{ display: "flex", gap: "16px", alignItems: "center", position: "relative" }}>
+          <label style={{ fontSize: "14px", fontWeight: 500 }}>
+            業種で絞り込み:
+          </label>
+          <button
+            onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              fontSize: "14px",
+              cursor: "pointer",
+              backgroundColor: "white",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              minWidth: "200px"
+            }}
+          >
+            {selectedCategories.size === 0 
+              ? "すべての業種" 
+              : selectedCategories.size === getAllCategories().length
+                ? "すべて選択中"
+                : `${selectedCategories.size}件選択中`}
+            <span style={{ marginLeft: "auto" }}>▼</span>
+          </button>
+          
+          {showFilterDropdown && (
+            <div style={{
+              position: "absolute",
+              top: "100%",
+              left: "120px",
+              marginTop: "4px",
+              backgroundColor: "white",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              zIndex: 1000,
+              minWidth: "200px",
+              maxHeight: "300px",
+              overflowY: "auto"
+            }}>
+              <div style={{ padding: "8px", borderBottom: "1px solid #eee" }}>
+                <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.size === getAllCategories().length}
+                    onChange={toggleAllCategories}
+                    style={{ marginRight: "8px" }}
+                  />
+                  <strong>すべて選択</strong>
+                </label>
+              </div>
+              {getAllCategories().map((category) => (
+                <div key={category.value} style={{ padding: "8px" }}>
+                  <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.has(category.value)}
+                      onChange={() => toggleCategory(category.value)}
+                      style={{ marginRight: "8px" }}
+                    />
+                    {category.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {selectedCategories.size > 0 && (
+            <button
+              onClick={() => setSelectedCategories(new Set())}
+              style={{
+                padding: "4px 8px",
+                fontSize: "12px",
+                borderRadius: "4px",
+                border: "1px solid #ccc",
+                backgroundColor: "#f5f5f5",
+                cursor: "pointer"
+              }}
+            >
+              クリア
+            </button>
+          )}
         </div>
       </div>
 
@@ -131,9 +270,13 @@ const Companies = () => {
             <div className="business-entity-empty">
               会社データが見つかりません
             </div>
+          ) : filteredCompanies.length === 0 ? (
+            <div className="business-entity-empty">
+              選択した業種の会社が見つかりません
+            </div>
           ) : (
             <div>
-              {companies.map((company, index) => (
+              {filteredCompanies.map((company, index) => (
               <div
                 key={company.id || index}
                 className="business-entity-item-row"
@@ -143,11 +286,11 @@ const Companies = () => {
               >
                 <div className="business-entity-item-info">
                   <div className="business-entity-item-info-company">
-                    {company.short_name || company.name || "会社名未設定"}
+                    {company.shortName || "会社名未設定"}
                   </div>
                   
                   <div className="business-entity-item-info-company">
-                    {company.business_type || "業種未設定"}
+                    {getCategoryName(company.category)}
                   </div>
                   
                   <div className="business-entity-item-info-spacer"></div>
@@ -201,4 +344,4 @@ const Companies = () => {
   );
 };
 
-export { Companies };
+export default Companies;

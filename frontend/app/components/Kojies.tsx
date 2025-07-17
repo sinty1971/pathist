@@ -66,7 +66,7 @@ const Kojies = () => {
       if (response.data) {
         // 工事一覧を更新
         setKojies((prevKojies) =>
-          prevKojies.map((k) => (k.path === response.data!.path ? response.data! : k))
+          prevKojies.map((k) => (k.id === response.data!.id ? response.data! : k))
         );
 
         // 更新された工事データを返す
@@ -88,14 +88,14 @@ const Kojies = () => {
 
   // 管理ファイルの変更が必要かチェック
   const needsFileRename = (koji: ModelsKoji): boolean => {
-    if (!koji.managed_files || koji.managed_files.length === 0) {
+    if (!koji.assists || koji.assists.length === 0) {
       return false;
     }
     
-    // managed_filesの中で現在の名前と推奨名が異なるものがあるかチェック
-    const needsRename = koji.managed_files.some(file => {
-      // currentとrecommendedが両方存在し、異なる場合にtrueを返す
-      return file.current && file.recommended && file.current !== file.recommended;
+    // assistsの中で現在の名前と希望名が異なるものがあるかチェック
+    const needsRename = koji.assists.some(file => {
+      // currentとdesiredが両方存在し、異なる場合にtrueを返す
+      return file.current && file.desired && file.current !== file.desired;
     });
     
     return needsRename;
@@ -107,14 +107,14 @@ const Kojies = () => {
     setSelectedKoji(updatedKoji);
     
     // ファイル名が変更された可能性がある場合、モーダルを閉じた後に再読み込みをする
-    if (selectedKoji && selectedKoji.path !== updatedKoji.path) {
+    if (selectedKoji && selectedKoji.id !== updatedKoji.id) {
       setShouldReloadOnClose(true);
     }
 
     // 工事一覧を更新
     setKojies((prevKojies) => {
       // 既存の工事を探す（pathで照合）
-      const existingIndex = prevKojies.findIndex(k => k.path === updatedKoji.path);
+      const existingIndex = prevKojies.findIndex(k => k.id === updatedKoji.id);
       
       if (existingIndex !== -1) {
         // 既存の工事を更新
@@ -125,7 +125,7 @@ const Kojies = () => {
         // pathが変わった場合（フォルダー名変更時など）
         // 選択中の工事のpathで元の工事を探す
         const oldKojiIndex = prevKojies.findIndex(k => 
-          selectedKoji && k.path === selectedKoji.path
+          selectedKoji && k.id === selectedKoji.id
         );
         
         if (oldKojiIndex !== -1) {
@@ -136,8 +136,8 @@ const Kojies = () => {
           
           // 開始日順でソート（新しい順）
           return updatedKojies.sort((a, b) => {
-            const dateA = a.start_date ? new Date(typeof a.start_date === 'string' ? a.start_date : (a.start_date as any)['time.Time']).getTime() : 0;
-            const dateB = b.start_date ? new Date(typeof b.start_date === 'string' ? b.start_date : (b.start_date as any)['time.Time']).getTime() : 0;
+            const dateA = a.startDate ? new Date(typeof a.startDate === 'string' ? a.startDate : (a.startDate as any)['time.Time']).getTime() : 0;
+            const dateB = b.startDate ? new Date(typeof b.startDate === 'string' ? b.startDate : (b.startDate as any)['time.Time']).getTime() : 0;
             
             // 開始日が設定されている方を優先
             if (dateA > 0 && dateB === 0) return -1;
@@ -147,7 +147,7 @@ const Kojies = () => {
             if (dateA > 0 && dateB > 0) return dateB - dateA;
             
             // 両方開始日がない場合はフォルダー名で降順
-            return (b.name || '').localeCompare(a.name || '');
+            return (b.folderName || '').localeCompare(a.folderName || '');
           });
         } else {
           // 新規追加
@@ -253,21 +253,21 @@ const Kojies = () => {
               >
                 <div className="business-entity-item-info">
                   <div className="business-entity-item-info-date">
-                    {koji.start_date
+                    {koji.startDate
                       ? new Date(
-                          typeof koji.start_date === 'string' 
-                            ? koji.start_date 
-                            : (koji.start_date as any)['time.Time']
+                          typeof koji.startDate === 'string' 
+                            ? koji.startDate 
+                            : (koji.startDate as any)['time.Time']
                         ).toLocaleDateString("ja-JP")
                       : "未設定"}
                   </div>
                   
                   <div className="business-entity-item-info-company">
-                    {koji.company_name || "会社名未設定"}
+                    {koji.companyName || "会社名未設定"}
                   </div>
                   
                   <div className="business-entity-item-info-location">
-                    {koji.location_name || "現場名未設定"}
+                    {koji.locationName || "現場名未設定"}
                   </div>
                   
                   <div className="business-entity-item-info-description">
@@ -277,11 +277,11 @@ const Kojies = () => {
                   <div className="business-entity-item-info-date end-date" style={{ 
                     marginRight: "24px"
                   }}>
-                    ～{koji.end_date
+                    ～{koji.endDate
                       ? new Date(
-                          typeof koji.end_date === 'string' 
-                            ? koji.end_date 
-                            : (koji.end_date as any)['time.Time']
+                          typeof koji.endDate === 'string' 
+                            ? koji.endDate 
+                            : (koji.endDate as any)['time.Time']
                         ).toLocaleDateString("ja-JP")
                       : "未設定"}
                   </div>

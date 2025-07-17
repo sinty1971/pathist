@@ -249,11 +249,11 @@ export const Files: React.FC = () => {
       name: fileInfo.name,
       path: fileInfo.path, // バックエンドからのpathをそのまま使用
       relativePath: fileInfo.path.replace(basePath + '/', '') || '', // 相対パス部分を保存
-      isDirectory: fileInfo.is_directory,
+      isDirectory: fileInfo.isDirectory,
       size: fileInfo.size,
-      modifiedTime: fileInfo.modified_time,
-      children: fileInfo.is_directory ? [] : undefined,
-      isLoaded: !fileInfo.is_directory,
+      modifiedTime: fileInfo.modifiedTime,
+      children: fileInfo.isDirectory ? [] : undefined,
+      isLoaded: !fileInfo.isDirectory,
       isLoading: false,
     };
 

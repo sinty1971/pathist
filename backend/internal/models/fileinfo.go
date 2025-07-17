@@ -13,19 +13,11 @@ type FileInfo struct {
 	// Name of the file or folder
 	Name string `json:"name" yaml:"name" example:"2025-0618 豊田築炉 名和工場"`
 	// Whether this item is a directory
-	IsDirectory bool `json:"is_directory" yaml:"is_directory" example:"true"`
+	IsDirectory bool `json:"isDirectory" yaml:"is_directory" example:"true"`
 	// Size of the file in bytes
 	Size int64 `json:"size" yaml:"size" example:"4096"`
 	// Last modification time
-	ModifiedTime Timestamp `json:"modified_time" yaml:"modified_time"`
-}
-
-// ManagedFile は現在のファイル名と推奨されるファイル名のセットを表します
-type ManagedFile struct {
-	// FileService.BasePathからの相対パス
-	Recommended string `json:"recommended" yaml:"recommended" example:"2025-0618 豊田築炉 名和工場.xlsx"`
-	// FileService.BasePathからの相対パス
-	Current string `json:"current" yaml:"current" example:"工事.xlsx"`
+	ModifiedTime Timestamp `json:"modifiedTime" yaml:"modified_time"`
 }
 
 // NewFileInfo フルパスからFileInfo構造体を作成します

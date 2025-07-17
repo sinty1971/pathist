@@ -1,5 +1,5 @@
 package models
 
-type Attributable interface {
+type Database interface {
 	GetFolderName() string
 }

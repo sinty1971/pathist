@@ -1,5 +1,15 @@
 components:
   schemas:
+    business.RenameManagedFileRequest:
+      properties:
+        currents:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        koji:
+          $ref: '#/components/schemas/models.Koji'
+      type: object
     handlers.BulkConversionRequest:
       properties:
         items:
@@ -114,15 +124,24 @@ components:
           description: 提供されたID
           type: string
       type: object
-    handlers.RenameManagedFileRequest:
+    models.AssistFile:
       properties:
-        currents:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-        koji:
-          $ref: '#/components/schemas/models.Koji'
+        current:
+          description: 現在のファイル名
+          example: 工事.xlsx
+          type: string
+        currentPath:
+          description: FileService.BasePathからの相対パス
+          example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
+          type: string
+        desired:
+          description: 希望するファイル名
+          example: 2025-0618 豊田築炉 名和工場.xlsx
+          type: string
+        desiredPath:
+          description: FileService.BasePathからの相対パス
+          example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
+          type: string
       type: object
     models.Company:
       description: 工事会社の基本情報をファイル名から取得したモデル
@@ -130,48 +149,38 @@ components:
         address:
           example: 愛知県名古屋市熱田区三本松町1-1
           type: string
-        business_type:
-          example: 元請け
-          type: string
+        assists:
+          description: 補助ファイルフィールド
+          items:
+            $ref: '#/components/schemas/models.AssistFile'
+          type: array
+          uniqueItems: false
+        category:
+          $ref: '#/components/schemas/models.CompanyCategory'
         email:
           example: info@toyotachikuro.jp
           type: string
-        full_name:
-          description: 属性ファイルフィールド
-          example: 有限会社 豊田築炉
+        folderName:
+          description: Identity fields. FolderName is linked ShortName and Category.
+          example: 0 豊田築炉
           type: string
         id:
-          description: 計算フィールド
+          description: ID is generated from FolderName.
           example: TC001
           type: string
-        is_directory:
-          description: Whether this item is a directory
-          example: true
-          type: boolean
-        modified_time:
-          $ref: '#/components/schemas/models.Timestamp'
-        name:
-          description: Name of the file or folder
-          example: 2025-0618 豊田築炉 名和工場
-          type: string
-        path:
-          description: FileService.BasePathからの相対パス
-          example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
+        legalName:
+          description: Database file fields
+          example: 有限会社 豊田築炉
           type: string
         phone:
           example: 052-681-8111
           type: string
-        postal_code:
+        postalCode:
           example: 456-0001
           type: string
-        short_name:
-          description: パス名からの固有フィールド
+        shortName:
           example: 豊田築炉
           type: string
-        size:
-          description: Size of the file in bytes
-          example: 4096
-          type: integer
         tags:
           example:
           - '[''元請け'''
@@ -184,14 +193,39 @@ components:
           example: https://www.toyotachikuro.jp
           type: string
       type: object
+    models.CompanyCategory:
+      example: 4
+      type: integer
+      x-enum-comments:
+        CompanyCategoryAgency: '1: 応援会社'
+        CompanyCategoryLease: '5: リース会社'
+        CompanyCategoryOther: '9: その他'
+        CompanyCategoryPeer: '2: 同業者（築炉会社）'
+        CompanyCategoryPersonal: '3: 一人親方'
+        CompanyCategoryPrime: '4: 元請け'
+        CompanyCategoryRecruit: '8: 求人会社'
+        CompanyCategorySales: '6: 販売会社'
+        CompanyCategorySales2: '7: 販売会社（重複）'
+        CompanyCategorySpecial: '0: 特別(自社・組合・未定)'
+      x-enum-varnames:
+      - CompanyCategorySpecial
+      - CompanyCategoryAgency
+      - CompanyCategoryPeer
+      - CompanyCategoryPersonal
+      - CompanyCategoryPrime
+      - CompanyCategoryLease
+      - CompanyCategorySales
+      - CompanyCategorySales2
+      - CompanyCategoryRecruit
+      - CompanyCategoryOther
     models.FileInfo:
       description: ファイルまたはディレクトリの情報
       properties:
-        is_directory:
+        isDirectory:
           description: Whether this item is a directory
           example: true
           type: boolean
-        modified_time:
+        modifiedTime:
           $ref: '#/components/schemas/models.Timestamp'
         name:
           description: Name of the file or folder
@@ -209,46 +243,32 @@ components:
     models.Koji:
       description: 拡張属性を持つ工事プロジェクトフォルダー情報
       properties:
-        company_name:
-          description: パス名からの固有フィールド
+        assists:
+          items:
+            $ref: '#/components/schemas/models.AssistFile'
+          type: array
+          uniqueItems: false
+        companyName:
           example: 豊田築炉
           type: string
         description:
           example: 工事関連の資料とドキュメント
           type: string
-        end_date:
+        endDate:
           $ref: '#/components/schemas/models.Timestamp'
-        id:
-          description: 計算フィールド
-          example: TC618
-          type: string
-        is_directory:
-          description: Whether this item is a directory
-          example: true
-          type: boolean
-        location_name:
-          example: 名和工場
-          type: string
-        managed_files:
-          items:
-            $ref: '#/components/schemas/models.ManagedFile'
-          type: array
-          uniqueItems: false
-        modified_time:
-          $ref: '#/components/schemas/models.Timestamp'
-        name:
-          description: Name of the file or folder
-          example: 2025-0618 豊田築炉 名和工場
-          type: string
-        path:
-          description: FileService.BasePathからの相対パス
+        folderName:
+          description: Identity fields. FolderName is linked StartDate, CompanyName
+            and LocationName.
           example: 豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
           type: string
-        size:
-          description: Size of the file in bytes
-          example: 4096
-          type: integer
-        start_date:
+        id:
+          description: ID, Status is calculated from FolderName.
+          example: TC618
+          type: string
+        locationName:
+          example: 名和工場
+          type: string
+        startDate:
           $ref: '#/components/schemas/models.Timestamp'
         status:
           example: 進行中
@@ -263,19 +283,8 @@ components:
           type: array
           uniqueItems: false
       type: object
-    models.ManagedFile:
-      properties:
-        current:
-          description: FileService.BasePathからの相対パス
-          example: 工事.xlsx
-          type: string
-        recommended:
-          description: FileService.BasePathからの相対パス
-          example: 2025-0618 豊田築炉 名和工場.xlsx
-          type: string
-      type: object
     models.Timestamp:
-      description: 属性ファイルフィールド
+      description: Database file fields
       properties:
         time.Time:
           type: string
@@ -524,6 +533,31 @@ paths:
       summary: ビジネスベースパスの取得
       tags:
       - ビジネス管理
+  /business/categories:
+    get:
+      description: カテゴリー一覧を取得します
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties:
+                    type: string
+                  type: object
+                type: array
+          description: 正常なレスポンス
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: サーバーエラー
+      summary: カテゴリー一覧の取得
+      tags:
+      - 会社管理
   /business/companies:
     get:
       description: 会社フォルダーの一覧を取得します
@@ -554,7 +588,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/models.Company'
-        description: 会社データ
+        description: 会社更新リクエスト
         required: true
       responses:
         "200":
@@ -696,14 +730,14 @@ paths:
       summary: 更新対象フォルダー（Koji.FileInfo）のファイル情報をKojiのメンバ変数で更新
       tags:
       - 工事管理
-  /business/kojies/managed-files:
+  /business/kojies/assist-files:
     put:
-      description: ManagedFileの名前を変更します。
+      description: AssistFileの名前を変更します。
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/handlers.RenameManagedFileRequest'
+              $ref: '#/components/schemas/business.RenameManagedFileRequest'
         description: 工事データと管理ファイル
         required: true
       responses:
@@ -721,7 +755,7 @@ paths:
                   type: string
                 type: object
           description: サーバーエラー
-      summary: ManagedFileの名前を変更
+      summary: AssistFileの名前を変更
       tags:
       - 工事管理
   /kojies/{path}:

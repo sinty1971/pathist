@@ -22,9 +22,9 @@ import TagIcon from '@mui/icons-material/Tag';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import type { ModelsCompany } from '../api/types.gen';
-import { putBusinessCompanies } from '../api/sdk.gen';
-import { getCategoryName } from '../utils/company';
+import type { ModelsCompany, ModelsCompanyCategoryInfo } from '@/api/types.gen';
+import { putBusinessCompanies } from '@/api/sdk.gen';
+import { getCategoryName, loadCategories } from '@/utils/company';
 import "../styles/business-detail-modal.css";
 
 interface CompanyDetailModalProps {
@@ -34,59 +34,80 @@ interface CompanyDetailModalProps {
   onCompanyUpdate?: (company: ModelsCompany) => void;
 }
 
-// フォーム用のデータ型
-type CompanyFormData = {
-  id?: string;
-  legalName?: string;
-  shortName?: string;
-  category?: number;
-  phone?: string;
-  email?: string;
-  website?: string;
-  address?: string;
-  postalCode?: string;
-  tags?: string;
+// tags変換ユーティリティ関数
+const tagsToString = (tags?: string[]): string => {
+  return tags ? tags.join(', ') : '';
 };
 
+const stringToTags = (str: string): string[] => {
+  return str.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+};
+
+// デフォルト会社データ
+const defaultCompanyData: ModelsCompany = {
+  id: '',
+  legalName: '',
+  shortName: '',
+  category: 0,
+  phone: '',
+  email: '',
+  website: '',
+  address: '',
+  postalCode: '',
+  tags: []
+};
+
+// 会社詳細情報モーダル
 const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({ 
   isOpen, 
   onClose, 
   company, 
   onCompanyUpdate 
 }) => {
-  const [formData, setFormData] = useState<CompanyFormData>({
-    id: '',
-    legalName: '',
-    shortName: '',
-    category: undefined,
-    phone: '',
-    email: '',
-    website: '',
-    address: '',
-    postalCode: '',
-    tags: ''
-  });
+  const [formData, setFormData] = useState<ModelsCompany>(defaultCompanyData);
   const [currentCompany, setCurrentCompany] = useState<ModelsCompany | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [categories, setCategories] = useState<ModelsCompanyCategoryInfo[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+
+  // カテゴリーデータを初期化
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setCategoriesLoading(true);
+      try {
+        const allCategories = await loadCategories();
+        setCategories(allCategories);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
 
   // 会社データが変更されたときにフォームデータを更新
   useEffect(() => {
     if (company) {
       setCurrentCompany(company);
-      const newFormData: CompanyFormData = {
+      const newFormData: ModelsCompany = {
+        ...company,
         id: company.id || '',
         legalName: company.legalName || '',
         shortName: company.shortName || '',
-        category: company.category,
+        category: company.category || 0,
         phone: company.phone || '',
         email: company.email || '',
         website: company.website || '',
         address: company.address || '',
         postalCode: company.postalCode || '',
-        tags: Array.isArray(company.tags) ? company.tags.join(', ') : (company.tags || '')
+        tags: company.tags || []
       };
       setFormData(newFormData);
       setError(null);
@@ -97,7 +118,7 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: ModelsCompany) => ({
       ...prev,
       [name]: value
     }));
@@ -112,16 +133,17 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
         // 元のデータに戻す
         if (company) {
           setFormData({
+            ...company,
             id: company.id || '',
             legalName: company.legalName || '',
             shortName: company.shortName || '',
-            category: company.category,
+            category: company.category || 0,
             phone: company.phone || '',
             email: company.email || '',
             website: company.website || '',
             address: company.address || '',
             postalCode: company.postalCode || '',
-            tags: Array.isArray(company.tags) ? company.tags.join(', ') : (company.tags || '')
+            tags: company.tags || []
           });
         }
         setIsEditing(false);
@@ -144,23 +166,13 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
     setError(null);
 
     try {
-      // タグをカンマ区切りから配列に変換
-      const tagsArray = formData.tags 
-        ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) 
-        : [];
-
       // 更新用の会社データを作成
       const updatedCompany: ModelsCompany = {
         ...company,
-        legalName: formData.legalName,
-        shortName: formData.shortName,
-        category: formData.category,
-        phone: formData.phone,
-        email: formData.email,
-        website: formData.website,
-        address: formData.address,
-        tags: tagsArray
+        ...formData,
+        tags: formData.tags || []
       };
+
 
       // API呼び出し
       const response = await putBusinessCompanies({
@@ -168,6 +180,11 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
       });
 
       if (response.data) {
+        // ファイル名に影響するフィールドが変更されたかチェック
+        const isIdentityChanged = 
+          company.shortName !== response.data.shortName || 
+          company.category !== response.data.category;
+        
         // 成功時の処理
         setCurrentCompany(response.data);
         setIsEditing(false);
@@ -180,8 +197,10 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
         // 成功メッセージ（一時的に表示）
         setError(null);
         
-        // モーダルを閉じる（オプション）
-        // onClose();
+        // ファイル名が変更された場合はモーダルを閉じる
+        if (isIdentityChanged) {
+          onClose();
+        }
       } else {
         throw new Error('更新レスポンスが無効です');
       }
@@ -263,8 +282,45 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
         )}
 
         <Box sx={{ mt: 1 }}>
-          {/* 基本情報セクション */}
+          {/* ID・会社名 */}
           <Box sx={{ display: 'flex', gap: 2, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+            <Box sx={{ flex: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  backgroundColor: 'grey.50',
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                  borderRadius: 2
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'text.primary',
+                    fontWeight: 500,
+                    mb: 1
+                  }}
+                >
+                  ID
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: 'monospace',
+                    padding: '8px 12px',
+                    backgroundColor: 'white',
+                    border: '1px solid',
+                    borderColor: 'grey.300',
+                    borderRadius: 1,
+                    color: 'grey.700'
+                  }}
+                >
+                  {formData.id || 'ID未設定'}
+                </Typography>
+              </Paper>
+            </Box>
             <Box sx={{ flex: 1 }}>
               <Paper
                 elevation={0}
@@ -305,6 +361,73 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                 />
               </Paper>
             </Box>
+          </Box>
+
+          {/* 業種・略称 */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+            <Box sx={{ flex: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  backgroundColor: 'grey.50',
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                  borderRadius: 2
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'text.primary',
+                    fontWeight: 500,
+                    mb: 1
+                  }}
+                >
+                  業種
+                </Typography>
+                {!isEditing ? (
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    {getCategoryName(formData.category)}
+                  </Typography>
+                ) : (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    name="category"
+                    value={formData.category || ''}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                      setFormData((prev: ModelsCompany) => ({ ...prev, category: value }));
+                      setHasChanges(true);
+                    }}
+                    disabled={isLoading || categoriesLoading}
+                    select
+                    slotProps={{
+                      select: {
+                        native: true,
+                      }
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white'
+                      }
+                    }}
+                  >
+                    <option value="">選択してください</option>
+                    {categoriesLoading ? (
+                      <option value="" disabled>カテゴリーを読み込み中...</option>
+                    ) : (
+                      categories.map((cat) => (
+                        <option key={cat.code} value={cat.code}>
+                          {cat.name}
+                        </option>
+                      ))
+                    )}
+                  </TextField>
+                )}
+              </Paper>
+            </Box>
             <Box sx={{ flex: 1 }}>
               <Paper
                 elevation={0}
@@ -339,109 +462,6 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                     }
                   }}
                 />
-              </Paper>
-            </Box>
-          </Box>
-
-          {/* 業種・ID */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <Box sx={{ flex: 1 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  backgroundColor: 'grey.50',
-                  border: '1px solid',
-                  borderColor: 'grey.200',
-                  borderRadius: 2
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    color: 'text.primary',
-                    fontWeight: 500,
-                    mb: 1
-                  }}
-                >
-                  業種
-                </Typography>
-                {!isEditing ? (
-                  <Typography variant="body1" sx={{ mt: 1 }}>
-                    {getCategoryName(formData.category)}
-                  </Typography>
-                ) : (
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="category"
-                    value={formData.category || ''}
-                    onChange={(e) => {
-                      const value = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
-                      setFormData(prev => ({ ...prev, category: value }));
-                      setHasChanges(true);
-                    }}
-                    disabled={isLoading}
-                    select
-                    SelectProps={{
-                      native: true,
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white'
-                      }
-                    }}
-                  >
-                    <option value="">選択してください</option>
-                    <option value="0">特別</option>
-                    <option value="1">下請会社</option>
-                    <option value="2">築炉会社</option>
-                    <option value="3">一人親方</option>
-                    <option value="4">元請け</option>
-                    <option value="5">リース会社</option>
-                    <option value="6">販売会社</option>
-                    <option value="7">販売会社</option>
-                    <option value="8">求人会社</option>
-                    <option value="9">その他</option>
-                  </TextField>
-                )}
-              </Paper>
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  backgroundColor: 'grey.50',
-                  border: '1px solid',
-                  borderColor: 'grey.200',
-                  borderRadius: 2
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    color: 'text.primary',
-                    fontWeight: 500,
-                    mb: 1
-                  }}
-                >
-                  ID
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    padding: '8px 12px',
-                    backgroundColor: 'white',
-                    border: '1px solid',
-                    borderColor: 'grey.300',
-                    borderRadius: 1,
-                    color: 'grey.700'
-                  }}
-                >
-                  {formData.id || 'ID未設定'}
-                </Typography>
               </Paper>
             </Box>
           </Box>
@@ -632,8 +652,12 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                 multiline
                 rows={3}
                 name="tags"
-                value={formData.tags}
-                onChange={handleInputChange}
+                value={tagsToString(formData.tags)}
+                onChange={(e) => {
+                  const tagsArray = stringToTags(e.target.value);
+                  setFormData((prev: ModelsCompany) => ({ ...prev, tags: tagsArray }));
+                  setHasChanges(true);
+                }}
                 disabled={isLoading || !isEditing}
                 placeholder="会社の詳細説明を入力してください"
                 sx={{
@@ -661,8 +685,12 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
               <TextField
                 fullWidth
                 name="tags"
-                value={formData.tags}
-                onChange={handleInputChange}
+                value={tagsToString(formData.tags)}
+                onChange={(e) => {
+                  const tagsArray = stringToTags(e.target.value);
+                  setFormData((prev: ModelsCompany) => ({ ...prev, tags: tagsArray }));
+                  setHasChanges(true);
+                }}
                 placeholder="カンマ区切りで入力"
                 disabled={isLoading || !isEditing}
                 sx={{

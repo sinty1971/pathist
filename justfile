@@ -143,6 +143,36 @@ stop-frontend:
 stop-all: stop-backend stop-backend-http2 stop-frontend
     @echo "All servers stopped"
 
+# Restart backend server (HTTP/1.1)
+restart-backend: stop-backend
+    @echo "Restarting backend server..."
+    @sleep 1
+    cd ./backend && go run cmd/main.go &
+    @echo "Backend server restarted"
+
+# Restart backend server (HTTP/2 + HTTPS)
+restart-backend-http2: stop-backend-http2
+    @echo "Restarting HTTP/2 backend server..."
+    @sleep 1
+    cd ./backend && go run cmd/main.go -http2 &
+    @echo "HTTP/2 backend server restarted"
+
+# Restart frontend development server
+restart-frontend: stop-frontend
+    @echo "Restarting frontend development server..."
+    @sleep 1
+    cd ./frontend && npm run dev &
+    @echo "Frontend development server restarted"
+
+# Restart both backend and frontend servers
+restart-all: stop-all
+    @echo "Restarting all servers..."
+    @sleep 2
+    cd ./backend && go run cmd/main.go &
+    @sleep 1
+    cd ./frontend && npm run dev &
+    @echo "All servers restarted"
+
 # Kill process running on port 8080 (legacy command)
 kill-port:
     @echo "Stopping process on port 8080..."

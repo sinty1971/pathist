@@ -16,8 +16,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import type { ModelsKoji, ModelsTimestamp, ModelsManagedFile } from '../api/types.gen';
-import { putBusinessKojiesManagedFiles, getKojiesByPath } from '../api/sdk.gen';
+import type { ModelsKoji, ModelsTimestamp, ModelsManagedFile } from '@/api/types.gen';
+import { putBusinessKojiesAssistFiles, getKojiesByPath } from '@/api/sdk.gen';
 import { CalendarPicker } from './CalendarPicker';
 
 interface KojiDetailModalProps {
@@ -374,7 +374,7 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
       }
 
       // API呼び出し
-      const response = await putBusinessKojiesManagedFiles({
+      const response = await putBusinessKojiesAssistFiles({
         body: {
           koji: currentKoji,
           currents: currentFiles

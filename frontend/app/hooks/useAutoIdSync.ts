@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useCallback, useState } from 'react';
-import { useIdSync, IdComponents } from '../utils/idSync';
+import { useIdSync, IdComponents } from '@/utils/idSync';
 
 export interface AutoIdSyncOptions {
   /** 自動同期を有効にするかどうか（デフォルト: true） */

@@ -77,7 +77,7 @@ func (bh *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
 // @Description  カテゴリー一覧を取得します
 // @Tags         会社管理
 // @Produce      json
-// @Success      200 {array} map[string]string "正常なレスポンス"
+// @Success      200 {array} models.CompanyCategoryInfo "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /business/companies/categories [get]
 func (bh *BusinessHandler) GetCategories(c fiber.Ctx) error {

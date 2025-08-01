@@ -20,9 +20,9 @@ import {
   ExpandMore,
   ChevronRight,
 } from "@mui/icons-material";
-import { getBusinessFiles, getBusinessBasePath } from "../api/sdk.gen";
+import { getBusinessFiles, getBusinessBasePath } from "@/api/sdk.gen";
 import { FileDetailModal } from "./FileDetailModal";
-import { useFileInfo } from "../contexts/FileInfoContext";
+import { useFileInfo } from "@/contexts/FileInfoContext";
 
 // ユーティリティ関数群（コンポーネント外で定義）
 

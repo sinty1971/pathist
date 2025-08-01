@@ -1,4 +1,4 @@
-import type { ModelsTimestamp } from '../api/types.gen';
+import type { ModelsTimestamp } from '@/api/types.gen';
 
 /**
  * RFC3339Nano形式でサポートされる日時フォーマット（バックエンド対応）

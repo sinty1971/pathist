@@ -4,9 +4,9 @@ import (
 	"errors"
 	"io"
 	"os"
-	"os/user"
 	"path/filepath"
 	"penguin-backend/internal/models"
+	"penguin-backend/internal/utils"
 	"runtime"
 	"strings"
 	"sync"
@@ -14,88 +14,91 @@ import (
 
 // FileService はファイルシステムを管理するサービス
 type FileService struct {
-	// BasePath はファイルシステムの基底ディレクトリ
-	BasePath string `json:"base_path" yaml:"base_path" example:"~/penguin"`
+	// Container はトップコンテナのインスタンス
+	Container *ContainerService
+
+	// BaseFolder はファイルシステムの絶対パスフォルダー
+	BaseFolder string `json:"baseFolder" yaml:"base_folder" example:"/penguin/豊田築炉"`
 }
 
-// NewFileService FileServiceを作成する
-func NewFileService(basePath string) (*FileService, error) {
-	// ホームディレクトリに展開
-	if strings.HasPrefix(basePath, "~/") {
-		usr, err := user.Current()
-		if err != nil {
-			return nil, err
-		}
-		basePath = filepath.Join(usr.HomeDir, basePath[2:])
-	}
+// ResetWithContext FileServiceを引数のコンテナに設定し、基準フォルダーを設定する
+// buildContext はファイルサービスの基準フォルダー
+// 戻り値はファイルサービスのインスタンス
+func (fs *FileService) BuildWithOption(opt ContainerOption, folderPath string) error {
+	// コンテナを設定
+	fs.Container = opt.RootService
 
-	// 絶対パスに変換（チェック）
-	absPath, err := filepath.Abs(basePath)
+	// 絶対パスに展開
+	cleanBaseFolder, err := utils.CleanAbsPath(folderPath)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	basePath = absPath
 
-	return &FileService{
-		BasePath: basePath,
-	}, nil
-}
+	// 基準フォルダーにアクセスできるかチェック
+	osFileInfo, err := os.Stat(cleanBaseFolder)
+	if err != nil {
+		return err
+	}
 
-// FileInfoResult 並列処理用の結果構造体
-type FileInfoResult struct {
-	FileInfo *models.FileInfo
-	Index    int
-	Error    error
+	// フォルダーかどうかをチェック
+	if !osFileInfo.IsDir() {
+		return errors.New("フォルダーではありません")
+	}
+
+	// 基準フォルダーを設定
+	fs.BaseFolder = cleanBaseFolder
+
+	return nil
 }
 
 // GetFileInfos 指定されたディレクトリパス内のファイル情報を取得
-// 取得したファイル情報は実体のファイル情報を取得して判定したもの
-func (s *FileService) GetFileInfos(joinPaths ...string) ([]models.FileInfo, error) {
-	// 絶対パスを取得
-	fullpath, err := s.GetFullpath(joinPaths...)
+// target はディレクトリパス、省略時はBaseFolder
+func (fs *FileService) GetFileInfos(target ...string) ([]models.FileInfo, error) {
+	// パスの結合
+	targetPath := filepath.Join(target...)
+
+	// ターゲットフォルダーの絶対パスを取得
+	targetFolder, err := fs.JoinBasePath(targetPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// ファイルエントリ配列を取得
-	entries, err := os.ReadDir(fullpath)
+	targetEntries, err := os.ReadDir(targetFolder)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(entries) == 0 {
+	// ファイルエントリが0の場合は空配列を返す
+	if len(targetEntries) == 0 {
 		return []models.FileInfo{}, nil
 	}
 
-	// 並列処理用のワーカー数を決定（CPU数の2倍、最大16）
-	numWorkers := min(min(runtime.NumCPU()*2, 16), len(entries))
-
 	// チャンネルとワーカーグループを設定
-	jobs := make(chan int, len(entries))
-	results := make(chan FileInfoResult, len(entries))
+	jobs := make(chan int, len(targetEntries))
+	fis := make(chan *models.FileInfo, len(targetEntries))
+	// 並列処理用のワーカー数を決定（CPU数の2倍、最大16）
+	numWorkers := min(min(runtime.NumCPU()*2, 16), len(targetEntries))
+	// ワーカーグループを設定
 	var wg sync.WaitGroup
-
 	// ワーカーを起動
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for index := range jobs {
-				entry := entries[index]
-				entryFullpath := filepath.Join(fullpath, entry.Name())
+				entry := targetEntries[index]
+				fullpath := filepath.Join(targetFolder, entry.Name())
 
-				fileInfo, err := models.NewFileInfo(entryFullpath)
-				results <- FileInfoResult{
-					FileInfo: fileInfo,
-					Index:    index,
-					Error:    err,
+				fileInfo, _ := models.NewFileInfo(fullpath)
+				if fileInfo != nil {
+					fis <- fileInfo
 				}
 			}
 		}()
 	}
 
 	// ジョブを送信
-	for i := range entries {
+	for i := range targetEntries {
 		jobs <- i
 	}
 	close(jobs)
@@ -103,49 +106,38 @@ func (s *FileService) GetFileInfos(joinPaths ...string) ([]models.FileInfo, erro
 	// ワーカーの完了を待つ
 	go func() {
 		wg.Wait()
-		close(results)
+		close(fis)
 	}()
 
-	// 結果を収集（元の順序を保持）
-	fileInfos := make([]models.FileInfo, 0, len(entries))
-	resultMap := make(map[int]*models.FileInfo, len(entries))
-
-	for result := range results {
-		if result.Error == nil && result.FileInfo != nil {
-			resultMap[result.Index] = result.FileInfo
-		}
-	}
-
-	// 元の順序でファイル情報を構築
-	for i := range len(entries) {
-		if fileInfo, exists := resultMap[i]; exists {
-			fileInfos = append(fileInfos, *fileInfo)
-		}
+	// 結果を収集
+	fileInfos := make([]models.FileInfo, 0, len(targetEntries))
+	for fileInfo := range fis {
+		fileInfos = append(fileInfos, *fileInfo)
 	}
 
 	return fileInfos, nil
 }
 
-// GetFullpath BasePathに可変長引数の相対パスを追加したパスを返す
-// 絶対パスの場合はエラーを返す
-func (s *FileService) GetFullpath(joinPaths ...string) (string, error) {
-	if len(joinPaths) == 0 {
-		return s.BasePath, nil
+// JoinBasePath BaseFolderに可変長引数の相対パスを追加した絶対パスを返す
+// 引数が絶対パスの場合はエラーを返す
+func (fs *FileService) JoinBasePath(target ...string) (string, error) {
+	if len(target) == 0 {
+		return fs.BaseFolder, nil
 	}
 
 	// BasePathに相対パスを追加したパスを返す
-	joinedPath := filepath.Join(joinPaths...)
+	targetPath := filepath.Join(target...)
 
-	if strings.HasPrefix(joinedPath, "~/") {
+	if strings.HasPrefix(targetPath, "~/") {
 		// 接頭語 "~/" がある場合はエラーを返す
 		return "", errors.New("接頭語 \"~\" は使用できません")
 
-	} else if filepath.IsAbs(joinedPath) {
+	} else if filepath.IsAbs(targetPath) {
 		// 絶対パスがある場合はエラーを返す
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	return filepath.Join(s.BasePath, joinedPath), nil
+	return filepath.Join(fs.BaseFolder, targetPath), nil
 }
 
 // CopyFile はファイルまたはディレクトリをコピーする
@@ -158,7 +150,7 @@ func (s *FileService) CopyFile(src, dst string) error {
 	if filepath.IsAbs(src) {
 		srcFullpath = src
 	} else {
-		srcFullpath, err = s.GetFullpath(src)
+		srcFullpath, err = s.JoinBasePath(src)
 		if err != nil {
 			return err
 		}
@@ -168,7 +160,7 @@ func (s *FileService) CopyFile(src, dst string) error {
 	if filepath.IsAbs(dst) {
 		dstFullpath = dst
 	} else {
-		dstFullpath, err = s.GetFullpath(dst)
+		dstFullpath, err = s.JoinBasePath(dst)
 		if err != nil {
 			return err
 		}
@@ -267,11 +259,11 @@ func (s *FileService) copyDir(src, dst string) error {
 
 // MoveFile はファイルを移動する
 func (s *FileService) MoveFile(src, dst string) error {
-	srcFullpath, err := s.GetFullpath(src)
+	srcFullpath, err := s.JoinBasePath(src)
 	if err != nil {
 		return err
 	}
-	dstFullpath, err := s.GetFullpath(dst)
+	dstFullpath, err := s.JoinBasePath(dst)
 	if err != nil {
 		return err
 	}
@@ -292,7 +284,7 @@ func (s *FileService) MoveFile(src, dst string) error {
 
 // DeleteFile はファイルを削除する
 func (s *FileService) DeleteFile(path string) error {
-	fullpath, err := s.GetFullpath(path)
+	fullpath, err := s.JoinBasePath(path)
 	if err != nil {
 		return err
 	}

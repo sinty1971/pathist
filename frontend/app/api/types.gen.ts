@@ -194,6 +194,11 @@ export type ModelsCompany = {
 
 export type ModelsCompanyCategory = number;
 
+export type ModelsCompanyCategoryInfo = {
+    code?: number;
+    name?: string;
+};
+
 /**
  * ファイルまたはディレクトリの情報
  */
@@ -488,35 +493,6 @@ export type GetBusinessBasePathResponses = {
 
 export type GetBusinessBasePathResponse = GetBusinessBasePathResponses[keyof GetBusinessBasePathResponses];
 
-export type GetBusinessCategoriesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/business/categories';
-};
-
-export type GetBusinessCategoriesErrors = {
-    /**
-     * サーバーエラー
-     */
-    500: {
-        [key: string]: string;
-    };
-};
-
-export type GetBusinessCategoriesError = GetBusinessCategoriesErrors[keyof GetBusinessCategoriesErrors];
-
-export type GetBusinessCategoriesResponses = {
-    /**
-     * 正常なレスポンス
-     */
-    200: Array<{
-        [key: string]: string;
-    }>;
-};
-
-export type GetBusinessCategoriesResponse = GetBusinessCategoriesResponses[keyof GetBusinessCategoriesResponses];
-
 export type GetBusinessCompaniesData = {
     body?: never;
     path?: never;
@@ -611,6 +587,33 @@ export type GetBusinessCompaniesByIdResponses = {
 };
 
 export type GetBusinessCompaniesByIdResponse = GetBusinessCompaniesByIdResponses[keyof GetBusinessCompaniesByIdResponses];
+
+export type GetBusinessCompaniesCategoriesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/business/companies/categories';
+};
+
+export type GetBusinessCompaniesCategoriesErrors = {
+    /**
+     * サーバーエラー
+     */
+    500: {
+        [key: string]: string;
+    };
+};
+
+export type GetBusinessCompaniesCategoriesError = GetBusinessCompaniesCategoriesErrors[keyof GetBusinessCompaniesCategoriesErrors];
+
+export type GetBusinessCompaniesCategoriesResponses = {
+    /**
+     * 正常なレスポンス
+     */
+    200: Array<ModelsCompanyCategoryInfo>;
+};
+
+export type GetBusinessCompaniesCategoriesResponse = GetBusinessCompaniesCategoriesResponses[keyof GetBusinessCompaniesCategoriesResponses];
 
 export type GetBusinessFilesData = {
     body?: never;

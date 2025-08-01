@@ -2,6 +2,8 @@ package services
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"penguin-backend/internal/models"
 	"slices"
 	"strings"
@@ -9,83 +11,112 @@ import (
 
 // CompanyService は会社データ操作を処理します
 type CompanyService struct {
-	FileService     *FileService
+	// RootService はトップコンテナのインスタンス
+	RootService *ContainerService
+
+	// 工事一覧フォルダー
+	FolderPath string
+
+	// データベースサービス
 	DatabaseService *DatabaseService[*models.Company]
 }
 
-// NewCompanyService は新しいCompanyServiceを作成します
-func NewCompanyService(businessFileService *FileService, folderName string) (*CompanyService, error) {
-	// 会社一覧フォルダーのフルパスを取得
-	folderPath, err := businessFileService.GetFullpath(folderName)
-	if err != nil {
-		return nil, err
+// BuildWithOption は opt でCompanyServiceを初期化します
+// folderName は会社一覧の絶対パスフォルダー名
+// databaseFilename はデータベースファイルのファイル名
+func (cs *CompanyService) BuildWithOption(opt ContainerOption, folderPath string, databaseFilename string) error {
+
+	// CompanyCategoryReverseMapを初期化
+	models.CompanyCategoryReverseMap = make(map[string]models.CompanyCategoryIndex)
+	for code, category := range models.CompanyCategoryMap {
+		models.CompanyCategoryReverseMap[category] = code
 	}
 
-	// 会社一覧フォルダー基準のFileServiceを初期化
-	fileService, err := NewFileService(folderPath)
+	// folderPath がアクセス可能かチェック
+	fi, err := os.Stat(folderPath)
 	if err != nil {
-		return nil, err
+		return err
 	}
+
+	// フォルダーではない場合はエラー
+	if !fi.IsDir() {
+		return fmt.Errorf("フォルダーではありません: %s", folderPath)
+	}
+
+	// ルートサービスを設定
+	cs.RootService = opt.RootService
+
+	// 会社一覧のフォルダー名を設定
+	cs.FolderPath = folderPath
 
 	// 会社フォルダー基準のDatabaseServiceを初期化
-	databaseService := NewDatabaseService[*models.Company](fileService, ".detail.yaml")
+	cs.DatabaseService = NewDatabaseService[*models.Company](databaseFilename)
 
-	// CompanyServiceのインスタンスを作成
-	return &CompanyService{
-		FileService:     fileService,
-		DatabaseService: databaseService,
-	}, nil
+	return nil
 }
 
 // GetCompany は指定されたパスから会社を取得する
 // folderName: 会社フォルダー名
-func (cs *CompanyService) GetCompany(folderName string) (models.Company, error) {
+func (cs *CompanyService) GetCompany(folderName string) (*models.Company, error) {
 	// 会社データモデルを作成
 	company, err := models.NewCompany(folderName)
 	if err != nil {
-		return models.Company{}, fmt.Errorf("会社データモデルの作成に失敗しました: %v", err)
+		return nil, fmt.Errorf("会社データモデルの作成に失敗しました: %v", err)
 	}
 
 	// データベースファイルと同期
-	err = cs.SyncDatabaseFile(&company)
+	err = cs.SyncDatabaseFile(company)
 	if err != nil {
-		return models.Company{}, fmt.Errorf("データベースファイルとの同期に失敗しました: %v", err)
+		return nil, fmt.Errorf("データベースファイルとの同期に失敗しました: %v", err)
 	}
 
 	return company, nil
 }
 
-// GetCompanies は会社一覧を取得する
-func (cs *CompanyService) GetCompanies() []models.Company {
-	// 会社フォルダー一覧をデータベースファイルと同期せずに取得
-	companies := cs.GetCompaniesNoSyncDatabaseFile()
-
-	for _, company := range companies {
-		// データベースファイルと同期（エラーは無視）
-		_ = cs.SyncDatabaseFile(&company)
-	}
-
-	return companies
+type GetCompaniesOptions struct {
+	SyncDatabaseFile bool
 }
 
-// GetCompaniesNoSyncDatabaseFile は会社一覧を取得する、データベースへのアクセスは行わない
-func (cs *CompanyService) GetCompaniesNoSyncDatabaseFile() []models.Company {
+const (
+	SyncDatabaseFile = true
+)
+
+func GetCompaniesOptionsFunc(opts ...GetCompaniesOptions) GetCompaniesOptions {
+	opt := GetCompaniesOptions{
+		SyncDatabaseFile: true,
+	}
+	for _, o := range opts {
+		opt = o
+	}
+	return opt
+}
+
+// GetCompanies は会社一覧を取得する
+func (cs *CompanyService) GetCompanies(opts ...GetCompaniesOptions) []models.Company {
+	opt := GetCompaniesOptionsFunc(opts...)
+
 	// ファイルシステムから会社フォルダー一覧を取得
-	fileInfos, err := cs.FileService.GetFileInfos()
-	if err != nil || len(fileInfos) == 0 {
+	entries, err := os.ReadDir(cs.FolderPath)
+	if err != nil || len(entries) == 0 {
 		return []models.Company{}
 	}
 
-	companies := make([]models.Company, len(fileInfos))
+	// 会社データモデルを作成
+	companies := make([]models.Company, len(entries))
 	count := 0
-	for _, fileInfo := range fileInfos {
+	for _, entry := range entries {
 		// 会社データモデルを作成、これはデータベースアクセスを行いません
-		company, err := models.NewCompany(fileInfo.Name)
+		entryPath := filepath.Join(cs.FolderPath, entry.Name())
+		company, err := models.NewCompany(entryPath)
 		if err != nil {
 			continue
 		}
 
-		companies[count] = company
+		if opt.SyncDatabaseFile {
+			_ = cs.SyncDatabaseFile(company)
+		}
+
+		companies[count] = *company
 		count++
 	}
 
@@ -98,9 +129,7 @@ func (cs *CompanyService) SyncDatabaseFile(target *models.Company) error {
 	database, err := cs.DatabaseService.Load(target)
 	if err != nil {
 		// ファイルが存在しない場合は新規ファイルとして非同期で保存
-		go func() {
-			cs.DatabaseService.Save(target)
-		}()
+		cs.DatabaseService.Save(target)
 		return nil
 	}
 
@@ -118,9 +147,12 @@ func (cs *CompanyService) SyncDatabaseFile(target *models.Company) error {
 
 // GetCompanyByID は指定されたIDの会社を取得します
 func (cs *CompanyService) GetCompanyByID(id string) (*models.Company, error) {
-	// slices.IndexFuncを使用して高速化
-	companies := cs.GetCompaniesNoSyncDatabaseFile()
 
+	// 会社一覧を取得、データベースファイルと同期は行わない
+	opt := GetCompaniesOptions{SyncDatabaseFile: false}
+	companies := cs.GetCompanies(opt)
+
+	// slices.IndexFuncを使用して高速化
 	idx := slices.IndexFunc(companies, func(c models.Company) bool {
 		return c.ID == id
 	})
@@ -128,18 +160,19 @@ func (cs *CompanyService) GetCompanyByID(id string) (*models.Company, error) {
 		return nil, fmt.Errorf("ID %s の会社が見つかりません", id)
 	}
 
-	company, err := cs.GetCompany(companies[idx].FolderName)
+	company, err := cs.GetCompany(companies[idx].FolderPath)
 	if err != nil {
 		return nil, err
 	}
-	return &company, nil
+	return company, nil
 }
 
-// GetCompanyByName は会社名で会社を取得します（大文字小文字を区別しない）
+// GetCompanyByName は会社名で会社インスタンスを取得します（大文字小文字を区別しない）
 func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error) {
 
 	// 会社一覧を取得、データベースファイルと同期は行わない
-	companies := cs.GetCompaniesNoSyncDatabaseFile()
+	opt := GetCompaniesOptions{SyncDatabaseFile: false}
+	companies := cs.GetCompanies(opt)
 
 	// slices.IndexFuncを使用して高速化
 	idx := slices.IndexFunc(companies, func(c models.Company) bool {
@@ -151,12 +184,12 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 	}
 
 	// データベースファイルと同期
-	databasedCompany, err := cs.GetCompany(companies[idx].FolderName)
+	dbCompany, err := cs.GetCompany(companies[idx].FolderPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return &databasedCompany, nil
+	return dbCompany, nil
 }
 
 // Update は会社情報を更新し、必要に応じてフォルダー名も変更します
@@ -164,25 +197,25 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 // target.FolderName: 変更前のフォルダー名を指定すること
 func (cs *CompanyService) Update(target *models.Company) error {
 	// 変更前のフォルダー名を取得
-	prevFolderName := target.FolderName
+	prevFolderPath := target.FolderPath
 
-	// 会社の業種とショート名から新しいアイデンティティフィールドを更新
-	err := target.UpdateIdentity()
-	if err != nil {
-		return err
-	}
+	// 新しいフォルダー名を生成して変更が必要かチェック
+	target.UpdateIdentity()
 
-	// エラーがない場合はファイルの移動が必要
-	err = cs.FileService.MoveFile(prevFolderName, target.FolderName)
-	if err != nil {
-		return err
+	// フォルダー名の変更が必要な場合のみ処理
+	if target.FolderPath != prevFolderPath {
+		// ファイルの移動が必要
+		err := os.Rename(prevFolderPath, target.FolderPath)
+		if err != nil {
+			return err
+		}
 	}
 
 	// 更新後の会社情報をデータベースファイルに反映
 	return cs.DatabaseService.Save(target)
 }
 
-// Categories は会社のカテゴリー一覧をマップ形式で取得
-func (cs *CompanyService) Categories() map[string]string {
-	return models.GetAllCompanyCategoriesMap()
+// Categories は会社のカテゴリー一覧を配列形式で取得
+func (cs *CompanyService) Categories() map[models.CompanyCategoryIndex]string {
+	return models.CompanyCategoryMap
 }

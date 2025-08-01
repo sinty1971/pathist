@@ -16,7 +16,7 @@ import (
 // @Param        path path string true "Kojiフォルダーのファイル名"
 // @Success      200 {object} models.Koji "Koji"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /kojies/{path} [get]
+// @Router       /business/kojies/{path} [get]
 func (bh *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
 	// パスパラメータを取得
 	path := c.Params("path")
@@ -104,17 +104,17 @@ type RenameManagedFileRequest struct {
 	Currents []string    `json:"currents"`
 }
 
-// RenameKojiAssistFile godoc
-// @Summary      AssistFileの名前を変更
-// @Description  AssistFileの名前を変更します。
+// RenameKojiStandardFiles godoc
+// @Summary      StandardFileの名前を変更
+// @Description  StandardFileの名前を変更します。
 // @Tags         工事管理
 // @Accept       json
 // @Produce      json
 // @Param        body body RenameManagedFileRequest true "工事データと管理ファイル"
 // @Success      200 {object} models.Koji "更新後の工事データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/kojies/assist-files [put]
-func (bh *BusinessHandler) RenameKojiAssistFile(c fiber.Ctx) error {
+// @Router       /business/kojies/standard-files [put]
+func (bh *BusinessHandler) RenameKojiStandardFiles(c fiber.Ctx) error {
 	// リクエストボディから編集された工事を取得
 	var request RenameManagedFileRequest
 	if err := c.Bind().Body(&request); err != nil {
@@ -125,7 +125,7 @@ func (bh *BusinessHandler) RenameKojiAssistFile(c fiber.Ctx) error {
 	}
 
 	// ファイル名を変更
-	renamedFiles := bh.businessService.KojiService.RenameAssistFile(request.Koji, request.Currents)
+	renamedFiles := bh.businessService.KojiService.RenameStandardFile(request.Koji, request.Currents)
 
 	// ファイル名変更後、最新の工事データを取得して返す
 	if request.Koji.FolderName != "" {

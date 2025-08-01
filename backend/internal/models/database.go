@@ -1,5 +1,6 @@
 package models
 
-type Database interface {
-	GetFolderName() string
+// DatabaseFile はデータベースのインターフェースを定義します
+type DatabaseFile interface {
+	GetFilePath() string
 }

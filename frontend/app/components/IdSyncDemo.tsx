@@ -44,8 +44,8 @@ import {
   CheckCircle,
   Error
 } from '@mui/icons-material';
-import { useIdSync, IdComponents } from '../utils/idSync';
-import { useAutoIdSync, useBulkIdSync, usePathIdSync } from '../hooks/useAutoIdSync';
+import { useIdSync, IdComponents } from '@/utils/idSync';
+import { useAutoIdSync, useBulkIdSync, usePathIdSync } from '@/hooks/useAutoIdSync';
 
 interface DemoResult {
   id: string;

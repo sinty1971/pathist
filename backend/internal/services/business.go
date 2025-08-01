@@ -1,56 +1,53 @@
 package services
 
 // BusinessService は統合ビジネスデータ管理サービス
-// ファイルサーバー内のファイル名から様々なビジネスデータを解析・提供する
 type BusinessService struct {
-	// 基準ファイルサービス（ファイルアクセスはこれより下位のみ）
-	FileService *FileService
+	// RootService はトップコンテナのインスタンス
+	RootService *ContainerService `json:"-" yaml:"-"`
+
+	// ビジネスフォルダーフルパス名（Ex. "~/penguin/豊田築炉"）
+	FolderPath string `json:"folderPath" yaml:"folder-path"`
+
+	// データベースサービス
+	DatabaseService *DatabaseService[*BusinessService] `json:"-" yaml:"-"`
 
 	// 企業データ管理サービス
-	CompanyService *CompanyService
+	CompanyService *CompanyService `json:"-" yaml:"-"`
 
 	// 工事データ管理サービス
-	KojiService *KojiService
+	KojiService *KojiService `json:"-" yaml:"-"`
 
-	// メンバーデータ管理サービス（将来追加予定）
 	// 将来追加予定
+	// メンバーデータ管理サービス
 	// MemberService  *MemberService
+
+	// 注文データ管理サービス
 	// OrderService   *OrderService
+
+	// 請求データ管理サービス
 	// InvoiceService *InvoiceService
+
+	// 見積りデータ管理サービス
 	// EstimateService *EstimateService
 
 	// 設定
-	AttributeFilename string
+	DatabaseFilename string `json:"databaseFilename" yaml:"database-filename"`
 }
 
-// NewBusinessService はBusinessServiceを初期化する
-// @Param businessFilePath query string true "基準ファイルサービスのパス" default("~/penguin/豊田築炉")
-// @Param attributeFilename query string true "属性ファイルのファイル名" default(".detail.yaml")
-func NewBusinessService(businessFilePath, attributeFilename string) (*BusinessService, error) {
-	// fileServiceを初期化
-	fileService, err := NewFileService(businessFilePath)
-	if err != nil {
-		return nil, err
-	}
+// GetFolderPath はビジネスフォルダーパスを取得する
+func (bs *BusinessService) GetFolderPath() string {
+	return bs.FolderPath
+}
 
-	// CompanyServiceを初期化
-	companyService, err := NewCompanyService(fileService, "1 会社")
-	if err != nil {
-		return nil, err
-	}
+// BuildWithOption はBusinessServiceを初期化する
+// folderPath は会社フォルダーパス(Ex. "~/penguin/豊田築炉")
+// databaseFilename はデータベースファイルのファイル名
+func (bs *BusinessService) BuildWithOption(opt ContainerOption, folderPath string) {
+	// コンテナを設定
+	bs.RootService = opt.RootService
 
-	// KojiServiceを初期化（CompanyService依存なしで）
-	kojiService, err := NewKojiService(fileService, "2 工事")
-	if err != nil {
-		return nil, err
-	}
-
-	return &BusinessService{
-		FileService:       fileService,
-		CompanyService:    companyService,
-		KojiService:       kojiService,
-		AttributeFilename: attributeFilename,
-	}, nil
+	// ビジネスフォルダーパスを設定
+	bs.FolderPath = folderPath
 }
 
 // 将来追加予定のメソッド

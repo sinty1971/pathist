@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { getBusinessKojies, putBusinessKojies } from '../api/sdk.gen';
-import type { ModelsKoji } from '../api/types.gen';
+import { getBusinessKojies, putBusinessKojies } from '@/api/sdk.gen';
+import type { ModelsKoji } from '@/api/types.gen';
 import KojiDetailModal from './KojiDetailModal';
 import '../styles/koji-gantt.css';
 import '../styles/utilities.css';

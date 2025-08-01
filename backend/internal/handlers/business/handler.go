@@ -18,18 +18,6 @@ func NewBusinessHandler(businessService *services.BusinessService) *BusinessHand
 	}
 }
 
-// GetBusinessBasePath godoc
-// @Summary      ビジネスベースパスの取得
-// @Description  ビジネスベースパスを取得します
-// @Tags         ビジネス管理
-// @Produce      json
-// @Success      200 {object} map[string]string "ビジネスベースパス"
-// @Router       /business/base-path [get]
-func (bh *BusinessHandler) GetBusinessBasePath(c fiber.Ctx) error {
-	businessBasePath := bh.businessService.FileService.BasePath
-	return c.JSON(fiber.Map{"businessBasePath": businessBasePath})
-}
-
 // GetAttributeFilename godoc
 // @Summary      属性ファイル名の取得
 // @Description  属性ファイル名を取得します
@@ -38,6 +26,6 @@ func (bh *BusinessHandler) GetBusinessBasePath(c fiber.Ctx) error {
 // @Success      200 {object} map[string]string "属性ファイル名"
 // @Router       /business/attribute-filename [get]
 func (bh *BusinessHandler) GetAttributeFilename(c fiber.Ctx) error {
-	attributeFilename := bh.businessService.AttributeFilename
+	attributeFilename := bh.businessService.DatabaseFilename
 	return c.JSON(fiber.Map{"attributeFilename": attributeFilename})
 }

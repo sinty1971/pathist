@@ -1,6 +1,7 @@
 package models
 
 import (
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -14,50 +15,66 @@ type Koji struct {
 	Status string `json:"status,omitempty" yaml:"-" example:"進行中"`
 
 	// Identity fields. FolderName is linked StartDate, CompanyName and LocationName.
-	FolderName   string    `json:"folderName" yaml:"-" example:"豊田築炉/2-工事/2025-0618 豊田築炉 名和工場"`
+	FolderPath   string    `json:"folderPath" yaml:"-" example:"~/penguin/豊田築炉/2-工事/2025-0618 豊田築炉 名和工場"`
 	StartDate    Timestamp `json:"startDate,omitempty" yaml:"-"`
 	CompanyName  string    `json:"companyName,omitempty" yaml:"-" example:"豊田築炉"`
 	LocationName string    `json:"locationName,omitempty" yaml:"-" example:"名和工場"`
 
+	// Database Service field
+	DatabaseService *DatabaseService[*Koji] `json:"-" yaml:"-"`
+
 	// Database file fields
-	EndDate     Timestamp    `json:"endDate,omitempty" yaml:"end_date"`
-	Description string       `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
-	Tags        []string     `json:"tags,omitempty" yaml:"tags" example:"['工事', '豊田築炉', '名和工場']"`
-	Assists     []AssistFile `json:"assists" yaml:"assists"`
+	EndDate     Timestamp `json:"endDate" yaml:"end_date"`
+	Description string    `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
+	Tags        []string  `json:"tags,omitempty" yaml:"tags" example:"['工事', '豊田築炉', '名和工場']"`
+
+	// 標準ファイルフィールド
+	StandardFiles []FileInfo `json:"standardFiles" yaml:"standard_files"`
 }
 
 // GetFileInfo DatabaseServiceで使用するためのメソッド
-func (k *Koji) GetFolderName() string {
-	return k.FolderName
+func (km *Koji) GetFolderPath() string {
+	return km.FolderPath
 }
 
-// SetFileInfo DatabaseServiceで使用するためのメソッド
-func (k *Koji) SetFolderName(folderName string) {
-	k.FolderName = folderName
+func (km *Koji) GetFolderName() string {
+	// フォルダー名を取得
+	var folderName string
+	if lastSlash := strings.LastIndex(km.FolderPath, "/"); lastSlash != -1 {
+		folderName = km.FolderPath[lastSlash+1:]
+	}
+
+	return folderName
 }
 
 // NewKoji FolderNameからKojiを作成します（高速化版）
-func NewKoji(folderName string) (Koji, error) {
+func NewKoji(folderPath string) (*Koji, error) {
+
+	koji := &Koji{
+		FolderPath: folderPath,
+	}
+
+	// フォルダー名を取得
+	folderName := koji.GetFolderName()
+
 	// ファイル名から日付を取得と残りの文字列を取得
-	var nameWithoutDate string
-	startDate, err := ParseTimestamp(folderName, &nameWithoutDate)
+	nameWithoutDate := folderName
+	startDate, err := ParseTimestamp(folderPath, &nameWithoutDate)
 	if err != nil {
-		return Koji{}, err
+		return nil, err
 	}
 
 	// nameWithoutDate の解析を最適化
 	companyName, locationName := parseKojiName(nameWithoutDate)
 
 	// Kojiインスタンスを作成（構造体リテラルで一度に初期化）
-	koji := Koji{
-		FolderName:   folderName,
-		StartDate:    startDate,
-		CompanyName:  companyName,
-		LocationName: locationName,
-		EndDate:      startDate,
-		Description:  buildDescription(companyName, locationName),
-		Tags:         buildTags(companyName, locationName, startDate),
-	}
+	koji.StartDate = startDate
+	koji.CompanyName = companyName
+	koji.LocationName = locationName
+	koji.EndDate = startDate
+	koji.Description = buildDescription(companyName, locationName)
+	koji.Tags = buildTags(companyName, locationName, startDate)
+	koji.StandardFiles = []FileInfo{}
 
 	// IDとステータスの更新
 	koji.UpdateID()
@@ -136,29 +153,29 @@ func DetermineKojiStatus(startDate Timestamp, endDate ...Timestamp) string {
 }
 
 // UpdateID は工事IDを更新する
-func (k *Koji) UpdateID() bool {
-	prevID := k.ID
-	k.ID = NewIDFromString(k.FolderName).Len5()
+func (km *Koji) UpdateID() bool {
+	prevID := km.ID
+	km.ID = NewIDFromString(km.FolderPath).Len5()
 
-	return prevID != k.ID
+	return prevID != km.ID
 }
 
 // UpdateStatus はプロジェクトステータスを更新する
-func (k *Koji) UpdateStatus() bool {
-	prevStatus := k.Status
-	k.Status = DetermineKojiStatus(k.StartDate, k.EndDate)
+func (km *Koji) UpdateStatus() bool {
+	prevStatus := km.Status
+	km.Status = DetermineKojiStatus(km.StartDate, km.EndDate)
 
-	return prevStatus != k.Status
+	return prevStatus != km.Status
 }
 
-// UpdateFolderName は工事フォルダー名を更新します
-func (k *Koji) UpdateFolderName() bool {
-	if k.StartDate.Time.IsZero() {
+// UpdateFolderPath は工事フォルダー名を更新します
+func (km *Koji) UpdateFolderPath() bool {
+	if km.StartDate.Time.IsZero() {
 		// 開始日が無効な場合の早期リターン
 		return false
 	}
 
-	t := k.StartDate.Time
+	t := km.StartDate.Time
 
 	// 日付文字列を手動で構築（Format関数より高速）
 	year := t.Year()
@@ -167,7 +184,7 @@ func (k *Koji) UpdateFolderName() bool {
 
 	// 事前に容量を計算してstrings.Builderを初期化（再アロケーション回避）
 	// 日付(9文字) + スペース(1文字) + 会社名 + スペース(1文字) + 現場名 の概算
-	estimatedSize := 9 + 1 + len(k.CompanyName) + 1 + len(k.LocationName)
+	estimatedSize := 9 + 1 + len(km.CompanyName) + 1 + len(km.LocationName)
 	var builder strings.Builder
 	builder.Grow(estimatedSize)
 
@@ -187,12 +204,17 @@ func (k *Koji) UpdateFolderName() bool {
 
 	// 会社名と現場名を追加
 	builder.WriteByte(' ')
-	builder.WriteString(k.CompanyName)
+	builder.WriteString(km.CompanyName)
 	builder.WriteByte(' ')
-	builder.WriteString(k.LocationName)
+	builder.WriteString(km.LocationName)
 
-	prevFolderName := k.FolderName
-	k.FolderName = builder.String()
+	dir := filepath.Dir(km.FolderPath)
+	if dir == "." {
+		return false
+	}
+	prevFolderName := km.GetFolderName()
+	folderName := builder.String()
+	km.FolderPath = filepath.Join(dir, folderName)
 
-	return prevFolderName != k.FolderName
+	return prevFolderName != folderName
 }

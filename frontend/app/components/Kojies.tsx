@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { getBusinessKojies, putBusinessKojies } from "../api/sdk.gen";
-import type { ModelsKoji } from "../api/types.gen";
+import { getBusinessKojies, putBusinessKojies } from "@/api/sdk.gen";
+import type { ModelsKoji } from "@/api/types.gen";
 import KojiDetailModal from "./KojiDetailModal";
-import { useKoji } from "../contexts/KojiContext";
+import { useKoji } from "@/contexts/KojiContext";
 import "../styles/business-entity-list.css";
 
 const Kojies = () => {
@@ -24,12 +24,16 @@ const Kojies = () => {
       setLoading(true);
       setError(null);
 
+      console.log("Loading kojies..."); // デバッグ用
       const response = await getBusinessKojies();
+      console.log("Kojies response:", response); // デバッグ用
 
       if (response.data) {
+        console.log("Kojies data:", response.data); // デバッグ用
         setKojies(response.data);
         setKojiCount(response.data.length);
       } else {
+        console.log("No kojies data"); // デバッグ用
         setKojies([]);
         setKojiCount(0);
       }

@@ -5,13 +5,14 @@ import (
 	"strings"
 
 	_ "penguin-backend/docs" // swaggo generated docs
+	"penguin-backend/internal/routes/business"
 	"penguin-backend/internal/services"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 // SetupRoutes はすべてのルートを設定します
-func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
+func SetupRoutes(app *fiber.App, container *services.ContainerService) {
 	// Swagger UI - カスタム実装（Fiber v3対応）+ OpenAPI 3.0対応
 	app.Get("/swagger/*", func(c fiber.Ctx) error {
 		path := strings.TrimPrefix(c.Path(), "/swagger")
@@ -50,7 +51,7 @@ func SetupRoutes(app *fiber.App, container *services.ServiceContainer) {
 	// Business Data Services のルートを設定
 	if container.BusinessService != nil {
 		// Setup routes for each domain
-		SetupBusinessRoutes(api.Group("/business"), container.BusinessService)
+		business.SetupBusinessRoutes(api.Group("/business"), container.BusinessService)
 	}
 
 	// Media Data Services のルートを設定（将来実装）

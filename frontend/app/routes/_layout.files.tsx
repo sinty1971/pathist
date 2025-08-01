@@ -1,4 +1,4 @@
-import { Files } from "../components/Files";
+import { Files } from "@/components/Files";
 
 export default function FilesPage() {
   return <Files />;

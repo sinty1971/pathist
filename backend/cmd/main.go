@@ -112,24 +112,38 @@ func main() {
 		TimeFormat: "2006-01-02 15:04:05",
 	}))
 
-	// containerServiceを作成
-	var err error
-	sc := &services.ServiceContainer{}
+	const defaultDatabaseFilename = ".detail.yaml"
+	const defaultFileFolderPath = "~/penguin"
+	const defaultBusinessFolderPath = "~/penguin/豊田築炉"
+	const defaultCompanyFolderPath = "~/penguin/豊田築炉/1 会社"
+	const defaultKojiFolderPath = "~/penguin/豊田築炉/2 工事"
 
-	sc.BusinessService, err = services.NewBusinessService("~/penguin/豊田築炉", ".detail.yaml")
-	if err != nil {
-		log.Fatal(err)
+	// ServiceContainerを作成
+	cs := services.NewContainerService()
+
+	// コンテナオプションを作成
+	opt := services.ContainerOption{
+		RootService: cs,
 	}
+
+	// ファイルサービスをリセット
+	cs.FileService.BuildWithOption(opt, defaultFileFolderPath)
+	// ビジネスサービスをリセット
+	cs.BusinessService.BuildWithOption(opt, defaultBusinessFolderPath)
+	// 会社サービスをリセット
+	cs.BusinessService.CompanyService.BuildWithOption(opt, defaultCompanyFolderPath, defaultDatabaseFilename)
+	// 工事サービスをリセット
+	cs.BusinessService.KojiService.BuildWithOption(opt, defaultKojiFolderPath)
 
 	// sc.MediaService, err := services.NewMediaDataService("~/penguin/homes/sinty/media", ".detail.yaml")
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
 
-	defer sc.Cleanup()
+	defer cs.Cleanup()
 
 	// ルートを設定
-	routes.SetupRoutes(app, sc)
+	routes.SetupRoutes(app, cs)
 
 	// サーバー起動メッセージ
 	if *useHTTP2 {

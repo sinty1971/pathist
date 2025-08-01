@@ -42,6 +42,6 @@ func setupKojiRoutes(api fiber.Router, businessHandler *business.BusinessHandler
 	// 工事更新 - キャッシュなし（更新系）
 	api.Put("/kojies", businessHandler.UpdateKoji)
 
-	// 補助ファイル名変更 - キャッシュなし（更新系）
-	api.Put("/kojies/assist-files", businessHandler.RenameKojiAssistFile)
+	// 標準ファイル名変更 - キャッシュなし（更新系）
+	api.Put("/kojies/standard-files", businessHandler.RenameKojiStandardFiles)
 }

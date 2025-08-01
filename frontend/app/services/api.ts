@@ -1,5 +1,5 @@
-import { getFileFileinfos } from '../api/sdk.gen';
-import type { ModelsFileInfo } from '../api/types.gen';
+import { getFileFileinfos } from '@/api/sdk.gen';
+import type { ModelsFileInfo } from '@/api/types.gen';
 
 export type FileInfo = ModelsFileInfo;
 

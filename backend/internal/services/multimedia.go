@@ -2,27 +2,21 @@ package services
 
 // このファイルは将来のMediaDataService実装時の参考例です
 
-/*
-import (
-	"penguin-backend/internal/models"
-	"path/filepath"
-)
-
-// MediaDataService はメディアファイル管理サービスを提供する
-type MediaDataService struct {
-	FileService  *FileService
-	CacheService *CacheService  // サムネイルキャッシュ等
-	MediaPath    string
+// MultiMediaService はマルチメディア管理サービスを提供する
+type MultiMediaService struct {
+	MediaPath string
 }
 
-// NewMediaDataService はMediaDataServiceを初期化する
-func NewMediaDataService(mediaPath string) (*MediaDataService, error) {
+/*
+
+// NewMultiMediaService はMultiMediaServiceを初期化する
+func NewMultiMediaService(mediaPath string) (*MultiMediaService, error) {
 	fileService, err := NewFileService(mediaPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return &MediaDataService{
+	return &MultiMediaService{
 		FileService:  fileService,
 		CacheService: NewCacheService(),
 		MediaPath:    mediaPath,
@@ -30,7 +24,7 @@ func NewMediaDataService(mediaPath string) (*MediaDataService, error) {
 }
 
 // ListMediaFiles はメディアファイル一覧を取得する
-func (s *MediaDataService) ListMediaFiles(path string) ([]models.MediaFile, error) {
+func (s *MultiMediaService) ListMediaFiles(path string) ([]models.MediaFile, error) {
 	// 実装例
 	// 1. ファイル一覧を取得
 	// 2. メディアファイルのみフィルタリング（画像、動画、音声）

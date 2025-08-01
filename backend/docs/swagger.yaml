@@ -218,6 +218,15 @@ components:
       - CompanyCategorySales2
       - CompanyCategoryRecruit
       - CompanyCategoryOther
+    models.CompanyCategoryInfo:
+      properties:
+        code:
+          example: 0
+          type: integer
+        name:
+          example: 特別
+          type: string
+      type: object
     models.FileInfo:
       description: ファイルまたはディレクトリの情報
       properties:
@@ -533,31 +542,6 @@ paths:
       summary: ビジネスベースパスの取得
       tags:
       - ビジネス管理
-  /business/categories:
-    get:
-      description: カテゴリー一覧を取得します
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  additionalProperties:
-                    type: string
-                  type: object
-                type: array
-          description: 正常なレスポンス
-        "500":
-          content:
-            application/json:
-              schema:
-                additionalProperties:
-                  type: string
-                type: object
-          description: サーバーエラー
-      summary: カテゴリー一覧の取得
-      tags:
-      - 会社管理
   /business/companies:
     get:
       description: 会社フォルダーの一覧を取得します
@@ -642,6 +626,29 @@ paths:
                 type: object
           description: サーバーエラー
       summary: 会社詳細の取得
+      tags:
+      - 会社管理
+  /business/companies/categories:
+    get:
+      description: カテゴリー一覧を取得します
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/models.CompanyCategoryInfo'
+                type: array
+          description: 正常なレスポンス
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: サーバーエラー
+      summary: カテゴリー一覧の取得
       tags:
       - 会社管理
   /business/files:

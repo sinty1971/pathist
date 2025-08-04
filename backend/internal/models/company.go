@@ -51,21 +51,22 @@ type Company struct {
 	ShortName  string               `json:"shortName,omitempty" yaml:"-" example:"豊田築炉"`
 	Category   CompanyCategoryIndex `json:"category" yaml:"-" example:"1"`
 
-	// データベースファイルフィールド
-	LegalName  string   `json:"legalName,omitempty" yaml:"legal_name" example:"有限会社 豊田築炉"`
-	PostalCode string   `json:"postalCode,omitempty" yaml:"postal_code" example:"456-0001"`
-	Address    string   `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
-	Phone      string   `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
-	Email      string   `json:"email,omitempty" yaml:"email" example:"info@toyotachikuro.jp"`
-	Website    string   `json:"website,omitempty" yaml:"website" example:"https://www.toyotachikuro.jp"`
-	Tags       []string `json:"tags,omitempty" yaml:"tags" example:"['元請け', '製造業']"`
+	// Database file fields
+	Database   *Database[*Company] `json:"-" yaml:"-"`
+	LegalName  string              `json:"legalName,omitempty" yaml:"legal_name" example:"有限会社 豊田築炉"`
+	PostalCode string              `json:"postalCode,omitempty" yaml:"postal_code" example:"456-0001"`
+	Address    string              `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
+	Phone      string              `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
+	Email      string              `json:"email,omitempty" yaml:"email" example:"info@toyotachikuro.jp"`
+	Website    string              `json:"website,omitempty" yaml:"website" example:"https://www.toyotachikuro.jp"`
+	Tags       []string            `json:"tags,omitempty" yaml:"tags" example:"['元請け', '製造業']"`
 
-	// 標準ファイルフィールド
-	StandardFiles []FileInfo `json:"standardFiles" yaml:"standard_files"`
+	// 必須ファイルフィールド
+	RequiredFiles []FileInfo `json:"requiredFiles" yaml:"required_files"`
 }
 
-// GetFolderPath フォルダーパスを取得します
-// DatabaseServiceで使用
+// GetFolderPath はフォルダーパスを取得します
+// DatabaseFileインターフェースの実装
 func (c *Company) GetFolderPath() string {
 	return c.FolderPath
 }
@@ -86,11 +87,15 @@ func NewCompany(folderPath string) (*Company, error) {
 
 	return &Company{
 		ID:         NewIDFromString(result.ShortName).Len5(),
-		FolderPath: folderPath, // フォルダー名のみを格納
-		LegalName:  result.ShortName,
+		FolderPath: folderPath,
 		ShortName:  result.ShortName,
 		Category:   result.Category,
-		Tags:       append([]string{"会社"}, result.Tags...),
+
+		// Database file fields
+		Database:      NewDatabaseFileService[*Company](result.ShortName),
+		LegalName:     result.ShortName,
+		Tags:          append([]string{"会社"}, result.Tags...),
+		RequiredFiles: []FileInfo{},
 	}, nil
 }
 

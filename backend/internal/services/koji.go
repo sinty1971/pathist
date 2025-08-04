@@ -23,7 +23,7 @@ type KojiService struct {
 	FolderPath string
 
 	// データベースサービス
-	DatabaseService *DatabaseService[*models.Koji]
+	DatabaseService *DatabaseFileService[*models.Koji]
 }
 
 // BuildWithContext は opt でKojiServiceを初期化する
@@ -49,7 +49,7 @@ func (ks *KojiService) BuildWithContext(opt ContainerOption, folderPath string, 
 	ks.FolderPath = folderPath
 
 	// 工事一覧用のDatabaseServiceを作成
-	ks.DatabaseService = NewDatabaseService[*models.Koji](databaseFilename)
+	ks.DatabaseService = NewDatabaseFileService[*models.Koji](databaseFilename)
 
 	return nil
 }
@@ -73,10 +73,10 @@ func (ks *KojiService) GetKoji(folderName string) (*models.Koji, error) {
 		return nil, fmt.Errorf("データベースファイルからの読み込みに失敗しました: %v", err)
 	}
 
-	// 標準ファイルの設定
-	err = ks.UpdateStandardFiles(koji)
+	// 必須ファイルの設定
+	err = ks.UpdateRequiredFiles(koji)
 	if err != nil {
-		return nil, fmt.Errorf("標準ファイルの設定に失敗しました: %v", err)
+		return nil, fmt.Errorf("必須ファイルの設定に失敗しました: %v", err)
 	}
 
 	return koji, nil
@@ -216,28 +216,28 @@ func (ks *KojiService) LoadDatabaseFile(target *models.Koji) error {
 	return nil
 }
 
-// UpdateAssistFiles は工事の補助ファイルを更新します
+// UpdateRequiredFiles は工事の必須ファイルを更新します
 // データベースファイルの情報を優先するので、値が空の場合のみ更新する
-func (ks *KojiService) UpdateStandardFiles(koji *models.Koji) error {
-	// 補助ファイルがすでに設定されている場合は更新しない
-	if len(koji.StandardFiles) > 0 {
-		return errors.New("補助ファイルがすでに設定されています")
+func (ks *KojiService) UpdateRequiredFiles(koji *models.Koji) error {
+	// 必須ファイルがすでに設定されている場合は更新しない
+	if len(koji.RequiredFiles) > 0 {
+		return errors.New("必須ファイルがすでに設定されています")
 	}
 
 	// 工事フォルダー内のファイルを取得
 	entries, err := os.ReadDir(koji.FolderPath)
 	if err != nil {
-		// エラーの場合はデフォルトの標準ファイルを設定
-		standardFile, err := models.NewFileInfo(path.Join(koji.FolderPath, "工事.xlsx"))
+		// エラーの場合はデフォルトの必須ファイルを設定
+		requiredFile, err := models.NewFileInfo(path.Join(koji.FolderPath, "工事.xlsx"))
 		if err != nil {
 			return err
 		}
-		koji.StandardFiles = []models.FileInfo{*standardFile}
+		koji.RequiredFiles = []models.FileInfo{*requiredFile}
 		return nil
 	}
 
-	// 標準ファイルの設定（現在は1個のみ）
-	var standardFile *models.FileInfo
+	// 必須ファイルの設定（現在は1個のみ）
+	var requiredFile *models.FileInfo
 	var found bool
 
 	// 日付パターンのコンパイル（1回のみ）
@@ -263,7 +263,7 @@ func (ks *KojiService) UpdateStandardFiles(koji *models.Koji) error {
 		actualPath := path.Join(koji.FolderPath, file.Name())
 		standardName := koji.GetFolderName() + extension
 		standardPath := path.Join(koji.FolderPath, standardName)
-		standardFile, err = models.NewFileInfo(actualPath, standardPath)
+		requiredFile, err = models.NewFileInfo(actualPath, standardPath)
 		if err != nil {
 			continue
 		}
@@ -273,14 +273,15 @@ func (ks *KojiService) UpdateStandardFiles(koji *models.Koji) error {
 
 	// 工事ファイルが見つからない場合はひな形を設定
 	if !found {
-		standardFile, err = models.NewFileInfo("工事.xlsx", standardPath)
+		standardPath := path.Join(koji.FolderPath, koji.GetFolderName()+".xlsx")
+		requiredFile, err = models.NewFileInfo("工事.xlsx", standardPath)
 
 		// テンプレートファイルのコピーは省略（高速化のため）
 		// 必要に応じて別途実行する
 	}
 
 	// 管理ファイルの設定
-	koji.StandardFiles = []models.StandardFile{standardFile}
+	koji.RequiredFiles = []models.FileInfo{*requiredFile}
 
 	return nil
 }
@@ -294,20 +295,21 @@ func (ks *KojiService) Update(target *models.Koji) error {
 	temp := *target
 
 	// フォルダー名の変更
-	if temp.UpdateFolderName() {
+	if temp.UpdateFolderPath() {
 		// 工事IDの更新（フォルダー名の変更に伴う）
 		temp.UpdateID()
 
-		// 補助ファイル情報の更新（フォルダー名の変更に伴う）
-		temp.StandardFiles = []models.StandardFile{}
-		if err := ks.UpdateStandardFiles(&temp); err != nil {
+		// 必須ファイル情報の更新（フォルダー名の変更に伴う）
+		temp.RequiredFiles = []models.FileInfo{}
+		if err := ks.UpdateRequiredFiles(&temp); err != nil {
 			return err
 		}
 
 		// ファイルの移動
-		if err := ks.BaseFolderService.MoveFile(temp.FolderName, target.FolderName); err != nil {
-			return err
-		}
+		// TODO: ファイル移動の実装
+		// if err := ks.RootService.MoveFile(temp.GetFolderName(), target.GetFolderName()); err != nil {
+		// 	return err
+		// }
 	}
 
 	// フォルダー名の変更完了後、情報を更新
@@ -321,56 +323,54 @@ func (ks *KojiService) Update(target *models.Koji) error {
 }
 
 // RenameStandardFile は標準ファイルの名前を変更し、工事データも更新する
-// kojiは工事データ
-// currentsは変更前の標準ファイル名
-// 変更後の標準ファイル名を返す
-func (ks *KojiService) RenameStandardFile(koji models.Koji, actuals []string) []string {
-	// マップの作成
-	actualToStandardMap := make(map[string]*models.StandardFile)
-	for i := range koji.StandardFiles {
-		sf := &koji.StandardFiles[i]
-		actualToStandardMap[sf.ActualName] = sf
-	}
-
-	// 変更後の標準ファイル名を格納する配列
-	renamedFiles := make([]string, len(actuals))
-
-	// 変更前の標準ファイル名をループ
-	count := 0
-	for _, actual := range actuals {
-		if sf, exists := actualToStandardMap[actual]; exists {
-			actualFullpath, err := ks.BaseFolderService.GetFullpath(sf.GetPath())
-			if err != nil {
-				continue
-			}
-
-			standardFullpath, err := ks.BaseFolderService.GetFullpath(sf.Name)
-			if err != nil {
-				continue
-			}
-			count++
-		}
-
-		// ファイル名変更後、工事の補助ファイル情報を更新
-		if count > 0 {
-			// 補助ファイル情報を再設定
-			err := ks.UpdateStandardFiles(&koji)
-			if err == nil {
-				// 属性ファイルに反映
-				ks.DatabaseService.Save(&koji)
-			}
-		}
-	}
-
-	// ファイル名変更後、工事の補助ファイル情報を更新
-	if count > 0 {
-		// 補助ファイル情報を再設定
-		err := ks.UpdateStandardFiles(&koji)
-		if err == nil {
-			// 属性ファイルに反映
-			ks.DatabaseService.Save(&koji)
-		}
-	}
-
-	return renamedFiles[:count]
-}
+// TODO: StandardFile型が定義されていないため、一時的にコメントアウト
+// func (ks *KojiService) RenameStandardFile(koji models.Koji, actuals []string) []string {
+// 	// マップの作成
+// 	actualToStandardMap := make(map[string]*models.StandardFile)
+// 	for i := range koji.StandardFiles {
+// 		sf := &koji.StandardFiles[i]
+// 		actualToStandardMap[sf.ActualName] = sf
+// 	}
+//
+// 	// 変更後の標準ファイル名を格納する配列
+// 	renamedFiles := make([]string, len(actuals))
+//
+// 	// 変更前の標準ファイル名をループ
+// 	count := 0
+// 	for _, actual := range actuals {
+// 		if sf, exists := actualToStandardMap[actual]; exists {
+// 			actualFullpath, err := ks.BaseFolderService.GetFullpath(sf.GetPath())
+// 			if err != nil {
+// 				continue
+// 			}
+//
+// 			standardFullpath, err := ks.BaseFolderService.GetFullpath(sf.Name)
+// 			if err != nil {
+// 				continue
+// 			}
+// 			count++
+// 		}
+//
+// 		// ファイル名変更後、工事の必須ファイル情報を更新
+// 		if count > 0 {
+// 			// 必須ファイル情報を再設定
+// 			err := ks.UpdateRequiredFiles(&koji)
+// 			if err == nil {
+// 				// 属性ファイルに反映
+// 				ks.DatabaseService.Save(&koji)
+// 			}
+// 		}
+// 	}
+//
+// 	// ファイル名変更後、工事の必須ファイル情報を更新
+// 	if count > 0 {
+// 		// 必須ファイル情報を再設定
+// 		err := ks.UpdateRequiredFiles(&koji)
+// 		if err == nil {
+// 			// 属性ファイルに反映
+// 			ks.DatabaseService.Save(&koji)
+// 		}
+// 	}
+//
+// 	return renamedFiles[:count]
+// }

@@ -21,18 +21,18 @@ type Koji struct {
 	LocationName string    `json:"locationName,omitempty" yaml:"-" example:"名和工場"`
 
 	// Database Service field
-	DatabaseService *DatabaseService[*Koji] `json:"-" yaml:"-"`
 
 	// Database file fields
-	EndDate     Timestamp `json:"endDate" yaml:"end_date"`
-	Description string    `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
-	Tags        []string  `json:"tags,omitempty" yaml:"tags" example:"['工事', '豊田築炉', '名和工場']"`
+	Database    *Database[*Koji] `json:"-" yaml:"-"`
+	EndDate     Timestamp        `json:"endDate" yaml:"end_date"`
+	Description string           `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
+	Tags        []string         `json:"tags,omitempty" yaml:"tags" example:"['工事', '豊田築炉', '名和工場']"`
 
-	// 標準ファイルフィールド
-	StandardFiles []FileInfo `json:"standardFiles" yaml:"standard_files"`
+	// 必須ファイルフィールド
+	RequiredFiles []FileInfo `json:"requiredFiles" yaml:"required_files"`
 }
 
-// GetFileInfo DatabaseServiceで使用するためのメソッド
+// GetFolderPath Databaseインターフェースの実装
 func (km *Koji) GetFolderPath() string {
 	return km.FolderPath
 }
@@ -74,7 +74,7 @@ func NewKoji(folderPath string) (*Koji, error) {
 	koji.EndDate = startDate
 	koji.Description = buildDescription(companyName, locationName)
 	koji.Tags = buildTags(companyName, locationName, startDate)
-	koji.StandardFiles = []FileInfo{}
+	koji.RequiredFiles = []FileInfo{}
 
 	// IDとステータスの更新
 	koji.UpdateID()

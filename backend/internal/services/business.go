@@ -9,7 +9,7 @@ type BusinessService struct {
 	FolderPath string `json:"folderPath" yaml:"folder-path"`
 
 	// データベースサービス
-	DatabaseService *DatabaseService[*BusinessService] `json:"-" yaml:"-"`
+	DatabaseService *DatabaseFileService[*BusinessService] `json:"-" yaml:"-"`
 
 	// 企業データ管理サービス
 	CompanyService *CompanyService `json:"-" yaml:"-"`
@@ -34,7 +34,7 @@ type BusinessService struct {
 	DatabaseFilename string `json:"databaseFilename" yaml:"database-filename"`
 }
 
-// GetFolderPath はビジネスフォルダーパスを取得する
+// GetFolderPath Databaseインターフェースの実装
 func (bs *BusinessService) GetFolderPath() string {
 	return bs.FolderPath
 }

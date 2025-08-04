@@ -18,7 +18,7 @@ type CompanyService struct {
 	FolderPath string
 
 	// データベースサービス
-	DatabaseService *DatabaseService[*models.Company]
+	DatabaseService *DatabaseFileService[*models.Company]
 }
 
 // BuildWithOption は opt でCompanyServiceを初期化します
@@ -50,7 +50,7 @@ func (cs *CompanyService) BuildWithOption(opt ContainerOption, folderPath string
 	cs.FolderPath = folderPath
 
 	// 会社フォルダー基準のDatabaseServiceを初期化
-	cs.DatabaseService = NewDatabaseService[*models.Company](databaseFilename)
+	cs.DatabaseService = NewDatabaseFileService[*models.Company](databaseFilename)
 
 	return nil
 }

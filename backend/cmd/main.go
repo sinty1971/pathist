@@ -133,7 +133,7 @@ func main() {
 	// 会社サービスをリセット
 	cs.BusinessService.CompanyService.BuildWithOption(opt, defaultCompanyFolderPath, defaultDatabaseFilename)
 	// 工事サービスをリセット
-	cs.BusinessService.KojiService.BuildWithOption(opt, defaultKojiFolderPath)
+	cs.BusinessService.KojiService.BuildWithContext(opt, defaultKojiFolderPath, defaultDatabaseFilename)
 
 	// sc.MediaService, err := services.NewMediaDataService("~/penguin/homes/sinty/media", ".detail.yaml")
 	// if err != nil {

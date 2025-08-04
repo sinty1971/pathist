@@ -18,6 +18,18 @@ func NewBusinessHandler(businessService *services.BusinessService) *BusinessHand
 	}
 }
 
+// GetBusinessBasePath godoc
+// @Summary      ビジネスベースパスの取得
+// @Description  ビジネスベースパスを取得します
+// @Tags         ビジネス管理
+// @Produce      json
+// @Success      200 {object} map[string]string "ビジネスベースパス"
+// @Router       /business/base-path [get]
+func (bh *BusinessHandler) GetBusinessBasePath(c fiber.Ctx) error {
+	basePath := bh.businessService.FolderPath
+	return c.JSON(fiber.Map{"basePath": basePath})
+}
+
 // GetAttributeFilename godoc
 // @Summary      属性ファイル名の取得
 // @Description  属性ファイル名を取得します
@@ -28,4 +40,27 @@ func NewBusinessHandler(businessService *services.BusinessService) *BusinessHand
 func (bh *BusinessHandler) GetAttributeFilename(c fiber.Ctx) error {
 	attributeFilename := bh.businessService.DatabaseFilename
 	return c.JSON(fiber.Map{"attributeFilename": attributeFilename})
+}
+
+// GetFiles godoc
+// @Summary      ファイルエントリ一覧の取得
+// @Description  指定されたパスからファイルとフォルダーの一覧を取得します
+// @Tags         ファイル管理
+// @Produce      json
+// @Param        path query string false "取得するディレクトリのパス"
+// @Success      200 {array} models.FileInfo "正常なレスポンス"
+// @Failure      500 {object} map[string]string "サーバーエラー"
+// @Router       /business/files [get]
+func (bh *BusinessHandler) GetFiles(c fiber.Ctx) error {
+	fsPath := c.Query("path", "")
+	
+	fileInfos, err := bh.businessService.RootService.FileService.GetFileInfos(fsPath)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "Failed to read directory",
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(fileInfos)
 }

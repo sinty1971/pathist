@@ -16,5 +16,11 @@ type Member struct {
 	JoinDate    *time.Time `json:"joinDate,omitempty" yaml:"join_date" example:"2020-04-01T00:00:00Z"`
 
 	// 補助ファイルフィールド
-	Assets []FileInfo `json:"assets" yaml:"assets"`
+	Database *Database[*Member] `json:"-" yaml:"-"`
+	Assets   []FileInfo         `json:"assets" yaml:"assets"`
+}
+
+// GetFolderPath Databaseインターフェースの実装
+func (mm *Member) GetFolderPath() string {
+	return mm.FolderPath
 }

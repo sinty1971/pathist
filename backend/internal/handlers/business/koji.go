@@ -55,12 +55,12 @@ func (bh *BusinessHandler) GetKojies(c fiber.Ctx) error {
 
 	// filter=recentの場合は最近の工事のみを取得
 	if filter == "recent" {
-		kojies := bh.businessService.KojiService.GetRecentKojies()
+		kojies := bh.businessService.KojiService.GetKojies()
 		return c.JSON(kojies)
 	} else {
 		fmt.Printf("filter: %s\n", filter)
 		// フィルターが指定されていない場合は最近の工事を返す（互換性のため）
-		kojies := bh.businessService.KojiService.GetRecentKojies()
+		kojies := bh.businessService.KojiService.GetKojies()
 		return c.JSON(kojies)
 
 	}
@@ -124,17 +124,17 @@ func (bh *BusinessHandler) RenameKojiStandardFiles(c fiber.Ctx) error {
 		})
 	}
 
-	// ファイル名を変更
-	renamedFiles := bh.businessService.KojiService.RenameStandardFile(request.Koji, request.Currents)
+	// TODO: RenameStandardFileメソッドの実装が必要
+	// renamedFiles := bh.businessService.KojiService.RenameStandardFile(request.Koji, request.Currents)
 
 	// ファイル名変更後、最新の工事データを取得して返す
-	if request.Koji.FolderName != "" {
-		updatedKoji, err := bh.businessService.KojiService.GetKoji(request.Koji.FolderName)
+	if request.Koji.GetFolderName() != "" {
+		updatedKoji, err := bh.businessService.KojiService.GetKoji(request.Koji.GetFolderName())
 		if err == nil {
 			return c.JSON(updatedKoji)
 		}
 	}
 
-	// 取得できない場合は変更されたファイル名リストを返す（後方互換性）
-	return c.JSON(renamedFiles)
+	// 取得できない場合は空の配列を返す（後方互換性）
+	return c.JSON([]string{})
 }

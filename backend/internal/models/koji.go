@@ -23,7 +23,7 @@ type Koji struct {
 	// Database Service field
 
 	// Database file fields
-	Database    *Database[*Koji] `json:"-" yaml:"-"`
+	Database    *FileRepository[*Koji] `json:"-" yaml:"-"`
 	EndDate     Timestamp        `json:"endDate" yaml:"end_date"`
 	Description string           `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
 	Tags        []string         `json:"tags,omitempty" yaml:"tags" example:"['工事', '豊田築炉', '名和工場']"`
@@ -32,7 +32,7 @@ type Koji struct {
 	RequiredFiles []FileInfo `json:"requiredFiles" yaml:"required_files"`
 }
 
-// GetFolderPath Databaseインターフェースの実装
+// GetFolderPath Persistableインターフェースの実装
 func (km *Koji) GetFolderPath() string {
 	return km.FolderPath
 }

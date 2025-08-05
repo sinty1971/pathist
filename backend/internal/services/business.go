@@ -34,7 +34,7 @@ type BusinessService struct {
 	DatabaseFilename string `json:"databaseFilename" yaml:"database-filename"`
 }
 
-// GetFolderPath Databaseインターフェースの実装
+// GetFolderPath Persistableインターフェースの実装
 func (bs *BusinessService) GetFolderPath() string {
 	return bs.FolderPath
 }

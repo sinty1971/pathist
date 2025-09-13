@@ -12,13 +12,13 @@ import (
 // CompanyService は会社データ操作を処理します
 type CompanyService struct {
 	// RootService はトップコンテナのインスタンス
-	RootService *ContainerService
+	RootService *RootService
 
 	// 工事一覧フォルダー
 	FolderPath string
 
 	// データベースサービス
-	DatabaseService *DatabaseFileService[*models.Company]
+	DatabaseService *RepositoryService[*models.Company]
 }
 
 // BuildWithOption は opt でCompanyServiceを初期化します
@@ -50,7 +50,7 @@ func (cs *CompanyService) BuildWithOption(opt ContainerOption, folderPath string
 	cs.FolderPath = folderPath
 
 	// 会社フォルダー基準のDatabaseServiceを初期化
-	cs.DatabaseService = NewDatabaseFileService[*models.Company](databaseFilename)
+	cs.DatabaseService = NewRepositoryService[*models.Company](databaseFilename)
 
 	return nil
 }

@@ -16,7 +16,7 @@ import (
 // @Param        path path string true "Kojiフォルダーのファイル名"
 // @Success      200 {object} models.Koji "Koji"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/kojies/{path} [get]
+// @Router       /kojies/{path} [get]
 func (bh *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
 	// パスパラメータを取得
 	path := c.Params("path")
@@ -48,7 +48,7 @@ func (bh *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
 // @Param        filter query string false "フィルター (recent: 最近の工事のみ)"
 // @Success      200 {array} models.Koji "工事一覧"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/kojies [get]
+// @Router       /kojies [get]
 func (bh *BusinessHandler) GetKojies(c fiber.Ctx) error {
 	// クエリパラメータでフィルターを取得
 	filter := c.Query("filter")
@@ -75,7 +75,7 @@ func (bh *BusinessHandler) GetKojies(c fiber.Ctx) error {
 // @Param        body body models.Koji true "工事データ"
 // @Success      200 {object} models.Koji "更新後の工事データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/kojies [put]
+// @Router       /kojies [put]
 func (bh *BusinessHandler) UpdateKoji(c fiber.Ctx) error {
 	// リクエストボディから編集された工事を取得
 	var koji models.Koji
@@ -113,7 +113,7 @@ type RenameManagedFileRequest struct {
 // @Param        body body RenameManagedFileRequest true "工事データと管理ファイル"
 // @Success      200 {object} models.Koji "更新後の工事データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/kojies/standard-files [put]
+// @Router       /kojies/standard-files [put]
 func (bh *BusinessHandler) RenameKojiStandardFiles(c fiber.Ctx) error {
 	// リクエストボディから編集された工事を取得
 	var request RenameManagedFileRequest

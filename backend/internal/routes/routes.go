@@ -12,7 +12,7 @@ import (
 )
 
 // SetupRoutes はすべてのルートを設定します
-func SetupRoutes(app *fiber.App, container *services.ContainerService) {
+func SetupRoutes(app *fiber.App, container *services.RootService) {
 	// Swagger UI - カスタム実装（Fiber v3対応）+ OpenAPI 3.0対応
 	app.Get("/swagger/*", func(c fiber.Ctx) error {
 		path := strings.TrimPrefix(c.Path(), "/swagger")

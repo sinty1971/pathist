@@ -7,28 +7,28 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Repository はファイルベースのデータ永続化を行うリポジトリです
+// 現在はYAML形式をサポートしていますが、将来的に他の形式にも対応可能です
+type Repository[T Persistable] struct {
+	filePath string
+}
+
 // Persistable はファイルベースで永続化可能なエンティティのインターフェースを定義します
 type Persistable interface {
 	// GetFolderPath はデータが保存されているフォルダーのパスを取得します
 	GetFolderPath() string
 }
 
-// FileRepository はファイルベースのデータ永続化を行うリポジトリです
-// 現在はYAML形式をサポートしていますが、将来的に他の形式にも対応可能です
-type FileRepository[T Persistable] struct {
-	filePath string
-}
-
-// NewFileRepository はFileRepositoryを初期化する
-func NewFileRepository[T Persistable](filePath string) *FileRepository[T] {
-	return &FileRepository[T]{
+// NewRepository はFileRepositoryを初期化する
+func NewRepository[T Persistable](filePath string) *Repository[T] {
+	return &Repository[T]{
 		filePath: filePath,
 	}
 }
 
 // Load はYAMLファイルからデータを読み込む
 // @Param folderName query string true "フォルダー名(FileService.BasePathからの相対パス)"
-func (r *FileRepository[T]) Load(ref T) (T, error) {
+func (r *Repository[T]) Load(ref T) (T, error) {
 
 	// Initialize output with default data
 	var output T
@@ -49,7 +49,7 @@ func (r *FileRepository[T]) Load(ref T) (T, error) {
 
 // Save はデータをファイルに保存する
 // @Param folderName query string true "フォルダー名(FileService.BasePathからの相対パス)"
-func (r *FileRepository[T]) Save(input T) error {
+func (r *Repository[T]) Save(input T) error {
 
 	// データをエンコード
 	yamlData, err := yaml.Marshal(input)

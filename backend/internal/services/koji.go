@@ -15,41 +15,52 @@ import (
 )
 
 // KojiService は工事情報取得サービスを提供する
+// 工事一覧フォルダーを管理します
 type KojiService struct {
-	// RootService はトップコンテナのインスタンス
-	RootService *ContainerService
+	// ルートサービス
+	Root *RootService
 
-	// 工事一覧フォルダーのフルパス名
-	FolderPath string
+	// リポジトリーサービス
+	Repository *RepositoryService[*models.Koji]
 
-	// データベースサービス
-	DatabaseService *DatabaseFileService[*models.Koji]
+	// 工事一覧フォルダーのフルパス
+	Folder string
 }
 
-// BuildWithContext は opt でKojiServiceを初期化する
-// businessFileService: ビジネスファイルサービス
-// folderName: 工事一覧フォルダーのファイル名 (Ex. "2 工事")
-func (ks *KojiService) BuildWithContext(opt ContainerOption, folderPath string, databaseFilename string) error {
+func (ks *KojiService) Register(rs *RegistableService, opts ...Option) {
+	ks.Root = rs.GetRootService()
+	ks.Repository = NewRepositoryService[*models.Koji](repositoryFilename)
+	ks.Folder = folder
+}
+
+// CreateKojiService は opt でKojiServiceを初期化する
+// root: ルートサービス
+// repositoryFilename: リポジトリーサービスのファイル名
+// folder: 工事一覧フォルダーのフルパス
+func (ks *KojiService) CreateKojiService(root *RootService, repositoryFilename, folder string) error {
+
+	// 工事一覧フォルダーのフルパスの取得
+	folder, err := utils.CleanAbsPath(folder)
+	if err != nil {
+		return err
+	}
 
 	// folderPath がアクセス可能かチェック
-	fi, err := os.Stat(folderPath)
+	fi, err := os.Stat(folder)
 	if err != nil {
 		return err
 	}
 
 	// フォルダーで無ければエラー
 	if !fi.IsDir() {
-		return fmt.Errorf("工事一覧対象パスがフォルダーではありません: %s", folderPath)
+		return fmt.Errorf("工事一覧対象パスがフォルダーではありません: %s", folder)
 	}
 
-	// ルートサービスを設定
-	ks.RootService = opt.RootService
+	// ルートサービスに工事サービスを登録
+	root.KojiService = ks
 
-	// 工事一覧フォルダーのフルパスの取得
-	ks.FolderPath = folderPath
-
-	// 工事一覧用のDatabaseServiceを作成
-	ks.DatabaseService = NewDatabaseFileService[*models.Koji](databaseFilename)
+	// 工事一覧用のリポジトリーサービスを作成
+	ks.Repository = NewRepositoryService[*models.Koji](repositoryFilename)
 
 	return nil
 }
@@ -59,7 +70,7 @@ func (ks *KojiService) BuildWithContext(opt ContainerOption, folderPath string, 
 // 工事を返す
 func (ks *KojiService) GetKoji(folderName string) (*models.Koji, error) {
 	// フォルダー名からフルパスを作成
-	folderPath := filepath.Join(ks.FolderPath, folderName)
+	folderPath := filepath.Join(ks.Folder, folderName)
 
 	// 工事データモデルを作成
 	koji, err := models.NewKoji(folderPath)
@@ -111,7 +122,7 @@ func (ks *KojiService) GetKojies(modes ...getKojiesMode) []models.Koji {
 	}
 
 	// ファイルシステムから工事フォルダー一覧を取得
-	entries, err := os.ReadDir(ks.FolderPath)
+	entries, err := os.ReadDir(ks.Folder)
 	if err != nil || len(entries) == 0 {
 		return []models.Koji{}
 	}
@@ -137,7 +148,7 @@ func (ks *KojiService) GetKojies(modes ...getKojiesMode) []models.Koji {
 		go func() {
 			defer wg.Done()
 			for idx := range jobs {
-				kojiPath := path.Join(ks.FolderPath, entries[idx].Name())
+				kojiPath := path.Join(ks.Folder, entries[idx].Name())
 				if koji, err := models.NewKoji(kojiPath); err == nil {
 					if mode&GetKojiesModeSyncDatabase != 0 {
 						_ = ks.LoadDatabaseFile(koji)
@@ -193,14 +204,14 @@ func (ks *KojiService) GetKojies(modes ...getKojiesMode) []models.Koji {
 // LoadDatabaseFile は工事データベースファイルからデータを取り込みます
 func (ks *KojiService) LoadDatabaseFile(target *models.Koji) error {
 	// 工事データベースファイルからデータを読み込む
-	database, err := ks.DatabaseService.Load(target)
+	database, err := ks.Repository.Load(target)
 	if err != nil {
 		// ファイルが存在しない場合はデフォルト値を設定
 		target.UpdateStatus()
 
 		// 新規ファイルの場合は非同期で保存
 		go func() {
-			ks.DatabaseService.Save(target)
+			ks.Repository.Save(target)
 		}()
 		return nil
 	}
@@ -319,7 +330,7 @@ func (ks *KojiService) Update(target *models.Koji) error {
 	target.UpdateStatus()
 
 	// 更新後の工事情報を属性ファイルに反映
-	return ks.DatabaseService.Save(target)
+	return ks.Repository.Save(target)
 }
 
 // RenameStandardFile は標準ファイルの名前を変更し、工事データも更新する

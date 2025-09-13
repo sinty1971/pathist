@@ -15,7 +15,7 @@ import (
 // @Success      200 {object} models.Company "正常なレスポンス"
 // @Failure      404 {object} map[string]string "会社が見つからない"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/companies/{id} [get]
+// @Router       /companies/{id} [get]
 func (bh *BusinessHandler) GetCompanyByID(c fiber.Ctx) error {
 	company, err := bh.businessService.CompanyService.GetCompanyByID(c.Params("id"))
 	if err != nil {
@@ -34,7 +34,7 @@ func (bh *BusinessHandler) GetCompanyByID(c fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {array} models.Company "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/companies [get]
+// @Router       /companies [get]
 func (bh *BusinessHandler) GetCompanies(c fiber.Ctx) error {
 	companies := bh.businessService.CompanyService.GetCompanies()
 	return c.JSON(companies)
@@ -49,7 +49,7 @@ func (bh *BusinessHandler) GetCompanies(c fiber.Ctx) error {
 // @Param        body body models.Company true "会社更新リクエスト"
 // @Success      200 {object} models.Company "更新後の会社データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/companies [put]
+// @Router       /companies [put]
 func (bh *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
 	// リクエストボディから編集された会社を取得
 	var company models.Company
@@ -79,7 +79,7 @@ func (bh *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {array} models.CompanyCategoryInfo "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
-// @Router       /business/companies/categories [get]
+// @Router       /companies/categories [get]
 func (bh *BusinessHandler) GetCategories(c fiber.Ctx) error {
 	return c.JSON(bh.businessService.CompanyService.Categories())
 }

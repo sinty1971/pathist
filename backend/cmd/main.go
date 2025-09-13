@@ -118,32 +118,32 @@ func main() {
 	const defaultCompanyFolderPath = "~/penguin/豊田築炉/1 会社"
 	const defaultKojiFolderPath = "~/penguin/豊田築炉/2 工事"
 
-	// ServiceContainerを作成
-	cs := services.NewContainerService()
+	// RootServiceを作成
+	rs := services.CreateRootService()
 
-	// コンテナオプションを作成
-	opt := services.ContainerOption{
-		RootService: cs,
-	}
-
-	// ファイルサービスをリセット
-	cs.FileService.BuildWithOption(opt, defaultFileFolderPath)
+	rs.AddService
+	// ファイルサービスを
+	rs.FileService.BuildWithOption(opt, defaultFileFolderPath)
 	// ビジネスサービスをリセット
-	cs.BusinessService.BuildWithOption(opt, defaultBusinessFolderPath)
+	rs.BusinessService.BuildWithOption(opt, defaultBusinessFolderPath)
 	// 会社サービスをリセット
-	cs.BusinessService.CompanyService.BuildWithOption(opt, defaultCompanyFolderPath, defaultDatabaseFilename)
-	// 工事サービスをリセット
-	cs.BusinessService.KojiService.BuildWithContext(opt, defaultKojiFolderPath, defaultDatabaseFilename)
+	rs.BusinessService.CompanyService.BuildWithOption(opt, defaultCompanyFolderPath, defaultDatabaseFilename)
+
+	// 工事サービスの作成
+	err := rs.KojiService.CreateKojiService(rs, defaultDatabaseFilename, defaultKojiFolderPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// sc.MediaService, err := services.NewMediaDataService("~/penguin/homes/sinty/media", ".detail.yaml")
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
 
-	defer cs.Cleanup()
+	defer rs.Cleanup()
 
 	// ルートを設定
-	routes.SetupRoutes(app, cs)
+	routes.SetupRoutes(app, rs)
 
 	// サーバー起動メッセージ
 	if *useHTTP2 {

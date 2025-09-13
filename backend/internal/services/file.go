@@ -15,7 +15,7 @@ import (
 // FileService はファイルシステムを管理するサービス
 type FileService struct {
 	// Container はトップコンテナのインスタンス
-	Container *ContainerService
+	Container *RootService
 
 	// BaseFolder はファイルシステムの絶対パスフォルダー
 	BaseFolder string `json:"baseFolder" yaml:"base_folder" example:"/penguin/豊田築炉"`
@@ -24,9 +24,9 @@ type FileService struct {
 // ResetWithContext FileServiceを引数のコンテナに設定し、基準フォルダーを設定する
 // buildContext はファイルサービスの基準フォルダー
 // 戻り値はファイルサービスのインスタンス
-func (fs *FileService) BuildWithOption(opt ContainerOption, folderPath string) error {
+func (fs *FileService) BuildWithOption(rs *RootService, folderPath string) error {
 	// コンテナを設定
-	fs.Container = opt.RootService
+	fs.Container = rs.RootService
 
 	// 絶対パスに展開
 	cleanBaseFolder, err := utils.CleanAbsPath(folderPath)

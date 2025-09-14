@@ -18,59 +18,68 @@ import (
 // 工事一覧フォルダーを管理します
 type KojiService struct {
 	// ルートサービス
-	Root *RootService
+	RootService *RootService
 
 	// リポジトリーサービス
 	Repository *RepositoryService[*models.Koji]
 
 	// 工事一覧フォルダーのフルパス
-	Folder string
+	TargetFolder string
 }
 
-func (ks *KojiService) Register(rs *RegistableService, opts ...Option) {
-	ks.Root = rs.GetRootService()
-	ks.Repository = NewRepositoryService[*models.Koji](repositoryFilename)
-	ks.Folder = folder
+// GetServiceName はサービス名を返す
+func (ks *KojiService) GetServiceName() string {
+	return "KojiService"
 }
 
-// CreateKojiService は opt でKojiServiceを初期化する
-// root: ルートサービス
-// repositoryFilename: リポジトリーサービスのファイル名
-// folder: 工事一覧フォルダーのフルパス
-func (ks *KojiService) CreateKojiService(root *RootService, repositoryFilename, folder string) error {
+// GetService はサービスを返す
+func (ks *KojiService) GetService(serviceName string) *Service {
+	return ks.RootService.GetService(serviceName)
+}
 
-	// 工事一覧フォルダーのフルパスの取得
-	folder, err := utils.CleanAbsPath(folder)
+// Cleanup はサービスをクリーンアップする
+func (ks *KojiService) Cleanup() error {
+	return nil
+}
+
+// Initialize はサービスを初期化する
+func (ks *KojiService) Initialize(rs *RootService, opts ...ConfigFunc) error {
+	config := NewConfig(opts...)
+
+	// 工事一覧フォルダーのフルパス
+	targetFolder, err := utils.CleanAbsPath(config.PathName)
 	if err != nil {
 		return err
 	}
 
 	// folderPath がアクセス可能かチェック
-	fi, err := os.Stat(folder)
+	fi, err := os.Stat(targetFolder)
 	if err != nil {
 		return err
 	}
 
 	// フォルダーで無ければエラー
 	if !fi.IsDir() {
-		return fmt.Errorf("工事一覧対象パスがフォルダーではありません: %s", folder)
+		return fmt.Errorf("工事一覧対象パスがフォルダーではありません: %s", targetFolder)
 	}
 
-	// ルートサービスに工事サービスを登録
-	root.KojiService = ks
+	ks.TargetFolder = targetFolder
 
 	// 工事一覧用のリポジトリーサービスを作成
+	repositoryFilename := config.FileName
 	ks.Repository = NewRepositoryService[*models.Koji](repositoryFilename)
 
+	// ルートサービスを設定
+	ks.RootService = rs
 	return nil
 }
 
 // GetKoji は指定されたパスから工事を取得する
-// folder は工事フォルダー名 (Ex. '2025-0618 豊田築炉 名和工場')
+// folderName は工事フォルダー名 (Ex. '2025-0618 豊田築炉 名和工場')
 // 工事を返す
 func (ks *KojiService) GetKoji(folderName string) (*models.Koji, error) {
 	// フォルダー名からフルパスを作成
-	folderPath := filepath.Join(ks.Folder, folderName)
+	folderPath := filepath.Join(ks.TargetFolder, folderName)
 
 	// 工事データモデルを作成
 	koji, err := models.NewKoji(folderPath)
@@ -122,7 +131,7 @@ func (ks *KojiService) GetKojies(modes ...getKojiesMode) []models.Koji {
 	}
 
 	// ファイルシステムから工事フォルダー一覧を取得
-	entries, err := os.ReadDir(ks.Folder)
+	entries, err := os.ReadDir(ks.TargetFolder)
 	if err != nil || len(entries) == 0 {
 		return []models.Koji{}
 	}
@@ -148,7 +157,7 @@ func (ks *KojiService) GetKojies(modes ...getKojiesMode) []models.Koji {
 		go func() {
 			defer wg.Done()
 			for idx := range jobs {
-				kojiPath := path.Join(ks.Folder, entries[idx].Name())
+				kojiPath := path.Join(ks.TargetFolder, entries[idx].Name())
 				if koji, err := models.NewKoji(kojiPath); err == nil {
 					if mode&GetKojiesModeSyncDatabase != 0 {
 						_ = ks.LoadDatabaseFile(koji)

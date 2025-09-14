@@ -14,22 +14,41 @@ import (
 
 // FileService はファイルシステムを管理するサービス
 type FileService struct {
-	// Container はトップコンテナのインスタンス
-	Container *RootService
+	// rootService はトップコンテナのインスタンス
+	rootService *RootService
 
-	// BaseFolder はファイルシステムの絶対パスフォルダー
-	BaseFolder string `json:"baseFolder" yaml:"base_folder" example:"/penguin/豊田築炉"`
+	// TargetFolder はファイルサービスの絶対パスフォルダー
+	TargetFolder string `json:"targetFolder" yaml:"target_folder" example:"/penguin/豊田築炉"`
 }
 
-// ResetWithContext FileServiceを引数のコンテナに設定し、基準フォルダーを設定する
+func (fs *FileService) GetServiceName() string {
+	return "FileService"
+}
+
+func (fs *FileService) GetService(serviceName string) *Service {
+	return fs.rootService.GetService(serviceName)
+}
+
+func (fs *FileService) Cleanup() error {
+	return nil
+}
+
+// Initialize FileServiceを初期化する
+// rs はルートサービス
+// folderPath はファイルサービスの基準フォルダー
 // buildContext はファイルサービスの基準フォルダー
 // 戻り値はファイルサービスのインスタンス
-func (fs *FileService) BuildWithOption(rs *RootService, folderPath string) error {
+func (fs *FileService) Initialize(rs *RootService, opts ...ConfigFunc) error {
+
+	// オプションを設定
+	config := NewConfig(opts...)
+	targetFolder := config.PathName
+
 	// コンテナを設定
-	fs.Container = rs.RootService
+	fs.rootService = rs
 
 	// 絶対パスに展開
-	cleanBaseFolder, err := utils.CleanAbsPath(folderPath)
+	cleanBaseFolder, err := utils.CleanAbsPath(targetFolder)
 	if err != nil {
 		return err
 	}
@@ -46,7 +65,7 @@ func (fs *FileService) BuildWithOption(rs *RootService, folderPath string) error
 	}
 
 	// 基準フォルダーを設定
-	fs.BaseFolder = cleanBaseFolder
+	fs.TargetFolder = cleanBaseFolder
 
 	return nil
 }
@@ -122,7 +141,7 @@ func (fs *FileService) GetFileInfos(target ...string) ([]models.FileInfo, error)
 // 引数が絶対パスの場合はエラーを返す
 func (fs *FileService) JoinBasePath(target ...string) (string, error) {
 	if len(target) == 0 {
-		return fs.BaseFolder, nil
+		return fs.TargetFolder, nil
 	}
 
 	// BasePathに相対パスを追加したパスを返す
@@ -137,7 +156,7 @@ func (fs *FileService) JoinBasePath(target ...string) (string, error) {
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	return filepath.Join(fs.BaseFolder, targetPath), nil
+	return filepath.Join(fs.TargetFolder, targetPath), nil
 }
 
 // CopyFile はファイルまたはディレクトリをコピーする

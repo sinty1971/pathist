@@ -14,17 +14,32 @@ type CompanyService struct {
 	// RootService はトップコンテナのインスタンス
 	RootService *RootService
 
-	// 工事一覧フォルダー
-	FolderPath string
+	// 会社一覧フォルダー
+	TargetFolder string
 
 	// データベースサービス
 	DatabaseService *RepositoryService[*models.Company]
 }
 
+// GetServiceName はサービス名を返す
+func (cs *CompanyService) GetServiceName() string {
+	return "CompanyService"
+}
+
+// GetService はサービスを返す
+func (cs *CompanyService) GetService(serviceName string) *Service {
+	return cs.RootService.GetService(serviceName)
+}
+
+// Cleanup はサービスをクリーンアップする
+func (cs *CompanyService) Cleanup() error {
+	return nil
+}
+
 // BuildWithOption は opt でCompanyServiceを初期化します
-// folderName は会社一覧の絶対パスフォルダー名
-// databaseFilename はデータベースファイルのファイル名
-func (cs *CompanyService) BuildWithOption(opt ContainerOption, folderPath string, databaseFilename string) error {
+// rs はルートサービス
+// opts はオプション
+func (cs *CompanyService) Initialize(rs *RootService, cfs ...ConfigFunc) error {
 
 	// CompanyCategoryReverseMapを初期化
 	models.CompanyCategoryReverseMap = make(map[string]models.CompanyCategoryIndex)
@@ -32,25 +47,28 @@ func (cs *CompanyService) BuildWithOption(opt ContainerOption, folderPath string
 		models.CompanyCategoryReverseMap[category] = code
 	}
 
-	// folderPath がアクセス可能かチェック
-	fi, err := os.Stat(folderPath)
+	config := NewConfig(cfs...)
+
+	// targetFolder がアクセス可能かチェック
+	targetFolder := config.PathName
+	fi, err := os.Stat(targetFolder)
 	if err != nil {
 		return err
 	}
 
 	// フォルダーではない場合はエラー
 	if !fi.IsDir() {
-		return fmt.Errorf("フォルダーではありません: %s", folderPath)
+		return fmt.Errorf("フォルダーではありません: %s", targetFolder)
 	}
 
-	// ルートサービスを設定
-	cs.RootService = opt.RootService
-
 	// 会社一覧のフォルダー名を設定
-	cs.FolderPath = folderPath
+	cs.TargetFolder = targetFolder
 
 	// 会社フォルダー基準のDatabaseServiceを初期化
-	cs.DatabaseService = NewRepositoryService[*models.Company](databaseFilename)
+	cs.DatabaseService = NewRepositoryService[*models.Company](config.FileName)
+
+	// ルートサービスを設定
+	cs.RootService = rs
 
 	return nil
 }
@@ -59,7 +77,7 @@ func (cs *CompanyService) BuildWithOption(opt ContainerOption, folderPath string
 // folderName: 会社フォルダー名
 func (cs *CompanyService) GetCompany(folderName string) (*models.Company, error) {
 	// 会社データモデルを作成
-	company, err := models.NewCompany(folderName)
+	company, err := models.NewCompany(folderName, cs.DatabaseService.databaseFilename)
 	if err != nil {
 		return nil, fmt.Errorf("会社データモデルの作成に失敗しました: %v", err)
 	}
@@ -96,7 +114,7 @@ func (cs *CompanyService) GetCompanies(opts ...GetCompaniesOptions) []models.Com
 	opt := GetCompaniesOptionsFunc(opts...)
 
 	// ファイルシステムから会社フォルダー一覧を取得
-	entries, err := os.ReadDir(cs.FolderPath)
+	entries, err := os.ReadDir(cs.TargetFolder)
 	if err != nil || len(entries) == 0 {
 		return []models.Company{}
 	}
@@ -106,8 +124,8 @@ func (cs *CompanyService) GetCompanies(opts ...GetCompaniesOptions) []models.Com
 	count := 0
 	for _, entry := range entries {
 		// 会社データモデルを作成、これはデータベースアクセスを行いません
-		entryPath := filepath.Join(cs.FolderPath, entry.Name())
-		company, err := models.NewCompany(entryPath)
+		entryPath := filepath.Join(cs.TargetFolder, entry.Name())
+		company, err := models.NewCompany(entryPath, cs.DatabaseService.databaseFilename)
 		if err != nil {
 			continue
 		}
@@ -193,29 +211,28 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 }
 
 // Update は会社情報を更新し、必要に応じてフォルダー名も変更します
-// target: 更新対象の会社データモデル
-// target.FolderName: 変更前のフォルダー名を指定すること
-func (cs *CompanyService) Update(target *models.Company) error {
-	// 変更前のフォルダー名を取得
-	prevFolderPath := target.FolderPath
+// updateCompany: 更新対象の会社データモデル
+func (cs *CompanyService) Update(updateCompany *models.Company) error {
+	// 変更前のフォルダー名を保持しておく
+	prevFolderPath := updateCompany.FolderPath
 
 	// 新しいフォルダー名を生成して変更が必要かチェック
-	target.UpdateIdentity()
+	updateCompany.UpdateIdentity()
 
 	// フォルダー名の変更が必要な場合のみ処理
-	if target.FolderPath != prevFolderPath {
+	if updateCompany.FolderPath != prevFolderPath {
 		// ファイルの移動が必要
-		err := os.Rename(prevFolderPath, target.FolderPath)
+		err := os.Rename(prevFolderPath, updateCompany.FolderPath)
 		if err != nil {
 			return err
 		}
 	}
 
 	// 更新後の会社情報をデータベースファイルに反映
-	return cs.DatabaseService.Save(target)
+	return cs.DatabaseService.Save(updateCompany)
 }
 
-// Categories は会社のカテゴリー一覧を配列形式で取得
-func (cs *CompanyService) Categories() map[models.CompanyCategoryIndex]string {
+// GetCategories は会社のカテゴリー一覧を配列形式で取得
+func (cs *CompanyService) GetCategories() map[models.CompanyCategoryIndex]string {
 	return models.CompanyCategoryMap
 }

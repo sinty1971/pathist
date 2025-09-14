@@ -1,53 +1,66 @@
 package services
 
-// Option はサービス登録時のオプション設定用の関数型です
-type Option func(*Config)
+// Service はRootServiceに登録可能なサービスのインターフェースを定義します
+// インターフェイスメソッドは通常ポインタレシーバーで実装されます
+type Service interface {
+	GetServiceName() string
+	GetService(serviceName string) *Service
+	Cleanup() error
+	Initialize(rs *RootService, opts ...ConfigFunc) error
+}
+
+// ConfigFunc はサービス登録時のオプション設定用の関数型です
+type ConfigFunc func(*Config)
 
 // Config はサービス登録時の設定を保持します
 type Config struct {
-	Name         string
-	FolderPath   string
+	FileName     string
+	PathName     string
 	Priority     int
 	LazyLoad     bool
 	Dependencies []string
 }
 
-// WithName はサービス名を設定するオプションです
-func WithName(name string) Option {
+// ConfigFileName はファイル名を設定するコンフィグレーション関数です
+func ConfigFileName(fileName string) ConfigFunc {
 	return func(c *Config) {
-		c.Name = name
+		c.FileName = fileName
 	}
 }
 
-func WithFolderPath(folderPath string) Option {
+// ConfigPathName はパス名を設定するコンフィグレーション関数です
+func ConfigPathName(pathName string) ConfigFunc {
 	return func(c *Config) {
-		c.FolderPath = folderPath
+		c.PathName = pathName
 	}
 }
 
-// WithPriority はサービスの優先度を設定するオプションです
-func WithPriority(priority int) Option {
+// ConfigPriority はサービスの優先度を設定するコンフィグレーション関数です
+func ConfigPriority(priority int) ConfigFunc {
 	return func(c *Config) {
 		c.Priority = priority
 	}
 }
 
-// WithLazyLoad は遅延ロードを有効にするオプションです
-func WithLazyLoad(enabled bool) Option {
+// ConfigLazyLoad は遅延ロードを有効にするコンフィグレーション関数です
+func ConfigLazyLoad(enabled bool) ConfigFunc {
 	return func(c *Config) {
 		c.LazyLoad = enabled
 	}
 }
 
-// WithDependencies はサービスの依存関係を設定するオプションです
-func WithDependencies(deps ...string) Option {
+// ConfigDependencies はサービスの依存関係を設定するコンフィグレーション関数です
+func ConfigDependencies(deps ...string) ConfigFunc {
 	return func(c *Config) {
 		c.Dependencies = append(c.Dependencies, deps...)
 	}
 }
 
-// RegistableService はRootServiceに登録可能なサービスのインターフェースを定義します
-type RegistableService interface {
-	GetRootService() *RootService
-	Register(rs *RegistableService, opts ...Option)
+// cfs から Config を作成する
+func NewConfig(cfs ...ConfigFunc) *Config {
+	config := &Config{}
+	for _, cf := range cfs {
+		cf(config)
+	}
+	return config
 }

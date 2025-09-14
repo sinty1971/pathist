@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"penguin-backend/internal/endpoints"
 	"penguin-backend/internal/routes"
 	"penguin-backend/internal/services"
 	"time"
@@ -118,22 +119,33 @@ func main() {
 	const defaultCompanyFolderPath = "~/penguin/豊田築炉/1 会社"
 	const defaultKojiFolderPath = "~/penguin/豊田築炉/2 工事"
 
+	// 5. サービスを追加
+
 	// RootServiceを作成
 	rs := services.CreateRootService()
 
-	rs.AddService
-	// ファイルサービスを
-	rs.FileService.BuildWithOption(opt, defaultFileFolderPath)
-	// ビジネスサービスをリセット
-	rs.BusinessService.BuildWithOption(opt, defaultBusinessFolderPath)
-	// 会社サービスをリセット
-	rs.BusinessService.CompanyService.BuildWithOption(opt, defaultCompanyFolderPath, defaultDatabaseFilename)
+	// ファイルサービスを作成
+	fs := &services.FileService{}
+	opts := []services.ConfigFunc{
+		services.ConfigPathName(defaultFileFolderPath),
+	}
+	rs.AddService(fs, opts...)
+
+	// 会社サービスを作成
+	cs := &services.CompanyService{}
+	opts = []services.ConfigFunc{
+		services.ConfigPathName(defaultCompanyFolderPath),
+		services.ConfigFileName(defaultDatabaseFilename),
+	}
+	rs.AddService(cs, opts...)
 
 	// 工事サービスの作成
-	err := rs.KojiService.CreateKojiService(rs, defaultDatabaseFilename, defaultKojiFolderPath)
-	if err != nil {
-		log.Fatal(err)
+	ks := &services.KojiService{}
+	opts = []services.ConfigFunc{
+		services.ConfigPathName(defaultKojiFolderPath),
+		services.ConfigFileName(defaultDatabaseFilename),
 	}
+	rs.AddService(ks, opts...)
 
 	// sc.MediaService, err := services.NewMediaDataService("~/penguin/homes/sinty/media", ".detail.yaml")
 	// if err != nil {
@@ -142,10 +154,12 @@ func main() {
 
 	defer rs.Cleanup()
 
-	// ルートを設定
+	// 6. エンドポイントを設定
+	ce := &endpoints.CompanyEndPoint{CompanyService: *cs}
+	ce.RegisterRoutes(app)
 	routes.SetupRoutes(app, rs)
 
-	// サーバー起動メッセージ
+	// 7. サーバー起動メッセージ
 	if *useHTTP2 {
 		log.Printf("🚀 HTTP/2 + HTTPS Server starting on :%s", *port)
 		log.Printf("📖 API documentation: https://localhost:%s/swagger/index.html", *port)

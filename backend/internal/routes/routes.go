@@ -12,7 +12,7 @@ import (
 )
 
 // SetupRoutes はすべてのルートを設定します
-func SetupRoutes(app *fiber.App, container *services.RootService) {
+func SetupRoutes(app *fiber.App, rootService *services.RootService) {
 	// Swagger UI - カスタム実装（Fiber v3対応）+ OpenAPI 3.0対応
 	app.Get("/swagger/*", func(c fiber.Ctx) error {
 		path := strings.TrimPrefix(c.Path(), "/swagger")
@@ -47,11 +47,16 @@ func SetupRoutes(app *fiber.App, container *services.RootService) {
 
 	// API group
 	api := app.Group("/api")
+	officeApi := api.Group("/toyotachikurul")
 
-	// Business Data Services のルートを設定
-	if container.BusinessService != nil {
-		// Setup routes for each domain
-		business.SetupBusinessRoutes(api.Group("/business"), container.BusinessService)
+	// FileService のルートを設定
+	service := rootService.GetService("FileService")
+	if service != nil {
+		// 型アサーションでFileServiceに変換
+		if fileService, ok := (*service).(*services.FileService); ok {
+			// Setup routes for each domain
+			business.SetupBusinessRoutes(officeApi, fileService.GetFileInfos())
+		}
 	}
 
 	// Media Data Services のルートを設定（将来実装）

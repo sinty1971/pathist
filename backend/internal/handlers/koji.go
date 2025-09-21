@@ -17,7 +17,7 @@ import (
 // @Success      200 {object} models.Koji "Koji"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kojies/{path} [get]
-func (bh *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
+func (h *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
 	// パスパラメータを取得
 	path := c.Params("path")
 
@@ -29,7 +29,7 @@ func (bh *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
 	}
 
 	// KojiServiceを使用してKojiを取得
-	koji, err := bh.businessService.KojiService.GetKoji(decodedPath)
+	koji, err := h.businessService.KojiService.GetKoji(decodedPath)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "工事の取得に失敗しました",
@@ -49,18 +49,18 @@ func (bh *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
 // @Success      200 {array} models.Koji "工事一覧"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kojies [get]
-func (bh *BusinessHandler) GetKojies(c fiber.Ctx) error {
+func (h *BusinessHandler) GetKojies(c fiber.Ctx) error {
 	// クエリパラメータでフィルターを取得
 	filter := c.Query("filter")
 
 	// filter=recentの場合は最近の工事のみを取得
 	if filter == "recent" {
-		kojies := bh.businessService.KojiService.GetKojies()
+		kojies := h.businessService.KojiService.GetKojies()
 		return c.JSON(kojies)
 	} else {
 		fmt.Printf("filter: %s\n", filter)
 		// フィルターが指定されていない場合は最近の工事を返す（互換性のため）
-		kojies := bh.businessService.KojiService.GetKojies()
+		kojies := h.businessService.KojiService.GetKojies()
 		return c.JSON(kojies)
 
 	}
@@ -76,7 +76,7 @@ func (bh *BusinessHandler) GetKojies(c fiber.Ctx) error {
 // @Success      200 {object} models.Koji "更新後の工事データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kojies [put]
-func (bh *BusinessHandler) UpdateKoji(c fiber.Ctx) error {
+func (h *BusinessHandler) UpdateKoji(c fiber.Ctx) error {
 	// リクエストボディから編集された工事を取得
 	var koji models.Koji
 	if err := c.Bind().Body(&koji); err != nil {
@@ -87,7 +87,7 @@ func (bh *BusinessHandler) UpdateKoji(c fiber.Ctx) error {
 	}
 
 	// kojiのファイル情報を更新（.detail.yamlも更新）
-	err := bh.businessService.KojiService.Update(&koji)
+	err := h.businessService.KojiService.Update(&koji)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "工事データの保存に失敗しました",
@@ -114,7 +114,7 @@ type RenameManagedFileRequest struct {
 // @Success      200 {object} models.Koji "更新後の工事データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kojies/standard-files [put]
-func (bh *BusinessHandler) RenameKojiStandardFiles(c fiber.Ctx) error {
+func (h *BusinessHandler) RenameKojiStandardFiles(c fiber.Ctx) error {
 	// リクエストボディから編集された工事を取得
 	var request RenameManagedFileRequest
 	if err := c.Bind().Body(&request); err != nil {
@@ -129,7 +129,7 @@ func (bh *BusinessHandler) RenameKojiStandardFiles(c fiber.Ctx) error {
 
 	// ファイル名変更後、最新の工事データを取得して返す
 	if request.Koji.GetFolderName() != "" {
-		updatedKoji, err := bh.businessService.KojiService.GetKoji(request.Koji.GetFolderName())
+		updatedKoji, err := h.businessService.KojiService.GetKoji(request.Koji.GetFolderName())
 		if err == nil {
 			return c.JSON(updatedKoji)
 		}

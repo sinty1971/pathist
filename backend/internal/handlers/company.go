@@ -16,8 +16,8 @@ import (
 // @Failure      404 {object} map[string]string "会社が見つからない"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /companies/{id} [get]
-func (bh *BusinessHandler) GetCompanyByID(c fiber.Ctx) error {
-	company, err := bh.businessService.CompanyService.GetCompanyByID(c.Params("id"))
+func (h *BusinessHandler) GetCompanyByID(c fiber.Ctx) error {
+	company, err := h.businessService.CompanyService.GetCompanyByID(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error":   "Company not found",
@@ -35,8 +35,8 @@ func (bh *BusinessHandler) GetCompanyByID(c fiber.Ctx) error {
 // @Success      200 {array} models.Company "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /companies [get]
-func (bh *BusinessHandler) GetCompanies(c fiber.Ctx) error {
-	companies := bh.businessService.CompanyService.GetCompanies()
+func (h *BusinessHandler) GetCompanies(c fiber.Ctx) error {
+	companies := h.businessService.CompanyService.GetCompanies()
 	return c.JSON(companies)
 }
 
@@ -50,7 +50,7 @@ func (bh *BusinessHandler) GetCompanies(c fiber.Ctx) error {
 // @Success      200 {object} models.Company "更新後の会社データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /companies [put]
-func (bh *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
+func (h *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
 	// リクエストボディから編集された会社を取得
 	var company models.Company
 	if err := c.Bind().Body(&company); err != nil {
@@ -61,7 +61,7 @@ func (bh *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
 	}
 
 	// 会社の情報を更新
-	err := bh.businessService.CompanyService.Update(&company)
+	err := h.businessService.CompanyService.Update(&company)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "会社データの保存に失敗しました",
@@ -80,6 +80,6 @@ func (bh *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
 // @Success      200 {array} models.CompanyCategoryInfo "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /companies/categories [get]
-func (bh *BusinessHandler) GetCategories(c fiber.Ctx) error {
-	return c.JSON(bh.businessService.CompanyService.Categories())
+func (h *BusinessHandler) GetCategories(c fiber.Ctx) error {
+	return c.JSON(h.businessService.CompanyService.Categories())
 }

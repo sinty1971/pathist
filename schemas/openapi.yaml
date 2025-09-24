@@ -1,5 +1,59 @@
 components:
   schemas:
+    Bulk-convert-idsRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Bulk-convert-idsRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        Items:
+          items:
+            $ref: "#/components/schemas/Item"
+          type:
+            - array
+            - "null"
+      required:
+        - Items
+      type: object
+    Bulk-convert-idsResponse:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Bulk-convert-idsResponse.json
+          format: uri
+          readOnly: true
+          type: string
+        Results:
+          items:
+            $ref: "#/components/schemas/Item"
+          type:
+            - array
+            - "null"
+        errorCount:
+          format: int64
+          type: integer
+        processedAt:
+          format: date-time
+          type: string
+        successCount:
+          format: int64
+          type: integer
+        totalCount:
+          format: int64
+          type: integer
+      required:
+        - Results
+        - totalCount
+        - successCount
+        - errorCount
+        - processedAt
+      type: object
     Company:
       additionalProperties: false
       properties:
@@ -176,6 +230,138 @@ components:
         - size
         - modifiedTime
       type: object
+    Generate-koji-idRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Generate-koji-idRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        companyName:
+          description: 会社名
+          type: string
+        locationName:
+          description: 場所名
+          type: string
+        startDate:
+          description: 開始日 (ISO 8601)
+          type: string
+      required:
+        - startDate
+        - companyName
+        - locationName
+      type: object
+    Generate-koji-idResponse:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Generate-koji-idResponse.json
+          format: uri
+          readOnly: true
+          type: string
+        created:
+          format: date-time
+          type: string
+        errorMsg:
+          type: string
+        id:
+          type: string
+        idType:
+          type: string
+        isValid:
+          type: boolean
+        length:
+          format: int64
+          type: integer
+        method:
+          type: string
+        source:
+          type: string
+      required:
+        - id
+        - idType
+        - length
+        - method
+        - source
+        - created
+        - isValid
+        - errorMsg
+      type: object
+    Generate-path-idRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Generate-path-idRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        fullPath:
+          description: パスID生成用フルパス
+          type: string
+      required:
+        - fullPath
+      type: object
+    Generate-path-idResponse:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Generate-path-idResponse.json
+          format: uri
+          readOnly: true
+          type: string
+        created:
+          format: date-time
+          type: string
+        errorMsg:
+          type: string
+        id:
+          type: string
+        idType:
+          type: string
+        isValid:
+          type: boolean
+        length:
+          format: int64
+          type: integer
+        method:
+          type: string
+        source:
+          type: string
+      required:
+        - id
+        - idType
+        - length
+        - method
+        - source
+        - created
+        - isValid
+        - errorMsg
+      type: object
+    Get-file-base-pathResponse:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Get-file-base-pathResponse.json
+          format: uri
+          readOnly: true
+          type: string
+        basePath:
+          description: ファイルサービスの基準パス
+          type: string
+      required:
+        - basePath
+      type: object
     Get-rootResponse:
       additionalProperties: false
       properties:
@@ -202,6 +388,166 @@ components:
         - message
         - version
         - docs
+      type: object
+    Item:
+      additionalProperties: false
+      properties:
+        companyName:
+          type: string
+        fullPath:
+          type: string
+        locationName:
+          type: string
+        startDate:
+          type: string
+      required:
+        - startDate
+        - companyName
+        - locationName
+        - fullPath
+      type: object
+    Koji:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Koji.json
+          format: uri
+          readOnly: true
+          type: string
+        companyName:
+          examples:
+            - 豊田築炉
+          type: string
+        description:
+          examples:
+            - 工事関連の資料とドキュメント
+          type: string
+        endDate:
+          type: string
+        folderPath:
+          examples:
+            - ~/penguin/豊田築炉/2-工事/2025-0618 豊田築炉 名和工場
+          type: string
+        id:
+          examples:
+            - TC618
+          type: string
+        locationName:
+          examples:
+            - 名和工場
+          type: string
+        requiredFiles:
+          items:
+            $ref: "#/components/schemas/FileInfo"
+          type:
+            - array
+            - "null"
+        startDate:
+          type: string
+        status:
+          examples:
+            - 進行中
+          type: string
+        tags:
+          examples:
+            - - 工事
+              - 豊田築炉
+              - 名和工場
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - id
+        - folderPath
+        - endDate
+        - requiredFiles
+      type: object
+    Rename-koji-standard-filesRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Rename-koji-standard-filesRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        currents:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        koji:
+          $ref: "#/components/schemas/Koji"
+      required:
+        - koji
+        - currents
+      type: object
+    Validate-idRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Validate-idRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        companyName:
+          type: string
+        fullPath:
+          type: string
+        id:
+          type: string
+        locationName:
+          type: string
+        startDate:
+          type: string
+      required:
+        - id
+        - startDate
+        - companyName
+        - locationName
+        - fullPath
+      type: object
+    Validate-idResponse:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://localhost:8080/api/schemas/Validate-idResponse.json
+          format: uri
+          readOnly: true
+          type: string
+        comparedAt:
+          format: date-time
+          type: string
+        errorMsg:
+          type: string
+        expectedId:
+          type: string
+        isValid:
+          type: boolean
+        method:
+          type: string
+        needsSync:
+          type: boolean
+        providedId:
+          type: string
+      required:
+        - isValid
+        - expectedId
+        - providedId
+        - needsSync
+        - errorMsg
+        - method
+        - comparedAt
       type: object
 info:
   description: ファイルエントリの管理と閲覧のためのAPI
@@ -336,6 +682,330 @@ paths:
       summary: 会社詳細の取得
       tags:
         - 会社管理
+  /files:
+    get:
+      description: 指定されたパスからファイルとフォルダーの一覧を取得します
+      operationId: list-files
+      parameters:
+        - description: 取得するディレクトリの相対パス
+          example: 2 工事
+          explode: false
+          in: query
+          name: path
+          schema:
+            description: 取得するディレクトリの相対パス
+            examples:
+              - 2 工事
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                description: ファイルエントリ一覧
+                items:
+                  $ref: "#/components/schemas/FileInfo"
+                type:
+                  - array
+                  - "null"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: ファイルエントリ一覧の取得
+      tags:
+        - ファイル管理
+  /files/base-path:
+    get:
+      description: ファイルサービスが参照する基準パスを返します
+      operationId: get-file-base-path
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Get-file-base-pathResponse"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: ファイルサービスの基準パス取得
+      tags:
+        - ファイル管理
+  /id-sync/bulk-convert:
+    post:
+      description: 複数のアイテムを一括でID変換します
+      operationId: bulk-convert-ids
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bulk-convert-idsRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bulk-convert-idsResponse"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: 一括ID変換
+      tags:
+        - ID同期
+  /id-sync/config:
+    get:
+      description: ID同期システムの設定情報を取得します
+      operationId: get-id-sync-config
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties: {}
+                type: object
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: 同期設定の取得
+      tags:
+        - ID同期
+  /id-sync/generate-koji:
+    post:
+      description: 開始日・会社名・場所名から工事IDを生成します
+      operationId: generate-koji-id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Generate-koji-idRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Generate-koji-idResponse"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: 工事IDの生成
+      tags:
+        - ID同期
+  /id-sync/generate-path:
+    post:
+      description: フルパスから Len7 ID を生成します
+      operationId: generate-path-id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Generate-path-idRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Generate-path-idResponse"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: パスIDの生成
+      tags:
+        - ID同期
+  /id-sync/mapping:
+    get:
+      description: フルパスIDとLen7 IDのマッピングテーブルを取得します
+      operationId: get-id-mapping
+      parameters:
+        - description: カンマ区切りのパスリスト
+          explode: false
+          in: query
+          name: paths
+          schema:
+            description: カンマ区切りのパスリスト
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: IDマッピングテーブルの取得
+      tags:
+        - ID同期
+  /id-sync/validate:
+    post:
+      description: 提供されたIDが正しいかどうかを検証します
+      operationId: validate-id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Validate-idRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Validate-idResponse"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: IDの検証
+      tags:
+        - ID同期
+  /kojies:
+    get:
+      description: 工事一覧を取得します。filter=recentで最近の工事のみを取得できます
+      operationId: list-kojies
+      parameters:
+        - description: "フィルター (recent: 最近の工事のみ)"
+          explode: false
+          in: query
+          name: filter
+          schema:
+            description: "フィルター (recent: 最近の工事のみ)"
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                description: 工事一覧
+                items:
+                  $ref: "#/components/schemas/Koji"
+                type:
+                  - array
+                  - "null"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: 工事一覧の取得
+      tags:
+        - 工事管理
+    put:
+      description: 工事のファイル情報を更新します
+      operationId: update-koji
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Koji"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Koji"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: 工事情報の更新
+      tags:
+        - 工事管理
+  /kojies/standard-files:
+    put:
+      description: StandardFileの名前を変更し、最新の工事データを返します
+      operationId: rename-koji-standard-files
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Rename-koji-standard-filesRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                description: 更新後の工事データ
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: 標準ファイル名の変更
+      tags:
+        - 工事管理
+  /kojies/{path}:
+    get:
+      description: 指定されたフォルダー名の工事を取得します
+      operationId: get-koji
+      parameters:
+        - description: Kojiフォルダー名
+          in: path
+          name: path
+          required: true
+          schema:
+            description: Kojiフォルダー名
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Koji"
+                description: 工事詳細
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: 工事詳細の取得
+      tags:
+        - 工事管理
 servers:
   - url: http://localhost:8080/api
   - url: https://localhost:8443/api

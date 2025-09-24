@@ -5,10 +5,11 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path/filepath"
 	appbootstrap "penguin-backend/internal/app"
-	"penguin-backend/internal/endpoints"
 	"penguin-backend/internal/huma/fiberv2"
 	"penguin-backend/internal/routes"
+	"penguin-backend/internal/services"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -113,13 +114,50 @@ func main() {
 		TimeFormat: "2006-01-02 15:04:05",
 	}))
 
-	// 5. サービスを初期化
-	servicesContainer := appbootstrap.SetupServices(appbootstrap.DefaultServiceOptions)
+	// 5. サービスを初期化（手書き DI）
+	serviceOptions := appbootstrap.DefaultServiceOptions
+	if dataRoot := os.Getenv("PENGUIN_DATA_ROOT"); dataRoot != "" {
+		serviceOptions.FileFolderPath = dataRoot
+		serviceOptions.CompanyFolderPath = filepath.Join(dataRoot, "豊田築炉", "1 会社")
+		serviceOptions.KojiFolderPath = filepath.Join(dataRoot, "豊田築炉", "2 工事")
+	}
+	rootService := services.CreateRootService()
+
+	fileService := &services.FileService{}
+	if err := rootService.AddService(fileService, services.WithPath(serviceOptions.FileFolderPath)); err != nil {
+		log.Fatalf("failed to initialize FileService: %v", err)
+	}
+
+	companyService := &services.CompanyService{}
+	if err := rootService.AddService(
+		companyService,
+		services.WithPath(serviceOptions.CompanyFolderPath),
+		services.WithFileName(serviceOptions.DatabaseFilename),
+	); err != nil {
+		log.Fatalf("failed to initialize CompanyService: %v", err)
+	}
+
+	kojiService := &services.KojiService{}
+	if err := rootService.AddService(
+		kojiService,
+		services.WithPath(serviceOptions.KojiFolderPath),
+		services.WithFileName(serviceOptions.DatabaseFilename),
+	); err != nil {
+		log.Fatalf("failed to initialize KojiService: %v", err)
+	}
+
+	servicesContainer := appbootstrap.ServiceContainer{
+		Root:    rootService,
+		File:    fileService,
+		Company: companyService,
+		Koji:    kojiService,
+	}
+
 	rs := servicesContainer.Root
-	cs := servicesContainer.Company
 	defer rs.Cleanup()
 
-	// 6. Huma API 設定
+	// 6. ルーティング
+	// 6-1. Huma API 設定
 	config := huma.DefaultConfig("Penguin ファイルシステム管理API", "1.0.0")
 	config.OpenAPI.Info.Description = "ファイルエントリの管理と閲覧のためのAPI"
 	serverProtocol := "http"
@@ -135,10 +173,8 @@ func main() {
 
 	api := fiberv2.New(app, config)
 
-	// 7. エンドポイントを設定
-	companyEndpoint := endpoints.NewCompanyEndpoint(cs)
-	routes.SetupRoutes(app, api, rs)
-	endpoints.RegisterCompanyEndpoints(api, companyEndpoint)
+	// 6-2. サービスのルーティング
+	routes.SetupRoutes(app, api, servicesContainer)
 
 	// 7. サーバー起動メッセージ
 	if *useHTTP2 {

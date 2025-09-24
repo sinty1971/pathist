@@ -33,7 +33,7 @@ func (ks *KojiService) GetServiceName() string {
 }
 
 // GetService はサービスを返す
-func (ks *KojiService) GetService(serviceName string) *Service {
+func (ks *KojiService) GetService(serviceName string) Service {
 	return ks.RootService.GetService(serviceName)
 }
 

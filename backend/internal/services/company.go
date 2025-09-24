@@ -27,7 +27,7 @@ func (cs *CompanyService) GetServiceName() string {
 }
 
 // GetService はサービスを返す
-func (cs *CompanyService) GetService(serviceName string) *Service {
+func (cs *CompanyService) GetService(serviceName string) Service {
 	return cs.RootService.GetService(serviceName)
 }
 

@@ -4,7 +4,7 @@ package services
 // インターフェイスメソッドは通常ポインタレシーバーで実装されます
 type Service interface {
 	GetServiceName() string
-	GetService(serviceName string) *Service
+	GetService(serviceName string) Service
 	Cleanup() error
 	Initialize(rs *RootService, opts ...ConfigFunc) error
 }
@@ -21,18 +21,28 @@ type Config struct {
 	Dependencies []string
 }
 
-// ConfigFileName はファイル名を設定するコンフィグレーション関数です
-func ConfigFileName(fileName string) ConfigFunc {
+// WithFileName はファイル名を設定するシンプルなコンフィグレーション関数です
+func WithFileName(fileName string) ConfigFunc {
 	return func(c *Config) {
 		c.FileName = fileName
 	}
 }
 
-// ConfigPathName はパス名を設定するコンフィグレーション関数です
-func ConfigPathName(pathName string) ConfigFunc {
+// WithPath はパス名を設定するシンプルなコンフィグレーション関数です
+func WithPath(pathName string) ConfigFunc {
 	return func(c *Config) {
 		c.PathName = pathName
 	}
+}
+
+// ConfigFileName は後方互換目的のエイリアスです
+func ConfigFileName(fileName string) ConfigFunc {
+	return WithFileName(fileName)
+}
+
+// ConfigPathName は後方互換目的のエイリアスです
+func ConfigPathName(pathName string) ConfigFunc {
+	return WithPath(pathName)
 }
 
 // ConfigPriority はサービスの優先度を設定するコンフィグレーション関数です

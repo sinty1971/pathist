@@ -25,7 +25,7 @@ func (fs *FileService) GetServiceName() string {
 	return "FileService"
 }
 
-func (fs *FileService) GetService(serviceName string) *Service {
+func (fs *FileService) GetService(serviceName string) Service {
 	return fs.rootService.GetService(serviceName)
 }
 

@@ -16,13 +16,12 @@ func (rs *RootService) Initialize(_rs *RootService, _opts ...ConfigFunc) error {
 }
 
 // GetService はサービスを返す
-func (rs *RootService) GetService(serviceName string) *Service {
+func (rs *RootService) GetService(serviceName string) Service {
 	if serviceName == rs.GetServiceName() {
-		var s Service = rs
-		return &s
+		return rs
 	}
 	if service, ok := rs.services[serviceName]; ok {
-		return &service
+		return service
 	}
 	return nil
 }
@@ -50,7 +49,10 @@ func CreateRootService() *RootService {
 // serviceName: サービス名
 // service: サービスのインスタンス
 // opts: サービス登録時のオプション
-func (rs *RootService) AddService(service Service, opts ...ConfigFunc) {
+func (rs *RootService) AddService(service Service, opts ...ConfigFunc) error {
+	if err := service.Initialize(rs, opts...); err != nil {
+		return err
+	}
 	rs.services[service.GetServiceName()] = service
-	service.Initialize(rs, opts...)
+	return nil
 }

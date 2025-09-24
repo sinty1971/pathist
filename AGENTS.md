@@ -1,5 +1,8 @@
 # Repository Guidelines
 
+## 基本的な規則
+- 極力日本語出力でお願いします。
+
 ## プロジェクト構成とモジュール
 - `backend/` は Go Fiber ベースの API で、`cmd/main.go` がエントリポイント、`internal/{endpoints,handlers,models,routes,services,utils}` にドメインロジックを集約しています。`docs/` は Swagger 生成物、`scripts/` はユーティリティスクリプト、証明書関連は `cert.pem` と `key.pem` を参照してください。
 - `frontend/` は React Router v7 + TypeScript 構成です。画面ルートは `app/routes/`、UI コンポーネントは `app/components/`、API 型は `app/api/` に生成され、スタイル共通化は `app/styles/` で管理します。

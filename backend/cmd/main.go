@@ -129,9 +129,9 @@ func main() {
 	config.OpenAPI.Servers = []*huma.Server{
 		{URL: serverProtocol + "://localhost:" + *port + "/api"},
 	}
-	config.OpenAPIPath = "/swagger/openapi"
-	config.DocsPath = "/swagger"
-	config.SchemasPath = "/swagger/schemas"
+	config.OpenAPIPath = "/openapi"
+	config.DocsPath = "/docs"
+	config.SchemasPath = "/schemas"
 
 	api := fiberv2.New(app, config)
 
@@ -143,7 +143,7 @@ func main() {
 	// 7. サーバー起動メッセージ
 	if *useHTTP2 {
 		log.Printf("🚀 HTTP/2 + HTTPS Server starting on :%s", *port)
-		log.Printf("📖 API documentation: https://localhost:%s/swagger", *port)
+		log.Printf("📖 API documentation: https://localhost:%s/docs", *port)
 		log.Printf("🔒 Using TLS certificate: %s", *certFile)
 		log.Println("🌟 Features enabled:")
 		log.Println("  ✅ HTTP/2 (h2)")
@@ -167,7 +167,7 @@ func main() {
 		log.Fatal(app.Listener(listener))
 	} else {
 		log.Printf("🚀 HTTP/1.1 Server starting on :%s", *port)
-		log.Printf("📖 API documentation: http://localhost:%s/swagger", *port)
+		log.Printf("📖 API documentation: http://localhost:%s/docs", *port)
 		log.Println("🌟 Features enabled:")
 		log.Println("  ✅ HTTP/1.1")
 		log.Println("  ✅ Gzip compression")

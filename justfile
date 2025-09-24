@@ -181,15 +181,15 @@ architecture:
     @echo "Opening architecture diagram..."
     @xdg-open "https://mermaid.live/edit#$(cat doc/backend-architecture.md | grep -A 100 '```mermaid' | grep -B 100 '```' | grep -v '```' | base64 -w 0)" 2>/dev/null || open "https://mermaid.live/" 2>/dev/null || echo "Please visit https://mermaid.live/ and paste the mermaid code from doc/backend-architecture.md"
 
-# Open Swagger UI documentation in browser (HTTP/1.1)
-swagger:
-    @echo "Opening Swagger UI documentation..."
-    @xdg-open "http://localhost:8080/swagger" 2>/dev/null || open "http://localhost:8080/swagger" 2>/dev/null || echo "Please visit http://localhost:8080/swagger"
+# Open API docs in browser (HTTP/1.1)
+docs:
+    @echo "Opening API documentation..."
+    @xdg-open "http://localhost:8080/docs" 2>/dev/null || open "http://localhost:8080/docs" 2>/dev/null || echo "Please visit http://localhost:8080/docs"
 
-# Open Swagger UI documentation in browser (HTTP/2 + HTTPS)
-swagger-http2:
-    @echo "Opening Swagger UI documentation (HTTP/2)..."
-    @xdg-open "https://localhost:8080/swagger" 2>/dev/null || open "https://localhost:8080/swagger" 2>/dev/null || echo "Please visit https://localhost:8080/swagger"
+# Open API docs in browser (HTTP/2 + HTTPS)
+docs-http2:
+    @echo "Opening API documentation (HTTP/2)..."
+    @xdg-open "https://localhost:8080/docs" 2>/dev/null || open "https://localhost:8080/docs" 2>/dev/null || echo "Please visit https://localhost:8080/docs"
 
 # Show available commands
 help:

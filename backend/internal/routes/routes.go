@@ -27,19 +27,19 @@ func SetupRoutes(app *fiber.App, api huma.API, rootService *services.RootService
 		Body struct {
 			Message string `json:"message" example:"Penguin Backend API"`
 			Version string `json:"version" example:"1.0.0"`
-			Docs    string `json:"docs" example:"/swagger"`
+			Docs    string `json:"docs" example:"/docs"`
 		}
 	}, error) {
 		resp := &struct {
 			Body struct {
 				Message string `json:"message" example:"Penguin Backend API"`
 				Version string `json:"version" example:"1.0.0"`
-				Docs    string `json:"docs" example:"/swagger"`
+				Docs    string `json:"docs" example:"/docs"`
 			}
 		}{}
 		resp.Body.Message = apiRootDescription
 		resp.Body.Version = "1.0.0"
-		resp.Body.Docs = "/swagger"
+		resp.Body.Docs = "/docs"
 		return resp, nil
 	})
 

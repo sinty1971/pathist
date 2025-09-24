@@ -69,7 +69,7 @@ go run cmd/main.go
    ```
 
 3. **APIドキュメント (Huma)**:
-   - `http://localhost:8080/swagger` をブラウザで開く
+   - `http://localhost:8080/docs` をブラウザで開く
 
 ### レスポンスの説明
 - `folders`: ファイルエントリーの配列

@@ -188,7 +188,7 @@ components:
           type: string
         docs:
           examples:
-            - /swagger
+            - /docs
           type: string
         message:
           examples:

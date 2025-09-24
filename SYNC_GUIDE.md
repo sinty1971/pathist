@@ -246,7 +246,7 @@ just frontend
 just backend
 
 # API仕様確認
-just swagger
+just docs
 ```
 
 ### APIテスト例

@@ -267,7 +267,7 @@
           },
           "docs": {
             "examples": [
-              "/swagger"
+            "/docs"
             ],
             "type": "string"
           },

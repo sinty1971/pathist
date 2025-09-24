@@ -88,18 +88,18 @@ func (ts Timestamp) Compare(other Timestamp) int {
 	// IsZero()の結果をキャッシュして再利用
 	tsZero := ts.Time.IsZero()
 	otherZero := other.Time.IsZero()
-	
+
 	// ゼロ値の組み合わせを効率的に処理
 	if tsZero {
 		if otherZero {
-			return 0  // 両方ゼロ
+			return 0 // 両方ゼロ
 		}
-		return -1    // tsのみゼロ
+		return -1 // tsのみゼロ
 	}
 	if otherZero {
-		return 1     // otherのみゼロ
+		return 1 // otherのみゼロ
 	}
-	
+
 	// 両方とも有効な場合は時刻の差で比較
 	switch {
 	case ts.Time.After(other.Time):

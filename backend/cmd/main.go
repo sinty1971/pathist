@@ -5,20 +5,20 @@ import (
 	"flag"
 	"log"
 	"os"
+	appbootstrap "penguin-backend/internal/app"
 	"penguin-backend/internal/endpoints"
+	"penguin-backend/internal/huma/fiberv2"
 	"penguin-backend/internal/routes"
-	"penguin-backend/internal/services"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/compress"
-	"github.com/gofiber/fiber/v3/middleware/cors"
-	"github.com/gofiber/fiber/v3/middleware/logger"
-
-	_ "penguin-backend/docs"
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
-// @title Penguin ファイルシステム管理API
+// @title Penguin ファイル情報管理API
 // @version 1.0.0
 // @description ファイルエントリの管理と閲覧のためのAPI
 // @servers.url http://localhost:8080/api
@@ -64,7 +64,7 @@ func main() {
 		WriteBufferSize: 4096,
 
 		// エラーハンドリング
-		ErrorHandler: func(c fiber.Ctx, err error) error {
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			if e, ok := err.(*fiber.Error); ok {
 				code = e.Code
@@ -85,7 +85,7 @@ func main() {
 
 	// 2. キャッシュミドルウェア（無効化）
 	// app.Use(cache.New(cache.Config{
-	// 	Next: func(c fiber.Ctx) bool {
+	// 	Next: func(c *fiber.Ctx) bool {
 	// 		// POST、PUT、DELETE、PATCHはキャッシュしない
 	// 		return c.Method() != fiber.MethodGet
 	// 	},
@@ -96,9 +96,9 @@ func main() {
 
 	// 3. CORS
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"},
-		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
 
 	// 4. ログ（最後に適用）
@@ -113,72 +113,61 @@ func main() {
 		TimeFormat: "2006-01-02 15:04:05",
 	}))
 
-	const defaultDatabaseFilename = ".detail.yaml"
-	const defaultFileFolderPath = "~/penguin"
-	const defaultBusinessFolderPath = "~/penguin/豊田築炉"
-	const defaultCompanyFolderPath = "~/penguin/豊田築炉/1 会社"
-	const defaultKojiFolderPath = "~/penguin/豊田築炉/2 工事"
-
-	// 5. サービスを追加
-
-	// RootServiceを作成
-	rs := services.CreateRootService()
-
-	// ファイルサービスを作成
-	fs := &services.FileService{}
-	opts := []services.ConfigFunc{
-		services.ConfigPathName(defaultFileFolderPath),
-	}
-	rs.AddService(fs, opts...)
-
-	// 会社サービスを作成
-	cs := &services.CompanyService{}
-	opts = []services.ConfigFunc{
-		services.ConfigPathName(defaultCompanyFolderPath),
-		services.ConfigFileName(defaultDatabaseFilename),
-	}
-	rs.AddService(cs, opts...)
-
-	// 工事サービスの作成
-	ks := &services.KojiService{}
-	opts = []services.ConfigFunc{
-		services.ConfigPathName(defaultKojiFolderPath),
-		services.ConfigFileName(defaultDatabaseFilename),
-	}
-	rs.AddService(ks, opts...)
-
-	// sc.MediaService, err := services.NewMediaDataService("~/penguin/homes/sinty/media", ".detail.yaml")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
+	// 5. サービスを初期化
+	servicesContainer := appbootstrap.SetupServices(appbootstrap.DefaultServiceOptions)
+	rs := servicesContainer.Root
+	cs := servicesContainer.Company
 	defer rs.Cleanup()
 
-	// 6. エンドポイントを設定
-	ce := &endpoints.CompanyEndPoint{CompanyService: *cs}
-	ce.RegisterRoutes(app)
-	routes.SetupRoutes(app, rs)
+	// 6. Huma API 設定
+	config := huma.DefaultConfig("Penguin ファイルシステム管理API", "1.0.0")
+	config.OpenAPI.Info.Description = "ファイルエントリの管理と閲覧のためのAPI"
+	serverProtocol := "http"
+	if *useHTTP2 {
+		serverProtocol = "https"
+	}
+	config.OpenAPI.Servers = []*huma.Server{
+		{URL: serverProtocol + "://localhost:" + *port + "/api"},
+	}
+	config.OpenAPIPath = "/swagger/openapi"
+	config.DocsPath = "/swagger"
+	config.SchemasPath = "/swagger/schemas"
+
+	api := fiberv2.New(app, config)
+
+	// 7. エンドポイントを設定
+	companyEndpoint := endpoints.NewCompanyEndpoint(cs)
+	routes.SetupRoutes(app, api, rs)
+	endpoints.RegisterCompanyEndpoints(api, companyEndpoint)
 
 	// 7. サーバー起動メッセージ
 	if *useHTTP2 {
 		log.Printf("🚀 HTTP/2 + HTTPS Server starting on :%s", *port)
-		log.Printf("📖 API documentation: https://localhost:%s/swagger/index.html", *port)
+		log.Printf("📖 API documentation: https://localhost:%s/swagger", *port)
 		log.Printf("🔒 Using TLS certificate: %s", *certFile)
 		log.Println("🌟 Features enabled:")
-		log.Println("  ✅ HTTP/2 (h2) - Fiber v3 auto-enables")
+		log.Println("  ✅ HTTP/2 (h2)")
 		log.Println("  ✅ TLS 1.2+")
 		log.Println("  ✅ Gzip compression")
 		log.Println("  ✅ CORS")
 
-		// HTTP/2 + HTTPS で起動
-		log.Fatal(app.Listen("0.0.0.0:"+*port, fiber.ListenConfig{
-			CertFile:      *certFile,
-			CertKeyFile:   *keyFile,
-			TLSMinVersion: tls.VersionTLS12,
-		}))
+		cert, err := tls.LoadX509KeyPair(*certFile, *keyFile)
+		if err != nil {
+			log.Fatalf("failed to load TLS certificate: %v", err)
+		}
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			MinVersion:   tls.VersionTLS12,
+			NextProtos:   []string{"h2", "http/1.1"},
+		}
+		listener, err := tls.Listen("tcp", "0.0.0.0:"+*port, tlsConfig)
+		if err != nil {
+			log.Fatalf("failed to start TLS listener: %v", err)
+		}
+		log.Fatal(app.Listener(listener))
 	} else {
 		log.Printf("🚀 HTTP/1.1 Server starting on :%s", *port)
-		log.Printf("📖 API documentation: http://localhost:%s/swagger/index.html", *port)
+		log.Printf("📖 API documentation: http://localhost:%s/swagger", *port)
 		log.Println("🌟 Features enabled:")
 		log.Println("  ✅ HTTP/1.1")
 		log.Println("  ✅ Gzip compression")

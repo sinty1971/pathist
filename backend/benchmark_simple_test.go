@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cache"
-	"github.com/gofiber/fiber/v3/middleware/compress"
-	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 // createOptimizedApp 最適化されたFiberアプリを作成
@@ -34,7 +34,7 @@ func createOptimizedApp() *fiber.App {
 	}))
 
 	app.Use(cache.New(cache.Config{
-		Next: func(c fiber.Ctx) bool {
+		Next: func(c *fiber.Ctx) bool {
 			return c.Method() != fiber.MethodGet
 		},
 		Expiration:   30 * time.Second,
@@ -42,9 +42,9 @@ func createOptimizedApp() *fiber.App {
 	}))
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"},
-		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
 
 	return app
@@ -59,9 +59,9 @@ func createBasicApp() *fiber.App {
 	// ログは無効化（ベンチマーク用）
 	// app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"},
-		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
 
 	return app
@@ -72,14 +72,14 @@ func setupTestRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
 	// テスト用エンドポイント
-	api.Get("/test/small", func(c fiber.Ctx) error {
+	api.Get("/test/small", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"message":   "small response",
 			"timestamp": time.Now(),
 		})
 	})
 
-	api.Get("/test/large", func(c fiber.Ctx) error {
+	api.Get("/test/large", func(c *fiber.Ctx) error {
 		// 大きなレスポンスをシミュレート
 		data := make([]fiber.Map, 100)
 		for i := 0; i < 100; i++ {

@@ -1,67 +1,56 @@
 package routes
 
 import (
+	"context"
 	"net/http"
-	"strings"
 
-	_ "penguin-backend/docs" // swaggo generated docs
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/gofiber/fiber/v2"
+
 	"penguin-backend/internal/routes/business"
 	"penguin-backend/internal/services"
-
-	"github.com/gofiber/fiber/v3"
 )
 
+// apiRootDescription はルートエンドポイントの説明
+const apiRootDescription = "Penguin Backend API"
+
 // SetupRoutes はすべてのルートを設定します
-func SetupRoutes(app *fiber.App, rootService *services.RootService) {
-	// Swagger UI - カスタム実装（Fiber v3対応）+ OpenAPI 3.0対応
-	app.Get("/swagger/*", func(c fiber.Ctx) error {
-		path := strings.TrimPrefix(c.Path(), "/swagger")
-
-		// OpenAPI 3.0 仕様ファイル
-		if path == "/openapi-v3.json" {
-			return c.SendFile("../schemas/openapi-v3.json")
+func SetupRoutes(app *fiber.App, api huma.API, rootService *services.RootService) {
+	huma.Register(api, huma.Operation{
+		OperationID: "get-root",
+		Method:      http.MethodGet,
+		Path:        "/",
+		Summary:     "API ルート情報取得",
+		Description: "API のバージョンやドキュメントURLを返します",
+		Tags:        []string{"system"},
+	}, func(ctx context.Context, _ *struct{}) (*struct {
+		Body struct {
+			Message string `json:"message" example:"Penguin Backend API"`
+			Version string `json:"version" example:"1.0.0"`
+			Docs    string `json:"docs" example:"/swagger"`
 		}
-
-		if path == "/openapi-v3.yaml" {
-			return c.SendFile("../schemas/openapi-v3.yaml")
-		}
-
-		// デフォルトページ
-		if path == "" || path == "/" || path == "/index.html" {
-			return c.SendFile("./templates/swagger.html")
-		}
-
-		return c.Status(http.StatusNotFound).JSON(fiber.Map{
-			"error": "Not found",
-		})
+	}, error) {
+		resp := &struct {
+			Body struct {
+				Message string `json:"message" example:"Penguin Backend API"`
+				Version string `json:"version" example:"1.0.0"`
+				Docs    string `json:"docs" example:"/swagger"`
+			}
+		}{}
+		resp.Body.Message = apiRootDescription
+		resp.Body.Version = "1.0.0"
+		resp.Body.Docs = "/swagger"
+		return resp, nil
 	})
 
-	// Root endpoint
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "Penguin Backend API",
-			"version": "1.0.0",
-			"docs":    "/swagger/index.html",
-		})
-	})
+	// 既存 Fiber ルート（段階的移行用）
+	apiGroup := app.Group("/api")
+	officeAPI := apiGroup.Group("/toyotachikurul")
 
-	// API group
-	api := app.Group("/api")
-	officeApi := api.Group("/toyotachikurul")
-
-	// FileService のルートを設定
-	service := rootService.GetService("FileService")
+	service := rootService.GetService("BusinessService")
 	if service != nil {
-		// 型アサーションでFileServiceに変換
-		if fileService, ok := (*service).(*services.FileService); ok {
-			// Setup routes for each domain
-			business.SetupBusinessRoutes(officeApi, fileService.GetFileInfos())
+		if businessService, ok := (*service).(*services.BusinessService); ok {
+			business.SetupBusinessRoutes(officeAPI, businessService)
 		}
 	}
-
-	// Media Data Services のルートを設定（将来実装）
-	// if container.MediaData != nil {
-	//     mediaHandler := handlers.NewMediaHandler(container.MediaData)
-	//     SetupMediaRoutes(api, mediaHandler)
-	// }
 }

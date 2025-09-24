@@ -1,8 +1,8 @@
 package main
 
 import (
-	"testing"
 	"slices"
+	"testing"
 )
 
 // 簡易的なCompany構造体

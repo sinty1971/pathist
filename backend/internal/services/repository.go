@@ -20,6 +20,11 @@ func NewRepositoryService[T models.Persistable](databaseFilename string) *Reposi
 	}
 }
 
+// DatabaseFilename は設定されたデータベースファイル名を返します。
+func (rs *RepositoryService[T]) DatabaseFilename() string {
+	return rs.databaseFilename
+}
+
 // Load はデータをロードします
 func (rs *RepositoryService[T]) Load(entity T) (T, error) {
 	// エンティティのフォルダーパスとデータベースファイル名を結合

@@ -4,8 +4,8 @@ import (
 	"penguin-backend/internal/handlers/business"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cache"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 )
 
 // setupFileRoutes はファイル関連のルートを設定します
@@ -16,7 +16,7 @@ func setupFileRoutes(api fiber.Router, businessHandler *business.BusinessHandler
 			Expiration:   3 * time.Second, // 3秒間キャッシュ
 			CacheHeader:  "X-File-Cache",  // カスタムヘッダー
 			CacheControl: true,
-			KeyGenerator: func(c fiber.Ctx) string {
+			KeyGenerator: func(c *fiber.Ctx) string {
 				// パスクエリパラメータを含めてキャッシュキーを生成
 				path := c.Query("path", "")
 				return "files:" + path

@@ -34,19 +34,10 @@ backend-update:
     cd ./backend && go get -u ./...
     cd ./backend && go mod tidy
 
-# Generate OpenAPI documentation from Go code (using swag v2.0.0-rc4)
+# Generate OpenAPI documentation using Huma (OpenAPI 3.1 only)
 generate-api:
-    cd ./backend && go run github.com/swaggo/swag/v2/cmd/swag@v2.0.0-rc4 init -g cmd/main.go --v3.1
-    cp ./backend/docs/swagger.yaml ./schemas/openapi.yaml
-    cp ./backend/docs/swagger.json ./schemas/openapi.json
-    cp ./backend/docs/swagger.yaml ./schemas/openapi-v3.yaml
-    cp ./backend/docs/swagger.json ./schemas/openapi-v3.json
-    @echo "✅ OpenAPI 3.1 documentation generated and copied to schemas/"
-
-# Convert Swagger 2.0 to OpenAPI 3.0 (legacy - no longer needed with swag v2)
-convert-openapi3:
-    cd ./backend/scripts && node convert-to-openapi3.js
-    @echo "OpenAPI 3.0 documentation generated at schemas/openapi-v3.{yaml,json}"
+    cd ./backend && go run cmd/openapi/main.go
+    @echo "✅ OpenAPI 3.1 documentation generated under schemas/"
 
 # Install frontend dependencies  
 frontend-deps:
@@ -193,12 +184,12 @@ architecture:
 # Open Swagger UI documentation in browser (HTTP/1.1)
 swagger:
     @echo "Opening Swagger UI documentation..."
-    @xdg-open "http://localhost:8080/swagger/index.html" 2>/dev/null || open "http://localhost:8080/swagger/index.html" 2>/dev/null || echo "Please visit http://localhost:8080/swagger/index.html"
+    @xdg-open "http://localhost:8080/swagger" 2>/dev/null || open "http://localhost:8080/swagger" 2>/dev/null || echo "Please visit http://localhost:8080/swagger"
 
 # Open Swagger UI documentation in browser (HTTP/2 + HTTPS)
 swagger-http2:
     @echo "Opening Swagger UI documentation (HTTP/2)..."
-    @xdg-open "https://localhost:8080/swagger/index.html" 2>/dev/null || open "https://localhost:8080/swagger/index.html" 2>/dev/null || echo "Please visit https://localhost:8080/swagger/index.html"
+    @xdg-open "https://localhost:8080/swagger" 2>/dev/null || open "https://localhost:8080/swagger" 2>/dev/null || echo "Please visit https://localhost:8080/swagger"
 
 # Show available commands
 help:

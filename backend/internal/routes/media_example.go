@@ -5,7 +5,7 @@ package routes
 /*
 import (
 	"penguin-backend/internal/handlers"
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // SetupMediaRoutes はメディア関連のルートを設定します

@@ -4,7 +4,7 @@ import (
 	"penguin-backend/internal/handlers/business"
 	"penguin-backend/internal/services"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // SetupBusinessRoutes はビジネス関連のルートを設定します

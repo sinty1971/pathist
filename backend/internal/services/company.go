@@ -236,3 +236,18 @@ func (cs *CompanyService) Update(updateCompany *models.Company) error {
 func (cs *CompanyService) GetCategories() map[models.CompanyCategoryIndex]string {
 	return models.CompanyCategoryMap
 }
+
+// Categories は会社カテゴリーを配列形式で取得します。
+func (cs *CompanyService) Categories() []models.CompanyCategoryInfo {
+	keys := make([]models.CompanyCategoryIndex, 0, len(models.CompanyCategoryMap))
+	for code := range models.CompanyCategoryMap {
+		keys = append(keys, code)
+	}
+	slices.Sort(keys)
+
+	results := make([]models.CompanyCategoryInfo, 0, len(keys))
+	for _, code := range keys {
+		results = append(results, models.CompanyCategoryInfo{Code: code, Label: models.CompanyCategoryMap[code]})
+	}
+	return results
+}

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"penguin-backend/internal/models"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // GetKoji godoc
@@ -17,7 +17,7 @@ import (
 // @Success      200 {object} models.Koji "Koji"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kojies/{path} [get]
-func (h *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
+func (h *BusinessHandler) GetKojiByPath(c *fiber.Ctx) error {
 	// パスパラメータを取得
 	path := c.Params("path")
 
@@ -49,7 +49,7 @@ func (h *BusinessHandler) GetKojiByPath(c fiber.Ctx) error {
 // @Success      200 {array} models.Koji "工事一覧"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kojies [get]
-func (h *BusinessHandler) GetKojies(c fiber.Ctx) error {
+func (h *BusinessHandler) GetKojies(c *fiber.Ctx) error {
 	// クエリパラメータでフィルターを取得
 	filter := c.Query("filter")
 
@@ -76,10 +76,10 @@ func (h *BusinessHandler) GetKojies(c fiber.Ctx) error {
 // @Success      200 {object} models.Koji "更新後の工事データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kojies [put]
-func (h *BusinessHandler) UpdateKoji(c fiber.Ctx) error {
+func (h *BusinessHandler) UpdateKoji(c *fiber.Ctx) error {
 	// リクエストボディから編集された工事を取得
 	var koji models.Koji
-	if err := c.Bind().Body(&koji); err != nil {
+	if err := c.BodyParser(&koji); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "リクエストボディの解析に失敗しました",
 			"message": err.Error(),
@@ -114,10 +114,10 @@ type RenameManagedFileRequest struct {
 // @Success      200 {object} models.Koji "更新後の工事データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /kojies/standard-files [put]
-func (h *BusinessHandler) RenameKojiStandardFiles(c fiber.Ctx) error {
+func (h *BusinessHandler) RenameKojiStandardFiles(c *fiber.Ctx) error {
 	// リクエストボディから編集された工事を取得
 	var request RenameManagedFileRequest
-	if err := c.Bind().Body(&request); err != nil {
+	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "リクエストボディの解析に失敗しました",
 			"message": err.Error(),

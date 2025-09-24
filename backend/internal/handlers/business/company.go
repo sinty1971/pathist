@@ -3,7 +3,7 @@ package business
 import (
 	"penguin-backend/internal/models"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // GetCompanyByID godoc
@@ -16,7 +16,7 @@ import (
 // @Failure      404 {object} map[string]string "会社が見つからない"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /companies/{id} [get]
-func (h *BusinessHandler) GetCompanyByID(c fiber.Ctx) error {
+func (h *BusinessHandler) GetCompanyByID(c *fiber.Ctx) error {
 	company, err := h.businessService.CompanyService.GetCompanyByID(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -35,7 +35,7 @@ func (h *BusinessHandler) GetCompanyByID(c fiber.Ctx) error {
 // @Success      200 {array} models.Company "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /companies [get]
-func (h *BusinessHandler) GetCompanies(c fiber.Ctx) error {
+func (h *BusinessHandler) GetCompanies(c *fiber.Ctx) error {
 	companies := h.businessService.CompanyService.GetCompanies()
 	return c.JSON(companies)
 }
@@ -50,10 +50,10 @@ func (h *BusinessHandler) GetCompanies(c fiber.Ctx) error {
 // @Success      200 {object} models.Company "更新後の会社データ"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /companies [put]
-func (h *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
+func (h *BusinessHandler) UpdateCompany(c *fiber.Ctx) error {
 	// リクエストボディから編集された会社を取得
 	var company models.Company
-	if err := c.Bind().Body(&company); err != nil {
+	if err := c.BodyParser(&company); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "リクエストボディの解析に失敗しました",
 			"message": err.Error(),
@@ -80,6 +80,6 @@ func (h *BusinessHandler) UpdateCompany(c fiber.Ctx) error {
 // @Success      200 {array} models.CompanyCategoryInfo "正常なレスポンス"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /companies/categories [get]
-func (h *BusinessHandler) GetCategories(c fiber.Ctx) error {
+func (h *BusinessHandler) GetCategories(c *fiber.Ctx) error {
 	return c.JSON(h.businessService.CompanyService.Categories())
 }

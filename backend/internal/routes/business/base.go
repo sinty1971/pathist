@@ -4,8 +4,8 @@ import (
 	"penguin-backend/internal/handlers/business"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cache"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 )
 
 // setupBaseRoutes はベース関連のルートを設定します

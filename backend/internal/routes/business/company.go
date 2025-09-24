@@ -4,8 +4,8 @@ import (
 	"penguin-backend/internal/handlers/business"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cache"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 )
 
 // setupCompanyRoutes は会社関連のルートを設定します
@@ -16,7 +16,7 @@ func setupCompanyRoutes(api fiber.Router, businessHandler *business.BusinessHand
 			Expiration:   5 * time.Minute, // 5分間キャッシュ
 			CacheHeader:  "X-Categories-Cache",
 			CacheControl: true,
-			KeyGenerator: func(c fiber.Ctx) string {
+			KeyGenerator: func(c *fiber.Ctx) string {
 				return "categories:list"
 			},
 		}),
@@ -29,7 +29,7 @@ func setupCompanyRoutes(api fiber.Router, businessHandler *business.BusinessHand
 			Expiration:   10 * time.Second, // 10秒間キャッシュ
 			CacheHeader:  "X-Company-Cache",
 			CacheControl: true,
-			KeyGenerator: func(c fiber.Ctx) string {
+			KeyGenerator: func(c *fiber.Ctx) string {
 				return "companies:list"
 			},
 		}),
@@ -42,7 +42,7 @@ func setupCompanyRoutes(api fiber.Router, businessHandler *business.BusinessHand
 			Expiration:   10 * time.Second, // 10秒間キャッシュ
 			CacheHeader:  "X-Company-Detail-Cache",
 			CacheControl: true,
-			KeyGenerator: func(c fiber.Ctx) string {
+			KeyGenerator: func(c *fiber.Ctx) string {
 				id := c.Params("id")
 				return "companies:detail:" + id
 			},

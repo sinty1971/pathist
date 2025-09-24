@@ -68,8 +68,8 @@ go run cmd/main.go
    curl "http://localhost:8080/api/kouji/entries"
    ```
 
-3. **Swaggerドキュメント**:
-   - `http://localhost:8080/swagger/index.html` をブラウザで開く
+3. **APIドキュメント (Huma)**:
+   - `http://localhost:8080/swagger` をブラウザで開く
 
 ### レスポンスの説明
 - `folders`: ファイルエントリーの配列

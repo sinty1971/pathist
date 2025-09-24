@@ -8,7 +8,7 @@ import (
 	"penguin-backend/internal/models"
 	"penguin-backend/internal/services"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // IDSyncHandler はID同期関連のHTTPハンドラーを提供
@@ -88,9 +88,9 @@ type BulkConversionResponse struct {
 // @Failure      400 {object} map[string]string "リクエストエラー"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /api/id-sync/generate-koji [post]
-func (h *IDSyncHandler) GenerateKojiID(c fiber.Ctx) error {
+func (h *IDSyncHandler) GenerateKojiID(c *fiber.Ctx) error {
 	var req IDGenerationRequest
-	if err := c.Bind().Body(&req); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "リクエストの解析に失敗しました"})
 	}
 
@@ -131,9 +131,9 @@ func (h *IDSyncHandler) GenerateKojiID(c fiber.Ctx) error {
 // @Failure      400 {object} map[string]string "リクエストエラー"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /api/id-sync/generate-path [post]
-func (h *IDSyncHandler) GeneratePathID(c fiber.Ctx) error {
+func (h *IDSyncHandler) GeneratePathID(c *fiber.Ctx) error {
 	var req IDGenerationRequest
-	if err := c.Bind().Body(&req); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "リクエストの解析に失敗しました"})
 	}
 
@@ -169,9 +169,9 @@ func (h *IDSyncHandler) GeneratePathID(c fiber.Ctx) error {
 // @Failure      400 {object} map[string]string "リクエストエラー"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /api/id-sync/validate [post]
-func (h *IDSyncHandler) ValidateID(c fiber.Ctx) error {
+func (h *IDSyncHandler) ValidateID(c *fiber.Ctx) error {
 	var req IDValidationRequest
-	if err := c.Bind().Body(&req); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "リクエストの解析に失敗しました"})
 	}
 
@@ -223,9 +223,9 @@ func (h *IDSyncHandler) ValidateID(c fiber.Ctx) error {
 // @Failure      400 {object} map[string]string "リクエストエラー"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /api/id-sync/bulk-convert [post]
-func (h *IDSyncHandler) BulkConvert(c fiber.Ctx) error {
+func (h *IDSyncHandler) BulkConvert(c *fiber.Ctx) error {
 	var req BulkConversionRequest
-	if err := c.Bind().Body(&req); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "リクエストの解析に失敗しました"})
 	}
 
@@ -312,7 +312,7 @@ func (h *IDSyncHandler) BulkConvert(c fiber.Ctx) error {
 // @Failure      400 {object} map[string]string "リクエストエラー"
 // @Failure      500 {object} map[string]string "サーバーエラー"
 // @Router       /api/id-sync/mapping [get]
-func (h *IDSyncHandler) GetIDMapping(c fiber.Ctx) error {
+func (h *IDSyncHandler) GetIDMapping(c *fiber.Ctx) error {
 	pathsParam := c.Query("paths")
 	if pathsParam == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "パスリストが指定されていません"})
@@ -366,7 +366,7 @@ func generateKojiFolderName(startDate time.Time, companyName, locationName strin
 // @Produce      json
 // @Success      200 {object} map[string]interface{} "同期設定情報"
 // @Router       /api/id-sync/config [get]
-func (h *IDSyncHandler) SyncConfiguration(c fiber.Ctx) error {
+func (h *IDSyncHandler) SyncConfiguration(c *fiber.Ctx) error {
 	config := map[string]interface{}{
 		"version":       "1.0.0",
 		"algorithm":     "BLAKE2b-256",

@@ -3,7 +3,7 @@ package routes
 import (
 	"penguin-backend/internal/handlers"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // SetupIDSyncRoutes はID同期関連のルートを設定します

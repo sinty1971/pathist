@@ -40,6 +40,12 @@ var CompanyCategoryMap = map[CompanyCategoryIndex]string{
 
 var CompanyCategoryReverseMap = map[string]CompanyCategoryIndex{}
 
+// CompanyCategoryInfo は業種コードとラベルのペアを表します。
+type CompanyCategoryInfo struct {
+	Code  CompanyCategoryIndex `json:"code" example:"1"`
+	Label string               `json:"label" example:"下請会社"`
+}
+
 // Company は工事会社の基本情報をファイル名から取得したモデルを表します
 // @Description 工事会社の基本情報をファイル名から取得したモデル
 type Company struct {
@@ -59,7 +65,7 @@ type Company struct {
 	Phone      string                `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
 	Email      string                `json:"email,omitempty" yaml:"email" example:"info@toyotachikuro.jp"`
 	Website    string                `json:"website,omitempty" yaml:"website" example:"https://www.toyotachikuro.jp"`
-	Tags       []string              `json:"tags,omitempty" yaml:"tags" example:"['元請け', '製造業']"`
+	Tags       []string              `json:"tags,omitempty" yaml:"tags" example:"[\"元請け\", \"製造業\"]"`
 
 	// 必須ファイルフィールド
 	RequiredFiles []FileInfo `json:"requiredFiles" yaml:"required_files"`

@@ -4,8 +4,8 @@ import (
 	"penguin-backend/internal/handlers/business"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cache"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 )
 
 // setupKojiRoutes は工事関連のルートを設定します
@@ -16,7 +16,7 @@ func setupKojiRoutes(api fiber.Router, businessHandler *business.BusinessHandler
 			Expiration:   5 * time.Second, // 5秒間キャッシュ
 			CacheHeader:  "X-Koji-Cache",
 			CacheControl: true,
-			KeyGenerator: func(c fiber.Ctx) string {
+			KeyGenerator: func(c *fiber.Ctx) string {
 				// filterクエリパラメータを含めてキャッシュキーを生成
 				filter := c.Query("filter", "")
 				return "kojies:list:" + filter
@@ -31,7 +31,7 @@ func setupKojiRoutes(api fiber.Router, businessHandler *business.BusinessHandler
 			Expiration:   5 * time.Second, // 5秒間キャッシュ
 			CacheHeader:  "X-Koji-Detail-Cache",
 			CacheControl: true,
-			KeyGenerator: func(c fiber.Ctx) string {
+			KeyGenerator: func(c *fiber.Ctx) string {
 				path := c.Params("path")
 				return "kojies:detail:" + path
 			},

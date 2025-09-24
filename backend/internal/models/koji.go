@@ -26,7 +26,7 @@ type Koji struct {
 	Database    *Repository[*Koji] `json:"-" yaml:"-"`
 	EndDate     Timestamp          `json:"endDate" yaml:"end_date"`
 	Description string             `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
-	Tags        []string           `json:"tags,omitempty" yaml:"tags" example:"['工事', '豊田築炉', '名和工場']"`
+	Tags        []string           `json:"tags,omitempty" yaml:"tags" example:"[\"工事\", \"豊田築炉\", \"名和工場\"]"`
 
 	// 必須ファイルフィールド
 	RequiredFiles []FileInfo `json:"requiredFiles" yaml:"required_files"`

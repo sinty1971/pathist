@@ -57,7 +57,7 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "🌐 ブラウザでアクセス:"
     echo "  https://localhost:8443"
-    echo "  https://localhost:8443/swagger/index.html"
+    echo "  https://localhost:8443/swagger"
     echo ""
     echo "⚠️  ブラウザで「安全でない」警告が表示されますが、"
     echo "   「詳細設定」→「localhost に進む」で続行してください。"

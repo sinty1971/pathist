@@ -168,10 +168,38 @@ func main() {
 		{URL: serverProtocol + "://localhost:" + *port + "/api"},
 	}
 	config.OpenAPIPath = "/openapi"
-	config.DocsPath = "/docs"
+	config.DocsPath = ""
 	config.SchemasPath = "/schemas"
 
-	api := fiberv2.New(app, config)
+	apiGroup := app.Group("/api")
+	api := fiberv2.NewWithGroup(app, apiGroup, config)
+
+	apiGroup.Get("/docs", func(c *fiber.Ctx) error {
+		c.Type("html", "utf-8")
+		return c.SendString(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="referrer" content="same-origin" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Penguin Backend API Reference</title>
+    <link href="https://unpkg.com/@stoplight/elements@9.0.0/styles.min.css" rel="stylesheet" />
+    <script src="https://unpkg.com/@stoplight/elements@9.0.0/web-components.min.js" integrity="sha256-Tqvw1qE2abI+G6dPQBc5zbeHqfVwGoamETU3/TSpUw4=" crossorigin="anonymous"></script>
+  </head>
+  <body style="height: 100vh;">
+    <elements-api
+      apiDescriptionUrl="/api/openapi.yaml"
+      router="hash"
+      layout="sidebar"
+      tryItCredentialsPolicy="same-origin"
+    />
+  </body>
+</html>`)
+	})
+
+	app.Get("/docs", func(c *fiber.Ctx) error {
+		return c.Redirect("/api/docs", fiber.StatusTemporaryRedirect)
+	})
 
 	// 6-2. サービスのルーティング
 	routes.SetupRoutes(app, api, servicesContainer)
@@ -179,7 +207,7 @@ func main() {
 	// 7. サーバー起動メッセージ
 	if *useHTTP2 {
 		log.Printf("🚀 HTTP/2 + HTTPS Server starting on :%s", *port)
-		log.Printf("📖 API documentation: https://localhost:%s/docs", *port)
+		log.Printf("📖 API documentation: https://localhost:%s/api/docs", *port)
 		log.Printf("🔒 Using TLS certificate: %s", *certFile)
 		log.Println("🌟 Features enabled:")
 		log.Println("  ✅ HTTP/2 (h2)")
@@ -203,7 +231,7 @@ func main() {
 		log.Fatal(app.Listener(listener))
 	} else {
 		log.Printf("🚀 HTTP/1.1 Server starting on :%s", *port)
-		log.Printf("📖 API documentation: http://localhost:%s/docs", *port)
+		log.Printf("📖 API documentation: http://localhost:%s/api/docs", *port)
 		log.Println("🌟 Features enabled:")
 		log.Println("  ✅ HTTP/1.1")
 		log.Println("  ✅ Gzip compression")

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"penguin-backend/internal/models"
+	"penguin-backend/internal/utils"
 	"slices"
 	"strings"
 )
@@ -49,8 +50,13 @@ func (cs *CompanyService) Initialize(rs *RootService, cfs ...ConfigFunc) error {
 
 	config := NewConfig(cfs...)
 
+	// 必須パラメータのチェック
+	targetFolder, err := utils.CleanAbsPath(config.PathName)
+	if err != nil {
+		return err
+	}
+
 	// targetFolder がアクセス可能かチェック
-	targetFolder := config.PathName
 	fi, err := os.Stat(targetFolder)
 	if err != nil {
 		return err

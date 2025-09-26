@@ -5,11 +5,9 @@ import (
 	"flag"
 	"log"
 	"os"
-	"path/filepath"
 	appbootstrap "penguin-backend/internal/app"
+	"penguin-backend/internal/endpoints"
 	"penguin-backend/internal/huma/fiberv2"
-	"penguin-backend/internal/routes"
-	"penguin-backend/internal/services"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -115,49 +113,15 @@ func main() {
 	}))
 
 	// 5. サービスを初期化（手書き DI）
-	serviceOptions := appbootstrap.DefaultServiceOptions
-	if dataRoot := os.Getenv("PENGUIN_DATA_ROOT"); dataRoot != "" {
-		serviceOptions.FileFolderPath = dataRoot
-		serviceOptions.CompanyFolderPath = filepath.Join(dataRoot, "豊田築炉", "1 会社")
-		serviceOptions.KojiFolderPath = filepath.Join(dataRoot, "豊田築炉", "2 工事")
-	}
-	rootService := services.CreateRootService()
-
-	fileService := &services.FileService{}
-	if err := rootService.AddService(fileService, services.WithPath(serviceOptions.FileFolderPath)); err != nil {
-		log.Fatalf("failed to initialize FileService: %v", err)
-	}
-
-	companyService := &services.CompanyService{}
-	if err := rootService.AddService(
-		companyService,
-		services.WithPath(serviceOptions.CompanyFolderPath),
-		services.WithFileName(serviceOptions.DatabaseFilename),
-	); err != nil {
-		log.Fatalf("failed to initialize CompanyService: %v", err)
-	}
-
-	kojiService := &services.KojiService{}
-	if err := rootService.AddService(
-		kojiService,
-		services.WithPath(serviceOptions.KojiFolderPath),
-		services.WithFileName(serviceOptions.DatabaseFilename),
-	); err != nil {
-		log.Fatalf("failed to initialize KojiService: %v", err)
-	}
-
-	servicesContainer := appbootstrap.ServiceContainer{
-		Root:    rootService,
-		File:    fileService,
-		Company: companyService,
-		Koji:    kojiService,
+	servicesContainer, err := appbootstrap.InitializeServices()
+	if err != nil {
+		log.Fatalf("failed to initialize services: %v", err)
 	}
 
 	rs := servicesContainer.Root
 	defer rs.Cleanup()
 
-	// 6. ルーティング
-	// 6-1. Huma API 設定
+	// 6. OpenAPI関連の設定
 	config := huma.DefaultConfig("Penguin ファイルシステム管理API", "1.0.0")
 	config.OpenAPI.Info.Description = "ファイルエントリの管理と閲覧のためのAPI"
 	serverProtocol := "http"
@@ -171,6 +135,7 @@ func main() {
 	config.DocsPath = ""
 	config.SchemasPath = "/schemas"
 
+	// 7. APIルーティングの設定
 	apiGroup := app.Group("/api")
 	api := fiberv2.NewWithGroup(app, apiGroup, config)
 
@@ -201,10 +166,10 @@ func main() {
 		return c.Redirect("/api/docs", fiber.StatusTemporaryRedirect)
 	})
 
-	// 6-2. サービスのルーティング
-	routes.SetupRoutes(app, api, servicesContainer)
+	// サービスのエンドポイントセットアップ
+	endpoints.SetupRoutes(app, api, *servicesContainer)
 
-	// 7. サーバー起動メッセージ
+	// 8. サーバー起動メッセージ
 	if *useHTTP2 {
 		log.Printf("🚀 HTTP/2 + HTTPS Server starting on :%s", *port)
 		log.Printf("📖 API documentation: https://localhost:%s/api/docs", *port)

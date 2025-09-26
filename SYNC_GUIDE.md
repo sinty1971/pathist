@@ -297,7 +297,7 @@ curl -X POST http://localhost:8080/api/id-sync/validate \
 
 ### バックエンド  
 - `internal/handlers/id_sync.go` - ID同期API
-- `internal/routes/id_sync.go` - ルート定義
+- `internal/endpoints/id_sync.go` - ルート定義
 - `internal/models/id.go` - 既存のID生成機能
 
 ### 設計資料

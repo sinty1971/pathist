@@ -10,48 +10,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"penguin-backend/internal/app"
+	"penguin-backend/internal/endpoints"
 	"penguin-backend/internal/huma/fiberv2"
-	"penguin-backend/internal/routes"
-	svc "penguin-backend/internal/services"
 )
 
 func main() {
-	serviceOptions := app.DefaultServiceOptions
-	if dataRoot := os.Getenv("PENGUIN_DATA_ROOT"); dataRoot != "" {
-		serviceOptions.FileFolderPath = dataRoot
-		serviceOptions.CompanyFolderPath = filepath.Join(dataRoot, "豊田築炉", "1 会社")
-		serviceOptions.KojiFolderPath = filepath.Join(dataRoot, "豊田築炉", "2 工事")
-	}
-	rootService := svc.CreateRootService()
-
-	fileService := &svc.FileService{}
-	if err := rootService.AddService(fileService, svc.WithPath(serviceOptions.FileFolderPath)); err != nil {
-		log.Fatalf("failed to initialize FileService: %v", err)
-	}
-
-	companyService := &svc.CompanyService{}
-	if err := rootService.AddService(
-		companyService,
-		svc.WithPath(serviceOptions.CompanyFolderPath),
-		svc.WithFileName(serviceOptions.DatabaseFilename),
-	); err != nil {
-		log.Fatalf("failed to initialize CompanyService: %v", err)
-	}
-
-	kojiService := &svc.KojiService{}
-	if err := rootService.AddService(
-		kojiService,
-		svc.WithPath(serviceOptions.KojiFolderPath),
-		svc.WithFileName(serviceOptions.DatabaseFilename),
-	); err != nil {
-		log.Fatalf("failed to initialize KojiService: %v", err)
-	}
-
-	services := app.ServiceContainer{
-		Root:    rootService,
-		File:    fileService,
-		Company: companyService,
-		Koji:    kojiService,
+	services, err := app.InitializeServices()
+	if err != nil {
+		log.Fatalf("failed to initialize services: %v", err)
 	}
 	defer services.Root.Cleanup()
 
@@ -66,7 +32,7 @@ func main() {
 
 	api := fiberv2.New(fiberApp, config)
 
-	routes.SetupRoutes(fiberApp, api, services)
+	endpoints.SetupRoutes(fiberApp, api, *services)
 
 	spec := api.OpenAPI()
 

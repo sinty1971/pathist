@@ -35,7 +35,7 @@ func (cs *CompanyService) GetPersistPath(company *models.Company) string {
 // BuildWithOption は opt でCompanyServiceを初期化します
 // rs はルートサービス
 // opts はオプション
-func (cs *CompanyService) Initialize(container *Container, serviceOptions *ServiceOptions) (*CompanyService, error) {
+func (cs *CompanyService) Initialize(container *Container, serviceOptions *Options) (*CompanyService, error) {
 
 	// コンテナを設定
 	cs.container = container

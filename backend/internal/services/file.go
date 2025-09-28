@@ -30,7 +30,7 @@ func (fs *FileService) Cleanup() error {
 // folderPath はファイルサービスの基準フォルダー
 // buildContext はファイルサービスの基準フォルダー
 // 戻り値はファイルサービスのインスタンス
-func (fs *FileService) Initialize(container *Container, serviceOptions *ServiceOptions) (*FileService, error) {
+func (fs *FileService) Initialize(container *Container, serviceOptions *Options) (*FileService, error) {
 
 	// コンテナを設定
 	fs.container = container

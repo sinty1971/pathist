@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	container, err := services.InitializeServices()
+	container, err := services.CreateContainer()
 	if err != nil {
 		log.Fatalf("failed to initialize services: %v", err)
 	}

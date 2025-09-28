@@ -113,7 +113,7 @@ func main() {
 	}))
 
 	// 5. サービスを初期化（手書き DI）
-	container, err := services.InitializeServices()
+	container, err := services.CreateContainer()
 	if err != nil {
 		log.Fatalf("failed to initialize services: %v", err)
 	}

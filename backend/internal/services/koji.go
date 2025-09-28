@@ -33,7 +33,7 @@ func (ks *KojiService) Cleanup() error {
 }
 
 // Initialize はサービスを初期化する
-func (ks *KojiService) Initialize(container *Container, serviceOptions *ServiceOptions) (*KojiService, error) {
+func (ks *KojiService) Initialize(container *Container, serviceOptions *Options) (*KojiService, error) {
 
 	// コンテナを設定
 	ks.container = container

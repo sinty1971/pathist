@@ -5,9 +5,9 @@ import (
 	"flag"
 	"log"
 	"os"
-	appbootstrap "penguin-backend/internal/app"
 	"penguin-backend/internal/endpoints"
 	"penguin-backend/internal/huma/fiberv2"
+	"penguin-backend/internal/services"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -113,13 +113,11 @@ func main() {
 	}))
 
 	// 5. サービスを初期化（手書き DI）
-	servicesContainer, err := appbootstrap.InitializeServices()
+	container, err := services.InitializeServices()
 	if err != nil {
 		log.Fatalf("failed to initialize services: %v", err)
 	}
-
-	rs := servicesContainer.Root
-	defer rs.Cleanup()
+	defer container.Cleanup()
 
 	// 6. OpenAPI関連の設定
 	config := huma.DefaultConfig("Penguin ファイルシステム管理API", "1.0.0")
@@ -167,7 +165,7 @@ func main() {
 	})
 
 	// サービスのエンドポイントセットアップ
-	endpoints.SetupRoutes(app, api, *servicesContainer)
+	endpoints.SetupRoutes(app, api, *container)
 
 	// 8. サーバー起動メッセージ
 	if *useHTTP2 {

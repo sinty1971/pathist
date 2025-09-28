@@ -1,7 +1,6 @@
 package services
 
 import (
-	"path/filepath"
 	"penguin-backend/internal/models"
 )
 
@@ -27,20 +26,14 @@ func (rs *RepositoryService[T]) DatabaseFilename() string {
 
 // Load はデータをロードします
 func (rs *RepositoryService[T]) Load(entity T) (T, error) {
-	// エンティティのフォルダーパスとデータベースファイル名を結合
-	filePath := filepath.Join(entity.GetFolderPath(), rs.databaseFilename)
-
 	// FileRepositoryを作成してロード
-	repo := models.NewRepository[T](filePath)
+	repo := models.NewRepository[T](entity.GetPersistPath())
 	return repo.Load(entity)
 }
 
 // Save はデータを保存します
 func (rs *RepositoryService[T]) Save(entity T) error {
-	// エンティティのフォルダーパスとデータベースファイル名を結合
-	filePath := filepath.Join(entity.GetFolderPath(), rs.databaseFilename)
-
 	// FileRepositoryを作成して保存
-	repo := models.NewRepository[T](filePath)
+	repo := models.NewRepository[T](entity.GetPersistPath())
 	return repo.Save(entity)
 }

@@ -10,15 +10,15 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gofiber/fiber/v2"
 
-	app "penguin-backend/internal/app"
 	"penguin-backend/internal/models"
+	"penguin-backend/internal/services"
 )
 
 // apiRootDescription はルートエンドポイントの説明
 const apiRootDescription = "Penguin Backend API"
 
 // SetupRoutes はすべてのルートを設定します
-func SetupRoutes(app *fiber.App, api huma.API, container app.ServiceContainer) {
+func SetupRoutes(app *fiber.App, api huma.API, container services.Container) {
 	_ = app // Fiber ルーター移行の名残。物理ルート追加時に再利用可。
 	registerRoot(api)
 	registerFileEndpoints(api, container)

@@ -17,24 +17,14 @@ import (
 // KojiService は工事情報取得サービスを提供する
 // 工事一覧フォルダーを管理します
 type KojiService struct {
-	// ルートサービス
-	RootService *RootService
+	// container はトップコンテナのインスタンス
+	container *Container
 
-	// リポジトリーサービス
-	Repository *RepositoryService[*models.Koji]
+	// データベースサービス
+	DatabaseService *RepositoryService[*models.Koji]
 
 	// 工事一覧フォルダーのフルパス
 	TargetFolder string
-}
-
-// GetServiceName はサービス名を返す
-func (ks *KojiService) GetServiceName() string {
-	return "KojiService"
-}
-
-// GetService はサービスを返す
-func (ks *KojiService) GetService(serviceName string) Service {
-	return ks.RootService.GetService(serviceName)
 }
 
 // Cleanup はサービスをクリーンアップする
@@ -43,35 +33,34 @@ func (ks *KojiService) Cleanup() error {
 }
 
 // Initialize はサービスを初期化する
-func (ks *KojiService) Initialize(rs *RootService, opts ...ConfigFunc) error {
-	config := NewConfig(opts...)
+func (ks *KojiService) Initialize(container *Container, serviceOptions *ServiceOptions) (*KojiService, error) {
+
+	// コンテナを設定
+	ks.container = container
 
 	// 工事一覧フォルダーのフルパス
-	targetFolder, err := utils.CleanAbsPath(config.PathName)
+	targetFolder, err := utils.CleanAbsPath(serviceOptions.KojiServiceTargetFolder)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// folderPath がアクセス可能かチェック
 	fi, err := os.Stat(targetFolder)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// フォルダーで無ければエラー
 	if !fi.IsDir() {
-		return fmt.Errorf("工事一覧対象パスがフォルダーではありません: %s", targetFolder)
+		return nil, fmt.Errorf("工事一覧対象パスがフォルダーではありません: %s", targetFolder)
 	}
 
 	ks.TargetFolder = targetFolder
 
 	// 工事一覧用のリポジトリーサービスを作成
-	repositoryFilename := config.FileName
-	ks.Repository = NewRepositoryService[*models.Koji](repositoryFilename)
+	ks.DatabaseService = NewRepositoryService[*models.Koji](serviceOptions.PersistFilename)
 
-	// ルートサービスを設定
-	ks.RootService = rs
-	return nil
+	return ks, nil
 }
 
 // GetKoji は指定されたパスから工事を取得する
@@ -204,7 +193,7 @@ func (ks *KojiService) GetKojies(modes ...getKojiesMode) []models.Koji {
 			return cmp > 0
 		}
 		// 両方の開始日が同じ場合、フォルダー名で降順
-		return kojies[i].FolderPath > kojies[j].FolderPath
+		return kojies[i].TargetFolder > kojies[j].TargetFolder
 	})
 
 	return kojies
@@ -213,14 +202,14 @@ func (ks *KojiService) GetKojies(modes ...getKojiesMode) []models.Koji {
 // LoadDatabaseFile は工事データベースファイルからデータを取り込みます
 func (ks *KojiService) LoadDatabaseFile(target *models.Koji) error {
 	// 工事データベースファイルからデータを読み込む
-	database, err := ks.Repository.Load(target)
+	database, err := ks.DatabaseService.Load(target)
 	if err != nil {
 		// ファイルが存在しない場合はデフォルト値を設定
 		target.UpdateStatus()
 
 		// 新規ファイルの場合は非同期で保存
 		go func() {
-			ks.Repository.Save(target)
+			ks.DatabaseService.Save(target)
 		}()
 		return nil
 	}
@@ -245,10 +234,10 @@ func (ks *KojiService) UpdateRequiredFiles(koji *models.Koji) error {
 	}
 
 	// 工事フォルダー内のファイルを取得
-	entries, err := os.ReadDir(koji.FolderPath)
+	entries, err := os.ReadDir(koji.TargetFolder)
 	if err != nil {
 		// エラーの場合はデフォルトの必須ファイルを設定
-		requiredFile, err := models.NewFileInfo(path.Join(koji.FolderPath, "工事.xlsx"))
+		requiredFile, err := models.NewFileInfo(path.Join(koji.TargetFolder, "工事.xlsx"))
 		if err != nil {
 			return err
 		}
@@ -280,9 +269,9 @@ func (ks *KojiService) UpdateRequiredFiles(koji *models.Koji) error {
 			continue
 		}
 
-		actualPath := path.Join(koji.FolderPath, file.Name())
+		actualPath := path.Join(koji.TargetFolder, file.Name())
 		standardName := koji.GetFolderName() + extension
-		standardPath := path.Join(koji.FolderPath, standardName)
+		standardPath := path.Join(koji.TargetFolder, standardName)
 		requiredFile, err = models.NewFileInfo(actualPath, standardPath)
 		if err != nil {
 			continue
@@ -293,7 +282,7 @@ func (ks *KojiService) UpdateRequiredFiles(koji *models.Koji) error {
 
 	// 工事ファイルが見つからない場合はひな形を設定
 	if !found {
-		standardPath := path.Join(koji.FolderPath, koji.GetFolderName()+".xlsx")
+		standardPath := path.Join(koji.TargetFolder, koji.GetFolderName()+".xlsx")
 		requiredFile, err = models.NewFileInfo("工事.xlsx", standardPath)
 
 		// テンプレートファイルのコピーは省略（高速化のため）
@@ -339,7 +328,7 @@ func (ks *KojiService) Update(target *models.Koji) error {
 	target.UpdateStatus()
 
 	// 更新後の工事情報を属性ファイルに反映
-	return ks.Repository.Save(target)
+	return ks.DatabaseService.Save(target)
 }
 
 // RenameStandardFile は標準ファイルの名前を変更し、工事データも更新する

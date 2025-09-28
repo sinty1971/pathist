@@ -1,14 +1,5 @@
 package services
 
-// Service はRootServiceに登録可能なサービスのインターフェースを定義します
-// インターフェイスメソッドは通常ポインタレシーバーで実装されます
-type Service interface {
-	GetServiceName() string
-	GetService(serviceName string) Service
-	Cleanup() error
-	Initialize(rs *RootService, opts ...ConfigFunc) error
-}
-
 // ConfigFunc はサービス登録時のオプション設定用の関数型です
 type ConfigFunc func(*Config)
 

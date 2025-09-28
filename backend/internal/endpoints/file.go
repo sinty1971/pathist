@@ -6,8 +6,8 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
-	app "penguin-backend/internal/app"
 	"penguin-backend/internal/models"
+	"penguin-backend/internal/services"
 )
 
 type GetFilesRequest struct {
@@ -26,8 +26,10 @@ type GetFileBasePathResponse struct {
 	} `json:""`
 }
 
-func registerFileEndpoints(api huma.API, container app.ServiceContainer) {
-	if container.File == nil {
+func registerFileEndpoints(api huma.API, container services.Container) {
+	// FileServiceが無ければ終了
+	fs := container.FileService
+	if fs == nil {
 		return
 	}
 
@@ -44,9 +46,9 @@ func registerFileEndpoints(api huma.API, container app.ServiceContainer) {
 			err     error
 		)
 		if in.Path == "" {
-			entries, err = container.File.GetFileInfos()
+			entries, err = fs.GetFileInfos()
 		} else {
-			entries, err = container.File.GetFileInfos(in.Path)
+			entries, err = fs.GetFileInfos(in.Path)
 		}
 		if err != nil {
 			return nil, huma.Error500InternalServerError("failed to read directory", err)
@@ -63,7 +65,7 @@ func registerFileEndpoints(api huma.API, container app.ServiceContainer) {
 		Tags:        []string{"ファイル管理"},
 	}, func(ctx context.Context, _ *GetFileBasePathRequest) (*GetFileBasePathResponse, error) {
 		resp := &GetFileBasePathResponse{}
-		resp.Body.BasePath = container.File.TargetFolder
+		resp.Body.BasePath = fs.TargetFolder
 		return resp, nil
 	})
 }

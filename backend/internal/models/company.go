@@ -53,9 +53,9 @@ type Company struct {
 	ID string `json:"id" yaml:"-" example:"TC001"`
 
 	// Identity fields. FolderName is linked ShortName and Category.
-	FolderPath string               `json:"folderName" yaml:"-" example:"~/penguin/豊田築炉/1 会社/0 豊田築炉"`
-	ShortName  string               `json:"shortName,omitempty" yaml:"-" example:"豊田築炉"`
-	Category   CompanyCategoryIndex `json:"category" yaml:"-" example:"1"`
+	TargetFolder string               `json:"folderName" yaml:"-" example:"~/penguin/豊田築炉/1 会社/0 豊田築炉"`
+	ShortName    string               `json:"shortName,omitempty" yaml:"-" example:"豊田築炉"`
+	Category     CompanyCategoryIndex `json:"category" yaml:"-" example:"1"`
 
 	// Database file fields
 	Database   *Repository[*Company] `json:"-" yaml:"-"`
@@ -73,8 +73,8 @@ type Company struct {
 
 // GetFolderPath はフォルダーパスを取得します
 // Persistableインターフェースの実装
-func (c *Company) GetFolderPath() string {
-	return c.FolderPath
+func (c *Company) GetPersistPath() string {
+	return path.Join(c.TargetFolder, c.Database.persistPath)
 }
 
 // NewCompany 会社フォルダーパス名からCompanyを作成します
@@ -96,10 +96,10 @@ func NewCompany(folderPath string, repositoryFilename string) (*Company, error) 
 	database := NewRepository[*Company](databaseFilePath)
 
 	return &Company{
-		ID:         NewIDFromString(result.ShortName).Len5(),
-		FolderPath: folderPath,
-		ShortName:  result.ShortName,
-		Category:   result.Category,
+		ID:           NewIDFromString(result.ShortName).Len5(),
+		TargetFolder: folderPath,
+		ShortName:    result.ShortName,
+		Category:     result.Category,
 
 		// Database file fields
 		Database:      database,
@@ -176,11 +176,11 @@ func (c *Company) UpdateIdentity() {
 	c.ID = NewIDFromString(folderName).Len5()
 
 	// フォルダーパスを更新
-	dir := path.Dir(c.FolderPath)
+	dir := path.Dir(c.TargetFolder)
 	if dir == "." {
 		return
 	}
-	c.FolderPath = path.Join(dir, folderName)
+	c.TargetFolder = path.Join(dir, folderName)
 }
 
 func (cc *CompanyCategoryIndex) IsValid() bool {

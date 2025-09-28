@@ -7,8 +7,8 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
-	app "penguin-backend/internal/app"
 	"penguin-backend/internal/models"
+	"penguin-backend/internal/services"
 )
 
 type GetKojiesRequest struct {
@@ -46,11 +46,18 @@ type PutKojiStandardFilesResponse struct {
 	Body interface{} `json:"" doc:"更新後の工事データ"`
 }
 
-func registerKojiEndpoints(api huma.API, container app.ServiceContainer) {
-	if container.Koji == nil {
+func registerKojiEndpoints(api huma.API, container services.Container) {
+	// KojiServiceが無ければ終了
+	ks := container.KojiService
+	if ks == nil {
 		return
 	}
 
+	if ks.DatabaseService == nil {
+		return
+	}
+
+	// 工事一覧の取得
 	huma.Register(api, huma.Operation{
 		OperationID: "get-kojies",
 		Method:      http.MethodGet,
@@ -60,8 +67,7 @@ func registerKojiEndpoints(api huma.API, container app.ServiceContainer) {
 		Tags:        []string{"工事管理"},
 	}, func(ctx context.Context, in *GetKojiesRequest) (*GetKojiesResponse, error) {
 		_ = in // 現状はフィルター未対応
-		kojies := container.Koji.GetKojies()
-		return &GetKojiesResponse{Body: kojies}, nil
+		return &GetKojiesResponse{Body: ks.GetKojies()}, nil
 	})
 
 	huma.Register(api, huma.Operation{
@@ -76,7 +82,7 @@ func registerKojiEndpoints(api huma.API, container app.ServiceContainer) {
 		if err != nil {
 			decoded = in.Path
 		}
-		koji, err := container.Koji.GetKoji(decoded)
+		koji, err := ks.GetKoji(decoded)
 		if err != nil {
 			return nil, huma.Error500InternalServerError("failed to fetch koji", err)
 		}
@@ -91,7 +97,7 @@ func registerKojiEndpoints(api huma.API, container app.ServiceContainer) {
 		Description: "工事のファイル情報を更新します",
 		Tags:        []string{"工事管理"},
 	}, func(ctx context.Context, in *PutKojiRequest) (*PutKojiResponse, error) {
-		if err := container.Koji.Update(&in.Body); err != nil {
+		if err := ks.Update(&in.Body); err != nil {
 			return nil, huma.Error500InternalServerError("failed to update koji", err)
 		}
 		return &PutKojiResponse{Body: in.Body}, nil
@@ -109,7 +115,7 @@ func registerKojiEndpoints(api huma.API, container app.ServiceContainer) {
 		if folderName == "" {
 			return &PutKojiStandardFilesResponse{Body: []string{}}, nil
 		}
-		updated, err := container.Koji.GetKoji(folderName)
+		updated, err := ks.GetKoji(folderName)
 		if err != nil {
 			return nil, huma.Error500InternalServerError("failed to load updated koji", err)
 		}

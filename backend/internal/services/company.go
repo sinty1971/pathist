@@ -12,24 +12,14 @@ import (
 
 // CompanyService は会社データ操作を処理します
 type CompanyService struct {
-	// RootService はトップコンテナのインスタンス
-	RootService *RootService
+	// container はトップコンテナのインスタンス	RootService *RootService
+	container *Container
 
-	// 会社一覧フォルダー
+	// 会社フォルダー
 	TargetFolder string
 
 	// データベースサービス
 	DatabaseService *RepositoryService[*models.Company]
-}
-
-// GetServiceName はサービス名を返す
-func (cs *CompanyService) GetServiceName() string {
-	return "CompanyService"
-}
-
-// GetService はサービスを返す
-func (cs *CompanyService) GetService(serviceName string) Service {
-	return cs.RootService.GetService(serviceName)
 }
 
 // Cleanup はサービスをクリーンアップする
@@ -37,46 +27,48 @@ func (cs *CompanyService) Cleanup() error {
 	return nil
 }
 
+// GetPersistPath は会社の属性データのパスを返す
+func (cs *CompanyService) GetPersistPath(company *models.Company) string {
+	return filepath.Join(company.TargetFolder, cs.DatabaseService.databaseFilename)
+}
+
 // BuildWithOption は opt でCompanyServiceを初期化します
 // rs はルートサービス
 // opts はオプション
-func (cs *CompanyService) Initialize(rs *RootService, cfs ...ConfigFunc) error {
+func (cs *CompanyService) Initialize(container *Container, serviceOptions *ServiceOptions) (*CompanyService, error) {
+
+	// コンテナを設定
+	cs.container = container
 
 	// CompanyCategoryReverseMapを初期化
 	models.CompanyCategoryReverseMap = make(map[string]models.CompanyCategoryIndex)
 	for code, category := range models.CompanyCategoryMap {
 		models.CompanyCategoryReverseMap[category] = code
 	}
-
-	config := NewConfig(cfs...)
-
-	// 必須パラメータのチェック
-	targetFolder, err := utils.CleanAbsPath(config.PathName)
+	// targetFolderのパスチェック
+	targetFolder, err := utils.CleanAbsPath(serviceOptions.CompanyServiceTargetFolder)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// targetFolder がアクセス可能かチェック
 	fi, err := os.Stat(targetFolder)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// フォルダーではない場合はエラー
 	if !fi.IsDir() {
-		return fmt.Errorf("フォルダーではありません: %s", targetFolder)
+		return nil, fmt.Errorf("フォルダーではありません: %s", targetFolder)
 	}
 
 	// 会社一覧のフォルダー名を設定
 	cs.TargetFolder = targetFolder
 
 	// 会社フォルダー基準のDatabaseServiceを初期化
-	cs.DatabaseService = NewRepositoryService[*models.Company](config.FileName)
+	cs.DatabaseService = NewRepositoryService[*models.Company](serviceOptions.PersistFilename)
 
-	// ルートサービスを設定
-	cs.RootService = rs
-
-	return nil
+	return cs, nil
 }
 
 // GetCompany は指定されたパスから会社を取得する
@@ -184,7 +176,7 @@ func (cs *CompanyService) GetCompanyByID(id string) (*models.Company, error) {
 		return nil, fmt.Errorf("ID %s の会社が見つかりません", id)
 	}
 
-	company, err := cs.GetCompany(companies[idx].FolderPath)
+	company, err := cs.GetCompany(companies[idx].TargetFolder)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +200,7 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 	}
 
 	// データベースファイルと同期
-	dbCompany, err := cs.GetCompany(companies[idx].FolderPath)
+	dbCompany, err := cs.GetCompany(companies[idx].TargetFolder)
 	if err != nil {
 		return nil, err
 	}
@@ -220,15 +212,15 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 // updateCompany: 更新対象の会社データモデル
 func (cs *CompanyService) Update(updateCompany *models.Company) error {
 	// 変更前のフォルダー名を保持しておく
-	prevFolderPath := updateCompany.FolderPath
+	prevFolderPath := updateCompany.TargetFolder
 
 	// 新しいフォルダー名を生成して変更が必要かチェック
 	updateCompany.UpdateIdentity()
 
 	// フォルダー名の変更が必要な場合のみ処理
-	if updateCompany.FolderPath != prevFolderPath {
+	if updateCompany.TargetFolder != prevFolderPath {
 		// ファイルの移動が必要
-		err := os.Rename(prevFolderPath, updateCompany.FolderPath)
+		err := os.Rename(prevFolderPath, updateCompany.TargetFolder)
 		if err != nil {
 			return err
 		}

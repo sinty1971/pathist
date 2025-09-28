@@ -10,19 +10,19 @@ import (
 // Repository はファイルベースのデータ永続化を行うリポジトリです
 // 現在はYAML形式をサポートしていますが、将来的に他の形式にも対応可能です
 type Repository[T Persistable] struct {
-	filePath string
+	persistPath string
 }
 
 // Persistable はファイルベースで永続化可能なエンティティのインターフェースを定義します
 type Persistable interface {
-	// GetFolderPath はデータが保存されているフォルダーのパスを取得します
-	GetFolderPath() string
+	// GetPersistPath はデータが保存されているパス名を取得します
+	GetPersistPath() string
 }
 
 // NewRepository はFileRepositoryを初期化する
 func NewRepository[T Persistable](filePath string) *Repository[T] {
 	return &Repository[T]{
-		filePath: filePath,
+		persistPath: filePath,
 	}
 }
 
@@ -34,7 +34,7 @@ func (r *Repository[T]) Load(ref T) (T, error) {
 	var output T
 
 	// データファイルを読み込む
-	yamlData, err := os.ReadFile(r.filePath)
+	yamlData, err := os.ReadFile(r.persistPath)
 	if err != nil {
 		return output, err
 	}
@@ -58,9 +58,9 @@ func (r *Repository[T]) Save(input T) error {
 	}
 
 	// ファイルが存在しない場合は作成
-	if _, err := os.Stat(r.filePath); os.IsNotExist(err) {
-		os.Create(r.filePath)
+	if _, err := os.Stat(r.persistPath); os.IsNotExist(err) {
+		os.Create(r.persistPath)
 	}
 
-	return os.WriteFile(r.filePath, yamlData, 0644)
+	return os.WriteFile(r.persistPath, yamlData, 0644)
 }

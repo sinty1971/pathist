@@ -9,17 +9,17 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gofiber/fiber/v2"
 
-	"penguin-backend/internal/app"
 	"penguin-backend/internal/endpoints"
 	"penguin-backend/internal/huma/fiberv2"
+	"penguin-backend/internal/services"
 )
 
 func main() {
-	services, err := app.InitializeServices()
+	container, err := services.InitializeServices()
 	if err != nil {
 		log.Fatalf("failed to initialize services: %v", err)
 	}
-	defer services.Root.Cleanup()
+	defer container.Cleanup()
 
 	fiberApp := fiber.New()
 
@@ -32,7 +32,7 @@ func main() {
 
 	api := fiberv2.New(fiberApp, config)
 
-	endpoints.SetupRoutes(fiberApp, api, *services)
+	endpoints.SetupRoutes(fiberApp, api, *container)
 
 	spec := api.OpenAPI()
 

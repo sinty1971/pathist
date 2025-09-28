@@ -14,19 +14,11 @@ import (
 
 // FileService はファイルシステムを管理するサービス
 type FileService struct {
-	// rootService はトップコンテナのインスタンス
-	rootService *RootService
+	// container はトップコンテナのインスタンス
+	container *Container
 
 	// TargetFolder はファイルサービスの絶対パスフォルダー
 	TargetFolder string `json:"targetFolder" yaml:"target_folder" example:"/penguin/豊田築炉"`
-}
-
-func (fs *FileService) GetServiceName() string {
-	return "FileService"
-}
-
-func (fs *FileService) GetService(serviceName string) Service {
-	return fs.rootService.GetService(serviceName)
 }
 
 func (fs *FileService) Cleanup() error {
@@ -38,36 +30,32 @@ func (fs *FileService) Cleanup() error {
 // folderPath はファイルサービスの基準フォルダー
 // buildContext はファイルサービスの基準フォルダー
 // 戻り値はファイルサービスのインスタンス
-func (fs *FileService) Initialize(rs *RootService, opts ...ConfigFunc) error {
-
-	// オプションを設定
-	config := NewConfig(opts...)
-	targetFolder := config.PathName
+func (fs *FileService) Initialize(container *Container, serviceOptions *ServiceOptions) (*FileService, error) {
 
 	// コンテナを設定
-	fs.rootService = rs
+	fs.container = container
 
 	// 絶対パスに展開
-	cleanBaseFolder, err := utils.CleanAbsPath(targetFolder)
+	cleanBaseFolder, err := utils.CleanAbsPath(serviceOptions.FileServiceTargetFolder)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// 基準フォルダーにアクセスできるかチェック
 	osFileInfo, err := os.Stat(cleanBaseFolder)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// フォルダーかどうかをチェック
 	if !osFileInfo.IsDir() {
-		return errors.New("フォルダーではありません")
+		return nil, errors.New("フォルダーではありません")
 	}
 
 	// 基準フォルダーを設定
 	fs.TargetFolder = cleanBaseFolder
 
-	return nil
+	return fs, nil
 }
 
 // GetFileInfos 指定されたディレクトリパス内のファイル情報を取得

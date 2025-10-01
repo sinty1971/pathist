@@ -73,9 +73,10 @@ func (cs *CompanyService) Initialize(container *Container, serviceOptions *Optio
 
 // GetCompany は指定されたパスから会社を取得する
 // folderName: 会社フォルダー名
+
 func (cs *CompanyService) GetCompany(folderName string) (*models.Company, error) {
 	// 会社データモデルを作成
-	company, err := models.NewCompany(folderName, cs.DatabaseService.databaseFilename)
+	company, err := models.NewCompany(folderName)
 	if err != nil {
 		return nil, fmt.Errorf("会社データモデルの作成に失敗しました: %v", err)
 	}
@@ -123,7 +124,7 @@ func (cs *CompanyService) GetCompanies(opts ...GetCompaniesOptions) []models.Com
 	for _, entry := range entries {
 		// 会社データモデルを作成、これはデータベースアクセスを行いません
 		entryPath := filepath.Join(cs.TargetFolder, entry.Name())
-		company, err := models.NewCompany(entryPath, cs.DatabaseService.databaseFilename)
+		company, err := models.NewCompany(entryPath)
 		if err != nil {
 			continue
 		}

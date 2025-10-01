@@ -1,9 +1,6 @@
 package models
 
-import (
-	"path"
-	"time"
-)
+import "time"
 
 type Member struct {
 	ID           ID         `json:"id" yaml:"-" example:"ABC1234"`
@@ -17,11 +14,11 @@ type Member struct {
 	JoinDate     *time.Time `json:"joinDate,omitempty" yaml:"join_date" example:"2020-04-01T00:00:00Z"`
 
 	// 補助ファイルフィールド
-	Database *Repository[*Member] `json:"-" yaml:"-"`
-	Assets   []FileInfo           `json:"assets" yaml:"assets"`
+	Assets []FileInfo `json:"assets" yaml:"assets"`
 }
 
-// GetTargetFolder Databaseインターフェースの実装
-func (m *Member) GetPersistPath() string {
-	return path.Join(m.TargetFolder, m.Database.persistPath)
+// PersistFolder は属性ファイルを格納するフォルダーのパスを返します。
+// Persistableインターフェースの実装
+func (m *Member) PersistFolder() string {
+	return m.TargetFolder
 }

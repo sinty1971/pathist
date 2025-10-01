@@ -1,16 +1,13 @@
 package services
 
-import (
-	"os"
-	"path/filepath"
-)
-
 type Container struct {
 	FileService    *FileService
 	CompanyService *CompanyService
 	KojiService    *KojiService
 }
 
+// Options はサービスの初期化に使用される設定を保持します。
+// これらの設定は環境変数やデフォルト値に基づいて決定されます。
 type Options struct {
 	FileServiceTargetFolder    string
 	CompanyServiceTargetFolder string
@@ -18,6 +15,8 @@ type Options struct {
 	PersistFilename            string
 }
 
+// DefaultOptions はサービスのデフォルト設定を定義します。
+// これらの値は、環境変数が設定されていない場合に使用されます。
 var DefaultOptions = Options{
 	PersistFilename:            ".detail.yaml",
 	FileServiceTargetFolder:    "~/penguin",
@@ -25,19 +24,9 @@ var DefaultOptions = Options{
 	KojiServiceTargetFolder:    "~/penguin/豊田築炉/2 工事",
 }
 
-// ResolveOptions は環境変数などを考慮したサービスオプションを生成します。
-func ResolveOptions() Options {
-	opts := DefaultOptions
-	if dataRoot := os.Getenv("PENGUIN_DATA_ROOT"); dataRoot != "" {
-		opts.FileServiceTargetFolder = dataRoot
-		opts.CompanyServiceTargetFolder = filepath.Join(dataRoot, "豊田築炉", "1 会社")
-		opts.KojiServiceTargetFolder = filepath.Join(dataRoot, "豊田築炉", "2 工事")
-	}
-	return opts
-}
-
 // CreateContainer は与えられたオプションでサービス群を初期化します。
 func CreateContainer() (*Container, error) {
+
 	// コンテナを作成
 	container := &Container{}
 	var err error

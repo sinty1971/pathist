@@ -1,7 +1,6 @@
 package models
 
 import (
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -24,18 +23,18 @@ type Koji struct {
 	// Database Service field
 
 	// Database file fields
-	Database    *Repository[*Koji] `json:"-" yaml:"-"`
-	EndDate     Timestamp          `json:"endDate" yaml:"end_date"`
-	Description string             `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
-	Tags        []string           `json:"tags,omitempty" yaml:"tags" example:"[\"工事\", \"豊田築炉\", \"名和工場\"]"`
+	EndDate     Timestamp `json:"endDate" yaml:"end_date"`
+	Description string    `json:"description,omitempty" yaml:"description" example:"工事関連の資料とドキュメント"`
+	Tags        []string  `json:"tags,omitempty" yaml:"tags" example:"[\"工事\", \"豊田築炉\", \"名和工場\"]"`
 
 	// 必須ファイルフィールド
 	RequiredFiles []FileInfo `json:"requiredFiles" yaml:"required_files"`
 }
 
-// GetTargetPath Persistableインターフェースの実装
-func (k *Koji) GetPersistPath() string {
-	return path.Join(k.TargetFolder, k.Database.persistPath)
+// PersistFolder は属性ファイルを格納するフォルダーのパスを返します。
+// Persistableインターフェースの実装
+func (k *Koji) PersistFolder() string {
+	return k.TargetFolder
 }
 
 func (k *Koji) GetFolderName() string {

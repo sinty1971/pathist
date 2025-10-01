@@ -58,27 +58,26 @@ type Company struct {
 	Category     CompanyCategoryIndex `json:"category" yaml:"-" example:"1"`
 
 	// Database file fields
-	Database   *Repository[*Company] `json:"-" yaml:"-"`
-	LegalName  string                `json:"legalName,omitempty" yaml:"legal_name" example:"有限会社 豊田築炉"`
-	PostalCode string                `json:"postalCode,omitempty" yaml:"postal_code" example:"456-0001"`
-	Address    string                `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
-	Phone      string                `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
-	Email      string                `json:"email,omitempty" yaml:"email" example:"info@toyotachikuro.jp"`
-	Website    string                `json:"website,omitempty" yaml:"website" example:"https://www.toyotachikuro.jp"`
-	Tags       []string              `json:"tags,omitempty" yaml:"tags" example:"[\"元請け\", \"製造業\"]"`
+	LegalName  string   `json:"legalName,omitempty" yaml:"legal_name" example:"有限会社 豊田築炉"`
+	PostalCode string   `json:"postalCode,omitempty" yaml:"postal_code" example:"456-0001"`
+	Address    string   `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
+	Phone      string   `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
+	Email      string   `json:"email,omitempty" yaml:"email" example:"info@toyotachikuro.jp"`
+	Website    string   `json:"website,omitempty" yaml:"website" example:"https://www.toyotachikuro.jp"`
+	Tags       []string `json:"tags,omitempty" yaml:"tags" example:"[\"元請け\", \"製造業\"]"`
 
 	// 必須ファイルフィールド
 	RequiredFiles []FileInfo `json:"requiredFiles" yaml:"required_files"`
 }
 
-// GetFolderPath はフォルダーパスを取得します
+// PersistFolder は属性ファイルを格納するフォルダーのパスを返します。
 // Persistableインターフェースの実装
-func (c *Company) GetPersistPath() string {
-	return path.Join(c.TargetFolder, c.Database.persistPath)
+func (c *Company) PersistFolder() string {
+	return c.TargetFolder
 }
 
 // NewCompany 会社フォルダーパス名からCompanyを作成します
-func NewCompany(folderPath string, repositoryFilename string) (*Company, error) {
+func NewCompany(folderPath string) (*Company, error) {
 	// フォルダー名を取得
 	var folderName string
 	if lastSlash := strings.LastIndex(folderPath, "/"); lastSlash != -1 {
@@ -91,10 +90,6 @@ func NewCompany(folderPath string, repositoryFilename string) (*Company, error) 
 		return nil, err
 	}
 
-	// データベースファイルパスを作成
-	databaseFilePath := path.Join(folderPath, repositoryFilename)
-	database := NewRepository[*Company](databaseFilePath)
-
 	return &Company{
 		ID:           NewIDFromString(result.ShortName).Len5(),
 		TargetFolder: folderPath,
@@ -102,7 +97,6 @@ func NewCompany(folderPath string, repositoryFilename string) (*Company, error) 
 		Category:     result.Category,
 
 		// Database file fields
-		Database:      database,
 		LegalName:     result.ShortName,
 		Tags:          append([]string{"会社"}, result.Tags...),
 		RequiredFiles: []FileInfo{},

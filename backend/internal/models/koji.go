@@ -33,7 +33,7 @@ type Koji struct {
 
 // PersistFolder は属性ファイルを格納するフォルダーのパスを返します。
 // Persistableインターフェースの実装
-func (k *Koji) PersistFolder() string {
+func (k *Koji) GetTargetFolder() string {
 	return k.TargetFolder
 }
 
@@ -50,9 +50,7 @@ func (k *Koji) GetFolderName() string {
 // NewKoji FolderNameからKojiを作成します（高速化版）
 func NewKoji(folderPath string) (*Koji, error) {
 
-	koji := &Koji{
-		TargetFolder: folderPath,
-	}
+	koji := &Koji{TargetFolder: folderPath}
 
 	// フォルダー名を取得
 	folderName := koji.GetFolderName()

@@ -57,7 +57,7 @@ type Company struct {
 	ShortName    string               `json:"shortName,omitempty" yaml:"-" example:"豊田築炉"`
 	Category     CompanyCategoryIndex `json:"category" yaml:"-" example:"1"`
 
-	// Database file fields
+	// yaml file fields
 	LegalName  string   `json:"legalName,omitempty" yaml:"legal_name" example:"有限会社 豊田築炉"`
 	PostalCode string   `json:"postalCode,omitempty" yaml:"postal_code" example:"456-0001"`
 	Address    string   `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
@@ -72,7 +72,7 @@ type Company struct {
 
 // PersistFolder は属性ファイルを格納するフォルダーのパスを返します。
 // Persistableインターフェースの実装
-func (c *Company) PersistFolder() string {
+func (c *Company) GetTargetFolder() string {
 	return c.TargetFolder
 }
 

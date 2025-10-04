@@ -19,7 +19,7 @@ type CompanyService struct {
 	TargetFolder string
 
 	// データベースサービス
-	DatabaseService *RepositoryService[*models.Company]
+	DatabaseService *PersistService[*models.Company]
 }
 
 // Cleanup はサービスをクリーンアップする
@@ -29,7 +29,7 @@ func (cs *CompanyService) Cleanup() error {
 
 // GetPersistPath は会社の属性データのパスを返す
 func (cs *CompanyService) GetPersistPath(company *models.Company) string {
-	return filepath.Join(company.TargetFolder, cs.DatabaseService.databaseFilename)
+	return filepath.Join(company.TargetFolder, cs.DatabaseService.persistFilename)
 }
 
 // BuildWithOption は opt でCompanyServiceを初期化します
@@ -66,7 +66,7 @@ func (cs *CompanyService) Initialize(container *Container, serviceOptions *Optio
 	cs.TargetFolder = targetFolder
 
 	// 会社フォルダー基準のDatabaseServiceを初期化
-	cs.DatabaseService = NewRepositoryService[*models.Company](serviceOptions.PersistFilename)
+	cs.DatabaseService = NewPersistService[*models.Company](serviceOptions.PersistFilename)
 
 	return cs, nil
 }

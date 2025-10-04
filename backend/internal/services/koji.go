@@ -21,7 +21,7 @@ type KojiService struct {
 	container *Container
 
 	// データベースサービス
-	DatabaseService *RepositoryService[*models.Koji]
+	DatabaseService *PersistService[*models.Koji]
 
 	// 工事一覧フォルダーのフルパス
 	TargetFolder string
@@ -58,7 +58,7 @@ func (ks *KojiService) Initialize(container *Container, serviceOptions *Options)
 	ks.TargetFolder = targetFolder
 
 	// 工事一覧用のリポジトリーサービスを作成
-	ks.DatabaseService = NewRepositoryService[*models.Koji](serviceOptions.PersistFilename)
+	ks.DatabaseService = NewPersistService[*models.Koji](serviceOptions.PersistFilename)
 
 	return ks, nil
 }
@@ -296,7 +296,7 @@ func (ks *KojiService) UpdateRequiredFiles(koji *models.Koji) error {
 }
 
 // Update は工事情報 FileInfoの情報を更新
-// kojiの詳細情報で.detail.yamlを更新
+// kojiの詳細情報で @profile.yaml を更新
 // 移動元フォルダー名：FileInfo.Name
 // 移動先フォルダー名：StartDate, CompanyName, LocationNameから生成されたフォルダー名
 func (ks *KojiService) Update(target *models.Koji) error {

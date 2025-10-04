@@ -18,7 +18,7 @@ type Options struct {
 // DefaultOptions はサービスのデフォルト設定を定義します。
 // これらの値は、環境変数が設定されていない場合に使用されます。
 var DefaultOptions = Options{
-	PersistFilename:            ".detail.yaml",
+	PersistFilename:            "@profile.yaml",
 	FileServiceTargetFolder:    "~/penguin",
 	CompanyServiceTargetFolder: "~/penguin/豊田築炉/1 会社",
 	KojiServiceTargetFolder:    "~/penguin/豊田築炉/2 工事",

@@ -33,7 +33,7 @@ const getNodeIcon = (node: TreeNode) => {
   }
 
   // 特定のファイル名のアイコンコードを返す
-  if (node.name === ".detail.yaml") {
+  if (node.name === "@profile.yaml") {
     return <span style={{ fontSize: "16px" }}>⚙️</span>;
   }
 
@@ -183,7 +183,7 @@ const CustomTreeItem: React.FC<CustomTreeItemProps> = React.memo(
               {node.name}
               {!node.isDirectory && formatFileSize(node.size)}
             </Typography>
-            {node.name === ".detail.yaml" && (
+            {node.name === "@profile.yaml" && (
               <Chip
                 label="詳細"
                 size="small"

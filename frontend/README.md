@@ -1,157 +1,91 @@
 # フォルダー管理システム - フロントエンド
 
-React + TypeScript + React Router v7を使用したフォルダー管理システムのフロントエンドアプリケーションです。
+Next.js (App Router) + TypeScript をベースにしたフォルダー管理システムのフロントエンドアプリケーションです。バックエンドの OpenAPI 仕様から自動生成した SDK を利用し、ファイル・工事・会社情報を扱います。
 
 ## 技術スタック
 
-- **React** 19.1.0
-- **TypeScript** 5.6.3
-- **React Router v7** (旧 Remix)
-- **Vite** 6.0.7
-- **@hey-api/openapi-ts** - OpenAPIからTypeScript型とAPIクライアントを自動生成
+- **Next.js** 14.x
+- **React** 18.x
+- **TypeScript** 5.9
+- **MUI / @mui/x-tree-view**
+- **Tailwind CSS + DaisyUI**
+- **@hey-api/openapi-ts** – OpenAPI から TypeScript 型と API クライアントを自動生成
 
-## ディレクトリ構成
+## ディレクトリ構成 (主要箇所)
 
 ```
 frontend/
-├── app/
-│   ├── root.tsx              # ルートコンポーネント
-│   ├── routes.ts             # ルート設定
-│   ├── routes/               # ページコンポーネント
-│   │   ├── _layout.tsx       # メインレイアウト
-│   │   ├── _layout._index.tsx # ホーム（ファイル一覧）
-│   │   ├── _layout.kojies.tsx # 工事一覧
-│   │   └── _layout.gantt.tsx  # ガントチャート
-│   ├── components/           # UIコンポーネント
-│   │   ├── Files.tsx         # ファイル一覧
-│   │   ├── FileDetailModal.tsx # ファイル詳細モーダル
-│   │   ├── Kojies.tsx        # 工事一覧
-│   │   ├── KojiDetailModal.tsx # 工事編集モーダル
-│   │   ├── KojiGanttChart.tsx # ガントチャート（詳細）
-│   │   └── Navigation.tsx    # ナビゲーションバー
-│   ├── api/                  # 自動生成されたAPIクライアント
-│   │   ├── client/           # クライアント実装
-│   │   ├── core/             # コア機能
-│   │   ├── client.gen.ts     # クライアント設定
-│   │   ├── sdk.gen.ts        # SDK関数
-│   │   └── types.gen.ts      # TypeScript型定義
-│   ├── services/             # APIサービス層
-│   │   └── api.ts            # APIサービスラッパー
-│   ├── styles/               # CSSファイル
-│   │   ├── App.css           # アプリケーション全体のスタイル
-│   │   ├── koji-gantt.css    # ガントチャート用スタイル
-│   │   └── koji-detail-modal.css # 工事モーダル用スタイル
-│   ├── types/                # 型定義
-│   │   └── css.d.ts          # CSS モジュール型定義
-│   └── utils/                # ユーティリティ関数
-│       ├── date.ts           # 日付処理
-│       └── timestamp.ts      # タイムスタンプ変換
-├── public/
-│   └── favicon.ico           # アプリケーションアイコン
+├── app/                     # Next.js App Router
+│   ├── layout.tsx           # ルートレイアウト（Providers, Navigation）
+│   ├── page.tsx             # ホーム
+│   ├── files/page.tsx       # ファイル一覧
+│   ├── kojies/page.tsx      # 工事一覧
+│   └── kojies/gantt/page.tsx# ガントチャート
+├── src/
+│   ├── api/                 # OpenAPI 生成物 (types.gen.ts / sdk.gen.ts 等)
+│   ├── components/          # UI コンポーネント
+│   ├── contexts/            # 状態管理コンテキスト
+│   ├── services/            # API ラッパー
+│   ├── styles/              # 共通スタイル
+│   └── utils/               # ユーティリティ関数
+├── public/                  # 静的アセット
+├── next.config.mjs
 ├── package.json
-├── vite.config.ts
 └── tsconfig.json
 ```
 
 ## 開発コマンド
 
-### 依存関係のインストール
+開発前に依存関係を再インストールしてください（React Router 依存削除後の再ロック推奨）。
+
 ```bash
 npm install
 ```
 
-### 開発サーバーの起動
+開発サーバー: http://localhost:3000
+
 ```bash
 npm run dev
 ```
-開発サーバーは http://localhost:5173 で起動します。
 
-### 本番用ビルド
+ビルド / 本番起動:
+
 ```bash
 npm run build
-```
-
-### 本番サーバーの起動
-```bash
 npm run start
 ```
 
-### その他のコマンド
-```bash
-npm run lint          # ESLintを実行
-npm run preview       # 本番ビルドをプレビュー
-npm run generate-api  # OpenAPIからTypeScript型を生成
-```
-
-## API連携
-
-### 自動生成
-バックエンドのOpenAPI仕様からTypeScript型とAPIクライアントを自動生成しています：
+Lint と OpenAPI SDK 再生成:
 
 ```bash
-# Justfileを使用する場合（推奨）
-just generate-types
-
-# npm scriptを使用する場合
-npm run generate-api
+npm run lint
+npm run generate-api   # ../schemas/openapi.yaml → ./src/api に出力
 ```
 
-### APIクライアントの使用例
-```typescript
-import { getFiles, getKojies } from '../api/sdk.gen';
+## API 仕様との連携
 
-// ファイル一覧の取得
-const response = await getFiles({ 
-  query: { path: '/path/to/folder' }
-});
+バックエンドの `schemas/openapi.yaml` から `@hey-api/openapi-ts` で SDK を生成しています。`just generate-api` または `npm run generate-api` を実行すると `src/api` 配下が再生成されます。生成物を直接編集しないでください。
 
-// 工事一覧の取得
-const kojies = await getKojies();
-```
+## 主な UI
 
-## 主な機能
+- **ファイル一覧**: TreeView によるファイル構造の閲覧、詳細モーダル表示。
+- **工事一覧**: 工事エントリーの編集、補助ファイルの状況可視化、ガントチャート遷移。
+- **会社一覧**: カテゴリーフィルタ / 詳細モーダルによる編集。
+- **ナビゲーション**: Next.js の Link と usePathname を利用したアクティブ表示。
 
-### ファイル管理
-- ファイル・フォルダーの一覧表示
-- ファイル種別に応じたアイコン表示
-- ファイル詳細情報の表示
+## 注意事項
 
-### 工事管理
-- 工事の一覧表示
-- 工事情報の編集（会社名、現場名、期間、タグ等）
-- ガントチャートによる工期の視覚化
-- YAMLファイルへの情報永続化
-
-### タイムスタンプ処理
-- バックエンドの`ModelsTimestamp`型（RFC3339Nano形式）の適切な処理
-- JSTタイムゾーンでの日時表示・編集
-- 柔軟な日時フォーマット解析
-
-## 開発上の注意点
-
-### TypeScript型
-- API型は`app/api/types.gen.ts`から自動生成されます
-- 手動で型を編集しないでください（再生成時に上書きされます）
-
-### 日時処理
-- バックエンドは`ModelsTimestamp`型（オブジェクト形式）を使用
-- フロントエンドでは`utils/timestamp.ts`の関数で変換処理を行う
-- 日付入力は常にJSTで処理される
-
-### スタイリング
-- CSSモジュールは使用せず、通常のCSSファイルをインポート
-- `css.d.ts`でCSSインポートの型定義を提供
+- ルーティングは Next.js のディレクトリ構造に従います。React Router 用スクリプト `scripts/generate-route-diagram.js` は非推奨となりました。
+- グローバルスタイルは `app/globals.css` で読み込み、コンポーネント固有のスタイルは `src/styles/` からインポートしてください。
+- Context Provider (`KojiProvider`, `FileInfoProvider`) は `app/providers.tsx` で一括ラップしています。
+- 旧来の Vite / React Router 向け設定ファイルは削除済みです。不要なキャッシュは `rm -rf frontend/node_modules` 後に再インストールしてください。
 
 ## トラブルシューティング
 
-### favicon.icoエラー
-`public/favicon.ico`が存在することを確認してください。
+- **依存関係エラー**: `package-lock.json` が古い場合は `rm package-lock.json` → `npm install` で再生成してください。
+- **API 型の不整合**: `just generate-api` または `npm run generate-api` で最新の SDK を再生成し、必要に応じて `npm run lint` を実行してください。
+- **スタイル崩れ**: Tailwind の監視対象パス (`tailwind.config.js`) に `app` / `src` が含まれていることを確認してください。
 
-### TypeScriptエラー
-API型が最新でない場合は、以下を実行してください：
-```bash
-just generate-all  # またはnpm run generate-api
-```
+## ライセンス
 
-### 開発サーバーが起動しない
-ポート5173が使用されていないか確認してください。
+社内利用を想定した非公開プロジェクトのため、ライセンスは設定していません。

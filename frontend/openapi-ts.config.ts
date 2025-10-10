@@ -5,7 +5,7 @@ export default defineConfig({
     bundle: true,
   },
   input: '../schemas/openapi.yaml',
-  output: './app/api',
+  output: './src/api',
   schemas: {
     export: true,
   },

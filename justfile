@@ -51,12 +51,12 @@ frontend-update:
 # Generate TypeScript types from OpenAPI spec
 generate-types:
     cd ./frontend && npm run generate-api
-    @echo "TypeScript types generated at frontend/app/api/"
+    @echo "TypeScript types generated at frontend/src/api/"
 
 # Generate React Router v7 route structure diagram
 generate-routes:
-    cd ./frontend && npm run generate-routes
-    @echo "Route structure diagram generated at frontend/route-structure-generated.md"
+    @echo "Next.js へ移行したため自動ルート図生成は未対応です"
+    @echo "app ディレクトリ構成を直接参照してください"
 
 # Build frontend for production (React Router v7)
 frontend-build:

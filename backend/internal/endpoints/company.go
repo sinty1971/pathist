@@ -10,12 +10,6 @@ import (
 	"penguin-backend/internal/services"
 )
 
-type GetCompaniesRequest struct{}
-
-type GetCompaniesResponse struct {
-	Body []models.Company `json:"" doc:"会社一覧"`
-}
-
 type GetCompanyRequest struct {
 	ID string `path:"id" example:"toyota" doc:"会社ID"`
 }
@@ -38,7 +32,7 @@ type GetCompanyCategoriesResponse struct {
 	Body []models.CompanyCategoryInfo `json:"" doc:"カテゴリー一覧"`
 }
 
-// registerCompanyEndpoints は会社管理エンドポイントを登録します。
+// GetCompaniesResponse は会社一覧取得レスポンスを表します
 func registerCompanyEndpoints(api huma.API, container services.Container) {
 	cs := container.CompanyService
 	if cs == nil {
@@ -50,6 +44,15 @@ func registerCompanyEndpoints(api huma.API, container services.Container) {
 	}
 
 	// 会社一覧の取得
+
+	// GetCompaniesRequest は会社一覧取得リクエストを表します
+	type GetCompaniesRequest struct{}
+
+	// GetCompaniesResponse は会社一覧取得レスポンスを表します
+	type GetCompaniesResponse struct {
+		Body []models.Company `json:"" doc:"会社一覧"`
+	}
+
 	huma.Register(api, huma.Operation{
 		OperationID: "get-companies",
 		Method:      http.MethodGet,

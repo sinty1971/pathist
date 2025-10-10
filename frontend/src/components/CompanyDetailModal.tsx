@@ -54,6 +54,7 @@ const stringToTags = (str: string): string[] => {
 // デフォルト会社データ
 const defaultCompanyData: Company = {
   id: '',
+  folderName: '',
   legalName: '',
   shortName: '',
   category: '',
@@ -62,7 +63,8 @@ const defaultCompanyData: Company = {
   website: '',
   address: '',
   postalCode: '',
-  tags: []
+  tags: [],
+  requiredFiles: [],
 };
 
 const normalizeCompany = (data: Company): Company => ({

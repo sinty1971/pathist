@@ -22,7 +22,7 @@ import {
   ExpandMore,
   ChevronRight,
 } from "@mui/icons-material";
-import { getBusinessFiles, getBusinessBasePath } from "@/api/sdk.gen";
+import { getFiles, getFileBasePath } from "@/api/sdk.gen";
 import { FileDetailModal } from "./FileDetailModal";
 import { useFileInfo } from "@/contexts/FileInfoContext";
 
@@ -229,11 +229,12 @@ export const Files: React.FC = () => {
   // ベースパスを取得
   const loadBasePath = useCallback(async () => {
     try {
-      const response = await getBusinessBasePath();
-      if (response.data && response.data.businessBasePath) {
-        setBasePath(response.data.businessBasePath);
+      const response = await getFileBasePath();
+      const resolvedBasePath = response.data?.basePath;
+      if (resolvedBasePath && resolvedBasePath.trim() !== "") {
+        setBasePath(resolvedBasePath);
         setBasePathError(false);
-        return response.data.businessBasePath;
+        return resolvedBasePath;
       }
       throw new Error("ベースパスが取得できませんでした");
     } catch (err) {
@@ -245,14 +246,46 @@ export const Files: React.FC = () => {
 
 
   // ファイルデータをTreeNode形式に変換
-  const convertToTreeNode = (fileInfo: any): TreeNode => {
-    const node = {
-      id: fileInfo.path, // バックエンドからのpathをIDとして使用
-      name: fileInfo.name,
-      path: fileInfo.path, // バックエンドからのpathをそのまま使用
-      relativePath: fileInfo.path.replace(basePath + '/', '') || '', // 相対パス部分を保存
-      isDirectory: fileInfo.isDirectory,
-      size: fileInfo.size,
+  const convertToTreeNode = (
+    fileInfo: any,
+    basePathValue: string
+  ): TreeNode => {
+    const standardPath: string =
+      typeof fileInfo.standardPath === "string" ? fileInfo.standardPath : "";
+    const providedPath: string =
+      typeof fileInfo.path === "string"
+        ? fileInfo.path
+        : typeof fileInfo.targetPath === "string"
+        ? fileInfo.targetPath
+        : "";
+    const absolutePath =
+      providedPath ||
+      (standardPath
+        ? [basePathValue, standardPath].filter(Boolean).join("/")
+        : "");
+
+    const relativePath =
+      standardPath ||
+      (basePathValue && absolutePath.startsWith(basePathValue)
+        ? absolutePath.slice(basePathValue.length).replace(/^\/+/, "")
+        : absolutePath);
+
+    const name =
+      fileInfo.name ||
+      (relativePath
+        ? relativePath.split("/").filter(Boolean).pop()
+        : absolutePath.split("/").filter(Boolean).pop()) ||
+      "";
+
+    const nodeIdFallback = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const node: TreeNode = {
+      id: absolutePath || relativePath || name || nodeIdFallback,
+      name,
+      path: absolutePath,
+      relativePath,
+      isDirectory: Boolean(fileInfo.isDirectory),
+      size: typeof fileInfo.size === "number" ? fileInfo.size : undefined,
       modifiedTime: fileInfo.modifiedTime,
       children: fileInfo.isDirectory ? [] : undefined,
       isLoaded: !fileInfo.isDirectory,
@@ -264,37 +297,47 @@ export const Files: React.FC = () => {
 
   // ファイル一覧を読み込み
   const loadFiles = useCallback(
-    async (relativePath?: string, isRefresh = false) => {
-      const requestPath = relativePath || "";
+    async (
+      relativePath?: string,
+      isRefresh = false,
+      basePathOverride?: string
+    ) => {
+      const requestPath = relativePath ?? "";
+      const effectiveBasePath = basePathOverride ?? basePath;
 
       setLoading(true);
       setError(null);
 
       try {
-        const response = await getBusinessFiles({
+        const response = await getFiles({
           query: requestPath ? { path: requestPath } : {},
         });
 
-        if (response.data) {
-          const data = response.data as any[];
-
-          const nodes = data.map((fileInfo) => {
-            return convertToTreeNode(fileInfo);
-          });
-
-          if (!relativePath || isRefresh) {
-            // ルートレベルの読み込みまたはリフレッシュの場合のみツリーデータを置き換え
-            setTreeData(nodes);
-            // コンテキストを更新
-            setFileCount(data.length);
-            setContextPath(basePath);
-            setCurrentPath(basePath);
-          }
-
-          return nodes;
-        } else if (response.error) {
+        if (response.error) {
           throw new Error("APIエラー: " + JSON.stringify(response.error));
         }
+
+        const data = Array.isArray(response.data) ? response.data : [];
+
+        const nodes = data.map((fileInfo) =>
+          convertToTreeNode(fileInfo, effectiveBasePath)
+        );
+
+        const shouldReplaceTree = isRefresh || requestPath === "";
+        if (shouldReplaceTree) {
+          // ルート読み込みまたはリフレッシュ時はツリーを置き換え
+          setTreeData(nodes);
+          // コンテキストを更新
+          const absolutePath =
+            requestPath && effectiveBasePath
+              ? `${effectiveBasePath.replace(/\/+$/, "")}/${requestPath}`
+              : effectiveBasePath;
+          setFileCount(data.length);
+          setContextPath(absolutePath);
+          setCurrentPath(requestPath);
+        }
+
+        return nodes;
       } catch (err) {
         setError(err instanceof Error ? err.message : "エラーが発生しました");
         return [];
@@ -311,7 +354,7 @@ export const Files: React.FC = () => {
       setLoading(true);
       const basePathResult = await loadBasePath();
       if (basePathResult) {
-        await loadFiles();
+        await loadFiles("", true, basePathResult);
       }
       setLoading(false);
     };
@@ -403,27 +446,25 @@ export const Files: React.FC = () => {
 
   // パスのブレッドクラム
   const getBreadcrumbs = () => {
-    const currentBasePath = currentPath || basePath;
-    const parts = currentBasePath
-      .replace(basePath, "")
-      .split("/")
-      .filter(Boolean);
-    const breadcrumbs = [
-      { label: basePath.split("/").pop() || "ホーム", path: "" },
+    const parts = currentPath.split("/").filter(Boolean);
+    const baseLabel =
+      basePath.split("/").filter(Boolean).pop() || "ホーム";
+    const breadcrumbs: Array<{ label: string; path: string }> = [
+      { label: baseLabel, path: "" },
     ];
 
     let accumulatedPath = "";
     parts.forEach((part) => {
-      if (accumulatedPath === "") {
-        accumulatedPath = `${basePath}/${part}`;
-      } else {
-        accumulatedPath += `/${part}`;
-      }
+      accumulatedPath = accumulatedPath
+        ? `${accumulatedPath}/${part}`
+        : part;
       breadcrumbs.push({ label: part, path: accumulatedPath });
     });
 
     return breadcrumbs;
   };
+
+  const breadcrumbs = getBreadcrumbs();
 
   return (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -441,13 +482,13 @@ export const Files: React.FC = () => {
         {/* ブレッドクラム */}
         <Box sx={{ px: 2, pb: 1 }}>
           <Breadcrumbs>
-            {getBreadcrumbs().map((crumb, index) => (
+            {breadcrumbs.map((crumb, index) => (
               <Link
                 key={index}
                 component="button"
                 variant="body2"
                 color={
-                  index === getBreadcrumbs().length - 1
+                  index === breadcrumbs.length - 1
                     ? "text.primary"
                     : "inherit"
                 }

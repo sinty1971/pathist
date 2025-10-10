@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -48,21 +49,23 @@ func (k *Koji) GetFolderName() string {
 }
 
 // NewKoji FolderNameからKojiを作成します（高速化版）
-func NewKoji(folderPath string) (*Koji, error) {
+func NewKoji(targetFolder string) (*Koji, error) {
 
-	koji := &Koji{TargetFolder: folderPath}
+	koji := &Koji{TargetFolder: targetFolder}
 
 	// フォルダー名を取得
 	folderName := koji.GetFolderName()
+	fmt.Println("folderName: ", folderName)
 
 	// ファイル名から日付を取得と残りの文字列を取得
 	nameWithoutDate := folderName
-	startDate, err := ParseTimestamp(folderPath, &nameWithoutDate)
+	startDate, err := ParseTimestamp(folderName, &nameWithoutDate)
 	if err != nil {
 		return nil, err
 	}
 
 	// nameWithoutDate の解析を最適化
+	fmt.Println("nameWithoutDate: %s", nameWithoutDate)
 	companyName, locationName := parseKojiName(nameWithoutDate)
 
 	// Kojiインスタンスを作成（構造体リテラルで一度に初期化）

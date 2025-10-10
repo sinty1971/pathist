@@ -24,33 +24,39 @@ import TagIcon from '@mui/icons-material/Tag';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import type { ModelsCompany, ModelsCompanyCategoryInfo } from '@/api/types.gen';
-import { putBusinessCompanies } from '@/api/sdk.gen';
+import type { Company, CompanyCategoryInfo } from '@/api/types.gen';
+import { putCompany } from '@/api/sdk.gen';
 import { getCategoryName, loadCategories } from '@/utils/company';
 import "../styles/business-detail-modal.css";
 
 interface CompanyDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  company: ModelsCompany | null;
-  onCompanyUpdate?: (company: ModelsCompany) => void;
+  company: Company | null;
+  onCompanyUpdate?: (company: Company) => void;
 }
 
 // tags変換ユーティリティ関数
-const tagsToString = (tags?: string[]): string => {
-  return tags ? tags.join(', ') : '';
+const tagsToString = (tags?: Array<string> | null): string => {
+  if (!tags) {
+    return '';
+  }
+  return Array.isArray(tags) ? tags.join(', ') : '';
 };
 
 const stringToTags = (str: string): string[] => {
+  if (!str.trim()) {
+    return [];
+  }
   return str.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 };
 
 // デフォルト会社データ
-const defaultCompanyData: ModelsCompany = {
+const defaultCompanyData: Company = {
   id: '',
   legalName: '',
   shortName: '',
-  category: 0,
+  category: '',
   phone: '',
   email: '',
   website: '',
@@ -59,6 +65,24 @@ const defaultCompanyData: ModelsCompany = {
   tags: []
 };
 
+const normalizeCompany = (data: Company): Company => ({
+  ...data,
+  id: data.id || '',
+  legalName: data.legalName || '',
+  shortName: data.shortName || '',
+  category:
+    data.category !== undefined &&
+    data.category !== null &&
+    String(data.category).trim() !== ''
+      ? String(data.category)
+      : '',
+  phone: data.phone || '',
+  email: data.email || '',
+  website: data.website || '',
+  address: data.address || '',
+  postalCode: data.postalCode || '',
+  tags: Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : [],
+});
 // 会社詳細情報モーダル
 const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({ 
   isOpen, 
@@ -66,13 +90,13 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
   company, 
   onCompanyUpdate 
 }) => {
-  const [formData, setFormData] = useState<ModelsCompany>(defaultCompanyData);
-  const [currentCompany, setCurrentCompany] = useState<ModelsCompany | null>(null);
+  const [formData, setFormData] = useState<Company>(defaultCompanyData);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [categories, setCategories] = useState<ModelsCompanyCategoryInfo[]>([]);
+  const [categories, setCategories] = useState<CompanyCategoryInfo[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   // カテゴリーデータを初期化
@@ -97,21 +121,9 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
   // 会社データが変更されたときにフォームデータを更新
   useEffect(() => {
     if (company) {
-      setCurrentCompany(company);
-      const newFormData: ModelsCompany = {
-        ...company,
-        id: company.id || '',
-        legalName: company.legalName || '',
-        shortName: company.shortName || '',
-        category: company.category || 0,
-        phone: company.phone || '',
-        email: company.email || '',
-        website: company.website || '',
-        address: company.address || '',
-        postalCode: company.postalCode || '',
-        tags: company.tags || []
-      };
-      setFormData(newFormData);
+      const normalized = normalizeCompany(company);
+      setCurrentCompany(normalized);
+      setFormData(normalized);
       setError(null);
       setIsEditing(false);
       setHasChanges(false);
@@ -120,7 +132,7 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: ModelsCompany) => ({
+    setFormData((prev: Company) => ({
       ...prev,
       [name]: value
     }));
@@ -134,19 +146,7 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
       if (confirm('変更を破棄しますか？')) {
         // 元のデータに戻す
         if (company) {
-          setFormData({
-            ...company,
-            id: company.id || '',
-            legalName: company.legalName || '',
-            shortName: company.shortName || '',
-            category: company.category || 0,
-            phone: company.phone || '',
-            email: company.email || '',
-            website: company.website || '',
-            address: company.address || '',
-            postalCode: company.postalCode || '',
-            tags: company.tags || []
-          });
+          setFormData(normalizeCompany(company));
         }
         setIsEditing(false);
         setHasChanges(false);
@@ -169,31 +169,39 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
 
     try {
       // 更新用の会社データを作成
-      const updatedCompany: ModelsCompany = {
-        ...company,
+      const baseCompany = normalizeCompany(company);
+      const updatedCompany: Company = {
+        ...baseCompany,
         ...formData,
+        category:
+          formData.category !== undefined &&
+          formData.category !== null
+            ? String(formData.category)
+            : '',
         tags: formData.tags || []
       };
 
 
       // API呼び出し
-      const response = await putBusinessCompanies({
+      const response = await putCompany({
         body: updatedCompany
       });
 
       if (response.data) {
         // ファイル名に影響するフィールドが変更されたかチェック
+        const normalizedResponse = normalizeCompany(response.data);
         const isIdentityChanged = 
-          company.shortName !== response.data.shortName || 
-          company.category !== response.data.category;
+          baseCompany.shortName !== normalizedResponse.shortName || 
+          baseCompany.category !== normalizedResponse.category;
         
         // 成功時の処理
-        setCurrentCompany(response.data);
+        setCurrentCompany(normalizedResponse);
+        setFormData(normalizedResponse);
         setIsEditing(false);
         setHasChanges(false);
         
         if (onCompanyUpdate) {
-          onCompanyUpdate(response.data);
+          onCompanyUpdate(normalizedResponse);
         }
         
         // 成功メッセージ（一時的に表示）
@@ -215,8 +223,9 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
   };
 
   // タグの配列を表示用に変換
-  const displayTags = currentCompany?.tags ? 
-    (Array.isArray(currentCompany.tags) ? currentCompany.tags : [currentCompany.tags]) : [];
+  const displayTags = currentCompany?.tags && Array.isArray(currentCompany.tags)
+    ? currentCompany.tags
+    : [];
 
   return (
     <Dialog
@@ -399,8 +408,11 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                     name="category"
                     value={formData.category || ''}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-                      setFormData((prev: ModelsCompany) => ({ ...prev, category: value }));
+                      const value = e.target.value;
+                      setFormData((prev: Company) => ({
+                        ...prev,
+                        category: value
+                      }));
                       setHasChanges(true);
                     }}
                     disabled={isLoading || categoriesLoading}
@@ -422,7 +434,7 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                     ) : (
                       categories.map((cat) => (
                         <option key={cat.code} value={cat.code}>
-                          {cat.name}
+                          {cat.label}
                         </option>
                       ))
                     )}
@@ -657,7 +669,7 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                 value={tagsToString(formData.tags)}
                 onChange={(e) => {
                   const tagsArray = stringToTags(e.target.value);
-                  setFormData((prev: ModelsCompany) => ({ ...prev, tags: tagsArray }));
+                  setFormData((prev: Company) => ({ ...prev, tags: tagsArray }));
                   setHasChanges(true);
                 }}
                 disabled={isLoading || !isEditing}
@@ -690,7 +702,7 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
                 value={tagsToString(formData.tags)}
                 onChange={(e) => {
                   const tagsArray = stringToTags(e.target.value);
-                  setFormData((prev: ModelsCompany) => ({ ...prev, tags: tagsArray }));
+                  setFormData((prev: Company) => ({ ...prev, tags: tagsArray }));
                   setHasChanges(true);
                 }}
                 placeholder="カンマ区切りで入力"

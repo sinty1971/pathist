@@ -2,45 +2,56 @@
  * 会社関連のユーティリティ関数
  */
 
-import { getBusinessCompaniesCategories } from "@/api/sdk.gen";
-import type { ModelsCompanyCategoryInfo } from "@/api/types.gen";
+import { getCompanyCategories } from "@/api/sdk.gen";
+import type { CompanyCategoryInfo } from "@/api/types.gen";
 
 /**
  * 業種カテゴリーのデフォルトデータ（フォールバック用）
  */
-const defaultCategories: ModelsCompanyCategoryInfo[] = [
-  { code: 0, name: "特別" },
-  { code: 1, name: "下請会社" },
-  { code: 2, name: "築炉会社" },
-  { code: 3, name: "一人親方" },
-  { code: 4, name: "元請け" },
-  { code: 5, name: "リース会社" },
-  { code: 6, name: "販売会社" },
-  { code: 7, name: "販売会社" },
-  { code: 8, name: "求人会社" },
-  { code: 9, name: "その他" }
+const defaultCategories: CompanyCategoryInfo[] = [
+  { code: "0", label: "特別" },
+  { code: "1", label: "下請会社" },
+  { code: "2", label: "築炉会社" },
+  { code: "3", label: "一人親方" },
+  { code: "4", label: "元請け" },
+  { code: "5", label: "リース会社" },
+  { code: "6", label: "販売会社" },
+  { code: "7", label: "販売会社" },
+  { code: "8", label: "求人会社" },
+  { code: "9", label: "その他" }
 ];
 
 /**
  * カテゴリーキャッシュ
  */
-let cachedCategories: ModelsCompanyCategoryInfo[] | null = null;
+let cachedCategories: CompanyCategoryInfo[] | null = null;
 
 /**
  * APIからカテゴリー一覧を取得する
  */
-export async function loadCategories(forceRefresh: boolean = false): Promise<ModelsCompanyCategoryInfo[]> {
+export async function loadCategories(forceRefresh: boolean = false): Promise<CompanyCategoryInfo[]> {
   // キャッシュが存在し、強制更新でない場合はキャッシュを返す
   if (!forceRefresh && cachedCategories) {
     return cachedCategories;
   }
 
   try {
-    const response = await getBusinessCompaniesCategories();
+    const response = await getCompanyCategories();
     if (response.data) {
-      // APIレスポンスは ModelsCompanyCategoryInfo[] 形式
-      cachedCategories = response.data;
-      return response.data;
+      // APIレスポンスは CompanyCategoryInfo[] 形式
+      cachedCategories = response.data
+        .filter(
+          (cat): cat is CompanyCategoryInfo =>
+            cat !== null &&
+            cat !== undefined &&
+            typeof cat.code !== "undefined" &&
+            cat.code !== null
+        )
+        .map((cat) => ({
+          code: String(cat.code),
+          label: cat.label ?? "業種未設定",
+        }));
+      return cachedCategories;
     }
   } catch (error) {
     console.warn("APIから会社カテゴリーの取得に失敗しました。デフォルトカテゴリーを使用します:", error);
@@ -56,16 +67,15 @@ export async function loadCategories(forceRefresh: boolean = false): Promise<Mod
  * @param category カテゴリー番号
  * @returns 業種名
  */
-export function getCategoryName(category: number | undefined | null): string {
-  // categoryが0の場合も正しく処理されるようにする
+export function getCategoryName(category: string | number | undefined | null): string {
   if (category === undefined || category === null) {
     return "業種未設定";
   }
-  
+  const categoryKey = String(category);
   // キャッシュされたカテゴリーを優先して使用
   const categories = cachedCategories || defaultCategories;
-  const found = categories.find(cat => cat.code === category);
-  return found?.name || "業種未設定";
+  const found = categories.find(cat => String(cat.code) === categoryKey);
+  return found?.label || "業種未設定";
 }
 
 /**
@@ -73,7 +83,7 @@ export function getCategoryName(category: number | undefined | null): string {
  * @param category カテゴリー番号
  * @returns 業種名
  */
-export async function getCategoryNameFromAPI(category: number | undefined | null): Promise<string> {
+export async function getCategoryNameFromAPI(category: string | number | undefined | null): Promise<string> {
   // categoryが0の場合も正しく処理されるようにする
   if (category === undefined || category === null) {
     return "業種未設定";
@@ -82,12 +92,14 @@ export async function getCategoryNameFromAPI(category: number | undefined | null
   try {
     // APIから最新のカテゴリーを取得
     const categories = await loadCategories();
-    const found = categories.find(cat => cat.code === category);
-    return found?.name || "業種未設定";
+    const categoryKey = String(category);
+    const found = categories.find(cat => String(cat.code) === categoryKey);
+    return found?.label || "業種未設定";
   } catch (error) {
     // APIが失敗した場合はデフォルトカテゴリーを使用
-    const found = defaultCategories.find(cat => cat.code === category);
-    return found?.name || "業種未設定";
+    const categoryKey = String(category);
+    const found = defaultCategories.find(cat => String(cat.code) === categoryKey);
+    return found?.label || "業種未設定";
   }
 }
 

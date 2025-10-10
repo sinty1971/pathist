@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
-import type { ModelsCompany } from "@/api/types.gen";
-import { getBusinessCompanies } from "@/api/sdk.gen";
+import type { Company } from "@/api/types.gen";
+import { getCompanies } from "@/api/sdk.gen";
 import CompanyDetailModal from "@/components/CompanyDetailModal";
 import {
   getCategoryName,
@@ -12,20 +12,22 @@ import {
 import "@/styles/business-entity-list.css";
 
 const Companies = () => {
-  const [companies, setCompanies] = useState<ModelsCompany[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<ModelsCompany | null>(
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(
     null
   );
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<Set<number>>(
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
     new Set()
   );
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
-  const [allCategories, setAllCategories] = useState<Array<{value: number; label: string}>>([]);
+  const [allCategories, setAllCategories] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
 
   // 会社データを読み込み
   const loadCompanies = async () => {
@@ -35,11 +37,20 @@ const Companies = () => {
       setError(null);
 
       // 会社データを取得
-      const response = await getBusinessCompanies();
+      const response = await getCompanies();
 
       // 取得したデータをセット
       if (response.data) {
-        setCompanies(response.data);
+        const normalizedCompanies = response.data.map((company) => ({
+          ...company,
+          category:
+            company.category !== undefined &&
+            company.category !== null &&
+            String(company.category).trim() !== ""
+              ? String(company.category)
+              : "",
+        }));
+        setCompanies(normalizedCompanies);
       } else {
         // データがない場合は空配列をセット
         setCompanies([]);
@@ -63,10 +74,19 @@ const Companies = () => {
       await initializeCategories();
       // カテゴリーデータを取得
       const categories = await loadCategories();
-      setAllCategories(categories.map(cat => ({ 
-        value: cat.code!, 
-        label: cat.name! 
-      })));
+      setAllCategories(
+        categories
+          .filter(
+            (cat) =>
+              cat.code !== undefined &&
+              cat.code !== null &&
+              String(cat.code).trim() !== ""
+          )
+          .map((cat) => ({
+            value: String(cat.code),
+            label: cat.label ?? "業種未設定",
+          }))
+      );
       // 会社データを読み込み
       await loadCompanies();
     };
@@ -95,13 +115,19 @@ const Companies = () => {
   // フィルタリングされた会社リスト
   const filteredCompanies = companies.filter((company) => {
     if (selectedCategories.size === 0) return true; // 何も選択されていない場合は全て表示
+    const categoryKey =
+      company.category !== undefined &&
+      company.category !== null &&
+      String(company.category).trim() !== ""
+        ? String(company.category)
+        : null;
     return (
-      company.category !== undefined && selectedCategories.has(company.category)
+      categoryKey !== null && selectedCategories.has(categoryKey)
     );
   });
 
   // カテゴリーの選択/解除
-  const toggleCategory = (category: number) => {
+  const toggleCategory = (category: string) => {
     const newSelected = new Set(selectedCategories);
     if (newSelected.has(category)) {
       newSelected.delete(category);
@@ -113,7 +139,10 @@ const Companies = () => {
 
   // 全選択/全解除
   const toggleAllCategories = () => {
-    if (selectedCategories.size === allCategories.length) {
+    if (
+      allCategories.length > 0 &&
+      selectedCategories.size === allCategories.length
+    ) {
       setSelectedCategories(new Set()); // 全解除
     } else {
       setSelectedCategories(new Set(allCategories.map((c) => c.value))); // 全選択
@@ -121,7 +150,7 @@ const Companies = () => {
   };
 
   // 会社クリック処理
-  const handleCompanyClick = (company: ModelsCompany) => {
+  const handleCompanyClick = (company: Company) => {
     setSelectedCompany(company);
     setIsDetailModalOpen(true);
   };
@@ -136,11 +165,20 @@ const Companies = () => {
   };
 
   // 会社データを更新
-  const handleCompanyUpdate = (updatedCompany: ModelsCompany) => {
-    setSelectedCompany(updatedCompany);
+  const handleCompanyUpdate = (updatedCompany: Company) => {
+    const normalized = {
+      ...updatedCompany,
+      category:
+        updatedCompany.category !== undefined &&
+        updatedCompany.category !== null &&
+        String(updatedCompany.category).trim() !== ""
+          ? String(updatedCompany.category)
+          : "",
+    };
+    setSelectedCompany(normalized);
     setCompanies((prevCompanies) =>
       prevCompanies.map((c) =>
-        c.id === updatedCompany.id ? updatedCompany : c
+        c.id === normalized.id ? normalized : c
       )
     );
   };
@@ -351,7 +389,20 @@ const Companies = () => {
                     </div>
 
                     <div className="business-entity-item-info-company">
-                      {allCategories.find(cat => cat.value === company.category)?.label || getCategoryName(company.category)}
+                      {(() => {
+                        const matched = allCategories.find(
+                          (cat) => cat.value === String(company.category)
+                        );
+                        if (matched) {
+                          return matched.label;
+                        }
+                        const numericCategory = Number(company.category);
+                        return getCategoryName(
+                          Number.isNaN(numericCategory)
+                            ? undefined
+                            : numericCategory
+                        );
+                      })()}
                     </div>
 
                     <div className="business-entity-item-info-spacer"></div>

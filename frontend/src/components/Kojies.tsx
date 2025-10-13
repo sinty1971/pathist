@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getBusinessKojies, putBusinessKojies } from "@/api/sdk.gen";
 import type { ModelsKoji } from "@/api/types.gen";
 import KojiDetailModal from "./KojiDetailModal";
 import { useKoji } from "@/contexts/KojiContext";
+import { kojiConnectClient } from "@/services/kojiConnect";
 import "../styles/business-entity-list.css";
 
 const Kojies = () => {
@@ -27,18 +27,10 @@ const Kojies = () => {
       setError(null);
 
       console.log("Loading kojies..."); // デバッグ用
-      const response = await getBusinessKojies();
-      console.log("Kojies response:", response); // デバッグ用
-
-      if (response.data) {
-        console.log("Kojies data:", response.data); // デバッグ用
-        setKojies(response.data);
-        setKojiCount(response.data.length);
-      } else {
-        console.log("No kojies data"); // デバッグ用
-        setKojies([]);
-        setKojiCount(0);
-      }
+      const list = await kojiConnectClient.list();
+      console.log("Kojies data:", list); // デバッグ用
+      setKojies(list);
+      setKojiCount(list.length);
     } catch (err) {
       console.error("Error loading kouji entries:", err);
       setError(
@@ -65,21 +57,11 @@ const Kojies = () => {
   const updateKoji = async (updatedKoji: ModelsKoji): Promise<ModelsKoji> => {
     try {
       // 生成されたSDKを使用してバックエンドに更新リクエストを送信
-      const response = await putBusinessKojies({
-        body: updatedKoji,
-      });
-
-      if (response.data) {
-        // 工事一覧を更新
-        setKojies((prevKojies) =>
-          prevKojies.map((k) => (k.id === response.data!.id ? response.data! : k))
-        );
-
-        // 更新された工事データを返す
-        return response.data;
-      } else {
-        throw new Error("更新に失敗しました");
-      }
+      const saved = await kojiConnectClient.update(updatedKoji);
+      setKojies((prevKojies) =>
+        prevKojies.map((k) => (k.id === saved.id ? saved : k))
+      );
+      return saved;
     } catch (err) {
       console.error("Error updating koji:", err);
       throw err; // エラーをモーダルに伝播

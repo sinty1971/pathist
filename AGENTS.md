@@ -4,11 +4,13 @@
 - 極力日本語出力でお願いします。
 
 ## プロジェクト構成とモジュール
+
 - `backend/` は Go Fiber ベースの API で、`cmd/main.go` がエントリポイント、`internal/{endpoints,handlers,models,routes,services,utils}` にドメインロジックを集約しています。`docs/` は Swagger 生成物、`scripts/` はユーティリティスクリプト、証明書関連は `cert.pem` と `key.pem` を参照してください。
 - `frontend/` は React Router v7 + TypeScript 構成です。画面ルートは `app/routes/`、UI コンポーネントは `app/components/`、API 型は `app/api/` に生成され、スタイル共通化は `app/styles/` で管理します。
 - `schemas/` には OpenAPI 3.1 定義があり、バックエンド更新後はここも更新します。横断的な開発コマンドはリポジトリ直下の `justfile` にまとまっています。
 
 ## ビルド・テスト・開発コマンド
+
 - `just backend` / `just backend-http2` で API サーバーを起動します。カスタムポートは `just backend-port <port>` を使用してください。
 - `just frontend` で開発サーバー、`just frontend-build` で本番ビルド、`just frontend-preview` で生成物の確認ができます。
 - バックエンドテストは `go test ./...`、ベンチマークは `go test -bench . ./...`。API 仕様と型定義は `just generate-api` と `just generate-types`、ルート図は `just generate-routes` で再生成します。

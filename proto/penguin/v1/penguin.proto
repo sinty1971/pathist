@@ -1,0 +1,145 @@
+edition = "2023";
+
+package penguin.v1;
+
+import "google/protobuf/go_features.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "penguin-backend/gen/penguin/v1;penguinv1";
+option features.field_presence = IMPLICIT;
+option features.(pb.go).api_level = API_OPAQUE;
+
+message Koji {
+  string id = 1;
+  string status = 2;
+  string target_folder = 3;
+  google.protobuf.Timestamp start_date = 4;
+  string company_name = 5;
+  string location_name = 6;
+  google.protobuf.Timestamp end_date = 7;
+  string description = 8;
+  repeated string tags = 9;
+  repeated FileInfo required_files = 10;
+}
+
+message FileInfo {
+  string target_path = 1;
+  string standard_path = 2;
+  bool is_directory = 3;
+  int64 size = 4;
+  google.protobuf.Timestamp modified_time = 5;
+}
+
+message Company {
+  string id = 1;
+  string target_folder = 2;
+  string short_name = 3;
+  string category = 4;
+  string legal_name = 5;
+  string postal_code = 6;
+  string address = 7;
+  string phone = 8;
+  string email = 9;
+  string website = 10;
+  repeated string tags = 11;
+  repeated FileInfo required_files = 12;
+}
+
+message CompanyCategoryInfo {
+  string code = 1;
+  string label = 2;
+}
+
+message ListKojiesRequest {
+  string filter = 1;
+}
+
+message ListKojiesResponse {
+  repeated Koji kojies = 1;
+}
+
+message GetKojiRequest {
+  string folder_name = 1;
+}
+
+message GetKojiResponse {
+  Koji koji = 1;
+}
+
+message UpdateKojiRequest {
+  Koji koji = 1;
+}
+
+message UpdateKojiResponse {
+  Koji koji = 1;
+}
+
+message UpdateKojiStandardFilesRequest {
+  Koji koji = 1;
+  repeated string currents = 2;
+}
+
+message UpdateKojiStandardFilesResponse {
+  Koji koji = 1;
+}
+
+message ListCompaniesRequest {}
+
+message ListCompaniesResponse {
+  repeated Company companies = 1;
+}
+
+message GetCompanyRequest {
+  string id = 1;
+}
+
+message GetCompanyResponse {
+  Company company = 1;
+}
+
+message UpdateCompanyRequest {
+  Company company = 1;
+}
+
+message UpdateCompanyResponse {
+  Company company = 1;
+}
+
+message ListCompanyCategoriesRequest {}
+
+message ListCompanyCategoriesResponse {
+  repeated CompanyCategoryInfo categories = 1;
+}
+
+message ListFilesRequest {
+  string path = 1;
+}
+
+message ListFilesResponse {
+  repeated FileInfo files = 1;
+}
+
+message GetFileBasePathRequest {}
+
+message GetFileBasePathResponse {
+  string base_path = 1;
+}
+
+service KojiService {
+  rpc ListKojies(ListKojiesRequest) returns (ListKojiesResponse);
+  rpc GetKoji(GetKojiRequest) returns (GetKojiResponse);
+  rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
+  rpc UpdateKojiStandardFiles(UpdateKojiStandardFilesRequest) returns (UpdateKojiStandardFilesResponse);
+}
+
+service CompanyService {
+  rpc ListCompanies(ListCompaniesRequest) returns (ListCompaniesResponse);
+  rpc GetCompany(GetCompanyRequest) returns (GetCompanyResponse);
+  rpc UpdateCompany(UpdateCompanyRequest) returns (UpdateCompanyResponse);
+  rpc ListCompanyCategories(ListCompanyCategoriesRequest) returns (ListCompanyCategoriesResponse);
+}
+
+service FileService {
+  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+  rpc GetFileBasePath(GetFileBasePathRequest) returns (GetFileBasePathResponse);
+}

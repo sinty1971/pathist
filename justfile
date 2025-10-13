@@ -4,6 +4,14 @@
 backend:
     cd ./backend && go run cmd/main.go
 
+# Start the gRPC (Connect) server over h2c
+backend-grpc:
+    cd ./backend && go run cmd/grpc/main.go
+
+# Start the gRPC (Connect) server with HTTPS
+backend-grpc-tls:
+    cd ./backend && go run cmd/grpc/main.go -enable-tls
+
 # Start the backend server with HTTP/2 + HTTPS
 backend-http2:
     cd ./backend && go run cmd/main.go -http2
@@ -38,6 +46,14 @@ backend-update:
 generate-api:
     cd ./backend && go run cmd/openapi/main.go
     @echo "✅ OpenAPI 3.1 documentation generated under schemas/"
+
+# Generate gRPC stubs for Koji service
+generate-grpc:
+    cd ./backend && mkdir -p .gocache && GOCACHE=$(pwd)/.gocache go generate ./tools/...
+
+# Generate Connect-Web stubs for the frontend
+frontend-generate-grpc:
+    cd ./frontend && PATH="$$(pwd)/node_modules/.bin:$$PATH" protoc --experimental_editions --proto_path=../proto --es_out=target=ts,import_extension=ts:./src/gen ../proto/penguin/v1/penguin.proto
 
 # Install frontend dependencies  
 frontend-deps:

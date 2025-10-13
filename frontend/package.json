@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "generate-api": "npx @hey-api/openapi-ts -i ../schemas/openapi.yaml -o ./src/api"
+    "generate-api": "npx @hey-api/openapi-ts -i ../schemas/openapi.yaml -o ./src/api",
+    "generate-grpc": "PATH=$PWD/node_modules/.bin:$PATH protoc --experimental_editions --proto_path=../proto --es_out=target=ts,import_extension=ts:./src/gen ../proto/penguin/v1/penguin.proto"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -19,7 +20,10 @@
     "@mui/x-tree-view": "8.14.0",
     "@tailwindcss/postcss": "4.1.14",
     "cally": "0.8.0",
-    "daisyui": "5.1.30",
+    "@bufbuild/protobuf": "2.9.0",
+    "@connectrpc/connect": "2.1.0",
+    "@connectrpc/connect-web": "2.1.0",
+    "daisyui": "5.2.3",
     "date-fns": "4.1.0",
     "isbot": "5.1.31",
     "next": "15.5.4",
@@ -29,6 +33,7 @@
   "devDependencies": {
     "@eslint/js": "9.37.0",
     "@hey-api/openapi-ts": "0.85.1",
+    "@bufbuild/protoc-gen-es": "2.9.0",
     "@types/node": "24.7.1",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.1",

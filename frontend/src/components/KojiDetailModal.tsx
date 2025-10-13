@@ -19,7 +19,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import type { ModelsKoji, ModelsTimestamp, ModelsManagedFile } from '@/api/types.gen';
-import { putBusinessKojiesAssistFiles, getKojiesByPath } from '@/api/sdk.gen';
+import { kojiConnectClient } from '@/services/kojiConnect';
 import { CalendarPicker } from './CalendarPicker';
 
 interface KojiDetailModalProps {
@@ -365,7 +365,6 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
     setError(null);
 
     try {
-      // 現在のファイル名のリストを取得
       const currentFiles = currentKoji.managed_files
         .filter(file => file.current && file.recommended && file.current !== file.recommended)
         .map(file => file.current as string);
@@ -375,75 +374,26 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
         return;
       }
 
-      // API呼び出し
-      const response = await putBusinessKojiesAssistFiles({
-        body: {
-          koji: currentKoji,
-          currents: currentFiles
-        }
-      });
+      const updatedKoji = await kojiConnectClient.updateStandardFiles(currentKoji, currentFiles);
 
-      if (response.data) {
-        // APIレスポンスが更新された工事データ（または文字列配列）を含む
-        if (typeof response.data === 'object' && response.data.id) {
-          // 工事データが返された場合
-          const updatedKoji = response.data;
-          
-          // ローカルステートも更新
-          setCurrentKoji(updatedKoji);
-          
-          // 工事データを更新
-          if (onKojiUpdate) {
-            onKojiUpdate(updatedKoji);
-          }
-          
-          // フォームデータも更新
-          const startDate = extractDateString(updatedKoji.startDate);
-          const endDate = extractDateString(updatedKoji.endDate);
-          
-          setFormData({
-            id: updatedKoji.id || '',
-            companyName: updatedKoji.companyName || '',
-            locationName: updatedKoji.locationName || '',
-            description: updatedKoji.description || '',
-            tags: Array.isArray(updatedKoji.tags) ? updatedKoji.tags.join(', ') : (updatedKoji.tags || ''),
-            startDate: startDate,
-            endDate: endDate
-          });
-        } else {
-          // 文字列配列が返された場合（後方互換性）
-          // 工事データを再取得
-          if (currentKoji.name) {
-            const updatedKojiResponse = await getKojiesByPath({
-              query: {
-                path: currentKoji.name
-              }
-            });
-            
-            if (updatedKojiResponse.data && onKojiUpdate) {
-              // ローカルステートも更新
-              setCurrentKoji(updatedKojiResponse.data);
-              // 工事データを更新
-              onKojiUpdate(updatedKojiResponse.data);
-              // フォームデータも更新
-              const startDate = extractDateString(updatedKojiResponse.data.startDate);
-              const endDate = extractDateString(updatedKojiResponse.data.endDate);
-              
-              setFormData({
-                id: updatedKojiResponse.data.id || '',
-                companyName: updatedKojiResponse.data.companyName || '',
-                locationName: updatedKojiResponse.data.locationName || '',
-                description: updatedKojiResponse.data.description || '',
-                tags: Array.isArray(updatedKojiResponse.data.tags) ? updatedKojiResponse.data.tags.join(', ') : (updatedKojiResponse.data.tags || ''),
-                startDate: startDate,
-                endDate: endDate
-              });
-            }
-          }
-        }
-      } else if (response.error) {
-        throw new Error('ファイル名の変更に失敗しました');
+      setCurrentKoji(updatedKoji);
+
+      if (onKojiUpdate) {
+        onKojiUpdate(updatedKoji);
       }
+
+      const startDate = extractDateString(updatedKoji.startDate);
+      const endDate = extractDateString(updatedKoji.endDate);
+
+      setFormData({
+        id: updatedKoji.id || '',
+        companyName: updatedKoji.companyName || '',
+        locationName: updatedKoji.locationName || '',
+        description: updatedKoji.description || '',
+        tags: Array.isArray(updatedKoji.tags) ? updatedKoji.tags.join(', ') : (updatedKoji.tags || ''),
+        startDate,
+        endDate
+      });
     } catch (err) {
       console.error('Error renaming files:', err);
       setError(err instanceof Error ? err.message : 'ファイル名の変更に失敗しました');
@@ -451,7 +401,6 @@ const KojiDetailModal: React.FC<KojiDetailModalProps> = ({ isOpen, onClose, koji
       setIsRenaming(false);
     }
   };
-
 
   return (
     <Dialog

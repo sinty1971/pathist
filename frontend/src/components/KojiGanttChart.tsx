@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { getBusinessKojies, putBusinessKojies } from '@/api/sdk.gen';
 import type { ModelsKoji } from '@/api/types.gen';
 import KojiDetailModal from './KojiDetailModal';
+import { kojiConnectClient } from '@/services/kojiConnect';
 import '../styles/koji-gantt.css';
 import '../styles/utilities.css';
 
@@ -29,17 +29,28 @@ const KojiGanttChart = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const MIN_ITEMS = 5;
-  const DAY_WIDTH = 10; // ピクセル/日
-  const ROW_HEIGHT = 40; // ピクセル
+const DAY_WIDTH = 10; // ピクセル/日
+const ROW_HEIGHT = 40; // ピクセル
+
+const getKojiKey = (koji: ModelsKoji | null | undefined): string => {
+  if (!koji) return "";
+  const candidate = (koji as Record<string, unknown>).path;
+  if (typeof candidate === "string" && candidate.length > 0) {
+    return candidate;
+  }
+  if (koji.targetFolder && koji.targetFolder.length > 0) {
+    return koji.targetFolder;
+  }
+  return koji.id ?? "";
+};
 
   // 工事データを読み込み
   const loadKojies = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getBusinessKojies();
-      const kojies = response.data || [];
-      setKojies(kojies);
+      const list = await kojiConnectClient.list();
+      setKojies(list);
     } catch (err) {
       console.error('Error loading kojies:', err);
       setError(`工事データの読み込みに失敗しました: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -381,22 +392,11 @@ const KojiGanttChart = () => {
   // 工事更新処理（APIコール）
   const updateKoji = async (updatedKoji: ModelsKoji): Promise<ModelsKoji> => {
     try {
-      // 生成されたSDKを使用してバックエンドに更新リクエストを送信
-      const response = await putBusinessKojies({
-        body: updatedKoji,
-      });
-
-      if (response.data) {
-        // 工事一覧を更新
-        setKojies((prevKojies) =>
-          prevKojies.map((k) => (k.path === response.data!.path ? response.data! : k))
-        );
-
-        // 更新された工事データを返す
-        return response.data;
-      } else {
-        throw new Error("更新に失敗しました");
-      }
+      const saved = await kojiConnectClient.update(updatedKoji);
+      setKojies((prevKojies) =>
+        prevKojies.map((k) => (getKojiKey(k) === getKojiKey(saved) ? saved : k))
+      );
+      return saved;
     } catch (err) {
       console.error("Error updating koji:", err);
       throw err;
@@ -409,14 +409,14 @@ const KojiGanttChart = () => {
     setSelectedKoji(updatedKoji);
     
     // ファイル名が変更された可能性がある場合、モーダルを閉じた後に再読み込みをする
-    if (selectedKoji && selectedKoji.path !== updatedKoji.path) {
+    if (getKojiKey(selectedKoji) !== getKojiKey(updatedKoji)) {
       setShouldReloadOnClose(true);
     }
 
     // 工事一覧を更新
     setKojies((prevKojies) => {
       // 既存の工事を探す（pathで照合）
-      const existingIndex = prevKojies.findIndex(k => k.path === updatedKoji.path);
+      const existingIndex = prevKojies.findIndex(k => getKojiKey(k) === getKojiKey(updatedKoji));
       
       if (existingIndex !== -1) {
         // 既存の工事を更新
@@ -427,7 +427,7 @@ const KojiGanttChart = () => {
         // pathが変わった場合（フォルダー名変更時など）
         // 選択中の工事のpathで元の工事を探す
         const oldKojiIndex = prevKojies.findIndex(k => 
-          selectedKoji && k.path === selectedKoji.path
+          getKojiKey(k) === getKojiKey(selectedKoji)
         );
         
         if (oldKojiIndex !== -1) {
@@ -449,7 +449,7 @@ const KojiGanttChart = () => {
             if (dateA > 0 && dateB > 0) return dateA - dateB;
             
             // 両方開始日がない場合はフォルダー名で昇順
-            return (a.name || '').localeCompare(b.name || '');
+            return getKojiKey(a).localeCompare(getKojiKey(b));
           });
         } else {
           // 新規追加

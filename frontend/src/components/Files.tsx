@@ -22,9 +22,9 @@ import {
   ExpandMore,
   ChevronRight,
 } from "@mui/icons-material";
-import { getFiles, getFileBasePath } from "@/api/sdk.gen";
 import { FileDetailModal } from "./FileDetailModal";
 import { useFileInfo } from "@/contexts/FileInfoContext";
+import { fileConnectClient } from "@/services/fileConnect";
 
 // ユーティリティ関数群（コンポーネント外で定義）
 
@@ -229,15 +229,14 @@ export const Files: React.FC = () => {
   // ベースパスを取得
   const loadBasePath = useCallback(async () => {
     try {
-      const response = await getFileBasePath();
-      const resolvedBasePath = response.data?.basePath;
+      const resolvedBasePath = await fileConnectClient.getBasePath();
       if (resolvedBasePath && resolvedBasePath.trim() !== "") {
         setBasePath(resolvedBasePath);
         setBasePathError(false);
         return resolvedBasePath;
       }
       throw new Error("ベースパスが取得できませんでした");
-    } catch (err) {
+    } catch (_err) {
       setBasePathError(true);
       setError("基準となるパスを取得できないため、一覧を表示できません");
       return null;
@@ -309,15 +308,7 @@ export const Files: React.FC = () => {
       setError(null);
 
       try {
-        const response = await getFiles({
-          query: requestPath ? { path: requestPath } : {},
-        });
-
-        if (response.error) {
-          throw new Error("APIエラー: " + JSON.stringify(response.error));
-        }
-
-        const data = Array.isArray(response.data) ? response.data : [];
+        const data = await fileConnectClient.list(requestPath);
 
         const nodes = data.map((fileInfo) =>
           convertToTreeNode(fileInfo, effectiveBasePath)

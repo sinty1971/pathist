@@ -24,8 +24,8 @@ import TagIcon from '@mui/icons-material/Tag';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import type { Company, CompanyCategoryInfo } from '@/api/types.gen';
-import { putCompany } from '@/api/sdk.gen';
+import type { Company, CompanyCategoryInfo } from '@/types/models';
+import { companyConnectClient } from '@/services/companyConnect';
 import { getCategoryName, loadCategories } from '@/utils/company';
 import "../styles/business-detail-modal.css";
 
@@ -55,6 +55,7 @@ const stringToTags = (str: string): string[] => {
 const defaultCompanyData: Company = {
   id: '',
   folderName: '',
+  targetFolder: '',
   legalName: '',
   shortName: '',
   category: '',
@@ -67,24 +68,36 @@ const defaultCompanyData: Company = {
   requiredFiles: [],
 };
 
-const normalizeCompany = (data: Company): Company => ({
-  ...data,
-  id: data.id || '',
-  legalName: data.legalName || '',
-  shortName: data.shortName || '',
-  category:
-    data.category !== undefined &&
-    data.category !== null &&
-    String(data.category).trim() !== ''
-      ? String(data.category)
-      : '',
-  phone: data.phone || '',
-  email: data.email || '',
-  website: data.website || '',
-  address: data.address || '',
-  postalCode: data.postalCode || '',
-  tags: Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : [],
-});
+const normalizeCompany = (data: Company): Company => {
+  const targetFolder = data.targetFolder || "";
+  const folderName =
+    data.folderName ||
+    (targetFolder
+      ? targetFolder.split(/[/\\]/).filter(Boolean).pop() || ""
+      : "");
+
+  return {
+    ...data,
+    id: data.id || "",
+    targetFolder,
+    folderName,
+    legalName: data.legalName || "",
+    shortName: data.shortName || "",
+    category:
+      data.category !== undefined &&
+      data.category !== null &&
+      String(data.category).trim() !== ""
+        ? String(data.category)
+        : "",
+    phone: data.phone || "",
+    email: data.email || "",
+    website: data.website || "",
+    address: data.address || "",
+    postalCode: data.postalCode || "",
+    tags: Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : [],
+    requiredFiles: Array.isArray(data.requiredFiles) ? data.requiredFiles : [],
+  };
+};
 // 会社詳細情報モーダル
 const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({ 
   isOpen, 
@@ -185,36 +198,30 @@ const CompanyDetailModal: React.FC<CompanyDetailModalProps> = ({
 
 
       // API呼び出し
-      const response = await putCompany({
-        body: updatedCompany
-      });
+      const response = await companyConnectClient.update(updatedCompany);
 
-      if (response.data) {
-        // ファイル名に影響するフィールドが変更されたかチェック
-        const normalizedResponse = normalizeCompany(response.data);
-        const isIdentityChanged = 
-          baseCompany.shortName !== normalizedResponse.shortName || 
-          baseCompany.category !== normalizedResponse.category;
-        
-        // 成功時の処理
-        setCurrentCompany(normalizedResponse);
-        setFormData(normalizedResponse);
-        setIsEditing(false);
-        setHasChanges(false);
-        
-        if (onCompanyUpdate) {
-          onCompanyUpdate(normalizedResponse);
-        }
-        
-        // 成功メッセージ（一時的に表示）
-        setError(null);
-        
-        // ファイル名が変更された場合はモーダルを閉じる
-        if (isIdentityChanged) {
-          onClose();
-        }
-      } else {
-        throw new Error('更新レスポンスが無効です');
+      // ファイル名に影響するフィールドが変更されたかチェック
+      const normalizedResponse = normalizeCompany(response);
+      const isIdentityChanged = 
+        baseCompany.shortName !== normalizedResponse.shortName || 
+        baseCompany.category !== normalizedResponse.category;
+      
+      // 成功時の処理
+      setCurrentCompany(normalizedResponse);
+      setFormData(normalizedResponse);
+      setIsEditing(false);
+      setHasChanges(false);
+      
+      if (onCompanyUpdate) {
+        onCompanyUpdate(normalizedResponse);
+      }
+      
+      // 成功メッセージ（一時的に表示）
+      setError(null);
+      
+      // ファイル名が変更された場合はモーダルを閉じる
+      if (isIdentityChanged) {
+        onClose();
       }
     } catch (err) {
       console.error('Error updating company:', err);

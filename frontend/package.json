@@ -8,7 +8,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "generate-api": "npx @hey-api/openapi-ts -i ../schemas/openapi.yaml -o ./src/api",
     "generate-grpc": "PATH=$PWD/node_modules/.bin:$PATH protoc --experimental_editions --proto_path=../proto --es_out=target=ts,import_extension=ts:./src/gen ../proto/penguin/v1/penguin.proto"
   },
   "dependencies": {
@@ -23,37 +22,27 @@
     "@bufbuild/protobuf": "2.9.0",
     "@connectrpc/connect": "2.1.0",
     "@connectrpc/connect-web": "2.1.0",
-    "daisyui": "5.2.3",
+    "daisyui": "5.3.1",
     "date-fns": "4.1.0",
     "isbot": "5.1.31",
-    "next": "15.5.4",
+    "next": "15.5.5",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",
-    "@hey-api/openapi-ts": "0.85.1",
     "@bufbuild/protoc-gen-es": "2.9.0",
-    "@types/node": "24.7.1",
+    "@types/node": "24.7.2",
     "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.1",
+    "@types/react-dom": "19.2.2",
     "autoprefixer": "10.4.21",
     "eslint": "9.37.0",
-    "eslint-config-next": "15.5.4",
-    "eslint-plugin-react-hooks": "7.0.0",
+    "eslint-config-next": "15.5.5",
+    "eslint-plugin-react-hooks": "5.2.0",
     "globals": "16.4.0",
-    "openapi-typescript": "7.9.1",
     "postcss": "8.5.6",
     "tailwindcss": "4.1.14",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.46.0"
-  },
-  "overrides": {
-    "@typescript-eslint/eslint-plugin": "8.46.0",
-    "@typescript-eslint/parser": "8.46.0",
-    "@typescript-eslint/scope-manager": "8.46.0",
-    "@typescript-eslint/type-utils": "8.46.0",
-    "@typescript-eslint/utils": "8.46.0",
-    "@typescript-eslint/visitor-keys": "8.46.0"
+    "typescript-eslint": "8.46.1"
   }
 }

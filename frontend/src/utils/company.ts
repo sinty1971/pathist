@@ -2,8 +2,8 @@
  * 会社関連のユーティリティ関数
  */
 
-import { getCompanyCategories } from "@/api/sdk.gen";
-import type { CompanyCategoryInfo } from "@/api/types.gen";
+import { companyConnectClient } from "@/services/companyConnect";
+import type { CompanyCategoryInfo } from "@/types/models";
 
 /**
  * 業種カテゴリーのデフォルトデータ（フォールバック用）
@@ -36,23 +36,12 @@ export async function loadCategories(forceRefresh: boolean = false): Promise<Com
   }
 
   try {
-    const response = await getCompanyCategories();
-    if (response.data) {
-      // APIレスポンスは CompanyCategoryInfo[] 形式
-      cachedCategories = response.data
-        .filter(
-          (cat): cat is CompanyCategoryInfo =>
-            cat !== null &&
-            cat !== undefined &&
-            typeof cat.code !== "undefined" &&
-            cat.code !== null
-        )
-        .map((cat) => ({
-          code: String(cat.code),
-          label: cat.label ?? "業種未設定",
-        }));
-      return cachedCategories;
-    }
+    const categories = await companyConnectClient.listCategories();
+    cachedCategories = categories.map((cat) => ({
+      code: String(cat.code),
+      label: cat.label ?? "業種未設定",
+    }));
+    return cachedCategories;
   } catch (error) {
     console.warn("APIから会社カテゴリーの取得に失敗しました。デフォルトカテゴリーを使用します:", error);
   }

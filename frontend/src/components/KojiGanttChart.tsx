@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { ModelsKoji } from '@/api/types.gen';
+import type { ModelsKoji } from '@/types/models';
 import KojiDetailModal from './KojiDetailModal';
 import { kojiConnectClient } from '@/services/kojiConnect';
 import '../styles/koji-gantt.css';

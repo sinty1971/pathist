@@ -18,7 +18,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import type { ModelsKoji, ModelsTimestamp, ModelsManagedFile } from '@/api/types.gen';
+import type { ModelsKoji, ModelsTimestamp, ModelsManagedFile } from '@/types/models';
 import { kojiConnectClient } from '@/services/kojiConnect';
 import { CalendarPicker } from './CalendarPicker';
 

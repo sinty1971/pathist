@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
-import type { Company } from "@/api/types.gen";
-import { getCompanies } from "@/api/sdk.gen";
+import type { Company } from "@/types/models";
+import { companyConnectClient } from "@/services/companyConnect";
 import CompanyDetailModal from "@/components/CompanyDetailModal";
 import {
   getCategoryName,
@@ -37,24 +37,18 @@ const Companies = () => {
       setError(null);
 
       // 会社データを取得
-      const response = await getCompanies();
+      const list = await companyConnectClient.list();
 
-      // 取得したデータをセット
-      if (response.data) {
-        const normalizedCompanies = response.data.map((company) => ({
-          ...company,
-          category:
-            company.category !== undefined &&
-            company.category !== null &&
-            String(company.category).trim() !== ""
-              ? String(company.category)
-              : "",
-        }));
-        setCompanies(normalizedCompanies);
-      } else {
-        // データがない場合は空配列をセット
-        setCompanies([]);
-      }
+      const normalizedCompanies = list.map((company) => ({
+        ...company,
+        category:
+          company.category !== undefined &&
+          company.category !== null &&
+          String(company.category).trim() !== ""
+            ? String(company.category)
+            : "",
+      }));
+      setCompanies(normalizedCompanies);
     } catch (err) {
       setError(
         `会社データの読み込みに失敗しました: ${

@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import type { ModelsFileInfo } from "@/api/types.gen";
+import type { ModelsFileInfo } from "@/types/models";
 import {
   FileService,
   ListFilesRequestSchema,
@@ -33,13 +33,17 @@ const timestampToIso = (value?: Timestamp): string | undefined => {
   return date.toISOString();
 };
 
-const normalizeFileInfo = (source: FileInfoMessage): ModelsFileInfo => ({
-  targetPath: source.targetPath,
-  standardPath: source.standardPath,
-  isDirectory: source.isDirectory,
-  size: Number(source.size ?? 0n),
-  modifiedTime: timestampToIso(source.modifiedTime) ?? ""
-});
+const normalizeFileInfo = (source: FileInfoMessage): ModelsFileInfo => {
+  const targetPath = source.targetPath ?? "";
+  return {
+    targetPath,
+    standardPath: source.standardPath ?? "",
+    path: targetPath,
+    isDirectory: source.isDirectory,
+    size: Number(source.size ?? 0n),
+    modifiedTime: timestampToIso(source.modifiedTime),
+  };
+};
 
 export const fileConnectClient = {
   list: async (path?: string): Promise<ModelsFileInfo[]> => {

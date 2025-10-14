@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import type { ModelsKoji } from "@/api/types.gen";
+import type { ModelsKoji } from "@/types/models";
 import KojiDetailModal from "./KojiDetailModal";
 import { useKoji } from "@/contexts/KojiContext";
 import { kojiConnectClient } from "@/services/kojiConnect";

@@ -3,7 +3,11 @@ import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import type { ConnectError } from "@connectrpc/connect";
-import type { ModelsFileInfo, ModelsKoji } from "@/api/types.gen";
+import type {
+  ModelsFileInfo,
+  ModelsKoji,
+  ModelsTimestamp,
+} from "@/types/models";
 import {
   FileInfoSchema,
   GetKojiRequestSchema,
@@ -52,25 +56,44 @@ const isoToTimestamp = (value?: string | null) => {
   }
 };
 
-const normalizeFileInfo = (source: FileInfoMessage): ModelsFileInfo => ({
-  targetPath: source.targetPath,
-  standardPath: source.standardPath,
-  isDirectory: source.isDirectory,
-  size: Number(source.size ?? 0n),
-  modifiedTime: timestampToIso(source.modifiedTime) ?? ""
-});
+const normalizeFileInfo = (source: FileInfoMessage): ModelsFileInfo => {
+  const targetPath = source.targetPath ?? "";
+  return {
+    targetPath,
+    standardPath: source.standardPath ?? "",
+    path: targetPath,
+    isDirectory: source.isDirectory,
+    size: Number(source.size ?? 0n),
+    modifiedTime: timestampToIso(source.modifiedTime),
+  };
+};
+
+const extractFolderName = (fullPath: string): string => {
+  if (!fullPath) return "";
+  const parts = fullPath.split(/[/\\]/).filter(Boolean);
+  return parts.length > 0 ? parts[parts.length - 1] : "";
+};
 
 const normalizeKoji = (source: KojiMessage): ModelsKoji => {
-  const startDateIso = source.startDate ? timestampToIso(source.startDate) : undefined;
-  const endDateIso = source.endDate ? timestampToIso(source.endDate) : "";
+  const startDateIso = source.startDate
+    ? timestampToIso(source.startDate)
+    : undefined;
+  const endDateIso = source.endDate ? timestampToIso(source.endDate) : undefined;
 
   const requiredFiles = source.requiredFiles?.map(normalizeFileInfo) ?? [];
-  const tags = source.tags ? [...source.tags] : [];
+  const tags = Array.isArray(source.tags)
+    ? source.tags.filter((tag): tag is string => Boolean(tag))
+    : [];
+  const targetFolder = source.targetFolder ?? "";
+  const folderName = extractFolderName(targetFolder);
 
   return {
     id: source.id ?? "",
     status: source.status || undefined,
-    targetFolder: source.targetFolder ?? "",
+    targetFolder,
+    folderPath: targetFolder,
+    folderName,
+    name: folderName,
     companyName: source.companyName || "",
     locationName: source.locationName || "",
     description: source.description || "",
@@ -81,7 +104,9 @@ const normalizeKoji = (source: KojiMessage): ModelsKoji => {
   };
 };
 
-const normalizeModelsTimestamp = (value: unknown): string | undefined => {
+const normalizeModelsTimestamp = (
+  value: ModelsTimestamp | string | undefined
+): string | undefined => {
   if (!value) return undefined;
   if (typeof value === "string") {
     return value;
@@ -95,11 +120,13 @@ const normalizeModelsTimestamp = (value: unknown): string | undefined => {
 
 const toFileInfoMessage = (source: ModelsFileInfo) =>
   create(FileInfoSchema, {
-    targetPath: source.targetPath ?? "",
+    targetPath: source.targetPath,
     standardPath: source.standardPath ?? "",
     isDirectory: Boolean(source.isDirectory),
     size: BigInt(source.size ?? 0),
-    modifiedTime: isoToTimestamp(source.modifiedTime)
+    modifiedTime: isoToTimestamp(
+      typeof source.modifiedTime === "string" ? source.modifiedTime : undefined
+    ),
   });
 
 const toKojiMessage = (source: ModelsKoji) => {
@@ -116,13 +143,11 @@ const toKojiMessage = (source: ModelsKoji) => {
     startDate: isoToTimestamp(startDateIso),
     endDate: isoToTimestamp(endDateIso),
     tags: Array.isArray(source.tags)
-      ? source.tags.filter(Boolean)
-      : typeof source.tags === "string" && source.tags.length > 0
-      ? source.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+      ? source.tags.filter((tag): tag is string => Boolean(tag))
       : [],
     requiredFiles: Array.isArray(source.requiredFiles)
       ? source.requiredFiles.map(toFileInfoMessage)
-      : []
+      : [],
   });
 };
 

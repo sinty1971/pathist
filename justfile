@@ -66,8 +66,8 @@ frontend-update:
 
 # Generate TypeScript types from OpenAPI spec
 generate-types:
-    cd ./frontend && npm run generate-api
-    @echo "TypeScript types generated at frontend/src/api/"
+    cd ./frontend && npm run generate-grpc
+    @echo "Connect-Web stubs generated at frontend/src/gen/"
 
 # Generate React Router v7 route structure diagram
 generate-routes:

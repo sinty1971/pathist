@@ -13,7 +13,7 @@
 
 - `just backend` / `just backend-http2` で API サーバーを起動します。カスタムポートは `just backend-port <port>` を使用してください。
 - `just frontend` で開発サーバー、`just frontend-build` で本番ビルド、`just frontend-preview` で生成物の確認ができます。
-- バックエンドテストは `go test ./...`、ベンチマークは `go test -bench . ./...`。API 仕様と型定義は `just generate-api` と `just generate-types`、ルート図は `just generate-routes` で再生成します。
+- バックエンドテストは `go test ./...`、ベンチマークは `go test -bench . ./...`。OpenAPI 仕様は `just generate-api`、フロント向け Connect スタブは `just generate-types`、ルート図は `just generate-routes` で再生成します。
 
 ## コーディングスタイルと命名規則
 - Go コードは `gofmt` 準拠 (タブインデント)。公開シンボルは UpperCamelCase、内部スコープは lowerCamelCase とし、ハンドラは `<Resource>Handler`、サービスは `<Resource>Service` 命名を守ります。

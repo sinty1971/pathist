@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/encoding/protojson"
 	penguinv1 "penguin-backend/gen/penguin/v1"
 	penguinv1connect "penguin-backend/gen/penguin/v1/penguinv1connect"
 )
@@ -28,6 +28,13 @@ func main() {
 
 	client := penguinv1connect.NewFileServiceClient(http.DefaultClient, *baseURL)
 
+	baseResp, err := client.GetFileBasePath(ctx, connect.NewRequest(
+		penguinv1.GetFileBasePathRequest_builder{}.Build(),
+	))
+	if err != nil {
+		log.Fatalf("GetFileBasePath の呼び出しに失敗しました: %v", err)
+	}
+
 	req := connect.NewRequest(penguinv1.ListFilesRequest_builder{
 		Path: *pathArg,
 	}.Build())
@@ -38,11 +45,17 @@ func main() {
 	}
 
 	if *jsonOut {
-		opts := protojson.MarshalOptions{
-			Multiline: true,
-			Indent:    "  ",
+		output := struct {
+			BasePath string                `json:"basePath"`
+			Path     string                `json:"path"`
+			Files    []*penguinv1.FileInfo `json:"files"`
+		}{
+			BasePath: baseResp.Msg.GetBasePath(),
+			Path:     req.Msg.GetPath(),
+			Files:    resp.Msg.GetFiles(),
 		}
-		data, err := opts.Marshal(resp.Msg)
+
+		data, err := json.MarshalIndent(output, "", "  ")
 		if err != nil {
 			log.Fatalf("レスポンスの JSON 変換に失敗しました: %v", err)
 		}
@@ -51,6 +64,7 @@ func main() {
 	}
 
 	// ターミナルで読みやすいように簡易フォーマットで出力する。
+	fmt.Printf("BasePath: %s\n", baseResp.Msg.GetBasePath())
 	fmt.Printf("Path: %s\n", req.Msg.GetPath())
 	fmt.Println("IsDir\tSize\tModified\tTargetPath\tStandardPath")
 	for _, file := range resp.Msg.GetFiles() {

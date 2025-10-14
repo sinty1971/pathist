@@ -1,19 +1,20 @@
 # Repository Guidelines
 
 ## 基本的な規則
+
 - 極力日本語出力でお願いします。
 
 ## プロジェクト構成とモジュール
 
-- `backend/` は Go Fiber ベースの API で、`cmd/main.go` がエントリポイント、`internal/{endpoints,handlers,models,routes,services,utils}` にドメインロジックを集約しています。`docs/` は Swagger 生成物、`scripts/` はユーティリティスクリプト、証明書関連は `cert.pem` と `key.pem` を参照してください。
+- `backend/` は Connect ベースの gRPC API で、`cmd/grpc/main.go` がエントリポイント、`internal/{models,rpc,services,utils}` にドメインロジックを集約しています。CLI ツールは `cmd/fileclient/` にまとまっています。
 - `frontend/` は React Router v7 + TypeScript 構成です。画面ルートは `app/routes/`、UI コンポーネントは `app/components/`、API 型は `app/api/` に生成され、スタイル共通化は `app/styles/` で管理します。
-- `schemas/` には OpenAPI 3.1 定義があり、バックエンド更新後はここも更新します。横断的な開発コマンドはリポジトリ直下の `justfile` にまとまっています。
+- `proto/` には gRPC サービス定義があり、バックエンド／フロントエンドのスタブ生成はこれを基に行います。横断的な開発コマンドはリポジトリ直下の `justfile` にまとまっています。
 
 ## ビルド・テスト・開発コマンド
 
-- `just backend` / `just backend-http2` で API サーバーを起動します。カスタムポートは `just backend-port <port>` を使用してください。
+- `just backend` で gRPC サーバー（HTTP/2 over h2c）、`just backend-tls` で TLS 有効のサーバーを起動できます。必要に応じてフラグでポートや証明書を上書きしてください。
 - `just frontend` で開発サーバー、`just frontend-build` で本番ビルド、`just frontend-preview` で生成物の確認ができます。
-- バックエンドテストは `go test ./...`、ベンチマークは `go test -bench . ./...`。OpenAPI 仕様は `just generate-api`、フロント向け Connect スタブは `just generate-types`、ルート図は `just generate-routes` で再生成します。
+- バックエンドテストは `go test ./...`、ベンチマークは `go test -bench . ./...`。gRPC スタブは `just generate-grpc`、フロント向け Connect スタブは `just generate-types`、ルート図は `just generate-routes` で再生成します。
 
 ## コーディングスタイルと命名規則
 - Go コードは `gofmt` 準拠 (タブインデント)。公開シンボルは UpperCamelCase、内部スコープは lowerCamelCase とし、ハンドラは `<Resource>Handler`、サービスは `<Resource>Service` 命名を守ります。
@@ -33,4 +34,4 @@
 ## セキュリティと構成のヒント
 - HTTP/2 を使う場合は `just generate-cert` でローカル証明書を再生成し、配布リポジトリにはコミットしないでください。運用環境では実証済みの証明書を `-cert` と `-key` フラグで指定します。
 - バックエンドはデフォルトで `~/penguin` 以下のファイルツリーを参照します。別ディレクトリを使用する場合はサービス初期化ロジックを更新し、アクセス権限とバックアップ方針を事前に決めてください。
-- Fiber の CORS 設定は全許可になっているため、公開環境では許可オリジンをホワイトリスト形式に更新し、ロギングや TLS 設定の値も環境変数やフラグで上書きしてください。
+- gRPC サーバーで TLS を使う場合は `just backend-tls` を利用し、運用環境では `-cert` と `-key` フラグで実証済み証明書を指定してください。H2C 利用時でも必ず内部ネットワークでのアクセス制御を行ってください。

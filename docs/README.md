@@ -1,5 +1,5 @@
 # API ドキュメント
 
-`backend/cmd/main.go` で `DocsPath = "/docs"` を設定しているため、バックエンド起動後は `http://localhost:8080/docs` から Huma のドキュメント UI にアクセスできます。
+バックエンドは Connect ベースの gRPC API で提供されており、REST 向けの Huma ドキュメント UI は廃止されました。サービス定義は `proto/penguin/v1/penguin.proto` を参照してください。
 
-OpenAPI 定義はルートディレクトリの `schemas/` 配下に保存され、`just docs` コマンドでブラウザを開くことができます。
+生成済みの OpenAPI ファイル（`schemas/` 配下）は互換性維持のために残っていますが、最新仕様は proto をソース・オブ・トゥルースとしてください。

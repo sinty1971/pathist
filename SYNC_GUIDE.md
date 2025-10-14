@@ -245,30 +245,20 @@ just frontend
 # バックエンドAPI
 just backend
 
-# API仕様確認
-just docs
+# gRPC サービス仕様
+less proto/penguin/v1/penguin.proto
 ```
 
 ### APIテスト例
 ```bash
-# 工事ID生成テスト
-curl -X POST http://localhost:8080/api/id-sync/generate-koji \
-  -H "Content-Type: application/json" \
-  -d '{
-    "startDate": "2025-06-18T00:00:00Z",
-    "companyName": "豊田築炉",
-    "locationName": "名和工場"
-  }'
+# 工事一覧の取得 (fileclient CLI)
+go run backend/cmd/fileclient/main.go -base-url http://localhost:9090
 
-# ID検証テスト
-curl -X POST http://localhost:8080/api/id-sync/validate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "3XK9P",
-    "startDate": "2025-06-18T00:00:00Z",
-    "companyName": "豊田築炉",
-    "locationName": "名和工場"
-  }'
+# grpcurl を使った呼び出し例 (KojiService.ListKojies)
+grpcurl -plaintext \
+  -import-path proto \
+  -proto penguin/v1/penguin.proto \
+  localhost:9090 penguin.v1.KojiService/ListKojies
 ```
 
 ## ⚠️ 注意事項

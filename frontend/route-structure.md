@@ -41,6 +41,7 @@ graph TD
 ## レイアウト構造
 
 ### 共通レイアウト (`_layout.tsx`)
+
 - ナビゲーションバー
 - ページタイトル表示
 - FileInfoContext Provider

@@ -1,6 +1,6 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
-import { createClient } from "@connectrpc/connect";
+import { Code, createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import type { ConnectError } from "@connectrpc/connect";
 import type {
@@ -167,7 +167,7 @@ export const kojiConnectClient = {
       return response.koji ? normalizeKoji(response.koji) : null;
     } catch (error) {
       const connectError = error as ConnectError;
-      if (connectError.code === "not_found") {
+      if (connectError.code === Code.NotFound) {
         return null;
       }
       throw error;

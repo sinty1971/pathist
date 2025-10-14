@@ -1,28 +1,12 @@
 # Penguin Backend & Frontend Commands
 
-# Start the backend server (HTTP/1.1)
+# Start the backend gRPC server (HTTP/2 over h2c)
 backend:
-    cd ./backend && go run cmd/main.go
-
-# Start the gRPC (Connect) server over h2c
-backend-grpc:
     cd ./backend && go run cmd/grpc/main.go
 
-# Start the gRPC (Connect) server with HTTPS
-backend-grpc-tls:
+# Start the backend gRPC server with TLS enabled
+backend-tls:
     cd ./backend && go run cmd/grpc/main.go -enable-tls
-
-# Start the backend server with HTTP/2 + HTTPS
-backend-http2:
-    cd ./backend && go run cmd/main.go -http2
-
-# Start the backend server with custom port
-backend-port PORT:
-    cd ./backend && go run cmd/main.go -port={{PORT}}
-
-# Start the backend server with HTTP/2 on custom port
-backend-http2-port PORT:
-    cd ./backend && go run cmd/main.go -http2 -port={{PORT}}
 
 # Start the frontend development server (React Router v7)
 frontend:
@@ -41,11 +25,6 @@ generate-cert:
 backend-update:
     cd ./backend && go get -u ./...
     cd ./backend && go mod tidy
-
-# Generate OpenAPI documentation using Huma (OpenAPI 3.1 only)
-generate-api:
-    cd ./backend && go run cmd/openapi/main.go
-    @echo "✅ OpenAPI 3.1 documentation generated under schemas/"
 
 # Generate gRPC stubs for Koji service
 generate-grpc:
@@ -91,11 +70,8 @@ dev:
     @echo "Starting backend and frontend..."
     @echo "Run 'just backend' in one terminal and 'just frontend' in another"
 
-# Generate both API docs and TypeScript types
-generate-all: generate-api generate-types
-
-# Generate all documentation (API, types, and routes)
-generate-docs: generate-api generate-types generate-routes
+# Generate both backend and frontend gRPC stubs
+generate-all: generate-grpc generate-types
 
 # Update all dependencies (Go and npm)
 update-all: backend-update frontend-update
@@ -108,25 +84,17 @@ stop-backend:
     #!/bin/bash
     set +e
     echo "Stopping backend server..."
-    pkill -f "go run cmd/main.go" 2>/dev/null
-    pkill -f "main.go" 2>/dev/null
+    pkill -f "go run cmd/grpc/main.go" 2>/dev/null
+    pkill -f "cmd/grpc/main.go" 2>/dev/null
     pkill -f "penguin-backend" 2>/dev/null
-    lsof -ti:8080 | xargs -r kill -15 2>/dev/null
+    for port in 9090 9443; do
+        lsof -ti:$port | xargs -r kill -15 2>/dev/null
+    done
     sleep 1
-    lsof -ti:8080 | xargs -r kill -9 2>/dev/null
+    for port in 9090 9443; do
+        lsof -ti:$port | xargs -r kill -9 2>/dev/null
+    done
     echo "Backend server stopped"
-
-# Stop HTTP/2 backend server
-stop-backend-http2:
-    #!/bin/bash
-    set +e
-    echo "Stopping HTTP/2 backend server..."
-    pkill -f "go run cmd/main.go -http2" 2>/dev/null
-    pkill -f "main.go.*http2" 2>/dev/null
-    lsof -ti:8443 | xargs -r kill -15 2>/dev/null
-    sleep 1
-    lsof -ti:8443 | xargs -r kill -9 2>/dev/null
-    echo "HTTP/2 backend server stopped"
 
 # Stop frontend development server (React Router v7 / Vite)
 stop-frontend:
@@ -147,22 +115,15 @@ stop-frontend:
     echo "Frontend development server stopped"
 
 # Stop both backend and frontend servers
-stop-all: stop-backend stop-backend-http2 stop-frontend
+stop-all: stop-backend stop-frontend
     @echo "All servers stopped"
 
 # Restart backend server (HTTP/1.1)
 restart-backend: stop-backend
     @echo "Restarting backend server..."
     @sleep 1
-    cd ./backend && go run cmd/main.go &
+    cd ./backend && go run cmd/grpc/main.go &
     @echo "Backend server restarted"
-
-# Restart backend server (HTTP/2 + HTTPS)
-restart-backend-http2: stop-backend-http2
-    @echo "Restarting HTTP/2 backend server..."
-    @sleep 1
-    cd ./backend && go run cmd/main.go -http2 &
-    @echo "HTTP/2 backend server restarted"
 
 # Restart frontend development server
 restart-frontend: stop-frontend
@@ -175,18 +136,18 @@ restart-frontend: stop-frontend
 restart-all: stop-all
     @echo "Restarting all servers..."
     @sleep 2
-    cd ./backend && go run cmd/main.go &
+    cd ./backend && go run cmd/grpc/main.go &
     @sleep 1
     cd ./frontend && npm run dev &
     @echo "All servers restarted"
 
-# Kill process running on port 8080 (legacy command)
+# Kill process running on port 9090 (legacy command)
 kill-port:
-    @echo "Stopping process on port 8080..."
-    @-lsof -ti:8080 | xargs -r kill -15 2>/dev/null || true
+    @echo "Stopping process on port 9090..."
+    @-lsof -ti:9090 | xargs -r kill -15 2>/dev/null || true
     @sleep 1
-    @-lsof -ti:8080 | xargs -r kill -9 2>/dev/null || true
-    @echo "Port 8080 cleanup completed"
+    @-lsof -ti:9090 | xargs -r kill -9 2>/dev/null || true
+    @echo "Port 9090 cleanup completed"
 
 # Update claude-code
 claude-code:
@@ -196,16 +157,6 @@ claude-code:
 architecture:
     @echo "Opening architecture diagram..."
     @xdg-open "https://mermaid.live/edit#$(cat doc/backend-architecture.md | grep -A 100 '```mermaid' | grep -B 100 '```' | grep -v '```' | base64 -w 0)" 2>/dev/null || open "https://mermaid.live/" 2>/dev/null || echo "Please visit https://mermaid.live/ and paste the mermaid code from doc/backend-architecture.md"
-
-# Open API docs in browser (HTTP/1.1)
-docs:
-    @echo "Opening API documentation..."
-    @xdg-open "http://localhost:8080/docs" 2>/dev/null || open "http://localhost:8080/docs" 2>/dev/null || echo "Please visit http://localhost:8080/docs"
-
-# Open API docs in browser (HTTP/2 + HTTPS)
-docs-http2:
-    @echo "Opening API documentation (HTTP/2)..."
-    @xdg-open "https://localhost:8080/docs" 2>/dev/null || open "https://localhost:8080/docs" 2>/dev/null || echo "Please visit https://localhost:8080/docs"
 
 # Show available commands
 help:

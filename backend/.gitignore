@@ -1,2 +1,3 @@
 .cache/*
-.gochache/*
+.gocache/*
+.gobuild/*

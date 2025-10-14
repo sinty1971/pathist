@@ -1,98 +1,62 @@
-# Penguin Backend API
+# Penguin Backend (gRPC)
 
-Go + Fiber製のフォルダー管理API
+Connect ベースの gRPC サーバーです。ファイル・会社・工事ドメインの情報を公開し、フロントエンドからは Connect-Web 経由で利用します。
 
-## 機能
-- ファイルエントリー（フォルダー・ファイル）の一覧取得
-- 工事プロジェクトの管理
-- 日時文字列のパース機能
-- CORS対応でフロントエンドとの連携
-- Swagger APIドキュメント
+## 主な機能
 
-## エンドポイント
+- `FileService` : ファイル／フォルダの一覧取得、基準パスの問い合わせ
+- `CompanyService` : 会社データの取得・更新、カテゴリー一覧
+- `KojiService` : 工事データの取得・更新、標準ファイルの更新
 
-### GET /api/file/entries
-ファイルエントリー（フォルダー・ファイル）一覧を取得
-
-**クエリパラメータ:**
-- `path` (optional): 対象パス (デフォルト: `~/penguin`)
-
-### GET /api/kouji/entries
-工事一覧を取得
-
-**クエリパラメータ:**
-- `path` (optional): 対象パス (デフォルト: `~/penguin/豊田築炉/2-工事`)
-
-### POST /api/kouji/entries/save
-工事プロジェクト情報をYAMLファイルに保存
-
-**レスポンス例:**
-```json
-{
-  "folders": [
-    {
-      "id": "12345678",
-      "name": "プロジェクトA",
-      "path": "/home/user/penguin/プロジェクトA",
-      "is_directory": true,
-      "size": 4096,
-      "modified_time": "2024-01-01T12:00:00Z"
-    }
-  ],
-  "count": 1,
-  "path": "/home/user/penguin"
-}
-```
+API の定義は `proto/penguin/v1/penguin.proto` にまとまっており、`just generate-grpc` コマンドでサーバー側とフロントエンド側のスタブを再生成できます。
 
 ## 実行方法
 
 ```bash
 cd backend
-go mod tidy
-go run cmd/main.go
+go run cmd/grpc/main.go
 ```
 
-サーバーは http://localhost:8080 で起動します。
+デフォルトでは HTTP/2 over h2c で `http://localhost:9090` を待ち受けます。TLS を有効化する場合は:
 
-## API使用例
+```bash
+go run cmd/grpc/main.go -enable-tls -cert=cert.pem -key=key.pem
+```
 
-### 基本的な使用方法
+証明書が未作成の場合は `just generate-cert` で自己署名証明書を生成できます。
 
-1. **ファイルエントリー一覧の取得**:
-   ```bash
-   curl "http://localhost:8080/api/file/entries"
-   ```
+## 動作確認
 
-2. **工事一覧の取得**:
-   ```bash
-   curl "http://localhost:8080/api/kouji/entries"
-   ```
+CLI で簡易確認を行いたい場合は、同梱の `cmd/fileclient` を利用できます。
 
-3. **APIドキュメント (Huma)**:
-   - `http://localhost:8080/docs` をブラウザで開く
+```bash
+go run cmd/fileclient/main.go \
+  -base-url http://localhost:9090 \
+  -json
+```
 
-### レスポンスの説明
-- `folders`: ファイルエントリーの配列
-- `count`: 取得された項目数
-- `path`: 実際に読み取られたパス
-- 各ファイルエントリー:
-  - `id`: 一意のID（Unix inode）
-  - `name`: ファイル/フォルダー名
-  - `path`: フルパス
-  - `is_directory`: ディレクトリかどうかのフラグ
-  - `size`: ファイルサイズ（バイト）
-  - `modified_time`: 最終更新時刻
+レスポンスには基準パスとファイル一覧が JSON で表示されます。
 
-## ディレクトリ構造
+## ディレクトリ構成
 
 ```
 backend/
 ├── cmd/
-│   └── main.go              # エントリーポイント
+│   ├── fileclient/   # gRPC を叩く CLI
+│   └── grpc/         # サーバーエントリポイント
+├── gen/              # プロト生成コード（go generate で更新）
 ├── internal/
-│   ├── handlers/            # HTTPハンドラー
-│   ├── models/              # データモデル
-│   └── services/            # ビジネスロジック
-├── pkg/                     # 外部公開パッケージ
-└── go.mod                   # Go modules
+│   ├── models/       # ドメインモデル
+│   ├── rpc/          # Connect ハンドラー
+│   └── services/     # ビジネスロジック
+├── tools/            # go generate スクリプト
+└── go.mod
 ```
+
+## 参考コマンド
+
+- `just backend` : gRPC サーバーを h2c で起動
+- `just backend-tls` : TLS 有効で gRPC サーバーを起動
+- `just generate-grpc` : Go サーバー側のスタブを再生成
+
+詳細はリポジトリ直下の `justfile` を参照してください。

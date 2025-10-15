@@ -232,7 +232,7 @@ func (b0 Koji_builder) Build() *Koji {
 type FileInfo struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_TargetPath   string                 `protobuf:"bytes,1,opt,name=target_path,json=targetPath"`
-	xxx_hidden_StandardPath string                 `protobuf:"bytes,2,opt,name=standard_path,json=standardPath"`
+	xxx_hidden_IdealPath    string                 `protobuf:"bytes,2,opt,name=ideal_path,json=idealPath"`
 	xxx_hidden_IsDirectory  bool                   `protobuf:"varint,3,opt,name=is_directory,json=isDirectory"`
 	xxx_hidden_Size         int64                  `protobuf:"varint,4,opt,name=size"`
 	xxx_hidden_ModifiedTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=modified_time,json=modifiedTime"`
@@ -272,9 +272,9 @@ func (x *FileInfo) GetTargetPath() string {
 	return ""
 }
 
-func (x *FileInfo) GetStandardPath() string {
+func (x *FileInfo) GetIdealPath() string {
 	if x != nil {
-		return x.xxx_hidden_StandardPath
+		return x.xxx_hidden_IdealPath
 	}
 	return ""
 }
@@ -304,8 +304,8 @@ func (x *FileInfo) SetTargetPath(v string) {
 	x.xxx_hidden_TargetPath = v
 }
 
-func (x *FileInfo) SetStandardPath(v string) {
-	x.xxx_hidden_StandardPath = v
+func (x *FileInfo) SetIdealPath(v string) {
+	x.xxx_hidden_IdealPath = v
 }
 
 func (x *FileInfo) SetIsDirectory(v bool) {
@@ -335,7 +335,7 @@ type FileInfo_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	TargetPath   string
-	StandardPath string
+	IdealPath    string
 	IsDirectory  bool
 	Size         int64
 	ModifiedTime *timestamppb.Timestamp
@@ -346,7 +346,7 @@ func (b0 FileInfo_builder) Build() *FileInfo {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_TargetPath = b.TargetPath
-	x.xxx_hidden_StandardPath = b.StandardPath
+	x.xxx_hidden_IdealPath = b.IdealPath
 	x.xxx_hidden_IsDirectory = b.IsDirectory
 	x.xxx_hidden_Size = b.Size
 	x.xxx_hidden_ModifiedTime = b.ModifiedTime
@@ -1863,11 +1863,12 @@ const file_penguin_v1_penguin_proto_rawDesc = "" +
 	"\vdescription\x18\b \x01(\tR\vdescription\x12\x12\n" +
 	"\x04tags\x18\t \x03(\tR\x04tags\x12;\n" +
 	"\x0erequired_files\x18\n" +
-	" \x03(\v2\x14.penguin.v1.FileInfoR\rrequiredFiles\"\xc8\x01\n" +
+	" \x03(\v2\x14.penguin.v1.FileInfoR\rrequiredFiles\"\xc2\x01\n" +
 	"\bFileInfo\x12\x1f\n" +
 	"\vtarget_path\x18\x01 \x01(\tR\n" +
-	"targetPath\x12#\n" +
-	"\rstandard_path\x18\x02 \x01(\tR\fstandardPath\x12!\n" +
+	"targetPath\x12\x1d\n" +
+	"\n" +
+	"ideal_path\x18\x02 \x01(\tR\tidealPath\x12!\n" +
 	"\fis_directory\x18\x03 \x01(\bR\visDirectory\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12?\n" +
 	"\rmodified_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\"\xea\x02\n" +

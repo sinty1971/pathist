@@ -5,9 +5,9 @@ package penguin.v1;
 import "google/protobuf/go_features.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "penguin-backend/gen/penguin/v1;penguinv1";
-option features.field_presence = IMPLICIT;
 option features.(pb.go).api_level = API_OPAQUE;
+option features.field_presence = IMPLICIT;
+option go_package = "penguin-backend/gen/penguin/v1;penguinv1";
 
 message Koji {
   string id = 1;
@@ -24,7 +24,7 @@ message Koji {
 
 message FileInfo {
   string target_path = 1;
-  string standard_path = 2;
+  string ideal_path = 2;
   bool is_directory = 3;
   int64 size = 4;
   google.protobuf.Timestamp modified_time = 5;

@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"time"
 
-	"connectrpc.com/connect"
 	penguinv1 "penguin-backend/gen/penguin/v1"
 	penguinv1connect "penguin-backend/gen/penguin/v1/penguinv1connect"
+
+	"connectrpc.com/connect"
 )
 
 func main() {
@@ -66,7 +67,7 @@ func main() {
 	// ターミナルで読みやすいように簡易フォーマットで出力する。
 	fmt.Printf("BasePath: %s\n", baseResp.Msg.GetBasePath())
 	fmt.Printf("Path: %s\n", req.Msg.GetPath())
-	fmt.Println("IsDir\tSize\tModified\tTargetPath\tStandardPath")
+	fmt.Println("IsDir\tSize\tModified\tTargetPath\tIdealPath")
 	for _, file := range resp.Msg.GetFiles() {
 		modified := ""
 		if ts := file.GetModifiedTime(); ts != nil {
@@ -77,7 +78,7 @@ func main() {
 			file.GetSize(),
 			modified,
 			file.GetTargetPath(),
-			file.GetStandardPath(),
+			file.GetIdealPath(),
 		)
 	}
 }

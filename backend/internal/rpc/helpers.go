@@ -26,13 +26,7 @@ func convertModelFileInfo(src *models.FileInfo) *penguinv1.FileInfo {
 		return nil
 	}
 
-	return penguinv1.FileInfo_builder{
-		TargetPath:   src.TargetPath,
-		StandardPath: src.StandardPath,
-		IsDirectory:  src.IsDirectory,
-		Size:         src.Size,
-		ModifiedTime: toProtoTimestamp(src.ModifiedTime),
-	}.Build()
+	return src.CloneProto()
 }
 
 func convertProtoFileInfo(src *penguinv1.FileInfo) models.FileInfo {
@@ -40,11 +34,8 @@ func convertProtoFileInfo(src *penguinv1.FileInfo) models.FileInfo {
 		return models.FileInfo{}
 	}
 
-	return models.FileInfo{
-		TargetPath:   src.GetTargetPath(),
-		StandardPath: src.GetStandardPath(),
-		IsDirectory:  src.GetIsDirectory(),
-		Size:         src.GetSize(),
-		ModifiedTime: toModelTimestamp(src.GetModifiedTime()),
+	if wrapped := models.NewFileInfoFromProto(src); wrapped != nil {
+		return *wrapped
 	}
+	return models.FileInfo{}
 }

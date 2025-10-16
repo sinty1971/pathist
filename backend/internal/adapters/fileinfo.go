@@ -1,4 +1,4 @@
-package serialize
+package adapters
 
 import (
 	"encoding/json"
@@ -36,9 +36,9 @@ func NewFileInfo(paths ...string) (*FileInfoWithYAML, error) {
 		return nil, err
 	}
 
-	var standardPath string
+	var idealPath string
 	if len(paths) == 2 {
-		standardPath, err = utils.CleanAbsPath(paths[1])
+		idealPath, err = utils.CleanAbsPath(paths[1])
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +46,7 @@ func NewFileInfo(paths ...string) (*FileInfoWithYAML, error) {
 
 	builder := penguinv1.FileInfo_builder{
 		TargetPath:  targetPath,
-		IdealPath:   standardPath,
+		IdealPath:   idealPath,
 		IsDirectory: osInfo.IsDir(),
 		Size:        osInfo.Size(),
 	}

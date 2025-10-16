@@ -17,8 +17,8 @@ type FileService struct {
 	// container はトップコンテナのインスタンス
 	container *Container
 
-	// TargetFolder はファイルサービスの絶対パスフォルダー
-	TargetFolder string `json:"targetFolder" yaml:"target_folder" example:"/penguin/豊田築炉"`
+	// TargetPath はファイルサービスの絶対パスフォルダー
+	TargetPath string `json:"targetPath" yaml:"target_path" example:"/penguin/豊田築炉"`
 }
 
 func (fs *FileService) Cleanup() error {
@@ -53,7 +53,7 @@ func (fs *FileService) Initialize(container *Container, serviceOptions *Options)
 	}
 
 	// 基準フォルダーを設定
-	fs.TargetFolder = cleanBaseFolder
+	fs.TargetPath = cleanBaseFolder
 
 	return fs, nil
 }
@@ -129,7 +129,7 @@ func (fs *FileService) GetFileInfos(target ...string) ([]models.FileInfo, error)
 // 引数が絶対パスの場合はエラーを返す
 func (fs *FileService) JoinBasePath(target ...string) (string, error) {
 	if len(target) == 0 {
-		return fs.TargetFolder, nil
+		return fs.TargetPath, nil
 	}
 
 	// BasePathに相対パスを追加したパスを返す
@@ -144,7 +144,7 @@ func (fs *FileService) JoinBasePath(target ...string) (string, error) {
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	return filepath.Join(fs.TargetFolder, targetPath), nil
+	return filepath.Join(fs.TargetPath, targetPath), nil
 }
 
 // CopyFile はファイルまたはディレクトリをコピーする

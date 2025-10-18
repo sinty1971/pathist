@@ -58,8 +58,9 @@ const (
 	// CompanyServiceListCompanyCategoriesProcedure is the fully-qualified name of the CompanyService's
 	// ListCompanyCategories RPC.
 	CompanyServiceListCompanyCategoriesProcedure = "/penguin.v1.CompanyService/ListCompanyCategories"
-	// FileServiceListFilesProcedure is the fully-qualified name of the FileService's ListFiles RPC.
-	FileServiceListFilesProcedure = "/penguin.v1.FileService/ListFiles"
+	// FileServiceListFileInfosProcedure is the fully-qualified name of the FileService's ListFileInfos
+	// RPC.
+	FileServiceListFileInfosProcedure = "/penguin.v1.FileService/ListFileInfos"
 	// FileServiceGetFileBasePathProcedure is the fully-qualified name of the FileService's
 	// GetFileBasePath RPC.
 	FileServiceGetFileBasePathProcedure = "/penguin.v1.FileService/GetFileBasePath"
@@ -363,7 +364,7 @@ func (UnimplementedCompanyServiceHandler) ListCompanyCategories(context.Context,
 
 // FileServiceClient is a client for the penguin.v1.FileService service.
 type FileServiceClient interface {
-	ListFiles(context.Context, *connect.Request[v1.ListFilesRequest]) (*connect.Response[v1.ListFilesResponse], error)
+	ListFileInfos(context.Context, *connect.Request[v1.ListFileInfosRequest]) (*connect.Response[v1.ListFileInfosResponse], error)
 	GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error)
 }
 
@@ -378,10 +379,10 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	fileServiceMethods := v1.File_penguin_v1_penguin_proto.Services().ByName("FileService").Methods()
 	return &fileServiceClient{
-		listFiles: connect.NewClient[v1.ListFilesRequest, v1.ListFilesResponse](
+		listFileInfos: connect.NewClient[v1.ListFileInfosRequest, v1.ListFileInfosResponse](
 			httpClient,
-			baseURL+FileServiceListFilesProcedure,
-			connect.WithSchema(fileServiceMethods.ByName("ListFiles")),
+			baseURL+FileServiceListFileInfosProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("ListFileInfos")),
 			connect.WithClientOptions(opts...),
 		),
 		getFileBasePath: connect.NewClient[v1.GetFileBasePathRequest, v1.GetFileBasePathResponse](
@@ -395,13 +396,13 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // fileServiceClient implements FileServiceClient.
 type fileServiceClient struct {
-	listFiles       *connect.Client[v1.ListFilesRequest, v1.ListFilesResponse]
+	listFileInfos   *connect.Client[v1.ListFileInfosRequest, v1.ListFileInfosResponse]
 	getFileBasePath *connect.Client[v1.GetFileBasePathRequest, v1.GetFileBasePathResponse]
 }
 
-// ListFiles calls penguin.v1.FileService.ListFiles.
-func (c *fileServiceClient) ListFiles(ctx context.Context, req *connect.Request[v1.ListFilesRequest]) (*connect.Response[v1.ListFilesResponse], error) {
-	return c.listFiles.CallUnary(ctx, req)
+// ListFileInfos calls penguin.v1.FileService.ListFileInfos.
+func (c *fileServiceClient) ListFileInfos(ctx context.Context, req *connect.Request[v1.ListFileInfosRequest]) (*connect.Response[v1.ListFileInfosResponse], error) {
+	return c.listFileInfos.CallUnary(ctx, req)
 }
 
 // GetFileBasePath calls penguin.v1.FileService.GetFileBasePath.
@@ -411,7 +412,7 @@ func (c *fileServiceClient) GetFileBasePath(ctx context.Context, req *connect.Re
 
 // FileServiceHandler is an implementation of the penguin.v1.FileService service.
 type FileServiceHandler interface {
-	ListFiles(context.Context, *connect.Request[v1.ListFilesRequest]) (*connect.Response[v1.ListFilesResponse], error)
+	ListFileInfos(context.Context, *connect.Request[v1.ListFileInfosRequest]) (*connect.Response[v1.ListFileInfosResponse], error)
 	GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error)
 }
 
@@ -422,10 +423,10 @@ type FileServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	fileServiceMethods := v1.File_penguin_v1_penguin_proto.Services().ByName("FileService").Methods()
-	fileServiceListFilesHandler := connect.NewUnaryHandler(
-		FileServiceListFilesProcedure,
-		svc.ListFiles,
-		connect.WithSchema(fileServiceMethods.ByName("ListFiles")),
+	fileServiceListFileInfosHandler := connect.NewUnaryHandler(
+		FileServiceListFileInfosProcedure,
+		svc.ListFileInfos,
+		connect.WithSchema(fileServiceMethods.ByName("ListFileInfos")),
 		connect.WithHandlerOptions(opts...),
 	)
 	fileServiceGetFileBasePathHandler := connect.NewUnaryHandler(
@@ -436,8 +437,8 @@ func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption
 	)
 	return "/penguin.v1.FileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case FileServiceListFilesProcedure:
-			fileServiceListFilesHandler.ServeHTTP(w, r)
+		case FileServiceListFileInfosProcedure:
+			fileServiceListFileInfosHandler.ServeHTTP(w, r)
 		case FileServiceGetFileBasePathProcedure:
 			fileServiceGetFileBasePathHandler.ServeHTTP(w, r)
 		default:
@@ -449,8 +450,8 @@ func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption
 // UnimplementedFileServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedFileServiceHandler struct{}
 
-func (UnimplementedFileServiceHandler) ListFiles(context.Context, *connect.Request[v1.ListFilesRequest]) (*connect.Response[v1.ListFilesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("penguin.v1.FileService.ListFiles is not implemented"))
+func (UnimplementedFileServiceHandler) ListFileInfos(context.Context, *connect.Request[v1.ListFileInfosRequest]) (*connect.Response[v1.ListFileInfosResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("penguin.v1.FileService.ListFileInfos is not implemented"))
 }
 
 func (UnimplementedFileServiceHandler) GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error) {

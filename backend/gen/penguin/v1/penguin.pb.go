@@ -1629,27 +1629,27 @@ func (b0 ListCompanyCategoriesResponse_builder) Build() *ListCompanyCategoriesRe
 	return m0
 }
 
-type ListFilesRequest struct {
+type ListFileInfosRequest struct {
 	state           protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Path string                 `protobuf:"bytes,1,opt,name=path"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *ListFilesRequest) Reset() {
-	*x = ListFilesRequest{}
+func (x *ListFileInfosRequest) Reset() {
+	*x = ListFileInfosRequest{}
 	mi := &file_penguin_v1_penguin_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListFilesRequest) String() string {
+func (x *ListFileInfosRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListFilesRequest) ProtoMessage() {}
+func (*ListFileInfosRequest) ProtoMessage() {}
 
-func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
+func (x *ListFileInfosRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_penguin_v1_penguin_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1661,52 +1661,52 @@ func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *ListFilesRequest) GetPath() string {
+func (x *ListFileInfosRequest) GetPath() string {
 	if x != nil {
 		return x.xxx_hidden_Path
 	}
 	return ""
 }
 
-func (x *ListFilesRequest) SetPath(v string) {
+func (x *ListFileInfosRequest) SetPath(v string) {
 	x.xxx_hidden_Path = v
 }
 
-type ListFilesRequest_builder struct {
+type ListFileInfosRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Path string
 }
 
-func (b0 ListFilesRequest_builder) Build() *ListFilesRequest {
-	m0 := &ListFilesRequest{}
+func (b0 ListFileInfosRequest_builder) Build() *ListFileInfosRequest {
+	m0 := &ListFileInfosRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Path = b.Path
 	return m0
 }
 
-type ListFilesResponse struct {
-	state            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Files *[]*FileInfo           `protobuf:"bytes,1,rep,name=files"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+type ListFileInfosResponse struct {
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FileInfos *[]*FileInfo           `protobuf:"bytes,1,rep,name=file_infos,json=fileInfos"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
-func (x *ListFilesResponse) Reset() {
-	*x = ListFilesResponse{}
+func (x *ListFileInfosResponse) Reset() {
+	*x = ListFileInfosResponse{}
 	mi := &file_penguin_v1_penguin_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListFilesResponse) String() string {
+func (x *ListFileInfosResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListFilesResponse) ProtoMessage() {}
+func (*ListFileInfosResponse) ProtoMessage() {}
 
-func (x *ListFilesResponse) ProtoReflect() protoreflect.Message {
+func (x *ListFileInfosResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_penguin_v1_penguin_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1718,30 +1718,30 @@ func (x *ListFilesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *ListFilesResponse) GetFiles() []*FileInfo {
+func (x *ListFileInfosResponse) GetFileInfos() []*FileInfo {
 	if x != nil {
-		if x.xxx_hidden_Files != nil {
-			return *x.xxx_hidden_Files
+		if x.xxx_hidden_FileInfos != nil {
+			return *x.xxx_hidden_FileInfos
 		}
 	}
 	return nil
 }
 
-func (x *ListFilesResponse) SetFiles(v []*FileInfo) {
-	x.xxx_hidden_Files = &v
+func (x *ListFileInfosResponse) SetFileInfos(v []*FileInfo) {
+	x.xxx_hidden_FileInfos = &v
 }
 
-type ListFilesResponse_builder struct {
+type ListFileInfosResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Files []*FileInfo
+	FileInfos []*FileInfo
 }
 
-func (b0 ListFilesResponse_builder) Build() *ListFilesResponse {
-	m0 := &ListFilesResponse{}
+func (b0 ListFileInfosResponse_builder) Build() *ListFileInfosResponse {
+	m0 := &ListFileInfosResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.xxx_hidden_Files = &b.Files
+	x.xxx_hidden_FileInfos = &b.FileInfos
 	return m0
 }
 
@@ -1925,11 +1925,12 @@ const file_penguin_v1_penguin_proto_rawDesc = "" +
 	"\x1dListCompanyCategoriesResponse\x12?\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2\x1f.penguin.v1.CompanyCategoryInfoR\n" +
-	"categories\"&\n" +
-	"\x10ListFilesRequest\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"?\n" +
-	"\x11ListFilesResponse\x12*\n" +
-	"\x05files\x18\x01 \x03(\v2\x14.penguin.v1.FileInfoR\x05files\"\x18\n" +
+	"categories\"*\n" +
+	"\x14ListFileInfosRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"L\n" +
+	"\x15ListFileInfosResponse\x123\n" +
+	"\n" +
+	"file_infos\x18\x01 \x03(\v2\x14.penguin.v1.FileInfoR\tfileInfos\"\x18\n" +
 	"\x16GetFileBasePathRequest\"6\n" +
 	"\x17GetFileBasePathResponse\x12\x1b\n" +
 	"\tbase_path\x18\x01 \x01(\tR\bbasePath2\xdf\x02\n" +
@@ -1945,9 +1946,9 @@ const file_penguin_v1_penguin_proto_rawDesc = "" +
 	"\n" +
 	"GetCompany\x12\x1d.penguin.v1.GetCompanyRequest\x1a\x1e.penguin.v1.GetCompanyResponse\x12T\n" +
 	"\rUpdateCompany\x12 .penguin.v1.UpdateCompanyRequest\x1a!.penguin.v1.UpdateCompanyResponse\x12l\n" +
-	"\x15ListCompanyCategories\x12(.penguin.v1.ListCompanyCategoriesRequest\x1a).penguin.v1.ListCompanyCategoriesResponse2\xb3\x01\n" +
-	"\vFileService\x12H\n" +
-	"\tListFiles\x12\x1c.penguin.v1.ListFilesRequest\x1a\x1d.penguin.v1.ListFilesResponse\x12Z\n" +
+	"\x15ListCompanyCategories\x12(.penguin.v1.ListCompanyCategoriesRequest\x1a).penguin.v1.ListCompanyCategoriesResponse2\xbf\x01\n" +
+	"\vFileService\x12T\n" +
+	"\rListFileInfos\x12 .penguin.v1.ListFileInfosRequest\x1a!.penguin.v1.ListFileInfosResponse\x12Z\n" +
 	"\x0fGetFileBasePath\x12\".penguin.v1.GetFileBasePathRequest\x1a#.penguin.v1.GetFileBasePathResponseB4Z(penguin-backend/gen/penguin/v1;penguinv1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
 
 var file_penguin_v1_penguin_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
@@ -1972,8 +1973,8 @@ var file_penguin_v1_penguin_proto_goTypes = []any{
 	(*UpdateCompanyResponse)(nil),           // 17: penguin.v1.UpdateCompanyResponse
 	(*ListCompanyCategoriesRequest)(nil),    // 18: penguin.v1.ListCompanyCategoriesRequest
 	(*ListCompanyCategoriesResponse)(nil),   // 19: penguin.v1.ListCompanyCategoriesResponse
-	(*ListFilesRequest)(nil),                // 20: penguin.v1.ListFilesRequest
-	(*ListFilesResponse)(nil),               // 21: penguin.v1.ListFilesResponse
+	(*ListFileInfosRequest)(nil),            // 20: penguin.v1.ListFileInfosRequest
+	(*ListFileInfosResponse)(nil),           // 21: penguin.v1.ListFileInfosResponse
 	(*GetFileBasePathRequest)(nil),          // 22: penguin.v1.GetFileBasePathRequest
 	(*GetFileBasePathResponse)(nil),         // 23: penguin.v1.GetFileBasePathResponse
 	(*timestamppb.Timestamp)(nil),           // 24: google.protobuf.Timestamp
@@ -1995,7 +1996,7 @@ var file_penguin_v1_penguin_proto_depIdxs = []int32{
 	2,  // 13: penguin.v1.UpdateCompanyRequest.company:type_name -> penguin.v1.Company
 	2,  // 14: penguin.v1.UpdateCompanyResponse.company:type_name -> penguin.v1.Company
 	3,  // 15: penguin.v1.ListCompanyCategoriesResponse.categories:type_name -> penguin.v1.CompanyCategoryInfo
-	1,  // 16: penguin.v1.ListFilesResponse.files:type_name -> penguin.v1.FileInfo
+	1,  // 16: penguin.v1.ListFileInfosResponse.file_infos:type_name -> penguin.v1.FileInfo
 	4,  // 17: penguin.v1.KojiService.ListKojies:input_type -> penguin.v1.ListKojiesRequest
 	6,  // 18: penguin.v1.KojiService.GetKoji:input_type -> penguin.v1.GetKojiRequest
 	8,  // 19: penguin.v1.KojiService.UpdateKoji:input_type -> penguin.v1.UpdateKojiRequest
@@ -2004,7 +2005,7 @@ var file_penguin_v1_penguin_proto_depIdxs = []int32{
 	14, // 22: penguin.v1.CompanyService.GetCompany:input_type -> penguin.v1.GetCompanyRequest
 	16, // 23: penguin.v1.CompanyService.UpdateCompany:input_type -> penguin.v1.UpdateCompanyRequest
 	18, // 24: penguin.v1.CompanyService.ListCompanyCategories:input_type -> penguin.v1.ListCompanyCategoriesRequest
-	20, // 25: penguin.v1.FileService.ListFiles:input_type -> penguin.v1.ListFilesRequest
+	20, // 25: penguin.v1.FileService.ListFileInfos:input_type -> penguin.v1.ListFileInfosRequest
 	22, // 26: penguin.v1.FileService.GetFileBasePath:input_type -> penguin.v1.GetFileBasePathRequest
 	5,  // 27: penguin.v1.KojiService.ListKojies:output_type -> penguin.v1.ListKojiesResponse
 	7,  // 28: penguin.v1.KojiService.GetKoji:output_type -> penguin.v1.GetKojiResponse
@@ -2014,7 +2015,7 @@ var file_penguin_v1_penguin_proto_depIdxs = []int32{
 	15, // 32: penguin.v1.CompanyService.GetCompany:output_type -> penguin.v1.GetCompanyResponse
 	17, // 33: penguin.v1.CompanyService.UpdateCompany:output_type -> penguin.v1.UpdateCompanyResponse
 	19, // 34: penguin.v1.CompanyService.ListCompanyCategories:output_type -> penguin.v1.ListCompanyCategoriesResponse
-	21, // 35: penguin.v1.FileService.ListFiles:output_type -> penguin.v1.ListFilesResponse
+	21, // 35: penguin.v1.FileService.ListFileInfos:output_type -> penguin.v1.ListFileInfosResponse
 	23, // 36: penguin.v1.FileService.GetFileBasePath:output_type -> penguin.v1.GetFileBasePathResponse
 	27, // [27:37] is the sub-list for method output_type
 	17, // [17:27] is the sub-list for method input_type

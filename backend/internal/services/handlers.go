@@ -1,4 +1,4 @@
-package rpc
+package services
 
 type Handlers struct {
 	FileService    *FileServiceHandler

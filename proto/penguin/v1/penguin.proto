@@ -111,12 +111,12 @@ message ListCompanyCategoriesResponse {
   repeated CompanyCategoryInfo categories = 1;
 }
 
-message ListFilesRequest {
+message ListFileInfosRequest {
   string path = 1;
 }
 
-message ListFilesResponse {
-  repeated FileInfo files = 1;
+message ListFileInfosResponse {
+  repeated FileInfo file_infos = 1;
 }
 
 message GetFileBasePathRequest {}
@@ -140,6 +140,6 @@ service CompanyService {
 }
 
 service FileService {
-  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+  rpc ListFileInfos(ListFileInfosRequest) returns (ListFileInfosResponse);
   rpc GetFileBasePath(GetFileBasePathRequest) returns (GetFileBasePathResponse);
 }

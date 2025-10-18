@@ -2,7 +2,6 @@ package adapters
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"time"
 
@@ -13,66 +12,50 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// NewFileInfo はファイルのフルパスから FileInfo を作成します。
+func NewFileInfo(targetPath string) (*penguinv1.FileInfo, error) {
+	var err error
+
+	targetPath, err = utils.CleanAbsPath(targetPath)
+	if err != nil {
+		return nil, err
+	}
+
+	osFi, err := os.Lstat(targetPath)
+	if err != nil {
+		return nil, err
+	}
+
+	builder := penguinv1.FileInfo_builder{
+		TargetPath:  targetPath,
+		IdealPath:   "",
+		IsDirectory: osFi.IsDir(),
+		Size:        osFi.Size(),
+	}
+	if !osFi.ModTime().IsZero() {
+		builder.ModifiedTime = timestamppb.New(osFi.ModTime())
+	}
+
+	return builder.Build(), nil
+}
+
 // FileInfoWithYAML は gRPC の FileInfo メッセージをラップし、
 // YAML/JSON でのシリアライズに対応するための型です。
 type FileInfoWithYAML struct {
 	*penguinv1.FileInfo
 }
 
-// NewFileInfo はファイルのフルパスから FileInfoWithYAML を作成します。
+// NewFileInfoYAML はファイルのフルパスから FileInfoWithYAML を作成します。
 // 引数が 1 つの場合は対象パス、2 つの場合は対象パスと標準パスを指定します。
-func NewFileInfo(paths ...string) (*FileInfoWithYAML, error) {
-	if len(paths) == 0 || len(paths) > 2 {
-		return nil, errors.New("引数が１つまたは２つ必要です")
-	}
+func NewFileInfoYAML(targetPath string) (*FileInfoWithYAML, error) {
 
-	targetPath, err := utils.CleanAbsPath(paths[0])
-	if err != nil {
+	if fi, err := NewFileInfo(targetPath); err != nil {
 		return nil, err
+	} else {
+		return &FileInfoWithYAML{
+			FileInfo: proto.Clone(fi).(*penguinv1.FileInfo),
+		}, nil
 	}
-
-	osInfo, err := os.Stat(targetPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var idealPath string
-	if len(paths) == 2 {
-		idealPath, err = utils.CleanAbsPath(paths[1])
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	builder := penguinv1.FileInfo_builder{
-		TargetPath:  targetPath,
-		IdealPath:   idealPath,
-		IsDirectory: osInfo.IsDir(),
-		Size:        osInfo.Size(),
-	}
-	if !osInfo.ModTime().IsZero() {
-		builder.ModifiedTime = timestamppb.New(osInfo.ModTime())
-	}
-
-	return &FileInfoWithYAML{FileInfo: builder.Build()}, nil
-}
-
-// NewFileInfoFromProto は proto メッセージからラッパーを生成します（クローンを作成）。
-func NewFileInfoFromProto(src *penguinv1.FileInfo) *FileInfoWithYAML {
-	if src == nil {
-		return nil
-	}
-	return &FileInfoWithYAML{
-		FileInfo: proto.Clone(src).(*penguinv1.FileInfo),
-	}
-}
-
-// CloneProto は内部の FileInfo をディープコピーして返します。
-func (fi *FileInfoWithYAML) CloneProto() *penguinv1.FileInfo {
-	if fi == nil || fi.FileInfo == nil {
-		return nil
-	}
-	return proto.Clone(fi.FileInfo).(*penguinv1.FileInfo)
 }
 
 type fileInfoEncoding struct {

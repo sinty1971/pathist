@@ -127,7 +127,7 @@ func (fs *FileService) GetFileInfos(target ...string) ([]models.FileInfo, error)
 
 // JoinBasePath BaseFolderに可変長引数の相対パスを追加した絶対パスを返す
 // 引数が絶対パスの場合はエラーを返す
-func (fs *FileService) JoinBasePath(target ...string) (string, error) {
+func (fs *FileService) JoinBasePath(targetPath string) (string, error) {
 	if len(target) == 0 {
 		return fs.TargetPath, nil
 	}

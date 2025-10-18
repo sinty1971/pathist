@@ -4,10 +4,13 @@ package utils
 import (
 	"fmt"
 	"maps"
+	"penguin-backend/internal/models"
 	"regexp"
 	"slices"
 	"strings"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // DefaultTimestampFormatsWithTZ タイムゾーン情報を含む日時フォーマットのリスト（優先順位順）
@@ -173,4 +176,62 @@ func ParseRFC3339Nano(in string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	return t, nil
+}
+
+func toProtoTimestamp(ts models.Timestamp) *timestamppb.Timestamp {
+	if ts.Time.IsZero() {
+		return nil
+	}
+	return timestamppb.New(ts.Time)
+}
+
+func toModelTimestamp(ts *timestamppb.Timestamp) models.Timestamp {
+	if ts == nil {
+		return models.Timestamp{}
+	}
+	return models.Timestamp{Time: ts.AsTime()}
+}
+
+// ParseTimestamp parses various date/time string formats and returns a Timestamp
+// When no timezone is specified, it uses the server's local timezone
+func ParseTimestamp(in string, out *string) (models.Timestamp, error) {
+	t, err := ParseTime(in, out)
+	if err != nil {
+		return models.Timestamp{}, err
+	}
+	return models.Timestamp{Time: t}, nil
+}
+
+// MarshalJSON implements json.Marshaler
+func (ts models.Timestamp) MarshalJSON() ([]byte, error) {
+	if ts.Time.IsZero() {
+		return []byte(`""`), nil
+	}
+	return []byte(`"` + ts.Time.Format(time.RFC3339Nano) + `"`), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (ts *models.Timestamp) UnmarshalJSON(data []byte) error {
+	in := string(data)
+	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
+		in = in[1 : len(in)-1]
+	}
+
+	if in == "" {
+		ts.Time = time.Time{}
+		return nil
+	}
+
+	// タイムスタンプ文字列のパース
+	parsed, err := ParseTime(in, nil)
+	if err != nil {
+		return err
+	}
+
+	ts.Time = parsed
+	return nil
+}
+
+func (ts *models.Timestamp) Format(layout string) (string, error) {
+	return FormatTime(layout, ts.Time)
 }

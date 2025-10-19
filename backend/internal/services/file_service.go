@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,8 +12,7 @@ import (
 
 	penguinv1 "penguin-backend/gen/penguin/v1"
 	penguinv1connect "penguin-backend/gen/penguin/v1/penguinv1connect"
-	"penguin-backend/internal/adapters"
-	"penguin-backend/internal/services"
+	"penguin-backend/internal/models"
 
 	"connectrpc.com/connect"
 )
@@ -23,17 +23,20 @@ import (
 type FileServiceHandler struct {
 	penguinv1connect.UnimplementedFileServiceHandler
 	// handlers は任意のgrpcサービスハンドラーへの参照
-	handlers *Handlers
+	handlers *RootHandler
 
 	// TargetPath はファイルサービスの絶対パスフォルダー
 	TargetPath string `json:"targetPath" yaml:"target_path" example:"/penguin/豊田築炉"`
 }
 
-func NewFileServiceHandler(service *services.FileService) *FileServiceHandler {
-	return &FileServiceHandler{}
+func NewFileServiceHandler(rootHandler *RootHandler, targetPath string) *FileServiceHandler {
+	return &FileServiceHandler{
+		handlers:   rootHandler,
+		TargetPath: targetPath,
+	}
 }
 
-func (h *FileServiceHandler) ListFiles(
+func (h *FileServiceHandler) ListFileInfos(
 	ctx context.Context,
 	req *connect.Request[penguinv1.ListFileInfosRequest]) (
 	*connect.Response[penguinv1.ListFileInfosResponse],
@@ -86,7 +89,7 @@ func (h *FileServiceHandler) ListFiles(
 				dir := dirs[index]
 				fullpath := filepath.Join(targetPath, dir.Name())
 
-				fi, _ := adapters.NewFileInfo(fullpath)
+				fi, _ := models.NewFileInfo(fullpath)
 				if fi != nil {
 					fisChan <- fi
 				}
@@ -118,12 +121,155 @@ func (h *FileServiceHandler) ListFiles(
 }
 
 // GetAbsPathFrom BasePathに引数の相対パスを追加した絶対パスを返す
-func (fs *FileServiceHandler) GetAbsPathFrom(relPath string) (string, error) {
+func (h *FileServiceHandler) GetAbsPathFrom(relPath string) (string, error) {
 
 	// 絶対パスがある場合はエラーを返す
 	if strings.HasPrefix(relPath, "~/") || filepath.IsAbs(relPath) {
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	return filepath.Join(fs.TargetPath, relPath), nil
+	return filepath.Join(h.TargetPath, relPath), nil
+}
+
+// CopyFile はファイルまたはディレクトリをコピーする
+func (h *FileServiceHandler) CopyFile(relSrc, relDst string) error {
+	var absSrc, absDst string
+	var err error
+
+	// relSrcがパスチェック及び絶対パス変換
+	absSrc, err = h.GetAbsPathFrom(relSrc)
+	if err != nil {
+		return err
+	}
+
+	// relDstのパスチェック及び絶対パス変換
+	absDst, err = h.GetAbsPathFrom(relDst)
+	if err != nil {
+		return err
+	}
+
+	// コピー元の存在確認
+	srcOsFi, err := os.Stat(absSrc)
+	if err != nil {
+		return err
+	}
+
+	// ディレクトリの場合
+	if srcOsFi.IsDir() {
+		return h.absCopyDir(absSrc, absDst)
+	}
+
+	// ファイルの場合
+	return h.absCopyFile(absSrc, absDst)
+}
+
+// absCopyFile はファイルをコピーする内部関数
+func (h *FileServiceHandler) absCopyFile(absSrc, absDst string) error {
+	// コピー元ファイルを開く
+	srcFile, err := os.Open(absSrc)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	// コピー先のディレクトリが存在しない場合は作成
+	dstDir := filepath.Dir(absDst)
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return err
+	}
+
+	// コピー先ファイルを作成
+	dstFile, err := os.Create(absDst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	// ファイル内容をコピー
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return err
+	}
+
+	// ファイル権限をコピー
+	srcInfo, err := os.Stat(absSrc)
+	if err != nil {
+		return err
+	}
+
+	return os.Chmod(absDst, srcInfo.Mode())
+}
+
+// absCopyDir はディレクトリを再帰的にコピーする内部関数
+func (h *FileServiceHandler) absCopyDir(absSrc, absDst string) error {
+	// コピー元ディレクトリの情報を取得
+	srcInfo, err := os.Stat(absSrc)
+	if err != nil {
+		return err
+	}
+
+	// コピー先ディレクトリを作成
+	if err := os.MkdirAll(absDst, srcInfo.Mode()); err != nil {
+		return err
+	}
+
+	// ディレクトリ内のエントリを読み取り
+	entries, err := os.ReadDir(absSrc)
+	if err != nil {
+		return err
+	}
+
+	// 各エントリを処理
+	for _, entry := range entries {
+		srcPath := filepath.Join(absSrc, entry.Name())
+		dstPath := filepath.Join(absDst, entry.Name())
+
+		if entry.IsDir() {
+			// サブディレクトリの場合、再帰的にコピー
+			if err := h.absCopyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		} else {
+			// ファイルの場合、ファイルをコピー
+			if err := h.absCopyFile(srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// MoveFile はファイルを移動する
+func (h *FileServiceHandler) MoveFile(relSrc, relDst string) error {
+	absSrc, err := h.GetAbsPathFrom(relSrc)
+	if err != nil {
+		return err
+	}
+	absDst, err := h.GetAbsPathFrom(relDst)
+	if err != nil {
+		return err
+	}
+
+	// 移動先のディレクトリが存在するかチェック
+	if _, err := os.Stat(absSrc); os.IsNotExist(err) {
+		return errors.New("移動元のファイル/ディレクトリが存在しません: " + relSrc)
+	}
+
+	// 移動先の親ディレクトリを作成（必要に応じて）
+	dstParent := filepath.Dir(absDst)
+	if err := os.MkdirAll(dstParent, 0755); err != nil {
+		return err
+	}
+
+	return os.Rename(absSrc, absDst)
+}
+
+// DeleteFile はファイルを削除する
+func (h *FileServiceHandler) DeleteFile(relPath string) error {
+	absPath, err := h.GetAbsPathFrom(relPath)
+	if err != nil {
+		return err
+	}
+
+	return os.Remove(absPath)
 }

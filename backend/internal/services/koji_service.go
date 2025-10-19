@@ -1,14 +1,15 @@
-package rpc
+package services
 
 import (
 	"context"
 	"errors"
 
-	"connectrpc.com/connect"
 	penguinv1 "penguin-backend/gen/penguin/v1"
 	penguinv1connect "penguin-backend/gen/penguin/v1/penguinv1connect"
 	"penguin-backend/internal/models"
 	"penguin-backend/internal/services"
+
+	"connectrpc.com/connect"
 )
 
 // KojiServiceHandler bridges existing KojiService logic to Connect handlers.

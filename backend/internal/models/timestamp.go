@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 	"regexp"
@@ -11,33 +12,31 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// Timestamp wraps time.Time with custom YAML/JSON marshaling/unmarshaling
-// @Description Timestamp in RFC3339 format
-// swagger:model
+// Timestamp は time.Time をラップし、カスタムの YAML/JSON マーシャリング/アンマーシャリングを提供します
 type TimestampEx struct {
 	timestamppb.Timestamp
-	// Time is the underlying time.Time value
-	// @Description Time value
-	// @example 2024-01-15T10:30:00Z
 }
 
 type TimestampEncoding struct {
 	// Time is the time value in RFC3339 format
-	// @Description Time in RFC3339 format
-	// @example 2024-01-15T10:30:00Z
 	Time string `json:"time" yaml:"time" swaggertype:"string" format:"date-time" example:"2024-01-15T10:30:00Z"`
 }
 
 // MarshalYAML implements yaml.Marshaler
-func (tsTimestamp) MarshalYAML() (any, error) {
-	if ts.Time.IsZero() {
+func (ts *TimestampEx) MarshalYAML() (any, error) {
+	// nil チェック
+	if ts == nil {
+		return "", errors.New("(ts *TimestampEx) MarshalYAML() で ts 値が nil です。")
+	}
+	asTime := ts.AsTime()
+	if asTime.IsZero() {
 		return "", nil
 	}
-	return ts.Time.Format(time.RFC3339Nano), nil
+	return asTime.Format(time.RFC3339Nano), nil
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler
-func (ts *models.Timestamp) UnmarshalYAML(unmarshal func(any) error) error {
+func (ts *TimestampEx) UnmarshalYAML(unmarshal func(any) error) error {
 	// 日時文字列を抽出
 	var in string
 	if err := unmarshal(&in); err != nil {
@@ -50,7 +49,7 @@ func (ts *models.Timestamp) UnmarshalYAML(unmarshal func(any) error) error {
 		return err
 	}
 
-	ts.Time = parsed
+	ts.Timestamp = *timestamppb.New(parsed)
 	return nil
 }
 
@@ -219,47 +218,33 @@ func ParseRFC3339Nano(in string) (time.Time, error) {
 	return t, nil
 }
 
-func toProtoTimestamp(ts models.Timestamp) *timestamppb.Timestamp {
-	if ts.Time.IsZero() {
-		return nil
-	}
-	return timestamppb.New(ts.Time)
-}
-
-func toModelTimestamp(ts *timestamppb.Timestamp) models.Timestamp {
-	if ts == nil {
-		return models.Timestamp{}
-	}
-	return models.Timestamp{Time: ts.AsTime()}
-}
-
-// ParseTimestamp parses various date/time string formats and returns a Timestamp
+// ParseToTimestamp parses various date/time string formats and returns a TimestampEx
 // When no timezone is specified, it uses the server's local timezone
-func ParseTimestamp(in string, out *string) (models.Timestamp, error) {
+func ParseToTimestamp(in string, out *string) (TimestampEx, error) {
 	t, err := ParseTime(in, out)
 	if err != nil {
-		return models.Timestamp{}, err
+		return TimestampEx{}, err
 	}
-	return models.Timestamp{Time: t}, nil
+	return TimestampEx{Timestamp: *timestamppb.New(t)}, nil
 }
 
 // MarshalJSON implements json.Marshaler
-func (ts models.Timestamp) MarshalJSON() ([]byte, error) {
-	if ts.Time.IsZero() {
+func (ts TimestampEx) MarshalJSON() ([]byte, error) {
+	if ts.Timestamp.AsTime().IsZero() {
 		return []byte(`""`), nil
 	}
-	return []byte(`"` + ts.Time.Format(time.RFC3339Nano) + `"`), nil
+	return []byte(`"` + ts.Timestamp.AsTime().Format(time.RFC3339Nano) + `"`), nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (ts *models.Timestamp) UnmarshalJSON(data []byte) error {
+func (ts *TimestampEx) UnmarshalJSON(data []byte) error {
 	in := string(data)
 	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
 		in = in[1 : len(in)-1]
 	}
 
 	if in == "" {
-		ts.Time = time.Time{}
+		ts.Timestamp = *timestamppb.New(time.Time{})
 		return nil
 	}
 
@@ -269,10 +254,10 @@ func (ts *models.Timestamp) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	ts.Time = parsed
+	ts.Timestamp = *timestamppb.New(parsed)
 	return nil
 }
 
-func (ts *models.Timestamp) Format(layout string) (string, error) {
-	return FormatTime(layout, ts.Time)
+func (ts TimestampEx) Format(layout string) (string, error) {
+	return FormatTime(layout, ts.Timestamp.AsTime())
 }

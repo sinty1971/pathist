@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// penguinv1.FileInfo 関連のヘルパー
+// grpcv1.FileInfo 関連のヘルパー
 // このファイルは proto ファイルから自動生成された gRPC メッセージ型を
 // 補完するためのヘルパー関数や型を提供します。
 
@@ -21,12 +21,14 @@ import (
 func NewFileInfo(targetPath string) (*grpcv1.FileInfo, error) {
 	var err error
 
+	// 絶対パスの正規化
 	targetPath, err = utils.CleanAbsPath(targetPath)
 	if err != nil {
 		return nil, err
 	}
 
-	osFi, err := os.Lstat(targetPath)
+	// ファイル情報の取得
+	osFi, err := os.Stat(targetPath)
 	if err != nil {
 		return nil, err
 	}

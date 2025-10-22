@@ -59,7 +59,7 @@ func NewKoji(targetFolder string) (*Koji, error) {
 
 	// ファイル名から日付を取得と残りの文字列を取得
 	nameWithoutDate := folderName
-	startDate, err := ParseTimestamp(folderName, &nameWithoutDate)
+	startDate, err := ParseToTimestamp(folderName, &nameWithoutDate)
 	if err != nil {
 		return nil, err
 	}

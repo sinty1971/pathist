@@ -6,10 +6,9 @@ import (
 	"os"
 	"time"
 
-	grpcv1 "penguin-backend/gen/penguin/v1"
-	"penguin-backend/internal/utils"
+	grpcv1 "grpc-backend/gen/grpc/v1"
+	"grpc-backend/internal/utils"
 
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -17,8 +16,16 @@ import (
 // このファイルは proto ファイルから自動生成された gRPC メッセージ型を
 // 補完するためのヘルパー関数や型を提供します。
 
+// FileInfoEx は gRPC の FileInfo メッセージの拡張機能版です。
+type FileInfoEx struct {
+	*grpcv1.FileInfo
+}
+
+// FileInfo は grpcv1.FileInfo のエイリアスです。
+type FileInfo = FileInfoEx
+
 // NewFileInfo はファイルのフルパスから FileInfo を作成します。
-func NewFileInfo(targetPath string) (*grpcv1.FileInfo, error) {
+func NewFileInfo(targetPath string) (*FileInfo, error) {
 	var err error
 
 	// 絶対パスの正規化
@@ -47,24 +54,9 @@ func NewFileInfo(targetPath string) (*grpcv1.FileInfo, error) {
 	}.Build(), nil
 }
 
-// FileInfoEx は gRPC の FileInfo メッセージの拡張機能版です。
-type FileInfoEx struct {
-	*grpcv1.FileInfo
-}
-
 // NewFileInfoEx は*grpcv1.FileInfo から FileInfoWithEx を作成します。
-func NewFileInfoEx(fileInfo *grpcv1.FileInfo) (*FileInfoEx, error) {
-	return &FileInfoEx{
-		FileInfo: proto.Clone(fileInfo).(*grpcv1.FileInfo),
-	}, nil
-}
-
-type FileInfoEncoding struct {
-	TargetPath   string `json:"targetPath" yaml:"target_path"`
-	IdealPath    string `json:"idealPath" yaml:"ideal_path"`
-	IsDirectory  bool   `json:"isDirectory" yaml:"-"`
-	Size         int64  `json:"size" yaml:"-"`
-	ModifiedTime string `json:"modifiedTime" yaml:"-"`
+func NewFileInfoEx(fileInfo *grpcv1.FileInfo) (*FileInfo, error) {
+	return &FileInfo{FileInfo: fileInfo}, nil
 }
 
 func NewFileInfoEncoding(fi *grpcv1.FileInfo) FileInfoEncoding {

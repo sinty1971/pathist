@@ -1,4 +1,4 @@
-# Penguin Backend & Frontend Commands
+# Grpc Backend & Frontend Commands
 
 # Start the backend gRPC server (HTTP/2 over h2c)
 backend:
@@ -32,7 +32,7 @@ generate-grpc:
 
 # Generate Connect-Web stubs for the frontend
 frontend-generate-grpc:
-    cd ./frontend && PATH="$$(pwd)/node_modules/.bin:$$PATH" protoc --experimental_editions --proto_path=../proto --es_out=target=ts,import_extension=ts:./src/gen ../proto/penguin/v1/penguin.proto
+    cd ./frontend && PATH="$$(pwd)/node_modules/.bin:$$PATH" protoc --experimental_editions --proto_path=../proto --es_out=target=ts,import_extension=ts:./src/gen ../proto/grpc/v1/penguin.proto
 
 # Install frontend dependencies  
 frontend-deps:
@@ -86,7 +86,7 @@ stop-backend:
     echo "Stopping backend server..."
     pkill -f "go run cmd/grpc/main.go" 2>/dev/null
     pkill -f "cmd/grpc/main.go" 2>/dev/null
-    pkill -f "penguin-backend" 2>/dev/null
+    pkill -f "grpc-backend" 2>/dev/null
     for port in 9090 9443; do
         lsof -ti:$port | xargs -r kill -15 2>/dev/null
     done

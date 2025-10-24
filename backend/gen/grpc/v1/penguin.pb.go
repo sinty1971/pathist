@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: penguin/v1/penguin.proto
+// source: grpc/v1/penguin.proto
 
-package penguinv1
+package grpcv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -22,25 +22,433 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Koji struct {
+type FileInfo struct {
 	state                    protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id            string                 `protobuf:"bytes,1,opt,name=id"`
-	xxx_hidden_Status        string                 `protobuf:"bytes,2,opt,name=status"`
-	xxx_hidden_TargetFolder  string                 `protobuf:"bytes,3,opt,name=target_folder,json=targetFolder"`
-	xxx_hidden_StartDate     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start_date,json=startDate"`
-	xxx_hidden_CompanyName   string                 `protobuf:"bytes,5,opt,name=company_name,json=companyName"`
-	xxx_hidden_LocationName  string                 `protobuf:"bytes,6,opt,name=location_name,json=locationName"`
-	xxx_hidden_EndDate       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=end_date,json=endDate"`
-	xxx_hidden_Description   string                 `protobuf:"bytes,8,opt,name=description"`
-	xxx_hidden_Tags          []string               `protobuf:"bytes,9,rep,name=tags"`
-	xxx_hidden_RequiredFiles *[]*FileInfo           `protobuf:"bytes,10,rep,name=required_files,json=requiredFiles"`
+	xxx_hidden_TargetPath    string                 `protobuf:"bytes,1,opt,name=target_path,json=targetPath"`
+	xxx_hidden_IsDirectory   bool                   `protobuf:"varint,2,opt,name=is_directory,json=isDirectory"`
+	xxx_hidden_Size          int64                  `protobuf:"varint,3,opt,name=size"`
+	xxx_hidden_ModifiedTime  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=modified_time,json=modifiedTime"`
+	xxx_hidden_IdealPathYaml string                 `protobuf:"bytes,5,opt,name=ideal_path_yaml,json=idealPathYaml"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
 
+func (x *FileInfo) Reset() {
+	*x = FileInfo{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileInfo) ProtoMessage() {}
+
+func (x *FileInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *FileInfo) GetTargetPath() string {
+	if x != nil {
+		return x.xxx_hidden_TargetPath
+	}
+	return ""
+}
+
+func (x *FileInfo) GetIsDirectory() bool {
+	if x != nil {
+		return x.xxx_hidden_IsDirectory
+	}
+	return false
+}
+
+func (x *FileInfo) GetSize() int64 {
+	if x != nil {
+		return x.xxx_hidden_Size
+	}
+	return 0
+}
+
+func (x *FileInfo) GetModifiedTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_ModifiedTime
+	}
+	return nil
+}
+
+func (x *FileInfo) GetIdealPathYaml() string {
+	if x != nil {
+		return x.xxx_hidden_IdealPathYaml
+	}
+	return ""
+}
+
+func (x *FileInfo) SetTargetPath(v string) {
+	x.xxx_hidden_TargetPath = v
+}
+
+func (x *FileInfo) SetIsDirectory(v bool) {
+	x.xxx_hidden_IsDirectory = v
+}
+
+func (x *FileInfo) SetSize(v int64) {
+	x.xxx_hidden_Size = v
+}
+
+func (x *FileInfo) SetModifiedTime(v *timestamppb.Timestamp) {
+	x.xxx_hidden_ModifiedTime = v
+}
+
+func (x *FileInfo) SetIdealPathYaml(v string) {
+	x.xxx_hidden_IdealPathYaml = v
+}
+
+func (x *FileInfo) HasModifiedTime() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_ModifiedTime != nil
+}
+
+func (x *FileInfo) ClearModifiedTime() {
+	x.xxx_hidden_ModifiedTime = nil
+}
+
+type FileInfo_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	TargetPath    string
+	IsDirectory   bool
+	Size          int64
+	ModifiedTime  *timestamppb.Timestamp
+	IdealPathYaml string
+}
+
+func (b0 FileInfo_builder) Build() *FileInfo {
+	m0 := &FileInfo{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_TargetPath = b.TargetPath
+	x.xxx_hidden_IsDirectory = b.IsDirectory
+	x.xxx_hidden_Size = b.Size
+	x.xxx_hidden_ModifiedTime = b.ModifiedTime
+	x.xxx_hidden_IdealPathYaml = b.IdealPathYaml
+	return m0
+}
+
+type Company struct {
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id                string                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_TargetFolder      string                 `protobuf:"bytes,2,opt,name=target_folder,json=targetFolder"`
+	xxx_hidden_ShortName         string                 `protobuf:"bytes,3,opt,name=short_name,json=shortName"`
+	xxx_hidden_Category          string                 `protobuf:"bytes,4,opt,name=category"`
+	xxx_hidden_LegalNameYaml     string                 `protobuf:"bytes,5,opt,name=legal_name_yaml,json=legalNameYaml"`
+	xxx_hidden_PostalCodeYaml    string                 `protobuf:"bytes,6,opt,name=postal_code_yaml,json=postalCodeYaml"`
+	xxx_hidden_AddressYaml       string                 `protobuf:"bytes,7,opt,name=address_yaml,json=addressYaml"`
+	xxx_hidden_PhoneYaml         string                 `protobuf:"bytes,8,opt,name=phone_yaml,json=phoneYaml"`
+	xxx_hidden_EmailYaml         string                 `protobuf:"bytes,9,opt,name=email_yaml,json=emailYaml"`
+	xxx_hidden_WebsiteYaml       string                 `protobuf:"bytes,10,opt,name=website_yaml,json=websiteYaml"`
+	xxx_hidden_TagsYaml          []string               `protobuf:"bytes,11,rep,name=tags_yaml,json=tagsYaml"`
+	xxx_hidden_RequiredFilesYaml *[]*FileInfo           `protobuf:"bytes,12,rep,name=required_files_yaml,json=requiredFilesYaml"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
+}
+
+func (x *Company) Reset() {
+	*x = Company{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Company) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Company) ProtoMessage() {}
+
+func (x *Company) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Company) GetId() string {
+	if x != nil {
+		return x.xxx_hidden_Id
+	}
+	return ""
+}
+
+func (x *Company) GetTargetFolder() string {
+	if x != nil {
+		return x.xxx_hidden_TargetFolder
+	}
+	return ""
+}
+
+func (x *Company) GetShortName() string {
+	if x != nil {
+		return x.xxx_hidden_ShortName
+	}
+	return ""
+}
+
+func (x *Company) GetCategory() string {
+	if x != nil {
+		return x.xxx_hidden_Category
+	}
+	return ""
+}
+
+func (x *Company) GetLegalNameYaml() string {
+	if x != nil {
+		return x.xxx_hidden_LegalNameYaml
+	}
+	return ""
+}
+
+func (x *Company) GetPostalCodeYaml() string {
+	if x != nil {
+		return x.xxx_hidden_PostalCodeYaml
+	}
+	return ""
+}
+
+func (x *Company) GetAddressYaml() string {
+	if x != nil {
+		return x.xxx_hidden_AddressYaml
+	}
+	return ""
+}
+
+func (x *Company) GetPhoneYaml() string {
+	if x != nil {
+		return x.xxx_hidden_PhoneYaml
+	}
+	return ""
+}
+
+func (x *Company) GetEmailYaml() string {
+	if x != nil {
+		return x.xxx_hidden_EmailYaml
+	}
+	return ""
+}
+
+func (x *Company) GetWebsiteYaml() string {
+	if x != nil {
+		return x.xxx_hidden_WebsiteYaml
+	}
+	return ""
+}
+
+func (x *Company) GetTagsYaml() []string {
+	if x != nil {
+		return x.xxx_hidden_TagsYaml
+	}
+	return nil
+}
+
+func (x *Company) GetRequiredFilesYaml() []*FileInfo {
+	if x != nil {
+		if x.xxx_hidden_RequiredFilesYaml != nil {
+			return *x.xxx_hidden_RequiredFilesYaml
+		}
+	}
+	return nil
+}
+
+func (x *Company) SetId(v string) {
+	x.xxx_hidden_Id = v
+}
+
+func (x *Company) SetTargetFolder(v string) {
+	x.xxx_hidden_TargetFolder = v
+}
+
+func (x *Company) SetShortName(v string) {
+	x.xxx_hidden_ShortName = v
+}
+
+func (x *Company) SetCategory(v string) {
+	x.xxx_hidden_Category = v
+}
+
+func (x *Company) SetLegalNameYaml(v string) {
+	x.xxx_hidden_LegalNameYaml = v
+}
+
+func (x *Company) SetPostalCodeYaml(v string) {
+	x.xxx_hidden_PostalCodeYaml = v
+}
+
+func (x *Company) SetAddressYaml(v string) {
+	x.xxx_hidden_AddressYaml = v
+}
+
+func (x *Company) SetPhoneYaml(v string) {
+	x.xxx_hidden_PhoneYaml = v
+}
+
+func (x *Company) SetEmailYaml(v string) {
+	x.xxx_hidden_EmailYaml = v
+}
+
+func (x *Company) SetWebsiteYaml(v string) {
+	x.xxx_hidden_WebsiteYaml = v
+}
+
+func (x *Company) SetTagsYaml(v []string) {
+	x.xxx_hidden_TagsYaml = v
+}
+
+func (x *Company) SetRequiredFilesYaml(v []*FileInfo) {
+	x.xxx_hidden_RequiredFilesYaml = &v
+}
+
+type Company_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id                string
+	TargetFolder      string
+	ShortName         string
+	Category          string
+	LegalNameYaml     string
+	PostalCodeYaml    string
+	AddressYaml       string
+	PhoneYaml         string
+	EmailYaml         string
+	WebsiteYaml       string
+	TagsYaml          []string
+	RequiredFilesYaml []*FileInfo
+}
+
+func (b0 Company_builder) Build() *Company {
+	m0 := &Company{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_TargetFolder = b.TargetFolder
+	x.xxx_hidden_ShortName = b.ShortName
+	x.xxx_hidden_Category = b.Category
+	x.xxx_hidden_LegalNameYaml = b.LegalNameYaml
+	x.xxx_hidden_PostalCodeYaml = b.PostalCodeYaml
+	x.xxx_hidden_AddressYaml = b.AddressYaml
+	x.xxx_hidden_PhoneYaml = b.PhoneYaml
+	x.xxx_hidden_EmailYaml = b.EmailYaml
+	x.xxx_hidden_WebsiteYaml = b.WebsiteYaml
+	x.xxx_hidden_TagsYaml = b.TagsYaml
+	x.xxx_hidden_RequiredFilesYaml = &b.RequiredFilesYaml
+	return m0
+}
+
+type CompanyCategoryInfo struct {
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Code  string                 `protobuf:"bytes,1,opt,name=code"`
+	xxx_hidden_Label string                 `protobuf:"bytes,2,opt,name=label"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *CompanyCategoryInfo) Reset() {
+	*x = CompanyCategoryInfo{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompanyCategoryInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompanyCategoryInfo) ProtoMessage() {}
+
+func (x *CompanyCategoryInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *CompanyCategoryInfo) GetCode() string {
+	if x != nil {
+		return x.xxx_hidden_Code
+	}
+	return ""
+}
+
+func (x *CompanyCategoryInfo) GetLabel() string {
+	if x != nil {
+		return x.xxx_hidden_Label
+	}
+	return ""
+}
+
+func (x *CompanyCategoryInfo) SetCode(v string) {
+	x.xxx_hidden_Code = v
+}
+
+func (x *CompanyCategoryInfo) SetLabel(v string) {
+	x.xxx_hidden_Label = v
+}
+
+type CompanyCategoryInfo_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Code  string
+	Label string
+}
+
+func (b0 CompanyCategoryInfo_builder) Build() *CompanyCategoryInfo {
+	m0 := &CompanyCategoryInfo{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Code = b.Code
+	x.xxx_hidden_Label = b.Label
+	return m0
+}
+
+type Koji struct {
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id                string                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Status            string                 `protobuf:"bytes,2,opt,name=status"`
+	xxx_hidden_TargetFolder      string                 `protobuf:"bytes,3,opt,name=target_folder,json=targetFolder"`
+	xxx_hidden_StartDate         *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start_date,json=startDate"`
+	xxx_hidden_CompanyName       string                 `protobuf:"bytes,5,opt,name=company_name,json=companyName"`
+	xxx_hidden_LocationName      string                 `protobuf:"bytes,6,opt,name=location_name,json=locationName"`
+	xxx_hidden_EndDateYaml       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=end_date_yaml,json=endDateYaml"`
+	xxx_hidden_DescriptionYaml   string                 `protobuf:"bytes,8,opt,name=description_yaml,json=descriptionYaml"`
+	xxx_hidden_TagsYaml          []string               `protobuf:"bytes,9,rep,name=tags_yaml,json=tagsYaml"`
+	xxx_hidden_RequiredFilesYaml *[]*FileInfo           `protobuf:"bytes,10,rep,name=required_files_yaml,json=requiredFilesYaml"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
+}
+
 func (x *Koji) Reset() {
 	*x = Koji{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[0]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -52,7 +460,7 @@ func (x *Koji) String() string {
 func (*Koji) ProtoMessage() {}
 
 func (x *Koji) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[0]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -105,31 +513,31 @@ func (x *Koji) GetLocationName() string {
 	return ""
 }
 
-func (x *Koji) GetEndDate() *timestamppb.Timestamp {
+func (x *Koji) GetEndDateYaml() *timestamppb.Timestamp {
 	if x != nil {
-		return x.xxx_hidden_EndDate
+		return x.xxx_hidden_EndDateYaml
 	}
 	return nil
 }
 
-func (x *Koji) GetDescription() string {
+func (x *Koji) GetDescriptionYaml() string {
 	if x != nil {
-		return x.xxx_hidden_Description
+		return x.xxx_hidden_DescriptionYaml
 	}
 	return ""
 }
 
-func (x *Koji) GetTags() []string {
+func (x *Koji) GetTagsYaml() []string {
 	if x != nil {
-		return x.xxx_hidden_Tags
+		return x.xxx_hidden_TagsYaml
 	}
 	return nil
 }
 
-func (x *Koji) GetRequiredFiles() []*FileInfo {
+func (x *Koji) GetRequiredFilesYaml() []*FileInfo {
 	if x != nil {
-		if x.xxx_hidden_RequiredFiles != nil {
-			return *x.xxx_hidden_RequiredFiles
+		if x.xxx_hidden_RequiredFilesYaml != nil {
+			return *x.xxx_hidden_RequiredFilesYaml
 		}
 	}
 	return nil
@@ -159,20 +567,20 @@ func (x *Koji) SetLocationName(v string) {
 	x.xxx_hidden_LocationName = v
 }
 
-func (x *Koji) SetEndDate(v *timestamppb.Timestamp) {
-	x.xxx_hidden_EndDate = v
+func (x *Koji) SetEndDateYaml(v *timestamppb.Timestamp) {
+	x.xxx_hidden_EndDateYaml = v
 }
 
-func (x *Koji) SetDescription(v string) {
-	x.xxx_hidden_Description = v
+func (x *Koji) SetDescriptionYaml(v string) {
+	x.xxx_hidden_DescriptionYaml = v
 }
 
-func (x *Koji) SetTags(v []string) {
-	x.xxx_hidden_Tags = v
+func (x *Koji) SetTagsYaml(v []string) {
+	x.xxx_hidden_TagsYaml = v
 }
 
-func (x *Koji) SetRequiredFiles(v []*FileInfo) {
-	x.xxx_hidden_RequiredFiles = &v
+func (x *Koji) SetRequiredFilesYaml(v []*FileInfo) {
+	x.xxx_hidden_RequiredFilesYaml = &v
 }
 
 func (x *Koji) HasStartDate() bool {
@@ -182,34 +590,34 @@ func (x *Koji) HasStartDate() bool {
 	return x.xxx_hidden_StartDate != nil
 }
 
-func (x *Koji) HasEndDate() bool {
+func (x *Koji) HasEndDateYaml() bool {
 	if x == nil {
 		return false
 	}
-	return x.xxx_hidden_EndDate != nil
+	return x.xxx_hidden_EndDateYaml != nil
 }
 
 func (x *Koji) ClearStartDate() {
 	x.xxx_hidden_StartDate = nil
 }
 
-func (x *Koji) ClearEndDate() {
-	x.xxx_hidden_EndDate = nil
+func (x *Koji) ClearEndDateYaml() {
+	x.xxx_hidden_EndDateYaml = nil
 }
 
 type Koji_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Id            string
-	Status        string
-	TargetFolder  string
-	StartDate     *timestamppb.Timestamp
-	CompanyName   string
-	LocationName  string
-	EndDate       *timestamppb.Timestamp
-	Description   string
-	Tags          []string
-	RequiredFiles []*FileInfo
+	Id                string
+	Status            string
+	TargetFolder      string
+	StartDate         *timestamppb.Timestamp
+	CompanyName       string
+	LocationName      string
+	EndDateYaml       *timestamppb.Timestamp
+	DescriptionYaml   string
+	TagsYaml          []string
+	RequiredFilesYaml []*FileInfo
 }
 
 func (b0 Koji_builder) Build() *Koji {
@@ -222,418 +630,10 @@ func (b0 Koji_builder) Build() *Koji {
 	x.xxx_hidden_StartDate = b.StartDate
 	x.xxx_hidden_CompanyName = b.CompanyName
 	x.xxx_hidden_LocationName = b.LocationName
-	x.xxx_hidden_EndDate = b.EndDate
-	x.xxx_hidden_Description = b.Description
-	x.xxx_hidden_Tags = b.Tags
-	x.xxx_hidden_RequiredFiles = &b.RequiredFiles
-	return m0
-}
-
-type FileInfo struct {
-	state                   protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_TargetPath   string                 `protobuf:"bytes,1,opt,name=target_path,json=targetPath"`
-	xxx_hidden_IdealPath    string                 `protobuf:"bytes,2,opt,name=ideal_path,json=idealPath"`
-	xxx_hidden_IsDirectory  bool                   `protobuf:"varint,3,opt,name=is_directory,json=isDirectory"`
-	xxx_hidden_Size         int64                  `protobuf:"varint,4,opt,name=size"`
-	xxx_hidden_ModifiedTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=modified_time,json=modifiedTime"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
-}
-
-func (x *FileInfo) Reset() {
-	*x = FileInfo{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FileInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FileInfo) ProtoMessage() {}
-
-func (x *FileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *FileInfo) GetTargetPath() string {
-	if x != nil {
-		return x.xxx_hidden_TargetPath
-	}
-	return ""
-}
-
-func (x *FileInfo) GetIdealPath() string {
-	if x != nil {
-		return x.xxx_hidden_IdealPath
-	}
-	return ""
-}
-
-func (x *FileInfo) GetIsDirectory() bool {
-	if x != nil {
-		return x.xxx_hidden_IsDirectory
-	}
-	return false
-}
-
-func (x *FileInfo) GetSize() int64 {
-	if x != nil {
-		return x.xxx_hidden_Size
-	}
-	return 0
-}
-
-func (x *FileInfo) GetModifiedTime() *timestamppb.Timestamp {
-	if x != nil {
-		return x.xxx_hidden_ModifiedTime
-	}
-	return nil
-}
-
-func (x *FileInfo) SetTargetPath(v string) {
-	x.xxx_hidden_TargetPath = v
-}
-
-func (x *FileInfo) SetIdealPath(v string) {
-	x.xxx_hidden_IdealPath = v
-}
-
-func (x *FileInfo) SetIsDirectory(v bool) {
-	x.xxx_hidden_IsDirectory = v
-}
-
-func (x *FileInfo) SetSize(v int64) {
-	x.xxx_hidden_Size = v
-}
-
-func (x *FileInfo) SetModifiedTime(v *timestamppb.Timestamp) {
-	x.xxx_hidden_ModifiedTime = v
-}
-
-func (x *FileInfo) HasModifiedTime() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_ModifiedTime != nil
-}
-
-func (x *FileInfo) ClearModifiedTime() {
-	x.xxx_hidden_ModifiedTime = nil
-}
-
-type FileInfo_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	TargetPath   string
-	IdealPath    string
-	IsDirectory  bool
-	Size         int64
-	ModifiedTime *timestamppb.Timestamp
-}
-
-func (b0 FileInfo_builder) Build() *FileInfo {
-	m0 := &FileInfo{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_TargetPath = b.TargetPath
-	x.xxx_hidden_IdealPath = b.IdealPath
-	x.xxx_hidden_IsDirectory = b.IsDirectory
-	x.xxx_hidden_Size = b.Size
-	x.xxx_hidden_ModifiedTime = b.ModifiedTime
-	return m0
-}
-
-type Company struct {
-	state                    protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id            string                 `protobuf:"bytes,1,opt,name=id"`
-	xxx_hidden_TargetFolder  string                 `protobuf:"bytes,2,opt,name=target_folder,json=targetFolder"`
-	xxx_hidden_ShortName     string                 `protobuf:"bytes,3,opt,name=short_name,json=shortName"`
-	xxx_hidden_Category      string                 `protobuf:"bytes,4,opt,name=category"`
-	xxx_hidden_LegalName     string                 `protobuf:"bytes,5,opt,name=legal_name,json=legalName"`
-	xxx_hidden_PostalCode    string                 `protobuf:"bytes,6,opt,name=postal_code,json=postalCode"`
-	xxx_hidden_Address       string                 `protobuf:"bytes,7,opt,name=address"`
-	xxx_hidden_Phone         string                 `protobuf:"bytes,8,opt,name=phone"`
-	xxx_hidden_Email         string                 `protobuf:"bytes,9,opt,name=email"`
-	xxx_hidden_Website       string                 `protobuf:"bytes,10,opt,name=website"`
-	xxx_hidden_Tags          []string               `protobuf:"bytes,11,rep,name=tags"`
-	xxx_hidden_RequiredFiles *[]*FileInfo           `protobuf:"bytes,12,rep,name=required_files,json=requiredFiles"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
-}
-
-func (x *Company) Reset() {
-	*x = Company{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Company) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Company) ProtoMessage() {}
-
-func (x *Company) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *Company) GetId() string {
-	if x != nil {
-		return x.xxx_hidden_Id
-	}
-	return ""
-}
-
-func (x *Company) GetTargetFolder() string {
-	if x != nil {
-		return x.xxx_hidden_TargetFolder
-	}
-	return ""
-}
-
-func (x *Company) GetShortName() string {
-	if x != nil {
-		return x.xxx_hidden_ShortName
-	}
-	return ""
-}
-
-func (x *Company) GetCategory() string {
-	if x != nil {
-		return x.xxx_hidden_Category
-	}
-	return ""
-}
-
-func (x *Company) GetLegalName() string {
-	if x != nil {
-		return x.xxx_hidden_LegalName
-	}
-	return ""
-}
-
-func (x *Company) GetPostalCode() string {
-	if x != nil {
-		return x.xxx_hidden_PostalCode
-	}
-	return ""
-}
-
-func (x *Company) GetAddress() string {
-	if x != nil {
-		return x.xxx_hidden_Address
-	}
-	return ""
-}
-
-func (x *Company) GetPhone() string {
-	if x != nil {
-		return x.xxx_hidden_Phone
-	}
-	return ""
-}
-
-func (x *Company) GetEmail() string {
-	if x != nil {
-		return x.xxx_hidden_Email
-	}
-	return ""
-}
-
-func (x *Company) GetWebsite() string {
-	if x != nil {
-		return x.xxx_hidden_Website
-	}
-	return ""
-}
-
-func (x *Company) GetTags() []string {
-	if x != nil {
-		return x.xxx_hidden_Tags
-	}
-	return nil
-}
-
-func (x *Company) GetRequiredFiles() []*FileInfo {
-	if x != nil {
-		if x.xxx_hidden_RequiredFiles != nil {
-			return *x.xxx_hidden_RequiredFiles
-		}
-	}
-	return nil
-}
-
-func (x *Company) SetId(v string) {
-	x.xxx_hidden_Id = v
-}
-
-func (x *Company) SetTargetFolder(v string) {
-	x.xxx_hidden_TargetFolder = v
-}
-
-func (x *Company) SetShortName(v string) {
-	x.xxx_hidden_ShortName = v
-}
-
-func (x *Company) SetCategory(v string) {
-	x.xxx_hidden_Category = v
-}
-
-func (x *Company) SetLegalName(v string) {
-	x.xxx_hidden_LegalName = v
-}
-
-func (x *Company) SetPostalCode(v string) {
-	x.xxx_hidden_PostalCode = v
-}
-
-func (x *Company) SetAddress(v string) {
-	x.xxx_hidden_Address = v
-}
-
-func (x *Company) SetPhone(v string) {
-	x.xxx_hidden_Phone = v
-}
-
-func (x *Company) SetEmail(v string) {
-	x.xxx_hidden_Email = v
-}
-
-func (x *Company) SetWebsite(v string) {
-	x.xxx_hidden_Website = v
-}
-
-func (x *Company) SetTags(v []string) {
-	x.xxx_hidden_Tags = v
-}
-
-func (x *Company) SetRequiredFiles(v []*FileInfo) {
-	x.xxx_hidden_RequiredFiles = &v
-}
-
-type Company_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Id            string
-	TargetFolder  string
-	ShortName     string
-	Category      string
-	LegalName     string
-	PostalCode    string
-	Address       string
-	Phone         string
-	Email         string
-	Website       string
-	Tags          []string
-	RequiredFiles []*FileInfo
-}
-
-func (b0 Company_builder) Build() *Company {
-	m0 := &Company{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Id = b.Id
-	x.xxx_hidden_TargetFolder = b.TargetFolder
-	x.xxx_hidden_ShortName = b.ShortName
-	x.xxx_hidden_Category = b.Category
-	x.xxx_hidden_LegalName = b.LegalName
-	x.xxx_hidden_PostalCode = b.PostalCode
-	x.xxx_hidden_Address = b.Address
-	x.xxx_hidden_Phone = b.Phone
-	x.xxx_hidden_Email = b.Email
-	x.xxx_hidden_Website = b.Website
-	x.xxx_hidden_Tags = b.Tags
-	x.xxx_hidden_RequiredFiles = &b.RequiredFiles
-	return m0
-}
-
-type CompanyCategoryInfo struct {
-	state            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Code  string                 `protobuf:"bytes,1,opt,name=code"`
-	xxx_hidden_Label string                 `protobuf:"bytes,2,opt,name=label"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *CompanyCategoryInfo) Reset() {
-	*x = CompanyCategoryInfo{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CompanyCategoryInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CompanyCategoryInfo) ProtoMessage() {}
-
-func (x *CompanyCategoryInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *CompanyCategoryInfo) GetCode() string {
-	if x != nil {
-		return x.xxx_hidden_Code
-	}
-	return ""
-}
-
-func (x *CompanyCategoryInfo) GetLabel() string {
-	if x != nil {
-		return x.xxx_hidden_Label
-	}
-	return ""
-}
-
-func (x *CompanyCategoryInfo) SetCode(v string) {
-	x.xxx_hidden_Code = v
-}
-
-func (x *CompanyCategoryInfo) SetLabel(v string) {
-	x.xxx_hidden_Label = v
-}
-
-type CompanyCategoryInfo_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Code  string
-	Label string
-}
-
-func (b0 CompanyCategoryInfo_builder) Build() *CompanyCategoryInfo {
-	m0 := &CompanyCategoryInfo{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Code = b.Code
-	x.xxx_hidden_Label = b.Label
+	x.xxx_hidden_EndDateYaml = b.EndDateYaml
+	x.xxx_hidden_DescriptionYaml = b.DescriptionYaml
+	x.xxx_hidden_TagsYaml = b.TagsYaml
+	x.xxx_hidden_RequiredFilesYaml = &b.RequiredFilesYaml
 	return m0
 }
 
@@ -646,7 +646,7 @@ type ListKojiesRequest struct {
 
 func (x *ListKojiesRequest) Reset() {
 	*x = ListKojiesRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[4]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -658,7 +658,7 @@ func (x *ListKojiesRequest) String() string {
 func (*ListKojiesRequest) ProtoMessage() {}
 
 func (x *ListKojiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[4]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +703,7 @@ type ListKojiesResponse struct {
 
 func (x *ListKojiesResponse) Reset() {
 	*x = ListKojiesResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[5]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -715,7 +715,7 @@ func (x *ListKojiesResponse) String() string {
 func (*ListKojiesResponse) ProtoMessage() {}
 
 func (x *ListKojiesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[5]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -762,7 +762,7 @@ type GetKojiRequest struct {
 
 func (x *GetKojiRequest) Reset() {
 	*x = GetKojiRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[6]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -774,7 +774,7 @@ func (x *GetKojiRequest) String() string {
 func (*GetKojiRequest) ProtoMessage() {}
 
 func (x *GetKojiRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[6]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -819,7 +819,7 @@ type GetKojiResponse struct {
 
 func (x *GetKojiResponse) Reset() {
 	*x = GetKojiResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[7]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -831,7 +831,7 @@ func (x *GetKojiResponse) String() string {
 func (*GetKojiResponse) ProtoMessage() {}
 
 func (x *GetKojiResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[7]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -887,7 +887,7 @@ type UpdateKojiRequest struct {
 
 func (x *UpdateKojiRequest) Reset() {
 	*x = UpdateKojiRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[8]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -899,7 +899,7 @@ func (x *UpdateKojiRequest) String() string {
 func (*UpdateKojiRequest) ProtoMessage() {}
 
 func (x *UpdateKojiRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[8]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -955,7 +955,7 @@ type UpdateKojiResponse struct {
 
 func (x *UpdateKojiResponse) Reset() {
 	*x = UpdateKojiResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[9]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +967,7 @@ func (x *UpdateKojiResponse) String() string {
 func (*UpdateKojiResponse) ProtoMessage() {}
 
 func (x *UpdateKojiResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[9]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1024,7 +1024,7 @@ type UpdateKojiStandardFilesRequest struct {
 
 func (x *UpdateKojiStandardFilesRequest) Reset() {
 	*x = UpdateKojiStandardFilesRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[10]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1036,7 +1036,7 @@ func (x *UpdateKojiStandardFilesRequest) String() string {
 func (*UpdateKojiStandardFilesRequest) ProtoMessage() {}
 
 func (x *UpdateKojiStandardFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[10]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1105,7 +1105,7 @@ type UpdateKojiStandardFilesResponse struct {
 
 func (x *UpdateKojiStandardFilesResponse) Reset() {
 	*x = UpdateKojiStandardFilesResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[11]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1117,7 +1117,7 @@ func (x *UpdateKojiStandardFilesResponse) String() string {
 func (*UpdateKojiStandardFilesResponse) ProtoMessage() {}
 
 func (x *UpdateKojiStandardFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[11]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1172,7 +1172,7 @@ type ListCompaniesRequest struct {
 
 func (x *ListCompaniesRequest) Reset() {
 	*x = ListCompaniesRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[12]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1184,7 +1184,7 @@ func (x *ListCompaniesRequest) String() string {
 func (*ListCompaniesRequest) ProtoMessage() {}
 
 func (x *ListCompaniesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[12]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1216,7 +1216,7 @@ type ListCompaniesResponse struct {
 
 func (x *ListCompaniesResponse) Reset() {
 	*x = ListCompaniesResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[13]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1228,7 +1228,7 @@ func (x *ListCompaniesResponse) String() string {
 func (*ListCompaniesResponse) ProtoMessage() {}
 
 func (x *ListCompaniesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[13]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1275,7 +1275,7 @@ type GetCompanyRequest struct {
 
 func (x *GetCompanyRequest) Reset() {
 	*x = GetCompanyRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[14]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1287,7 +1287,7 @@ func (x *GetCompanyRequest) String() string {
 func (*GetCompanyRequest) ProtoMessage() {}
 
 func (x *GetCompanyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[14]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1332,7 +1332,7 @@ type GetCompanyResponse struct {
 
 func (x *GetCompanyResponse) Reset() {
 	*x = GetCompanyResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[15]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1344,7 +1344,7 @@ func (x *GetCompanyResponse) String() string {
 func (*GetCompanyResponse) ProtoMessage() {}
 
 func (x *GetCompanyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[15]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1400,7 +1400,7 @@ type UpdateCompanyRequest struct {
 
 func (x *UpdateCompanyRequest) Reset() {
 	*x = UpdateCompanyRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[16]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1412,7 +1412,7 @@ func (x *UpdateCompanyRequest) String() string {
 func (*UpdateCompanyRequest) ProtoMessage() {}
 
 func (x *UpdateCompanyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[16]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1468,7 +1468,7 @@ type UpdateCompanyResponse struct {
 
 func (x *UpdateCompanyResponse) Reset() {
 	*x = UpdateCompanyResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[17]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1480,7 +1480,7 @@ func (x *UpdateCompanyResponse) String() string {
 func (*UpdateCompanyResponse) ProtoMessage() {}
 
 func (x *UpdateCompanyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[17]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1535,7 +1535,7 @@ type ListCompanyCategoriesRequest struct {
 
 func (x *ListCompanyCategoriesRequest) Reset() {
 	*x = ListCompanyCategoriesRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[18]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1547,7 +1547,7 @@ func (x *ListCompanyCategoriesRequest) String() string {
 func (*ListCompanyCategoriesRequest) ProtoMessage() {}
 
 func (x *ListCompanyCategoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[18]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1579,7 +1579,7 @@ type ListCompanyCategoriesResponse struct {
 
 func (x *ListCompanyCategoriesResponse) Reset() {
 	*x = ListCompanyCategoriesResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[19]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1591,7 +1591,7 @@ func (x *ListCompanyCategoriesResponse) String() string {
 func (*ListCompanyCategoriesResponse) ProtoMessage() {}
 
 func (x *ListCompanyCategoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[19]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1638,7 +1638,7 @@ type ListFileInfosRequest struct {
 
 func (x *ListFileInfosRequest) Reset() {
 	*x = ListFileInfosRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[20]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1650,7 +1650,7 @@ func (x *ListFileInfosRequest) String() string {
 func (*ListFileInfosRequest) ProtoMessage() {}
 
 func (x *ListFileInfosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[20]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1695,7 +1695,7 @@ type ListFileInfosResponse struct {
 
 func (x *ListFileInfosResponse) Reset() {
 	*x = ListFileInfosResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[21]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1707,7 +1707,7 @@ func (x *ListFileInfosResponse) String() string {
 func (*ListFileInfosResponse) ProtoMessage() {}
 
 func (x *ListFileInfosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[21]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1753,7 +1753,7 @@ type GetFileBasePathRequest struct {
 
 func (x *GetFileBasePathRequest) Reset() {
 	*x = GetFileBasePathRequest{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[22]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1765,7 +1765,7 @@ func (x *GetFileBasePathRequest) String() string {
 func (*GetFileBasePathRequest) ProtoMessage() {}
 
 func (x *GetFileBasePathRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[22]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1797,7 +1797,7 @@ type GetFileBasePathResponse struct {
 
 func (x *GetFileBasePathResponse) Reset() {
 	*x = GetFileBasePathResponse{}
-	mi := &file_penguin_v1_penguin_proto_msgTypes[23]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1809,7 +1809,7 @@ func (x *GetFileBasePathResponse) String() string {
 func (*GetFileBasePathResponse) ProtoMessage() {}
 
 func (x *GetFileBasePathResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_penguin_v1_penguin_proto_msgTypes[23]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1845,12 +1845,38 @@ func (b0 GetFileBasePathResponse_builder) Build() *GetFileBasePathResponse {
 	return m0
 }
 
-var File_penguin_v1_penguin_proto protoreflect.FileDescriptor
+var File_grpc_v1_penguin_proto protoreflect.FileDescriptor
 
-const file_penguin_v1_penguin_proto_rawDesc = "" +
+const file_grpc_v1_penguin_proto_rawDesc = "" +
 	"\n" +
-	"\x18penguin/v1/penguin.proto\x12\n" +
-	"penguin.v1\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x80\x03\n" +
+	"\x15grpc/v1/penguin.proto\x12\agrpc.v1\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcb\x01\n" +
+	"\bFileInfo\x12\x1f\n" +
+	"\vtarget_path\x18\x01 \x01(\tR\n" +
+	"targetPath\x12!\n" +
+	"\fis_directory\x18\x02 \x01(\bR\visDirectory\x12\x12\n" +
+	"\x04size\x18\x03 \x01(\x03R\x04size\x12?\n" +
+	"\rmodified_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\x12&\n" +
+	"\x0fideal_path_yaml\x18\x05 \x01(\tR\ridealPathYaml\"\xaf\x03\n" +
+	"\aCompany\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
+	"\rtarget_folder\x18\x02 \x01(\tR\ftargetFolder\x12\x1d\n" +
+	"\n" +
+	"short_name\x18\x03 \x01(\tR\tshortName\x12\x1a\n" +
+	"\bcategory\x18\x04 \x01(\tR\bcategory\x12&\n" +
+	"\x0flegal_name_yaml\x18\x05 \x01(\tR\rlegalNameYaml\x12(\n" +
+	"\x10postal_code_yaml\x18\x06 \x01(\tR\x0epostalCodeYaml\x12!\n" +
+	"\faddress_yaml\x18\a \x01(\tR\vaddressYaml\x12\x1d\n" +
+	"\n" +
+	"phone_yaml\x18\b \x01(\tR\tphoneYaml\x12\x1d\n" +
+	"\n" +
+	"email_yaml\x18\t \x01(\tR\temailYaml\x12!\n" +
+	"\fwebsite_yaml\x18\n" +
+	" \x01(\tR\vwebsiteYaml\x12\x1b\n" +
+	"\ttags_yaml\x18\v \x03(\tR\btagsYaml\x12A\n" +
+	"\x13required_files_yaml\x18\f \x03(\v2\x11.grpc.v1.FileInfoR\x11requiredFilesYaml\"?\n" +
+	"\x13CompanyCategoryInfo\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"\xa1\x03\n" +
 	"\x04Koji\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12#\n" +
@@ -1858,165 +1884,137 @@ const file_penguin_v1_penguin_proto_rawDesc = "" +
 	"\n" +
 	"start_date\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tstartDate\x12!\n" +
 	"\fcompany_name\x18\x05 \x01(\tR\vcompanyName\x12#\n" +
-	"\rlocation_name\x18\x06 \x01(\tR\flocationName\x125\n" +
-	"\bend_date\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\aendDate\x12 \n" +
-	"\vdescription\x18\b \x01(\tR\vdescription\x12\x12\n" +
-	"\x04tags\x18\t \x03(\tR\x04tags\x12;\n" +
-	"\x0erequired_files\x18\n" +
-	" \x03(\v2\x14.penguin.v1.FileInfoR\rrequiredFiles\"\xc2\x01\n" +
-	"\bFileInfo\x12\x1f\n" +
-	"\vtarget_path\x18\x01 \x01(\tR\n" +
-	"targetPath\x12\x1d\n" +
-	"\n" +
-	"ideal_path\x18\x02 \x01(\tR\tidealPath\x12!\n" +
-	"\fis_directory\x18\x03 \x01(\bR\visDirectory\x12\x12\n" +
-	"\x04size\x18\x04 \x01(\x03R\x04size\x12?\n" +
-	"\rmodified_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\"\xea\x02\n" +
-	"\aCompany\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
-	"\rtarget_folder\x18\x02 \x01(\tR\ftargetFolder\x12\x1d\n" +
-	"\n" +
-	"short_name\x18\x03 \x01(\tR\tshortName\x12\x1a\n" +
-	"\bcategory\x18\x04 \x01(\tR\bcategory\x12\x1d\n" +
-	"\n" +
-	"legal_name\x18\x05 \x01(\tR\tlegalName\x12\x1f\n" +
-	"\vpostal_code\x18\x06 \x01(\tR\n" +
-	"postalCode\x12\x18\n" +
-	"\aaddress\x18\a \x01(\tR\aaddress\x12\x14\n" +
-	"\x05phone\x18\b \x01(\tR\x05phone\x12\x14\n" +
-	"\x05email\x18\t \x01(\tR\x05email\x12\x18\n" +
-	"\awebsite\x18\n" +
-	" \x01(\tR\awebsite\x12\x12\n" +
-	"\x04tags\x18\v \x03(\tR\x04tags\x12;\n" +
-	"\x0erequired_files\x18\f \x03(\v2\x14.penguin.v1.FileInfoR\rrequiredFiles\"?\n" +
-	"\x13CompanyCategoryInfo\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"+\n" +
+	"\rlocation_name\x18\x06 \x01(\tR\flocationName\x12>\n" +
+	"\rend_date_yaml\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vendDateYaml\x12)\n" +
+	"\x10description_yaml\x18\b \x01(\tR\x0fdescriptionYaml\x12\x1b\n" +
+	"\ttags_yaml\x18\t \x03(\tR\btagsYaml\x12A\n" +
+	"\x13required_files_yaml\x18\n" +
+	" \x03(\v2\x11.grpc.v1.FileInfoR\x11requiredFilesYaml\"+\n" +
 	"\x11ListKojiesRequest\x12\x16\n" +
-	"\x06filter\x18\x01 \x01(\tR\x06filter\">\n" +
-	"\x12ListKojiesResponse\x12(\n" +
-	"\x06kojies\x18\x01 \x03(\v2\x10.penguin.v1.KojiR\x06kojies\"1\n" +
+	"\x06filter\x18\x01 \x01(\tR\x06filter\";\n" +
+	"\x12ListKojiesResponse\x12%\n" +
+	"\x06kojies\x18\x01 \x03(\v2\r.grpc.v1.KojiR\x06kojies\"1\n" +
 	"\x0eGetKojiRequest\x12\x1f\n" +
 	"\vfolder_name\x18\x01 \x01(\tR\n" +
-	"folderName\"7\n" +
-	"\x0fGetKojiResponse\x12$\n" +
-	"\x04koji\x18\x01 \x01(\v2\x10.penguin.v1.KojiR\x04koji\"9\n" +
-	"\x11UpdateKojiRequest\x12$\n" +
-	"\x04koji\x18\x01 \x01(\v2\x10.penguin.v1.KojiR\x04koji\":\n" +
-	"\x12UpdateKojiResponse\x12$\n" +
-	"\x04koji\x18\x01 \x01(\v2\x10.penguin.v1.KojiR\x04koji\"b\n" +
-	"\x1eUpdateKojiStandardFilesRequest\x12$\n" +
-	"\x04koji\x18\x01 \x01(\v2\x10.penguin.v1.KojiR\x04koji\x12\x1a\n" +
-	"\bcurrents\x18\x02 \x03(\tR\bcurrents\"G\n" +
-	"\x1fUpdateKojiStandardFilesResponse\x12$\n" +
-	"\x04koji\x18\x01 \x01(\v2\x10.penguin.v1.KojiR\x04koji\"\x16\n" +
-	"\x14ListCompaniesRequest\"J\n" +
-	"\x15ListCompaniesResponse\x121\n" +
-	"\tcompanies\x18\x01 \x03(\v2\x13.penguin.v1.CompanyR\tcompanies\"#\n" +
+	"folderName\"4\n" +
+	"\x0fGetKojiResponse\x12!\n" +
+	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"6\n" +
+	"\x11UpdateKojiRequest\x12!\n" +
+	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"7\n" +
+	"\x12UpdateKojiResponse\x12!\n" +
+	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"_\n" +
+	"\x1eUpdateKojiStandardFilesRequest\x12!\n" +
+	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\x12\x1a\n" +
+	"\bcurrents\x18\x02 \x03(\tR\bcurrents\"D\n" +
+	"\x1fUpdateKojiStandardFilesResponse\x12!\n" +
+	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"\x16\n" +
+	"\x14ListCompaniesRequest\"G\n" +
+	"\x15ListCompaniesResponse\x12.\n" +
+	"\tcompanies\x18\x01 \x03(\v2\x10.grpc.v1.CompanyR\tcompanies\"#\n" +
 	"\x11GetCompanyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"C\n" +
-	"\x12GetCompanyResponse\x12-\n" +
-	"\acompany\x18\x01 \x01(\v2\x13.penguin.v1.CompanyR\acompany\"E\n" +
-	"\x14UpdateCompanyRequest\x12-\n" +
-	"\acompany\x18\x01 \x01(\v2\x13.penguin.v1.CompanyR\acompany\"F\n" +
-	"\x15UpdateCompanyResponse\x12-\n" +
-	"\acompany\x18\x01 \x01(\v2\x13.penguin.v1.CompanyR\acompany\"\x1e\n" +
-	"\x1cListCompanyCategoriesRequest\"`\n" +
-	"\x1dListCompanyCategoriesResponse\x12?\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"@\n" +
+	"\x12GetCompanyResponse\x12*\n" +
+	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"B\n" +
+	"\x14UpdateCompanyRequest\x12*\n" +
+	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"C\n" +
+	"\x15UpdateCompanyResponse\x12*\n" +
+	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"\x1e\n" +
+	"\x1cListCompanyCategoriesRequest\"]\n" +
+	"\x1dListCompanyCategoriesResponse\x12<\n" +
 	"\n" +
-	"categories\x18\x01 \x03(\v2\x1f.penguin.v1.CompanyCategoryInfoR\n" +
+	"categories\x18\x01 \x03(\v2\x1c.grpc.v1.CompanyCategoryInfoR\n" +
 	"categories\"*\n" +
 	"\x14ListFileInfosRequest\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"L\n" +
-	"\x15ListFileInfosResponse\x123\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"I\n" +
+	"\x15ListFileInfosResponse\x120\n" +
 	"\n" +
-	"file_infos\x18\x01 \x03(\v2\x14.penguin.v1.FileInfoR\tfileInfos\"\x18\n" +
+	"file_infos\x18\x01 \x03(\v2\x11.grpc.v1.FileInfoR\tfileInfos\"\x18\n" +
 	"\x16GetFileBasePathRequest\"6\n" +
 	"\x17GetFileBasePathResponse\x12\x1b\n" +
-	"\tbase_path\x18\x01 \x01(\tR\bbasePath2\xdf\x02\n" +
-	"\vKojiService\x12K\n" +
+	"\tbase_path\x18\x01 \x01(\tR\bbasePath2\xc7\x02\n" +
+	"\vKojiService\x12E\n" +
 	"\n" +
-	"ListKojies\x12\x1d.penguin.v1.ListKojiesRequest\x1a\x1e.penguin.v1.ListKojiesResponse\x12B\n" +
-	"\aGetKoji\x12\x1a.penguin.v1.GetKojiRequest\x1a\x1b.penguin.v1.GetKojiResponse\x12K\n" +
+	"ListKojies\x12\x1a.grpc.v1.ListKojiesRequest\x1a\x1b.grpc.v1.ListKojiesResponse\x12<\n" +
+	"\aGetKoji\x12\x17.grpc.v1.GetKojiRequest\x1a\x18.grpc.v1.GetKojiResponse\x12E\n" +
 	"\n" +
-	"UpdateKoji\x12\x1d.penguin.v1.UpdateKojiRequest\x1a\x1e.penguin.v1.UpdateKojiResponse\x12r\n" +
-	"\x17UpdateKojiStandardFiles\x12*.penguin.v1.UpdateKojiStandardFilesRequest\x1a+.penguin.v1.UpdateKojiStandardFilesResponse2\xf7\x02\n" +
-	"\x0eCompanyService\x12T\n" +
-	"\rListCompanies\x12 .penguin.v1.ListCompaniesRequest\x1a!.penguin.v1.ListCompaniesResponse\x12K\n" +
+	"UpdateKoji\x12\x1a.grpc.v1.UpdateKojiRequest\x1a\x1b.grpc.v1.UpdateKojiResponse\x12l\n" +
+	"\x17UpdateKojiStandardFiles\x12'.grpc.v1.UpdateKojiStandardFilesRequest\x1a(.grpc.v1.UpdateKojiStandardFilesResponse2\xdf\x02\n" +
+	"\x0eCompanyService\x12N\n" +
+	"\rListCompanies\x12\x1d.grpc.v1.ListCompaniesRequest\x1a\x1e.grpc.v1.ListCompaniesResponse\x12E\n" +
 	"\n" +
-	"GetCompany\x12\x1d.penguin.v1.GetCompanyRequest\x1a\x1e.penguin.v1.GetCompanyResponse\x12T\n" +
-	"\rUpdateCompany\x12 .penguin.v1.UpdateCompanyRequest\x1a!.penguin.v1.UpdateCompanyResponse\x12l\n" +
-	"\x15ListCompanyCategories\x12(.penguin.v1.ListCompanyCategoriesRequest\x1a).penguin.v1.ListCompanyCategoriesResponse2\xbf\x01\n" +
-	"\vFileService\x12T\n" +
-	"\rListFileInfos\x12 .penguin.v1.ListFileInfosRequest\x1a!.penguin.v1.ListFileInfosResponse\x12Z\n" +
-	"\x0fGetFileBasePath\x12\".penguin.v1.GetFileBasePathRequest\x1a#.penguin.v1.GetFileBasePathResponseB4Z(penguin-backend/gen/penguin/v1;penguinv1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
+	"GetCompany\x12\x1a.grpc.v1.GetCompanyRequest\x1a\x1b.grpc.v1.GetCompanyResponse\x12N\n" +
+	"\rUpdateCompany\x12\x1d.grpc.v1.UpdateCompanyRequest\x1a\x1e.grpc.v1.UpdateCompanyResponse\x12f\n" +
+	"\x15ListCompanyCategories\x12%.grpc.v1.ListCompanyCategoriesRequest\x1a&.grpc.v1.ListCompanyCategoriesResponse2\xb3\x01\n" +
+	"\vFileService\x12N\n" +
+	"\rListFileInfos\x12\x1d.grpc.v1.ListFileInfosRequest\x1a\x1e.grpc.v1.ListFileInfosResponse\x12T\n" +
+	"\x0fGetFileBasePath\x12\x1f.grpc.v1.GetFileBasePathRequest\x1a .grpc.v1.GetFileBasePathResponseB+Z\x1fgrpc-backend/gen/grpc/v1;grpcv1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
 
-var file_penguin_v1_penguin_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
-var file_penguin_v1_penguin_proto_goTypes = []any{
-	(*Koji)(nil),                            // 0: penguin.v1.Koji
-	(*FileInfo)(nil),                        // 1: penguin.v1.FileInfo
-	(*Company)(nil),                         // 2: penguin.v1.Company
-	(*CompanyCategoryInfo)(nil),             // 3: penguin.v1.CompanyCategoryInfo
-	(*ListKojiesRequest)(nil),               // 4: penguin.v1.ListKojiesRequest
-	(*ListKojiesResponse)(nil),              // 5: penguin.v1.ListKojiesResponse
-	(*GetKojiRequest)(nil),                  // 6: penguin.v1.GetKojiRequest
-	(*GetKojiResponse)(nil),                 // 7: penguin.v1.GetKojiResponse
-	(*UpdateKojiRequest)(nil),               // 8: penguin.v1.UpdateKojiRequest
-	(*UpdateKojiResponse)(nil),              // 9: penguin.v1.UpdateKojiResponse
-	(*UpdateKojiStandardFilesRequest)(nil),  // 10: penguin.v1.UpdateKojiStandardFilesRequest
-	(*UpdateKojiStandardFilesResponse)(nil), // 11: penguin.v1.UpdateKojiStandardFilesResponse
-	(*ListCompaniesRequest)(nil),            // 12: penguin.v1.ListCompaniesRequest
-	(*ListCompaniesResponse)(nil),           // 13: penguin.v1.ListCompaniesResponse
-	(*GetCompanyRequest)(nil),               // 14: penguin.v1.GetCompanyRequest
-	(*GetCompanyResponse)(nil),              // 15: penguin.v1.GetCompanyResponse
-	(*UpdateCompanyRequest)(nil),            // 16: penguin.v1.UpdateCompanyRequest
-	(*UpdateCompanyResponse)(nil),           // 17: penguin.v1.UpdateCompanyResponse
-	(*ListCompanyCategoriesRequest)(nil),    // 18: penguin.v1.ListCompanyCategoriesRequest
-	(*ListCompanyCategoriesResponse)(nil),   // 19: penguin.v1.ListCompanyCategoriesResponse
-	(*ListFileInfosRequest)(nil),            // 20: penguin.v1.ListFileInfosRequest
-	(*ListFileInfosResponse)(nil),           // 21: penguin.v1.ListFileInfosResponse
-	(*GetFileBasePathRequest)(nil),          // 22: penguin.v1.GetFileBasePathRequest
-	(*GetFileBasePathResponse)(nil),         // 23: penguin.v1.GetFileBasePathResponse
+var file_grpc_v1_penguin_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_grpc_v1_penguin_proto_goTypes = []any{
+	(*FileInfo)(nil),                        // 0: grpc.v1.FileInfo
+	(*Company)(nil),                         // 1: grpc.v1.Company
+	(*CompanyCategoryInfo)(nil),             // 2: grpc.v1.CompanyCategoryInfo
+	(*Koji)(nil),                            // 3: grpc.v1.Koji
+	(*ListKojiesRequest)(nil),               // 4: grpc.v1.ListKojiesRequest
+	(*ListKojiesResponse)(nil),              // 5: grpc.v1.ListKojiesResponse
+	(*GetKojiRequest)(nil),                  // 6: grpc.v1.GetKojiRequest
+	(*GetKojiResponse)(nil),                 // 7: grpc.v1.GetKojiResponse
+	(*UpdateKojiRequest)(nil),               // 8: grpc.v1.UpdateKojiRequest
+	(*UpdateKojiResponse)(nil),              // 9: grpc.v1.UpdateKojiResponse
+	(*UpdateKojiStandardFilesRequest)(nil),  // 10: grpc.v1.UpdateKojiStandardFilesRequest
+	(*UpdateKojiStandardFilesResponse)(nil), // 11: grpc.v1.UpdateKojiStandardFilesResponse
+	(*ListCompaniesRequest)(nil),            // 12: grpc.v1.ListCompaniesRequest
+	(*ListCompaniesResponse)(nil),           // 13: grpc.v1.ListCompaniesResponse
+	(*GetCompanyRequest)(nil),               // 14: grpc.v1.GetCompanyRequest
+	(*GetCompanyResponse)(nil),              // 15: grpc.v1.GetCompanyResponse
+	(*UpdateCompanyRequest)(nil),            // 16: grpc.v1.UpdateCompanyRequest
+	(*UpdateCompanyResponse)(nil),           // 17: grpc.v1.UpdateCompanyResponse
+	(*ListCompanyCategoriesRequest)(nil),    // 18: grpc.v1.ListCompanyCategoriesRequest
+	(*ListCompanyCategoriesResponse)(nil),   // 19: grpc.v1.ListCompanyCategoriesResponse
+	(*ListFileInfosRequest)(nil),            // 20: grpc.v1.ListFileInfosRequest
+	(*ListFileInfosResponse)(nil),           // 21: grpc.v1.ListFileInfosResponse
+	(*GetFileBasePathRequest)(nil),          // 22: grpc.v1.GetFileBasePathRequest
+	(*GetFileBasePathResponse)(nil),         // 23: grpc.v1.GetFileBasePathResponse
 	(*timestamppb.Timestamp)(nil),           // 24: google.protobuf.Timestamp
 }
-var file_penguin_v1_penguin_proto_depIdxs = []int32{
-	24, // 0: penguin.v1.Koji.start_date:type_name -> google.protobuf.Timestamp
-	24, // 1: penguin.v1.Koji.end_date:type_name -> google.protobuf.Timestamp
-	1,  // 2: penguin.v1.Koji.required_files:type_name -> penguin.v1.FileInfo
-	24, // 3: penguin.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
-	1,  // 4: penguin.v1.Company.required_files:type_name -> penguin.v1.FileInfo
-	0,  // 5: penguin.v1.ListKojiesResponse.kojies:type_name -> penguin.v1.Koji
-	0,  // 6: penguin.v1.GetKojiResponse.koji:type_name -> penguin.v1.Koji
-	0,  // 7: penguin.v1.UpdateKojiRequest.koji:type_name -> penguin.v1.Koji
-	0,  // 8: penguin.v1.UpdateKojiResponse.koji:type_name -> penguin.v1.Koji
-	0,  // 9: penguin.v1.UpdateKojiStandardFilesRequest.koji:type_name -> penguin.v1.Koji
-	0,  // 10: penguin.v1.UpdateKojiStandardFilesResponse.koji:type_name -> penguin.v1.Koji
-	2,  // 11: penguin.v1.ListCompaniesResponse.companies:type_name -> penguin.v1.Company
-	2,  // 12: penguin.v1.GetCompanyResponse.company:type_name -> penguin.v1.Company
-	2,  // 13: penguin.v1.UpdateCompanyRequest.company:type_name -> penguin.v1.Company
-	2,  // 14: penguin.v1.UpdateCompanyResponse.company:type_name -> penguin.v1.Company
-	3,  // 15: penguin.v1.ListCompanyCategoriesResponse.categories:type_name -> penguin.v1.CompanyCategoryInfo
-	1,  // 16: penguin.v1.ListFileInfosResponse.file_infos:type_name -> penguin.v1.FileInfo
-	4,  // 17: penguin.v1.KojiService.ListKojies:input_type -> penguin.v1.ListKojiesRequest
-	6,  // 18: penguin.v1.KojiService.GetKoji:input_type -> penguin.v1.GetKojiRequest
-	8,  // 19: penguin.v1.KojiService.UpdateKoji:input_type -> penguin.v1.UpdateKojiRequest
-	10, // 20: penguin.v1.KojiService.UpdateKojiStandardFiles:input_type -> penguin.v1.UpdateKojiStandardFilesRequest
-	12, // 21: penguin.v1.CompanyService.ListCompanies:input_type -> penguin.v1.ListCompaniesRequest
-	14, // 22: penguin.v1.CompanyService.GetCompany:input_type -> penguin.v1.GetCompanyRequest
-	16, // 23: penguin.v1.CompanyService.UpdateCompany:input_type -> penguin.v1.UpdateCompanyRequest
-	18, // 24: penguin.v1.CompanyService.ListCompanyCategories:input_type -> penguin.v1.ListCompanyCategoriesRequest
-	20, // 25: penguin.v1.FileService.ListFileInfos:input_type -> penguin.v1.ListFileInfosRequest
-	22, // 26: penguin.v1.FileService.GetFileBasePath:input_type -> penguin.v1.GetFileBasePathRequest
-	5,  // 27: penguin.v1.KojiService.ListKojies:output_type -> penguin.v1.ListKojiesResponse
-	7,  // 28: penguin.v1.KojiService.GetKoji:output_type -> penguin.v1.GetKojiResponse
-	9,  // 29: penguin.v1.KojiService.UpdateKoji:output_type -> penguin.v1.UpdateKojiResponse
-	11, // 30: penguin.v1.KojiService.UpdateKojiStandardFiles:output_type -> penguin.v1.UpdateKojiStandardFilesResponse
-	13, // 31: penguin.v1.CompanyService.ListCompanies:output_type -> penguin.v1.ListCompaniesResponse
-	15, // 32: penguin.v1.CompanyService.GetCompany:output_type -> penguin.v1.GetCompanyResponse
-	17, // 33: penguin.v1.CompanyService.UpdateCompany:output_type -> penguin.v1.UpdateCompanyResponse
-	19, // 34: penguin.v1.CompanyService.ListCompanyCategories:output_type -> penguin.v1.ListCompanyCategoriesResponse
-	21, // 35: penguin.v1.FileService.ListFileInfos:output_type -> penguin.v1.ListFileInfosResponse
-	23, // 36: penguin.v1.FileService.GetFileBasePath:output_type -> penguin.v1.GetFileBasePathResponse
+var file_grpc_v1_penguin_proto_depIdxs = []int32{
+	24, // 0: grpc.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
+	0,  // 1: grpc.v1.Company.required_files_yaml:type_name -> grpc.v1.FileInfo
+	24, // 2: grpc.v1.Koji.start_date:type_name -> google.protobuf.Timestamp
+	24, // 3: grpc.v1.Koji.end_date_yaml:type_name -> google.protobuf.Timestamp
+	0,  // 4: grpc.v1.Koji.required_files_yaml:type_name -> grpc.v1.FileInfo
+	3,  // 5: grpc.v1.ListKojiesResponse.kojies:type_name -> grpc.v1.Koji
+	3,  // 6: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
+	3,  // 7: grpc.v1.UpdateKojiRequest.koji:type_name -> grpc.v1.Koji
+	3,  // 8: grpc.v1.UpdateKojiResponse.koji:type_name -> grpc.v1.Koji
+	3,  // 9: grpc.v1.UpdateKojiStandardFilesRequest.koji:type_name -> grpc.v1.Koji
+	3,  // 10: grpc.v1.UpdateKojiStandardFilesResponse.koji:type_name -> grpc.v1.Koji
+	1,  // 11: grpc.v1.ListCompaniesResponse.companies:type_name -> grpc.v1.Company
+	1,  // 12: grpc.v1.GetCompanyResponse.company:type_name -> grpc.v1.Company
+	1,  // 13: grpc.v1.UpdateCompanyRequest.company:type_name -> grpc.v1.Company
+	1,  // 14: grpc.v1.UpdateCompanyResponse.company:type_name -> grpc.v1.Company
+	2,  // 15: grpc.v1.ListCompanyCategoriesResponse.categories:type_name -> grpc.v1.CompanyCategoryInfo
+	0,  // 16: grpc.v1.ListFileInfosResponse.file_infos:type_name -> grpc.v1.FileInfo
+	4,  // 17: grpc.v1.KojiService.ListKojies:input_type -> grpc.v1.ListKojiesRequest
+	6,  // 18: grpc.v1.KojiService.GetKoji:input_type -> grpc.v1.GetKojiRequest
+	8,  // 19: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
+	10, // 20: grpc.v1.KojiService.UpdateKojiStandardFiles:input_type -> grpc.v1.UpdateKojiStandardFilesRequest
+	12, // 21: grpc.v1.CompanyService.ListCompanies:input_type -> grpc.v1.ListCompaniesRequest
+	14, // 22: grpc.v1.CompanyService.GetCompany:input_type -> grpc.v1.GetCompanyRequest
+	16, // 23: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
+	18, // 24: grpc.v1.CompanyService.ListCompanyCategories:input_type -> grpc.v1.ListCompanyCategoriesRequest
+	20, // 25: grpc.v1.FileService.ListFileInfos:input_type -> grpc.v1.ListFileInfosRequest
+	22, // 26: grpc.v1.FileService.GetFileBasePath:input_type -> grpc.v1.GetFileBasePathRequest
+	5,  // 27: grpc.v1.KojiService.ListKojies:output_type -> grpc.v1.ListKojiesResponse
+	7,  // 28: grpc.v1.KojiService.GetKoji:output_type -> grpc.v1.GetKojiResponse
+	9,  // 29: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
+	11, // 30: grpc.v1.KojiService.UpdateKojiStandardFiles:output_type -> grpc.v1.UpdateKojiStandardFilesResponse
+	13, // 31: grpc.v1.CompanyService.ListCompanies:output_type -> grpc.v1.ListCompaniesResponse
+	15, // 32: grpc.v1.CompanyService.GetCompany:output_type -> grpc.v1.GetCompanyResponse
+	17, // 33: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
+	19, // 34: grpc.v1.CompanyService.ListCompanyCategories:output_type -> grpc.v1.ListCompanyCategoriesResponse
+	21, // 35: grpc.v1.FileService.ListFileInfos:output_type -> grpc.v1.ListFileInfosResponse
+	23, // 36: grpc.v1.FileService.GetFileBasePath:output_type -> grpc.v1.GetFileBasePathResponse
 	27, // [27:37] is the sub-list for method output_type
 	17, // [17:27] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
@@ -2024,26 +2022,26 @@ var file_penguin_v1_penguin_proto_depIdxs = []int32{
 	0,  // [0:17] is the sub-list for field type_name
 }
 
-func init() { file_penguin_v1_penguin_proto_init() }
-func file_penguin_v1_penguin_proto_init() {
-	if File_penguin_v1_penguin_proto != nil {
+func init() { file_grpc_v1_penguin_proto_init() }
+func file_grpc_v1_penguin_proto_init() {
+	if File_grpc_v1_penguin_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_penguin_v1_penguin_proto_rawDesc), len(file_penguin_v1_penguin_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_v1_penguin_proto_rawDesc), len(file_grpc_v1_penguin_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   3,
 		},
-		GoTypes:           file_penguin_v1_penguin_proto_goTypes,
-		DependencyIndexes: file_penguin_v1_penguin_proto_depIdxs,
-		MessageInfos:      file_penguin_v1_penguin_proto_msgTypes,
+		GoTypes:           file_grpc_v1_penguin_proto_goTypes,
+		DependencyIndexes: file_grpc_v1_penguin_proto_depIdxs,
+		MessageInfos:      file_grpc_v1_penguin_proto_msgTypes,
 	}.Build()
-	File_penguin_v1_penguin_proto = out.File
-	file_penguin_v1_penguin_proto_goTypes = nil
-	file_penguin_v1_penguin_proto_depIdxs = nil
+	File_grpc_v1_penguin_proto = out.File
+	file_grpc_v1_penguin_proto_goTypes = nil
+	file_grpc_v1_penguin_proto_depIdxs = nil
 }

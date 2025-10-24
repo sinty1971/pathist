@@ -1,10 +1,13 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"path"
 	"slices"
 	"strings"
+
+	grpcv1 "grpc-backend/gen/grpc/v1"
 )
 
 // CompanyCategoryIndex は業種を表すenum型（string）
@@ -40,41 +43,19 @@ var CompanyCategoryMap = map[CompanyCategoryIndex]string{
 
 var CompanyCategoryReverseMap = map[string]CompanyCategoryIndex{}
 
-// CompanyCategoryInfo は業種コードとラベルのペアを表します。
-type CompanyCategoryInfo struct {
-	Code  CompanyCategoryIndex `json:"code" example:"1"`
+// CompanyCategory は業種コードとラベルのペアを表します。
+type CompanyCategory struct {
+	Index CompanyCategoryIndex `json:"code" example:"1"`
 	Label string               `json:"label" example:"下請会社"`
 }
 
-// Company は工事会社の基本情報をファイル名から取得したモデルを表します
-// @Description 工事会社の基本情報をファイル名から取得したモデル
-type Company struct {
-	// ID is generated from FolderName.
-	ID string `json:"id" yaml:"-" example:"TC001"`
-
-	// Identity fields. FolderName is linked ShortName and Category.
-	TargetFolder string               `json:"folderName" yaml:"-" example:"~/penguin/豊田築炉/1 会社/0 豊田築炉"`
-	ShortName    string               `json:"shortName,omitempty" yaml:"-" example:"豊田築炉"`
-	Category     CompanyCategoryIndex `json:"category" yaml:"-" example:"1"`
-
-	// yaml file fields
-	LegalName  string   `json:"legalName,omitempty" yaml:"legal_name" example:"有限会社 豊田築炉"`
-	PostalCode string   `json:"postalCode,omitempty" yaml:"postal_code" example:"456-0001"`
-	Address    string   `json:"address,omitempty" yaml:"address" example:"愛知県名古屋市熱田区三本松町1-1"`
-	Phone      string   `json:"phone,omitempty" yaml:"phone" example:"052-681-8111"`
-	Email      string   `json:"email,omitempty" yaml:"email" example:"info@toyotachikuro.jp"`
-	Website    string   `json:"website,omitempty" yaml:"website" example:"https://www.toyotachikuro.jp"`
-	Tags       []string `json:"tags,omitempty" yaml:"tags" example:"[\"元請け\", \"製造業\"]"`
-
-	// 必須ファイルフィールド
-	RequiredFiles []FileInfo `json:"requiredFiles" yaml:"required_files"`
+// CompanyEx は gRPC grpc.v1.Company メッセージの拡張版です。
+type CompanyEx struct {
+	*grpcv1.Company
 }
 
-// PersistFolder は属性ファイルを格納するフォルダーのパスを返します。
-// Persistableインターフェースの実装
-func (c *Company) GetTargetFolder() string {
-	return c.TargetFolder
-}
+// Company は後方互換のためのエイリアスです。
+type Company = CompanyEx
 
 // NewCompany 会社フォルダーパス名からCompanyを作成します
 func NewCompany(folderPath string) (*Company, error) {
@@ -91,15 +72,21 @@ func NewCompany(folderPath string) (*Company, error) {
 	}
 
 	return &Company{
-		ID:           NewIDFromString(result.ShortName).Len5(),
-		TargetFolder: folderPath,
-		ShortName:    result.ShortName,
-		Category:     result.Category,
+		Company: grpcv1.Company_builder{
+			Id:           NewIDFromString(result.ShortName).Len5(),
+			TargetFolder: folderPath,
+			ShortName:    result.ShortName,
+			Category:     string(result.Category),
 
-		// Database file fields
-		LegalName:     result.ShortName,
-		Tags:          append([]string{"会社"}, result.Tags...),
-		RequiredFiles: []FileInfo{},
+			LegalNameYaml:     result.ShortName,
+			TagsYaml:          append([]string{"会社"}, result.Tags...),
+			RequiredFilesYaml: []*grpcv1.FileInfo{},
+			PostalCodeYaml:    "",
+			AddressYaml:       "",
+			PhoneYaml:         "",
+			EmailYaml:         "",
+			WebsiteYaml:       "",
+		}.Build(),
 	}, nil
 }
 
@@ -127,7 +114,7 @@ func ParseCompanyName(name string) (parseCompanyNameResult, error) {
 
 	// 最初の文字がCompanyCategoryCodeかチェック
 	code := CompanyCategoryIndex(name[0])
-	if !code.IsValid() {
+	if !(&code).IsValid() {
 		return result, errors.New("最初の文字が業種コードではありません")
 	}
 
@@ -163,21 +150,27 @@ func ParseCompanyName(name string) (parseCompanyNameResult, error) {
 // UpdateIdentity CategoryとShortNameからIDとFolderNameを更新します
 // 戻り値: 変更前のフォルダー名, エラー
 func (c *Company) UpdateIdentity() {
-	// フォルダー名の生成
-	folderName := string(c.Category) + " " + c.ShortName
-
-	// フォルダー名とIDを更新
-	c.ID = NewIDFromString(folderName).Len5()
-
-	// フォルダーパスを更新
-	dir := path.Dir(c.TargetFolder)
-	if dir == "." {
+	if c == nil {
 		return
 	}
-	c.TargetFolder = path.Join(dir, folderName)
+
+	// フォルダー名の生成
+	folderName := string(c.GetCategory()) + " " + c.GetShortName()
+
+	// フォルダー名とIDを更新
+	c.SetId(NewIDFromString(folderName).Len5())
+
+	// フォルダーパスを更新
+	dir := path.Dir(c.GetTargetFolder())
+	if dir != "." {
+		c.SetTargetFolder(path.Join(dir, folderName))
+	}
 }
 
 func (cc *CompanyCategoryIndex) IsValid() bool {
+	if cc == nil {
+		return false
+	}
 	return *cc >= CompanyCategorySpecial && *cc <= CompanyCategoryOther
 }
 
@@ -202,8 +195,41 @@ func ParseCompanyCategoryName(name string) CompanyCategoryIndex {
 
 // AddTag は会社のタグリストにタグを追加します
 func (c *Company) AddTag(tag string) {
-	if slices.Contains(c.Tags, tag) {
+	if c == nil {
+		return
+	}
+	if slices.Contains(c.GetTagsYaml(), tag) {
 		return // タグは既に存在します
 	}
-	c.Tags = append(c.Tags, tag)
+	c.SetTagsYaml(append(c.GetTagsYaml(), tag))
+}
+
+// MarshalYAML は YAML 用のシリアライズを行います。
+func (c Company) MarshalYAML() (any, error) {
+	return c.Company, nil
+}
+
+// UnmarshalYAML は YAML からの復元を行います。
+func (c *Company) UnmarshalYAML(unmarshal func(any) error) error {
+	enc := &grpcv1.Company{}
+	if err := unmarshal(enc); err != nil {
+		return err
+	}
+	c.Company = enc
+	return nil
+}
+
+// MarshalJSON は JSON 用のシリアライズを行います。
+func (c Company) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.Company)
+}
+
+// UnmarshalJSON は JSON からの復元を行います。
+func (c *Company) UnmarshalJSON(data []byte) error {
+	enc := &grpcv1.Company{}
+	if err := json.Unmarshal(data, enc); err != nil {
+		return err
+	}
+	c.Company = enc
+	return nil
 }

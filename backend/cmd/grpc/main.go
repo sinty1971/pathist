@@ -9,6 +9,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"flag"
+	"grpc-backend/gen/grpc/v1/grpcv1connect"
 	"log"
 	"math/big"
 	"net"
@@ -19,12 +20,11 @@ import (
 	"syscall"
 	"time"
 
+	"grpc-backend/internal/services"
+
 	"connectrpc.com/grpcreflect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	penguinv1connect "penguin-backend/gen/penguin/v1/penguinv1connect"
-	"penguin-backend/internal/rpc"
-	"penguin-backend/internal/services"
 )
 
 var (
@@ -60,21 +60,21 @@ func main() {
 	mux := http.NewServeMux()
 
 	kojiHandler := rpc.NewKojiServiceHandler(container.KojiService)
-	kojiPath, kojiConnectHandler := penguinv1connect.NewKojiServiceHandler(kojiHandler)
+	kojiPath, kojiConnectHandler := grpcv1connect.NewKojiServiceHandler(kojiHandler)
 	mux.Handle(kojiPath, kojiConnectHandler)
 
 	companyHandler := rpc.NewCompanyServiceHandler(container.CompanyService)
-	companyPath, companyConnectHandler := penguinv1connect.NewCompanyServiceHandler(companyHandler)
+	companyPath, companyConnectHandler := grpcv1connect.NewCompanyServiceHandler(companyHandler)
 	mux.Handle(companyPath, companyConnectHandler)
 
 	fileHandler := rpc.NewFileServiceHandler(container.FileService)
-	filePath, fileConnectHandler := penguinv1connect.NewFileServiceHandler(fileHandler)
+	filePath, fileConnectHandler := grpcv1connect.NewFileServiceHandler(fileHandler)
 	mux.Handle(filePath, fileConnectHandler)
 
 	reflector := grpcreflect.NewStaticReflector(
-		penguinv1connect.KojiServiceName,
-		penguinv1connect.CompanyServiceName,
-		penguinv1connect.FileServiceName,
+		grpcv1connect.KojiServiceName,
+		grpcv1connect.CompanyServiceName,
+		grpcv1connect.FileServiceName,
 	)
 	mux.Handle(grpcreflect.NewHandlerV1(reflector))
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))

@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	penguinv1 "penguin-backend/gen/penguin/v1"
-	penguinv1connect "penguin-backend/gen/penguin/v1/penguinv1connect"
+	grpcv1 "grpc-backend/gen/grpc/v1"
+	"grpc-backend/gen/grpc/v1/grpcv1connect"
 
 	"connectrpc.com/connect"
 )
@@ -27,33 +27,33 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
 
-	client := penguinv1connect.NewFileServiceClient(http.DefaultClient, *baseURL)
+	client := grpcv1connect.NewFileServiceClient(http.DefaultClient, *baseURL)
 
 	baseResp, err := client.GetFileBasePath(ctx, connect.NewRequest(
-		penguinv1.GetFileBasePathRequest_builder{}.Build(),
+		grpcv1.GetFileBasePathRequest_builder{}.Build(),
 	))
 	if err != nil {
 		log.Fatalf("GetFileBasePath の呼び出しに失敗しました: %v", err)
 	}
 
-	req := connect.NewRequest(penguinv1.ListFilesRequest_builder{
+	req := connect.NewRequest(grpcv1.ListFileInfosRequest_builder{
 		Path: *pathArg,
 	}.Build())
 
-	resp, err := client.ListFiles(ctx, req)
+	resp, err := client.ListFileInfos(ctx, req)
 	if err != nil {
 		log.Fatalf("ListFiles の呼び出しに失敗しました: %v", err)
 	}
 
 	if *jsonOut {
 		output := struct {
-			BasePath string                `json:"basePath"`
-			Path     string                `json:"path"`
-			Files    []*penguinv1.FileInfo `json:"files"`
+			BasePath string             `json:"basePath"`
+			Path     string             `json:"path"`
+			Files    []*grpcv1.FileInfo `json:"files"`
 		}{
 			BasePath: baseResp.Msg.GetBasePath(),
 			Path:     req.Msg.GetPath(),
-			Files:    resp.Msg.GetFiles(),
+			Files:    resp.Msg.GetFileInfos(),
 		}
 
 		data, err := json.MarshalIndent(output, "", "  ")
@@ -68,7 +68,7 @@ func main() {
 	fmt.Printf("BasePath: %s\n", baseResp.Msg.GetBasePath())
 	fmt.Printf("Path: %s\n", req.Msg.GetPath())
 	fmt.Println("IsDir\tSize\tModified\tTargetPath\tIdealPath")
-	for _, file := range resp.Msg.GetFiles() {
+	for _, file := range resp.Msg.GetFileInfos() {
 		modified := ""
 		if ts := file.GetModifiedTime(); ts != nil {
 			modified = ts.AsTime().Format(time.RFC3339)
@@ -78,7 +78,7 @@ func main() {
 			file.GetSize(),
 			modified,
 			file.GetTargetPath(),
-			file.GetIdealPath(),
+			file.GetIdealPathYaml(),
 		)
 	}
 }

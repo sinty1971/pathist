@@ -237,16 +237,16 @@ func (cs *CompanyService) GetCategories() map[models.CompanyCategoryIndex]string
 }
 
 // Categories は会社カテゴリーを配列形式で取得します。
-func (cs *CompanyService) Categories() []models.CompanyCategoryInfo {
+func (cs *CompanyService) Categories() []models.CompanyCategory {
 	keys := make([]models.CompanyCategoryIndex, 0, len(models.CompanyCategoryMap))
 	for code := range models.CompanyCategoryMap {
 		keys = append(keys, code)
 	}
 	slices.Sort(keys)
 
-	results := make([]models.CompanyCategoryInfo, 0, len(keys))
+	results := make([]models.CompanyCategory, 0, len(keys))
 	for _, code := range keys {
-		results = append(results, models.CompanyCategoryInfo{Code: code, Label: models.CompanyCategoryMap[code]})
+		results = append(results, models.CompanyCategory{Index: code, Label: models.CompanyCategoryMap[code]})
 	}
 	return results
 }

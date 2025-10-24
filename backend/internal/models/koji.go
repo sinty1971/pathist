@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"path/filepath"
+	grpcv1 "penguin-backend/gen/penguin/v1"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 // Koji は追加のメタデータを持つ工事プロジェクトフォルダーを表します
 // @Description 拡張属性を持つ工事プロジェクトフォルダー情報
 type Koji struct {
+	grpcv1.Koji
 	// ID, Status is calculated from FolderName.
 	ID     string `json:"id" yaml:"-" example:"TC618"`
 	Status string `json:"status,omitempty" yaml:"-" example:"進行中"`

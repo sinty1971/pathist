@@ -102,26 +102,7 @@ func convertModelCompany(src *models.Company) *penguinv1.Company {
 		return nil
 	}
 
-	files := make([]*penguinv1.FileInfo, 0, len(src.RequiredFiles))
-	for i := range src.RequiredFiles {
-		f := src.RequiredFiles[i]
-		files = append(files, convertModelFileInfo(&f))
-	}
-
-	return penguinv1.Company_builder{
-		Id:            src.ID,
-		TargetFolder:  src.TargetFolder,
-		ShortName:     src.ShortName,
-		Category:      string(src.Category),
-		LegalName:     src.LegalName,
-		PostalCode:    src.PostalCode,
-		Address:       src.Address,
-		Phone:         src.Phone,
-		Email:         src.Email,
-		Website:       src.Website,
-		Tags:          append([]string(nil), src.Tags...),
-		RequiredFiles: files,
-	}.Build()
+	return src.Proto()
 }
 
 func convertProtoCompany(src *penguinv1.Company) *models.Company {
@@ -129,39 +110,12 @@ func convertProtoCompany(src *penguinv1.Company) *models.Company {
 		return nil
 	}
 
-	category := models.CompanyCategoryIndex(src.GetCategory())
-	if !(&category).IsValid() {
-		category = models.CompanyCategoryOther
-	}
-
-	model := &models.Company{
-		ID:           src.GetId(),
-		TargetFolder: src.GetTargetFolder(),
-		ShortName:    src.GetShortName(),
-		Category:     category,
-		LegalName:    src.GetLegalName(),
-		PostalCode:   src.GetPostalCode(),
-		Address:      src.GetAddress(),
-		Phone:        src.GetPhone(),
-		Email:        src.GetEmail(),
-		Website:      src.GetWebsite(),
-		Tags:         append([]string(nil), src.GetTags()...),
-	}
-
-	required := src.GetRequiredFiles()
-	if len(required) > 0 {
-		model.RequiredFiles = make([]models.FileInfo, 0, len(required))
-		for _, item := range required {
-			model.RequiredFiles = append(model.RequiredFiles, convertProtoFileInfo(item))
-		}
-	}
-
-	return model
+	return models.NewCompanyFromProto(src)
 }
 
-func convertModelCompanyCategory(src models.CompanyCategoryInfo) *penguinv1.CompanyCategoryInfo {
+func convertModelCompanyCategory(src models.CompanyCategory) *penguinv1.CompanyCategoryInfo {
 	return penguinv1.CompanyCategoryInfo_builder{
-		Code:  string(src.Code),
+		Code:  string(src.Index),
 		Label: src.Label,
 	}.Build()
 }

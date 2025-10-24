@@ -229,7 +229,8 @@ func ParseToTimestamp(in string, out *string) (TimestampEx, error) {
 }
 
 // MarshalJSON implements json.Marshaler
-func (ts TimestampEx) MarshalJSON() ([]byte, error) {
+// タイムスタンプをJSON形式の文字列に変換します
+func (ts *TimestampEx) MarshalJSON() ([]byte, error) {
 	if ts.Timestamp.AsTime().IsZero() {
 		return []byte(`""`), nil
 	}
@@ -237,6 +238,7 @@ func (ts TimestampEx) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
+// バイト文字列を受け取り、タイムスタンプをパースします
 func (ts *TimestampEx) UnmarshalJSON(data []byte) error {
 	in := string(data)
 	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
@@ -258,6 +260,6 @@ func (ts *TimestampEx) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (ts TimestampEx) Format(layout string) (string, error) {
+func (ts *TimestampEx) Format(layout string) (string, error) {
 	return FormatTime(layout, ts.Timestamp.AsTime())
 }

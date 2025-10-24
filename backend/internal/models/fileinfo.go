@@ -17,12 +17,9 @@ import (
 // 補完するためのヘルパー関数や型を提供します。
 
 // FileInfoEx は gRPC の FileInfo メッセージの拡張機能版です。
-type FileInfoEx struct {
+type FileInfo struct {
 	*grpcv1.FileInfo
 }
-
-// FileInfo は grpcv1.FileInfo のエイリアスです。
-type FileInfo = FileInfoEx
 
 // NewFileInfo はファイルのフルパスから FileInfo を作成します。
 func NewFileInfo(targetPath string) (*FileInfo, error) {
@@ -45,13 +42,14 @@ func NewFileInfo(targetPath string) (*FileInfo, error) {
 		return nil, errors.New("file modification time is zero")
 	}
 
-	return grpcv1.FileInfo_builder{
-		TargetPath:   targetPath,
-		IdealPath:    "",
-		IsDirectory:  osFi.IsDir(),
-		Size:         osFi.Size(),
-		ModifiedTime: timestamppb.New(osModTime),
-	}.Build(), nil
+	return &FileInfo{
+		FileInfo: grpcv1.FileInfo_builder{
+			TargetPath:    targetPath,
+			IdealPathYaml: "",
+			IsDirectory:   osFi.IsDir(),
+			Size:          osFi.Size(),
+			ModifiedTime:  timestamppb.New(osModTime),
+		}.Build()}, nil
 }
 
 // NewFileInfoEx は*grpcv1.FileInfo から FileInfoWithEx を作成します。

@@ -50,12 +50,9 @@ type CompanyCategory struct {
 }
 
 // CompanyEx は gRPC grpc.v1.Company メッセージの拡張版です。
-type CompanyEx struct {
+type Company struct {
 	*grpcv1.Company
 }
-
-// Company は後方互換のためのエイリアスです。
-type Company = CompanyEx
 
 // NewCompany 会社フォルダーパス名からCompanyを作成します
 func NewCompany(folderPath string) (*Company, error) {

@@ -23,14 +23,14 @@ const (
 )
 
 type FileInfo struct {
-	state                    protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_TargetPath    string                 `protobuf:"bytes,1,opt,name=target_path,json=targetPath"`
-	xxx_hidden_IsDirectory   bool                   `protobuf:"varint,2,opt,name=is_directory,json=isDirectory"`
-	xxx_hidden_Size          int64                  `protobuf:"varint,3,opt,name=size"`
-	xxx_hidden_ModifiedTime  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=modified_time,json=modifiedTime"`
-	xxx_hidden_IdealPathYaml string                 `protobuf:"bytes,5,opt,name=ideal_path_yaml,json=idealPathYaml"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id           string                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Path         string                 `protobuf:"bytes,2,opt,name=path"`
+	xxx_hidden_IsDirectory  bool                   `protobuf:"varint,3,opt,name=is_directory,json=isDirectory"`
+	xxx_hidden_Size         int64                  `protobuf:"varint,4,opt,name=size"`
+	xxx_hidden_ModifiedTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=modified_time,json=modifiedTime"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *FileInfo) Reset() {
@@ -58,9 +58,16 @@ func (x *FileInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *FileInfo) GetTargetPath() string {
+func (x *FileInfo) GetId() string {
 	if x != nil {
-		return x.xxx_hidden_TargetPath
+		return x.xxx_hidden_Id
+	}
+	return ""
+}
+
+func (x *FileInfo) GetPath() string {
+	if x != nil {
+		return x.xxx_hidden_Path
 	}
 	return ""
 }
@@ -86,15 +93,12 @@ func (x *FileInfo) GetModifiedTime() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *FileInfo) GetIdealPathYaml() string {
-	if x != nil {
-		return x.xxx_hidden_IdealPathYaml
-	}
-	return ""
+func (x *FileInfo) SetId(v string) {
+	x.xxx_hidden_Id = v
 }
 
-func (x *FileInfo) SetTargetPath(v string) {
-	x.xxx_hidden_TargetPath = v
+func (x *FileInfo) SetPath(v string) {
+	x.xxx_hidden_Path = v
 }
 
 func (x *FileInfo) SetIsDirectory(v bool) {
@@ -107,10 +111,6 @@ func (x *FileInfo) SetSize(v int64) {
 
 func (x *FileInfo) SetModifiedTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_ModifiedTime = v
-}
-
-func (x *FileInfo) SetIdealPathYaml(v string) {
-	x.xxx_hidden_IdealPathYaml = v
 }
 
 func (x *FileInfo) HasModifiedTime() bool {
@@ -127,41 +127,42 @@ func (x *FileInfo) ClearModifiedTime() {
 type FileInfo_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	TargetPath    string
-	IsDirectory   bool
-	Size          int64
-	ModifiedTime  *timestamppb.Timestamp
-	IdealPathYaml string
+	Id           string
+	Path         string
+	IsDirectory  bool
+	Size         int64
+	ModifiedTime *timestamppb.Timestamp
 }
 
 func (b0 FileInfo_builder) Build() *FileInfo {
 	m0 := &FileInfo{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.xxx_hidden_TargetPath = b.TargetPath
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_Path = b.Path
 	x.xxx_hidden_IsDirectory = b.IsDirectory
 	x.xxx_hidden_Size = b.Size
 	x.xxx_hidden_ModifiedTime = b.ModifiedTime
-	x.xxx_hidden_IdealPathYaml = b.IdealPathYaml
 	return m0
 }
 
 type Company struct {
-	state                        protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id                string                 `protobuf:"bytes,1,opt,name=id"`
-	xxx_hidden_TargetFolder      string                 `protobuf:"bytes,2,opt,name=target_folder,json=targetFolder"`
-	xxx_hidden_ShortName         string                 `protobuf:"bytes,3,opt,name=short_name,json=shortName"`
-	xxx_hidden_Category          string                 `protobuf:"bytes,4,opt,name=category"`
-	xxx_hidden_LegalNameYaml     string                 `protobuf:"bytes,5,opt,name=legal_name_yaml,json=legalNameYaml"`
-	xxx_hidden_PostalCodeYaml    string                 `protobuf:"bytes,6,opt,name=postal_code_yaml,json=postalCodeYaml"`
-	xxx_hidden_AddressYaml       string                 `protobuf:"bytes,7,opt,name=address_yaml,json=addressYaml"`
-	xxx_hidden_PhoneYaml         string                 `protobuf:"bytes,8,opt,name=phone_yaml,json=phoneYaml"`
-	xxx_hidden_EmailYaml         string                 `protobuf:"bytes,9,opt,name=email_yaml,json=emailYaml"`
-	xxx_hidden_WebsiteYaml       string                 `protobuf:"bytes,10,opt,name=website_yaml,json=websiteYaml"`
-	xxx_hidden_TagsYaml          []string               `protobuf:"bytes,11,rep,name=tags_yaml,json=tagsYaml"`
-	xxx_hidden_RequiredFilesYaml *[]*FileInfo           `protobuf:"bytes,12,rep,name=required_files_yaml,json=requiredFilesYaml"`
-	unknownFields                protoimpl.UnknownFields
-	sizeCache                    protoimpl.SizeCache
+	state                          protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_ManagedFolder       string                 `protobuf:"bytes,2,opt,name=managed_folder,json=managedFolder"`
+	xxx_hidden_ShortName           string                 `protobuf:"bytes,3,opt,name=short_name,json=shortName"`
+	xxx_hidden_Category            string                 `protobuf:"bytes,4,opt,name=category"`
+	xxx_hidden_InsideIdealPath     string                 `protobuf:"bytes,5,opt,name=inside_ideal_path,json=insideIdealPath"`
+	xxx_hidden_InsideLegalName     string                 `protobuf:"bytes,6,opt,name=inside_legal_name,json=insideLegalName"`
+	xxx_hidden_InsidePostalCode    string                 `protobuf:"bytes,7,opt,name=inside_postal_code,json=insidePostalCode"`
+	xxx_hidden_InsideAddress       string                 `protobuf:"bytes,8,opt,name=inside_address,json=insideAddress"`
+	xxx_hidden_InsidePhone         string                 `protobuf:"bytes,9,opt,name=inside_phone,json=insidePhone"`
+	xxx_hidden_InsideEmail         string                 `protobuf:"bytes,10,opt,name=inside_email,json=insideEmail"`
+	xxx_hidden_InsideWebsite       string                 `protobuf:"bytes,11,opt,name=inside_website,json=insideWebsite"`
+	xxx_hidden_InsideTags          []string               `protobuf:"bytes,12,rep,name=inside_tags,json=insideTags"`
+	xxx_hidden_InsideRequiredFiles *[]*FileInfo           `protobuf:"bytes,13,rep,name=inside_required_files,json=insideRequiredFiles"`
+	unknownFields                  protoimpl.UnknownFields
+	sizeCache                      protoimpl.SizeCache
 }
 
 func (x *Company) Reset() {
@@ -196,9 +197,9 @@ func (x *Company) GetId() string {
 	return ""
 }
 
-func (x *Company) GetTargetFolder() string {
+func (x *Company) GetManagedFolder() string {
 	if x != nil {
-		return x.xxx_hidden_TargetFolder
+		return x.xxx_hidden_ManagedFolder
 	}
 	return ""
 }
@@ -217,59 +218,66 @@ func (x *Company) GetCategory() string {
 	return ""
 }
 
-func (x *Company) GetLegalNameYaml() string {
+func (x *Company) GetInsideIdealPath() string {
 	if x != nil {
-		return x.xxx_hidden_LegalNameYaml
+		return x.xxx_hidden_InsideIdealPath
 	}
 	return ""
 }
 
-func (x *Company) GetPostalCodeYaml() string {
+func (x *Company) GetInsideLegalName() string {
 	if x != nil {
-		return x.xxx_hidden_PostalCodeYaml
+		return x.xxx_hidden_InsideLegalName
 	}
 	return ""
 }
 
-func (x *Company) GetAddressYaml() string {
+func (x *Company) GetInsidePostalCode() string {
 	if x != nil {
-		return x.xxx_hidden_AddressYaml
+		return x.xxx_hidden_InsidePostalCode
 	}
 	return ""
 }
 
-func (x *Company) GetPhoneYaml() string {
+func (x *Company) GetInsideAddress() string {
 	if x != nil {
-		return x.xxx_hidden_PhoneYaml
+		return x.xxx_hidden_InsideAddress
 	}
 	return ""
 }
 
-func (x *Company) GetEmailYaml() string {
+func (x *Company) GetInsidePhone() string {
 	if x != nil {
-		return x.xxx_hidden_EmailYaml
+		return x.xxx_hidden_InsidePhone
 	}
 	return ""
 }
 
-func (x *Company) GetWebsiteYaml() string {
+func (x *Company) GetInsideEmail() string {
 	if x != nil {
-		return x.xxx_hidden_WebsiteYaml
+		return x.xxx_hidden_InsideEmail
 	}
 	return ""
 }
 
-func (x *Company) GetTagsYaml() []string {
+func (x *Company) GetInsideWebsite() string {
 	if x != nil {
-		return x.xxx_hidden_TagsYaml
+		return x.xxx_hidden_InsideWebsite
+	}
+	return ""
+}
+
+func (x *Company) GetInsideTags() []string {
+	if x != nil {
+		return x.xxx_hidden_InsideTags
 	}
 	return nil
 }
 
-func (x *Company) GetRequiredFilesYaml() []*FileInfo {
+func (x *Company) GetInsideRequiredFiles() []*FileInfo {
 	if x != nil {
-		if x.xxx_hidden_RequiredFilesYaml != nil {
-			return *x.xxx_hidden_RequiredFilesYaml
+		if x.xxx_hidden_InsideRequiredFiles != nil {
+			return *x.xxx_hidden_InsideRequiredFiles
 		}
 	}
 	return nil
@@ -279,8 +287,8 @@ func (x *Company) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
 
-func (x *Company) SetTargetFolder(v string) {
-	x.xxx_hidden_TargetFolder = v
+func (x *Company) SetManagedFolder(v string) {
+	x.xxx_hidden_ManagedFolder = v
 }
 
 func (x *Company) SetShortName(v string) {
@@ -291,53 +299,58 @@ func (x *Company) SetCategory(v string) {
 	x.xxx_hidden_Category = v
 }
 
-func (x *Company) SetLegalNameYaml(v string) {
-	x.xxx_hidden_LegalNameYaml = v
+func (x *Company) SetInsideIdealPath(v string) {
+	x.xxx_hidden_InsideIdealPath = v
 }
 
-func (x *Company) SetPostalCodeYaml(v string) {
-	x.xxx_hidden_PostalCodeYaml = v
+func (x *Company) SetInsideLegalName(v string) {
+	x.xxx_hidden_InsideLegalName = v
 }
 
-func (x *Company) SetAddressYaml(v string) {
-	x.xxx_hidden_AddressYaml = v
+func (x *Company) SetInsidePostalCode(v string) {
+	x.xxx_hidden_InsidePostalCode = v
 }
 
-func (x *Company) SetPhoneYaml(v string) {
-	x.xxx_hidden_PhoneYaml = v
+func (x *Company) SetInsideAddress(v string) {
+	x.xxx_hidden_InsideAddress = v
 }
 
-func (x *Company) SetEmailYaml(v string) {
-	x.xxx_hidden_EmailYaml = v
+func (x *Company) SetInsidePhone(v string) {
+	x.xxx_hidden_InsidePhone = v
 }
 
-func (x *Company) SetWebsiteYaml(v string) {
-	x.xxx_hidden_WebsiteYaml = v
+func (x *Company) SetInsideEmail(v string) {
+	x.xxx_hidden_InsideEmail = v
 }
 
-func (x *Company) SetTagsYaml(v []string) {
-	x.xxx_hidden_TagsYaml = v
+func (x *Company) SetInsideWebsite(v string) {
+	x.xxx_hidden_InsideWebsite = v
 }
 
-func (x *Company) SetRequiredFilesYaml(v []*FileInfo) {
-	x.xxx_hidden_RequiredFilesYaml = &v
+func (x *Company) SetInsideTags(v []string) {
+	x.xxx_hidden_InsideTags = v
+}
+
+func (x *Company) SetInsideRequiredFiles(v []*FileInfo) {
+	x.xxx_hidden_InsideRequiredFiles = &v
 }
 
 type Company_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Id                string
-	TargetFolder      string
-	ShortName         string
-	Category          string
-	LegalNameYaml     string
-	PostalCodeYaml    string
-	AddressYaml       string
-	PhoneYaml         string
-	EmailYaml         string
-	WebsiteYaml       string
-	TagsYaml          []string
-	RequiredFilesYaml []*FileInfo
+	Id                  string
+	ManagedFolder       string
+	ShortName           string
+	Category            string
+	InsideIdealPath     string
+	InsideLegalName     string
+	InsidePostalCode    string
+	InsideAddress       string
+	InsidePhone         string
+	InsideEmail         string
+	InsideWebsite       string
+	InsideTags          []string
+	InsideRequiredFiles []*FileInfo
 }
 
 func (b0 Company_builder) Build() *Company {
@@ -345,17 +358,18 @@ func (b0 Company_builder) Build() *Company {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Id = b.Id
-	x.xxx_hidden_TargetFolder = b.TargetFolder
+	x.xxx_hidden_ManagedFolder = b.ManagedFolder
 	x.xxx_hidden_ShortName = b.ShortName
 	x.xxx_hidden_Category = b.Category
-	x.xxx_hidden_LegalNameYaml = b.LegalNameYaml
-	x.xxx_hidden_PostalCodeYaml = b.PostalCodeYaml
-	x.xxx_hidden_AddressYaml = b.AddressYaml
-	x.xxx_hidden_PhoneYaml = b.PhoneYaml
-	x.xxx_hidden_EmailYaml = b.EmailYaml
-	x.xxx_hidden_WebsiteYaml = b.WebsiteYaml
-	x.xxx_hidden_TagsYaml = b.TagsYaml
-	x.xxx_hidden_RequiredFilesYaml = &b.RequiredFilesYaml
+	x.xxx_hidden_InsideIdealPath = b.InsideIdealPath
+	x.xxx_hidden_InsideLegalName = b.InsideLegalName
+	x.xxx_hidden_InsidePostalCode = b.InsidePostalCode
+	x.xxx_hidden_InsideAddress = b.InsideAddress
+	x.xxx_hidden_InsidePhone = b.InsidePhone
+	x.xxx_hidden_InsideEmail = b.InsideEmail
+	x.xxx_hidden_InsideWebsite = b.InsideWebsite
+	x.xxx_hidden_InsideTags = b.InsideTags
+	x.xxx_hidden_InsideRequiredFiles = &b.InsideRequiredFiles
 	return m0
 }
 
@@ -431,19 +445,20 @@ func (b0 CompanyCategoryInfo_builder) Build() *CompanyCategoryInfo {
 }
 
 type Koji struct {
-	state                        protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id                string                 `protobuf:"bytes,1,opt,name=id"`
-	xxx_hidden_Status            string                 `protobuf:"bytes,2,opt,name=status"`
-	xxx_hidden_TargetFolder      string                 `protobuf:"bytes,3,opt,name=target_folder,json=targetFolder"`
-	xxx_hidden_StartDate         *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start_date,json=startDate"`
-	xxx_hidden_CompanyName       string                 `protobuf:"bytes,5,opt,name=company_name,json=companyName"`
-	xxx_hidden_LocationName      string                 `protobuf:"bytes,6,opt,name=location_name,json=locationName"`
-	xxx_hidden_EndDateYaml       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=end_date_yaml,json=endDateYaml"`
-	xxx_hidden_DescriptionYaml   string                 `protobuf:"bytes,8,opt,name=description_yaml,json=descriptionYaml"`
-	xxx_hidden_TagsYaml          []string               `protobuf:"bytes,9,rep,name=tags_yaml,json=tagsYaml"`
-	xxx_hidden_RequiredFilesYaml *[]*FileInfo           `protobuf:"bytes,10,rep,name=required_files_yaml,json=requiredFilesYaml"`
-	unknownFields                protoimpl.UnknownFields
-	sizeCache                    protoimpl.SizeCache
+	state                          protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Status              string                 `protobuf:"bytes,2,opt,name=status"`
+	xxx_hidden_ManagedFolder       string                 `protobuf:"bytes,3,opt,name=managed_folder,json=managedFolder"`
+	xxx_hidden_Start               *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start"`
+	xxx_hidden_CompanyName         string                 `protobuf:"bytes,5,opt,name=company_name,json=companyName"`
+	xxx_hidden_LocationName        string                 `protobuf:"bytes,6,opt,name=location_name,json=locationName"`
+	xxx_hidden_InsideIdealPath     string                 `protobuf:"bytes,7,opt,name=inside_ideal_path,json=insideIdealPath"`
+	xxx_hidden_InsideEnd           *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=inside_end,json=insideEnd"`
+	xxx_hidden_InsideDescription   string                 `protobuf:"bytes,9,opt,name=inside_description,json=insideDescription"`
+	xxx_hidden_InsideTags          []string               `protobuf:"bytes,10,rep,name=inside_tags,json=insideTags"`
+	xxx_hidden_InsideRequiredFiles *[]*FileInfo           `protobuf:"bytes,11,rep,name=inside_required_files,json=insideRequiredFiles"`
+	unknownFields                  protoimpl.UnknownFields
+	sizeCache                      protoimpl.SizeCache
 }
 
 func (x *Koji) Reset() {
@@ -485,16 +500,16 @@ func (x *Koji) GetStatus() string {
 	return ""
 }
 
-func (x *Koji) GetTargetFolder() string {
+func (x *Koji) GetManagedFolder() string {
 	if x != nil {
-		return x.xxx_hidden_TargetFolder
+		return x.xxx_hidden_ManagedFolder
 	}
 	return ""
 }
 
-func (x *Koji) GetStartDate() *timestamppb.Timestamp {
+func (x *Koji) GetStart() *timestamppb.Timestamp {
 	if x != nil {
-		return x.xxx_hidden_StartDate
+		return x.xxx_hidden_Start
 	}
 	return nil
 }
@@ -513,31 +528,38 @@ func (x *Koji) GetLocationName() string {
 	return ""
 }
 
-func (x *Koji) GetEndDateYaml() *timestamppb.Timestamp {
+func (x *Koji) GetInsideIdealPath() string {
 	if x != nil {
-		return x.xxx_hidden_EndDateYaml
-	}
-	return nil
-}
-
-func (x *Koji) GetDescriptionYaml() string {
-	if x != nil {
-		return x.xxx_hidden_DescriptionYaml
+		return x.xxx_hidden_InsideIdealPath
 	}
 	return ""
 }
 
-func (x *Koji) GetTagsYaml() []string {
+func (x *Koji) GetInsideEnd() *timestamppb.Timestamp {
 	if x != nil {
-		return x.xxx_hidden_TagsYaml
+		return x.xxx_hidden_InsideEnd
 	}
 	return nil
 }
 
-func (x *Koji) GetRequiredFilesYaml() []*FileInfo {
+func (x *Koji) GetInsideDescription() string {
 	if x != nil {
-		if x.xxx_hidden_RequiredFilesYaml != nil {
-			return *x.xxx_hidden_RequiredFilesYaml
+		return x.xxx_hidden_InsideDescription
+	}
+	return ""
+}
+
+func (x *Koji) GetInsideTags() []string {
+	if x != nil {
+		return x.xxx_hidden_InsideTags
+	}
+	return nil
+}
+
+func (x *Koji) GetInsideRequiredFiles() []*FileInfo {
+	if x != nil {
+		if x.xxx_hidden_InsideRequiredFiles != nil {
+			return *x.xxx_hidden_InsideRequiredFiles
 		}
 	}
 	return nil
@@ -551,12 +573,12 @@ func (x *Koji) SetStatus(v string) {
 	x.xxx_hidden_Status = v
 }
 
-func (x *Koji) SetTargetFolder(v string) {
-	x.xxx_hidden_TargetFolder = v
+func (x *Koji) SetManagedFolder(v string) {
+	x.xxx_hidden_ManagedFolder = v
 }
 
-func (x *Koji) SetStartDate(v *timestamppb.Timestamp) {
-	x.xxx_hidden_StartDate = v
+func (x *Koji) SetStart(v *timestamppb.Timestamp) {
+	x.xxx_hidden_Start = v
 }
 
 func (x *Koji) SetCompanyName(v string) {
@@ -567,57 +589,62 @@ func (x *Koji) SetLocationName(v string) {
 	x.xxx_hidden_LocationName = v
 }
 
-func (x *Koji) SetEndDateYaml(v *timestamppb.Timestamp) {
-	x.xxx_hidden_EndDateYaml = v
+func (x *Koji) SetInsideIdealPath(v string) {
+	x.xxx_hidden_InsideIdealPath = v
 }
 
-func (x *Koji) SetDescriptionYaml(v string) {
-	x.xxx_hidden_DescriptionYaml = v
+func (x *Koji) SetInsideEnd(v *timestamppb.Timestamp) {
+	x.xxx_hidden_InsideEnd = v
 }
 
-func (x *Koji) SetTagsYaml(v []string) {
-	x.xxx_hidden_TagsYaml = v
+func (x *Koji) SetInsideDescription(v string) {
+	x.xxx_hidden_InsideDescription = v
 }
 
-func (x *Koji) SetRequiredFilesYaml(v []*FileInfo) {
-	x.xxx_hidden_RequiredFilesYaml = &v
+func (x *Koji) SetInsideTags(v []string) {
+	x.xxx_hidden_InsideTags = v
 }
 
-func (x *Koji) HasStartDate() bool {
+func (x *Koji) SetInsideRequiredFiles(v []*FileInfo) {
+	x.xxx_hidden_InsideRequiredFiles = &v
+}
+
+func (x *Koji) HasStart() bool {
 	if x == nil {
 		return false
 	}
-	return x.xxx_hidden_StartDate != nil
+	return x.xxx_hidden_Start != nil
 }
 
-func (x *Koji) HasEndDateYaml() bool {
+func (x *Koji) HasInsideEnd() bool {
 	if x == nil {
 		return false
 	}
-	return x.xxx_hidden_EndDateYaml != nil
+	return x.xxx_hidden_InsideEnd != nil
 }
 
-func (x *Koji) ClearStartDate() {
-	x.xxx_hidden_StartDate = nil
+func (x *Koji) ClearStart() {
+	x.xxx_hidden_Start = nil
 }
 
-func (x *Koji) ClearEndDateYaml() {
-	x.xxx_hidden_EndDateYaml = nil
+func (x *Koji) ClearInsideEnd() {
+	x.xxx_hidden_InsideEnd = nil
 }
 
 type Koji_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Id                string
-	Status            string
-	TargetFolder      string
-	StartDate         *timestamppb.Timestamp
-	CompanyName       string
-	LocationName      string
-	EndDateYaml       *timestamppb.Timestamp
-	DescriptionYaml   string
-	TagsYaml          []string
-	RequiredFilesYaml []*FileInfo
+	Id                  string
+	Status              string
+	ManagedFolder       string
+	Start               *timestamppb.Timestamp
+	CompanyName         string
+	LocationName        string
+	InsideIdealPath     string
+	InsideEnd           *timestamppb.Timestamp
+	InsideDescription   string
+	InsideTags          []string
+	InsideRequiredFiles []*FileInfo
 }
 
 func (b0 Koji_builder) Build() *Koji {
@@ -626,14 +653,15 @@ func (b0 Koji_builder) Build() *Koji {
 	_, _ = b, x
 	x.xxx_hidden_Id = b.Id
 	x.xxx_hidden_Status = b.Status
-	x.xxx_hidden_TargetFolder = b.TargetFolder
-	x.xxx_hidden_StartDate = b.StartDate
+	x.xxx_hidden_ManagedFolder = b.ManagedFolder
+	x.xxx_hidden_Start = b.Start
 	x.xxx_hidden_CompanyName = b.CompanyName
 	x.xxx_hidden_LocationName = b.LocationName
-	x.xxx_hidden_EndDateYaml = b.EndDateYaml
-	x.xxx_hidden_DescriptionYaml = b.DescriptionYaml
-	x.xxx_hidden_TagsYaml = b.TagsYaml
-	x.xxx_hidden_RequiredFilesYaml = &b.RequiredFilesYaml
+	x.xxx_hidden_InsideIdealPath = b.InsideIdealPath
+	x.xxx_hidden_InsideEnd = b.InsideEnd
+	x.xxx_hidden_InsideDescription = b.InsideDescription
+	x.xxx_hidden_InsideTags = b.InsideTags
+	x.xxx_hidden_InsideRequiredFiles = &b.InsideRequiredFiles
 	return m0
 }
 
@@ -1849,47 +1877,48 @@ var File_grpc_v1_penguin_proto protoreflect.FileDescriptor
 
 const file_grpc_v1_penguin_proto_rawDesc = "" +
 	"\n" +
-	"\x15grpc/v1/penguin.proto\x12\agrpc.v1\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcb\x01\n" +
-	"\bFileInfo\x12\x1f\n" +
-	"\vtarget_path\x18\x01 \x01(\tR\n" +
-	"targetPath\x12!\n" +
-	"\fis_directory\x18\x02 \x01(\bR\visDirectory\x12\x12\n" +
-	"\x04size\x18\x03 \x01(\x03R\x04size\x12?\n" +
-	"\rmodified_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\x12&\n" +
-	"\x0fideal_path_yaml\x18\x05 \x01(\tR\ridealPathYaml\"\xaf\x03\n" +
+	"\x15grpc/v1/penguin.proto\x12\agrpc.v1\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x01\n" +
+	"\bFileInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path\x12!\n" +
+	"\fis_directory\x18\x03 \x01(\bR\visDirectory\x12\x12\n" +
+	"\x04size\x18\x04 \x01(\x03R\x04size\x12?\n" +
+	"\rmodified_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\"\xfd\x03\n" +
 	"\aCompany\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
-	"\rtarget_folder\x18\x02 \x01(\tR\ftargetFolder\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
+	"\x0emanaged_folder\x18\x02 \x01(\tR\rmanagedFolder\x12\x1d\n" +
 	"\n" +
 	"short_name\x18\x03 \x01(\tR\tshortName\x12\x1a\n" +
-	"\bcategory\x18\x04 \x01(\tR\bcategory\x12&\n" +
-	"\x0flegal_name_yaml\x18\x05 \x01(\tR\rlegalNameYaml\x12(\n" +
-	"\x10postal_code_yaml\x18\x06 \x01(\tR\x0epostalCodeYaml\x12!\n" +
-	"\faddress_yaml\x18\a \x01(\tR\vaddressYaml\x12\x1d\n" +
-	"\n" +
-	"phone_yaml\x18\b \x01(\tR\tphoneYaml\x12\x1d\n" +
-	"\n" +
-	"email_yaml\x18\t \x01(\tR\temailYaml\x12!\n" +
-	"\fwebsite_yaml\x18\n" +
-	" \x01(\tR\vwebsiteYaml\x12\x1b\n" +
-	"\ttags_yaml\x18\v \x03(\tR\btagsYaml\x12A\n" +
-	"\x13required_files_yaml\x18\f \x03(\v2\x11.grpc.v1.FileInfoR\x11requiredFilesYaml\"?\n" +
+	"\bcategory\x18\x04 \x01(\tR\bcategory\x12*\n" +
+	"\x11inside_ideal_path\x18\x05 \x01(\tR\x0finsideIdealPath\x12*\n" +
+	"\x11inside_legal_name\x18\x06 \x01(\tR\x0finsideLegalName\x12,\n" +
+	"\x12inside_postal_code\x18\a \x01(\tR\x10insidePostalCode\x12%\n" +
+	"\x0einside_address\x18\b \x01(\tR\rinsideAddress\x12!\n" +
+	"\finside_phone\x18\t \x01(\tR\vinsidePhone\x12!\n" +
+	"\finside_email\x18\n" +
+	" \x01(\tR\vinsideEmail\x12%\n" +
+	"\x0einside_website\x18\v \x01(\tR\rinsideWebsite\x12\x1f\n" +
+	"\vinside_tags\x18\f \x03(\tR\n" +
+	"insideTags\x12E\n" +
+	"\x15inside_required_files\x18\r \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"?\n" +
 	"\x13CompanyCategoryInfo\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"\xa1\x03\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"\xcd\x03\n" +
 	"\x04Koji\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\x12#\n" +
-	"\rtarget_folder\x18\x03 \x01(\tR\ftargetFolder\x129\n" +
-	"\n" +
-	"start_date\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tstartDate\x12!\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12%\n" +
+	"\x0emanaged_folder\x18\x03 \x01(\tR\rmanagedFolder\x120\n" +
+	"\x05start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12!\n" +
 	"\fcompany_name\x18\x05 \x01(\tR\vcompanyName\x12#\n" +
-	"\rlocation_name\x18\x06 \x01(\tR\flocationName\x12>\n" +
-	"\rend_date_yaml\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vendDateYaml\x12)\n" +
-	"\x10description_yaml\x18\b \x01(\tR\x0fdescriptionYaml\x12\x1b\n" +
-	"\ttags_yaml\x18\t \x03(\tR\btagsYaml\x12A\n" +
-	"\x13required_files_yaml\x18\n" +
-	" \x03(\v2\x11.grpc.v1.FileInfoR\x11requiredFilesYaml\"+\n" +
+	"\rlocation_name\x18\x06 \x01(\tR\flocationName\x12*\n" +
+	"\x11inside_ideal_path\x18\a \x01(\tR\x0finsideIdealPath\x129\n" +
+	"\n" +
+	"inside_end\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tinsideEnd\x12-\n" +
+	"\x12inside_description\x18\t \x01(\tR\x11insideDescription\x12\x1f\n" +
+	"\vinside_tags\x18\n" +
+	" \x03(\tR\n" +
+	"insideTags\x12E\n" +
+	"\x15inside_required_files\x18\v \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"+\n" +
 	"\x11ListKojiesRequest\x12\x16\n" +
 	"\x06filter\x18\x01 \x01(\tR\x06filter\";\n" +
 	"\x12ListKojiesResponse\x12%\n" +
@@ -1979,10 +2008,10 @@ var file_grpc_v1_penguin_proto_goTypes = []any{
 }
 var file_grpc_v1_penguin_proto_depIdxs = []int32{
 	24, // 0: grpc.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
-	0,  // 1: grpc.v1.Company.required_files_yaml:type_name -> grpc.v1.FileInfo
-	24, // 2: grpc.v1.Koji.start_date:type_name -> google.protobuf.Timestamp
-	24, // 3: grpc.v1.Koji.end_date_yaml:type_name -> google.protobuf.Timestamp
-	0,  // 4: grpc.v1.Koji.required_files_yaml:type_name -> grpc.v1.FileInfo
+	0,  // 1: grpc.v1.Company.inside_required_files:type_name -> grpc.v1.FileInfo
+	24, // 2: grpc.v1.Koji.start:type_name -> google.protobuf.Timestamp
+	24, // 3: grpc.v1.Koji.inside_end:type_name -> google.protobuf.Timestamp
+	0,  // 4: grpc.v1.Koji.inside_required_files:type_name -> grpc.v1.FileInfo
 	3,  // 5: grpc.v1.ListKojiesResponse.kojies:type_name -> grpc.v1.Koji
 	3,  // 6: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
 	3,  // 7: grpc.v1.UpdateKojiRequest.koji:type_name -> grpc.v1.Koji

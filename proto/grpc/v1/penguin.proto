@@ -10,26 +10,27 @@ option features.field_presence = IMPLICIT;
 option go_package = "grpc-backend/gen/grpc/v1;grpcv1";
 
 message FileInfo {
-  string target_path = 1;
-  bool is_directory = 2;
-  int64 size = 3;
-  google.protobuf.Timestamp modified_time = 4;
-  string ideal_path_yaml = 5;
+  string id = 1;
+  string path = 2;
+  bool is_directory = 3;
+  int64 size = 4;
+  google.protobuf.Timestamp modified_time = 5;
 }
 
 message Company {
   string id = 1;
-  string target_folder = 2;
+  string managed_folder = 2;
   string short_name = 3;
   string category = 4;
-  string legal_name_yaml = 5;
-  string postal_code_yaml = 6;
-  string address_yaml = 7;
-  string phone_yaml = 8;
-  string email_yaml = 9;
-  string website_yaml = 10;
-  repeated string tags_yaml = 11;
-  repeated FileInfo required_files_yaml = 12;
+  string inside_ideal_path = 5;
+  string inside_legal_name = 6;
+  string inside_postal_code = 7;
+  string inside_address = 8;
+  string inside_phone = 9;
+  string inside_email = 10;
+  string inside_website = 11;
+  repeated string inside_tags = 12;
+  repeated FileInfo inside_required_files = 13;
 }
 
 message CompanyCategoryInfo {
@@ -40,14 +41,15 @@ message CompanyCategoryInfo {
 message Koji {
   string id = 1;
   string status = 2;
-  string target_folder = 3;
-  google.protobuf.Timestamp start_date = 4;
+  string managed_folder = 3;
+  google.protobuf.Timestamp start = 4;
   string company_name = 5;
   string location_name = 6;
-  google.protobuf.Timestamp end_date_yaml = 7;
-  string description_yaml = 8;
-  repeated string tags_yaml = 9;
-  repeated FileInfo required_files_yaml = 10;
+  string inside_ideal_path = 7;
+  google.protobuf.Timestamp inside_end = 8;
+  string inside_description = 9;
+  repeated string inside_tags = 10;
+  repeated FileInfo inside_required_files = 11;
 }
 
 message ListKojiesRequest {

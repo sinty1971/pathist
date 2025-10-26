@@ -4,52 +4,70 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math/big"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
+	"grpc-backend/internal/utils"
+
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Timestamp は time.Time をラップし、カスタムの YAML/JSON マーシャリング/アンマーシャリングを提供します
-type TimestampEx struct {
-	timestamppb.Timestamp
+type Timestamp struct {
+	*timestamppb.Timestamp
 }
 
-type TimestampEncoding struct {
-	// Time is the time value in RFC3339 format
-	Time string `json:"time" yaml:"time" swaggertype:"string" format:"date-time" example:"2024-01-15T10:30:00Z"`
+// GetID 時間データからIDを生成
+func (ts *Timestamp) GetID() string {
+	// 秒とナノ秒からバイト配列を生成
+	bytes := big.NewInt(int64(ts.GetSeconds())*1_000_000_000 + int64(ts.GetNanos())).Bytes()
+
+	// 時刻をナノ秒精度の文字列に変換してIDを生成
+	return utils.GenerateIdFromBytes(bytes)
 }
 
 // MarshalYAML implements yaml.Marshaler
-func (ts *TimestampEx) MarshalYAML() (any, error) {
+func (ts *Timestamp) MarshalYAML() (any, error) {
 	// nil チェック
-	if ts == nil {
-		return "", errors.New("(ts *TimestampEx) MarshalYAML() で ts 値が nil です。")
+	if ts == nil || ts.Timestamp.CheckValid() == nil {
+		return "", errors.New("(ts *Timestamp) MarshalYAML() で値が nil もしくは不正です")
 	}
-	asTime := ts.AsTime()
-	if asTime.IsZero() {
-		return "", nil
-	}
-	return asTime.Format(time.RFC3339Nano), nil
+	return ts.Timestamp.AsTime().Format(time.RFC3339Nano), nil
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler
-func (ts *TimestampEx) UnmarshalYAML(unmarshal func(any) error) error {
+func (ts *Timestamp) UnmarshalYAML(unmarshal func(any) error) error {
 	// 日時文字列を抽出
-	var in string
-	if err := unmarshal(&in); err != nil {
+	var enc string
+	if err := unmarshal(&enc); err != nil {
 		return err
 	}
 
-	// 日時文字列をパース
-	parsed, err := ParseTime(in, nil)
-	if err != nil {
-		return err
+	// 空文字列の場合はゼロ値を設定
+	enc = strings.TrimSpace(enc)
+	if enc == "" {
+		ts.Timestamp = &timestamppb.Timestamp{}
+		return nil
 	}
 
-	ts.Timestamp = *timestamppb.New(parsed)
+	// timestamppb 内蔵の JSON アンマーシャリングを優先利用
+	quoted := strconv.Quote(enc)
+	if err := protojson.Unmarshal([]byte(quoted), ts.Timestamp); err != nil {
+		// 互換性維持のため旧ロジックにフォールバック
+		parsed, parseErr := ParseTimestamp(enc, nil)
+		if parseErr != nil {
+			return fmt.Errorf("timestamppb.UnmarshalJSON failed: %w; fallback parse failed: %v", err, parseErr)
+		}
+		ts.Timestamp = &timestamppb.Timestamp{
+			Seconds: parsed.Seconds,
+			Nanos:   parsed.Nanos,
+		}
+	}
 	return nil
 }
 
@@ -59,11 +77,11 @@ var DefaultTimestampFormatsWithTZ = []string{
 	time.RFC3339,
 }
 
-// DefaultTimestampRegexpsWithTZ タイムゾーン情報を含む日時フォーマットの正規表現マップ
-var DefaultTimestampRegexpsWithTZ = make(map[string]regexp.Regexp, len(DefaultTimestampFormatsWithTZ))
+// TimestampRegexpsWithTZ タイムゾーン情報を含む日時フォーマットの正規表現マップ
+var TimestampRegexpsWithTZ = make(map[string]regexp.Regexp, len(DefaultTimestampFormatsWithTZ))
 
-// DefaultTimestampFormatsWithoutTZ タイムゾーン情報を含まない日時フォーマットのリスト（ローカルタイムゾーンを使用）
-var DefaultTimestampFormatsWithoutTZ = []string{
+// TimestampFormatsWithoutTZ タイムゾーン情報を含まない日時フォーマットのリスト（ローカルタイムゾーンを使用）
+var TimestampFormatsWithoutTZ = []string{
 	"2006-01-02T15:04:05.999999999",
 	"2006-01-02T15:04:05",
 	"2006-01-02 15:04:05",
@@ -76,8 +94,8 @@ var DefaultTimestampFormatsWithoutTZ = []string{
 	"2006.1.2",
 }
 
-// DefaultTimestampRegexpsWithoutTZ タイムゾーン情報を含まない日時フォーマットの正規表現マップ
-var DefaultTimestampRegexpsWithoutTZ = make(map[string]regexp.Regexp, len(DefaultTimestampFormatsWithoutTZ))
+// TimestampRegexpsWithoutTZ タイムゾーン情報を含まない日時フォーマットの正規表現マップ
+var TimestampRegexpsWithoutTZ = make(map[string]regexp.Regexp, len(TimestampFormatsWithoutTZ))
 
 // TimestampParseReplaceRule 日時フォーマットを正規表現パターンに変換するための置換ルール
 var TimestampParseReplaceRule = map[string]string{
@@ -120,12 +138,12 @@ func InitializeTimestampRegexps() {
 
 	// Initialize patterns for formats with timezone
 	for _, format := range DefaultTimestampFormatsWithTZ {
-		DefaultTimestampRegexpsWithTZ[format] = formatToRegex(format)
+		TimestampRegexpsWithTZ[format] = formatToRegex(format)
 	}
 
 	// Initialize patterns for formats without timezone
-	for _, format := range DefaultTimestampFormatsWithoutTZ {
-		DefaultTimestampRegexpsWithoutTZ[format] = formatToRegex(format)
+	for _, format := range TimestampFormatsWithoutTZ {
+		TimestampRegexpsWithoutTZ[format] = formatToRegex(format)
 	}
 }
 
@@ -156,47 +174,53 @@ func findTimeString(re *regexp.Regexp, in string, out *string) (string, error) {
 	return timeStr, nil
 }
 
-// ParseTime 文字列から日時をパースし、time.Time型と残りの文字列を返します
-// 例: "2025-0618 豊田築炉 名和工場" → time.Time(2025-06-18), "豊田築炉 名和工場"
-func ParseTime(in string, out *string) (time.Time, error) {
+// ParseTimestamp 文字列から日時をパースし、Timestamp型と残りの文字列を返します
+// 例: "2025-0618 豊田築炉 名和工場" → Timestamp(2025-06-18), "豊田築炉 名和工場"
+func ParseTimestamp(in string, out *string) (*Timestamp, error) {
+
+	// 空文字列の場合はゼロ値を設定
+	in = strings.TrimSpace(in)
+	if in == "" {
+		return &Timestamp{Timestamp: &timestamppb.Timestamp{Seconds: 0, Nanos: 0}}, nil
+	}
+
+	// timestamppb 内蔵の JSON アンマーシャリングを優先利用
+	quoted := strconv.Quote(in)
+	pbts := timestamppb.Timestamp{}
+	if err := protojson.Unmarshal([]byte(quoted), &pbts); err == nil {
+		return &Timestamp{Timestamp: &timestamppb.Timestamp{
+			Seconds: pbts.GetSeconds(),
+			Nanos:   pbts.GetNanos(),
+		}}, nil
+	}
+
 	// タイムゾーン付きのフォーマットを試行（配列順序で）
 	for _, format := range DefaultTimestampFormatsWithTZ {
 		//
-		re := DefaultTimestampRegexpsWithTZ[format]
+		re := TimestampRegexpsWithTZ[format]
 		dateStr, err := findTimeString(&re, in, out)
 		if err != nil {
 			continue
 		}
 		if t, err := time.Parse(format, dateStr); err == nil {
-			return t, nil
+			return &Timestamp{Timestamp: timestamppb.New(t)}, nil
 		}
 	}
 
 	// タイムゾーンなしのフォーマットを試行（配列順序で）
-	for _, format := range DefaultTimestampFormatsWithoutTZ {
-		re := DefaultTimestampRegexpsWithoutTZ[format]
+	for _, format := range TimestampFormatsWithoutTZ {
+		re := TimestampRegexpsWithoutTZ[format]
 		dateStr, err := findTimeString(&re, in, out)
 		if err != nil {
 			continue
 		}
 
 		if t, err := time.ParseInLocation(format, dateStr, time.Local); err == nil {
-			return t, nil
+			return &Timestamp{Timestamp: timestamppb.New(t)}, nil
 		}
 	}
 
-	return time.Time{}, fmt.Errorf("unable to parse date/time in the string: %s", in)
-}
-
-// FormatTime 日時を指定のフォーマットに変換します
-func FormatTime(layout string, t time.Time) (string, error) {
-	if _, exists := DefaultTimestampRegexpsWithTZ[layout]; exists {
-		return t.Format(layout), nil
-	}
-	if _, exists := DefaultTimestampRegexpsWithoutTZ[layout]; exists {
-		return t.Format(layout), nil
-	}
-	return "", fmt.Errorf("invalid layout: %s", layout)
+	return &Timestamp{}, fmt.Errorf("unable to parse date/time in the string: %s", in)
 }
 
 // ParseRFC3339Nano RFC3339Nano形式の日時文字列をパースしてtime.Timeを返します
@@ -204,7 +228,7 @@ func FormatTime(layout string, t time.Time) (string, error) {
 func ParseRFC3339Nano(in string) (time.Time, error) {
 	// 日時部分を抽出
 	var out string
-	re := DefaultTimestampRegexpsWithTZ[time.RFC3339Nano]
+	re := TimestampRegexpsWithTZ[time.RFC3339Nano]
 	timeStr, err := findTimeString(&re, in, &out)
 	if err != nil {
 		return time.Time{}, err
@@ -218,19 +242,9 @@ func ParseRFC3339Nano(in string) (time.Time, error) {
 	return t, nil
 }
 
-// ParseToTimestamp parses various date/time string formats and returns a TimestampEx
-// When no timezone is specified, it uses the server's local timezone
-func ParseToTimestamp(in string, out *string) (TimestampEx, error) {
-	t, err := ParseTime(in, out)
-	if err != nil {
-		return TimestampEx{}, err
-	}
-	return TimestampEx{Timestamp: *timestamppb.New(t)}, nil
-}
-
 // MarshalJSON implements json.Marshaler
 // タイムスタンプをJSON形式の文字列に変換します
-func (ts *TimestampEx) MarshalJSON() ([]byte, error) {
+func (ts *Timestamp) MarshalJSON() ([]byte, error) {
 	if ts.Timestamp.AsTime().IsZero() {
 		return []byte(`""`), nil
 	}
@@ -239,27 +253,34 @@ func (ts *TimestampEx) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 // バイト文字列を受け取り、タイムスタンプをパースします
-func (ts *TimestampEx) UnmarshalJSON(data []byte) error {
+func (ts *Timestamp) UnmarshalJSON(data []byte) error {
 	in := string(data)
 	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
 		in = in[1 : len(in)-1]
 	}
 
 	if in == "" {
-		ts.Timestamp = *timestamppb.New(time.Time{})
+		ts.Timestamp = timestamppb.New(time.Time{})
 		return nil
 	}
 
 	// タイムスタンプ文字列のパース
-	parsed, err := ParseTime(in, nil)
+	parsed, err := ParseTimestamp(in, nil)
 	if err != nil {
 		return err
 	}
 
-	ts.Timestamp = *timestamppb.New(parsed)
+	ts.Timestamp = parsed.Timestamp
 	return nil
 }
 
-func (ts *TimestampEx) Format(layout string) (string, error) {
-	return FormatTime(layout, ts.Timestamp.AsTime())
+// FormatTime 日時を指定のフォーマットに変換します
+func (ts *Timestamp) FormatTime(layout string) (string, error) {
+	if _, exists := TimestampRegexpsWithTZ[layout]; exists {
+		return ts.AsTime().Format(layout), nil
+	}
+	if _, exists := TimestampRegexpsWithoutTZ[layout]; exists {
+		return ts.AsTime().Format(layout), nil
+	}
+	return "", fmt.Errorf("invalid layout: %s", layout)
 }

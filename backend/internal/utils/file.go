@@ -30,6 +30,15 @@ func CleanAbsPath(absPath string) (string, error) {
 	return "", errors.New("絶対パスではありません")
 }
 
+// パスからファイル名またはフォルダー名を取得します
+func GetBaseName(pathname string) string {
+	basename := filepath.Base(pathname)
+	if basename == "." || basename == "/" || basename == "\\" {
+		return ""
+	}
+	return basename
+}
+
 // IsExcel エクセルファイルかどうかをチェック
 func FilenameIsExcel(filename string) bool {
 	excelSuffix := []string{".xlsx", ".xls"}

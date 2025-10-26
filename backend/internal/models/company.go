@@ -3,11 +3,11 @@ package models
 import (
 	"encoding/json"
 	"errors"
-	"path"
 	"slices"
 	"strings"
 
 	grpcv1 "grpc-backend/gen/grpc/v1"
+	"grpc-backend/internal/utils"
 )
 
 // CompanyCategoryIndex は業種を表すenum型（string）
@@ -68,25 +68,34 @@ func NewCompany(folderPath string) (*Company, error) {
 		return nil, err
 	}
 
-	return &Company{
+	company := &Company{
 		Company: grpcv1.Company_builder{
-			Id:           NewIDFromString(result.ShortName).Len5(),
-			TargetFolder: folderPath,
-			ShortName:    result.ShortName,
-			Category:     string(result.Category),
+			Id:            GenerateCompanyId(result.ShortName),
+			ManagedFolder: folderPath,
+			ShortName:     result.ShortName,
+			Category:      string(result.Category),
 
-			LegalNameYaml:     result.ShortName,
-			TagsYaml:          append([]string{"会社"}, result.Tags...),
-			RequiredFilesYaml: []*grpcv1.FileInfo{},
-			PostalCodeYaml:    "",
-			AddressYaml:       "",
-			PhoneYaml:         "",
-			EmailYaml:         "",
-			WebsiteYaml:       "",
+			InsideIdealPath:     "",
+			InsideLegalName:     result.ShortName,
+			InsideTags:          append([]string{"会社"}, result.Tags...),
+			InsideRequiredFiles: []*grpcv1.FileInfo{},
+			InsidePostalCode:    "",
+			InsideAddress:       "",
+			InsidePhone:         "",
+			InsideEmail:         "",
+			InsideWebsite:       "",
 		}.Build(),
-	}, nil
+	}
+
+	// IDを更新とリターン
+	return company, nil
 }
 
+func GenerateCompanyId(shortName string) string {
+	return utils.GenerateIdFromString(shortName)
+}
+
+// parseCompanyNameResult は ParseCompanyName の戻り値を表します
 type parseCompanyNameResult struct {
 	Category  CompanyCategoryIndex
 	ShortName string
@@ -144,26 +153,7 @@ func ParseCompanyName(name string) (parseCompanyNameResult, error) {
 	return result, nil
 }
 
-// UpdateIdentity CategoryとShortNameからIDとFolderNameを更新します
-// 戻り値: 変更前のフォルダー名, エラー
-func (c *Company) UpdateIdentity() {
-	if c == nil {
-		return
-	}
-
-	// フォルダー名の生成
-	folderName := string(c.GetCategory()) + " " + c.GetShortName()
-
-	// フォルダー名とIDを更新
-	c.SetId(NewIDFromString(folderName).Len5())
-
-	// フォルダーパスを更新
-	dir := path.Dir(c.GetTargetFolder())
-	if dir != "." {
-		c.SetTargetFolder(path.Join(dir, folderName))
-	}
-}
-
+// IsValid は CompanyCategoryIndex が有効な範囲内かをチェックします
 func (cc *CompanyCategoryIndex) IsValid() bool {
 	if cc == nil {
 		return false
@@ -195,10 +185,10 @@ func (c *Company) AddTag(tag string) {
 	if c == nil {
 		return
 	}
-	if slices.Contains(c.GetTagsYaml(), tag) {
+	if slices.Contains(c.GetInsideTags(), tag) {
 		return // タグは既に存在します
 	}
-	c.SetTagsYaml(append(c.GetTagsYaml(), tag))
+	c.SetInsideTags(append(c.GetInsideTags(), tag))
 }
 
 // MarshalYAML は YAML 用のシリアライズを行います。

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"time"
 
 	grpcv1 "grpc-backend/gen/grpc/v1"
 	"grpc-backend/internal/utils"
@@ -25,7 +24,7 @@ type FileInfo struct {
 func NewFileInfo(targetPath string) (*FileInfo, error) {
 	var err error
 
-	// 絶対パスの正規化
+	// 絶対パスのクリーン化
 	targetPath, err = utils.CleanAbsPath(targetPath)
 	if err != nil {
 		return nil, err
@@ -37,57 +36,32 @@ func NewFileInfo(targetPath string) (*FileInfo, error) {
 		return nil, err
 	}
 
+	// 最終更新時刻の取得
 	osModTime := osFi.ModTime()
 	if osModTime.IsZero() {
-		return nil, errors.New("file modification time is zero")
+		return nil, errors.New("ファイル最終更新日の取得に失敗しました: file modification time is zero")
 	}
 
 	return &FileInfo{
 		FileInfo: grpcv1.FileInfo_builder{
-			TargetPath:    targetPath,
-			IdealPathYaml: "",
-			IsDirectory:   osFi.IsDir(),
-			Size:          osFi.Size(),
-			ModifiedTime:  timestamppb.New(osModTime),
+			Path:         targetPath,
+			IsDirectory:  osFi.IsDir(),
+			Size:         osFi.Size(),
+			ModifiedTime: timestamppb.New(osModTime),
 		}.Build()}, nil
 }
 
-// NewFileInfoEx は*grpcv1.FileInfo から FileInfoWithEx を作成します。
-func NewFileInfoEx(fileInfo *grpcv1.FileInfo) (*FileInfo, error) {
-	return &FileInfo{FileInfo: fileInfo}, nil
-}
-
-func NewFileInfoEncoding(fi *grpcv1.FileInfo) FileInfoEncoding {
-	return FileInfoEncoding{
-		TargetPath:  fi.GetTargetPath(),
-		IdealPath:   fi.GetIdealPath(),
-		IsDirectory: fi.GetIsDirectory(),
-		Size:        fi.GetSize(),
-	}
-}
-
-// ensureMessage は FileInfo メッセージが nil の場合に初期化を行います。
-func (fi *FileInfoEx) ensureMessage() {
-	if fi.FileInfo == nil {
-		fi.FileInfo = &grpcv1.FileInfo{}
-	}
-}
-
 // MarshalYAML は YAML 用のシリアライズを行います。
-func (fi FileInfoEx) MarshalYAML() (any, error) {
+func (fi FileInfo) MarshalYAML() (any, error) {
 	if fi.FileInfo == nil {
-		return FileInfoEncoding{}, nil
+		return FileInfo{}, nil
 	}
-	enc := NewFileInfoEncoding(fi.FileInfo)
-	if ts := fi.GetModifiedTime(); ts != nil {
-		enc.ModifiedTime = ts.AsTime().Format(time.RFC3339Nano)
-	}
-	return enc, nil
+	return fi, nil
 }
 
 // UnmarshalYAML は YAML からの復元を行います。
-func (fi *FileInfoEx) UnmarshalYAML(unmarshal func(any) error) error {
-	var enc FileInfoEncoding
+func (fi *FileInfo) UnmarshalYAML(unmarshal func(any) error) error {
+	var enc FileInfo
 	if err := unmarshal(&enc); err != nil {
 		return err
 	}
@@ -95,42 +69,27 @@ func (fi *FileInfoEx) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 // MarshalJSON は JSON Serde を従来形式で行います。
-func (fi FileInfoEx) MarshalJSON() ([]byte, error) {
+func (fi FileInfo) MarshalJSON() ([]byte, error) {
 	if fi.FileInfo == nil {
-		return json.Marshal(FileInfoEncoding{})
+		return json.Marshal(FileInfo{})
 	}
-	enc := NewFileInfoEncoding(fi.FileInfo)
-	if ts := fi.GetModifiedTime(); ts != nil {
-		enc.ModifiedTime = ts.AsTime().Format(time.RFC3339Nano)
-	}
-	return json.Marshal(enc)
+	return json.Marshal(fi)
 }
 
 // UnmarshalJSON は JSON からの復元を行います。
-func (fi *FileInfoEx) UnmarshalJSON(data []byte) error {
-	var enc FileInfoEncoding
+func (fi *FileInfo) UnmarshalJSON(data []byte) error {
+	var enc FileInfo
 	if err := json.Unmarshal(data, &enc); err != nil {
 		return err
 	}
 	return fi.applyEncoding(enc)
 }
 
-func (fi *FileInfoEx) applyEncoding(enc FileInfoEncoding) error {
-	fi.ensureMessage()
-	fi.FileInfo.SetTargetPath(enc.TargetPath)
-	fi.FileInfo.SetIdealPath(enc.IdealPath)
-	fi.FileInfo.SetIsDirectory(enc.IsDirectory)
-	fi.FileInfo.SetSize(enc.Size)
+func (fi *FileInfo) applyEncoding(enc FileInfo) error {
+	fi.FileInfo.SetPath(enc.GetPath())
+	fi.FileInfo.SetIsDirectory(enc.GetIsDirectory())
+	fi.FileInfo.SetSize(enc.GetSize())
+	fi.FileInfo.SetModifiedTime(enc.GetModifiedTime())
 
-	if enc.ModifiedTime == "" {
-		fi.FileInfo.SetModifiedTime(nil)
-		return nil
-	}
-
-	parsed, err := ParseTime(enc.ModifiedTime, nil)
-	if err != nil {
-		return err
-	}
-	fi.FileInfo.SetModifiedTime(timestamppb.New(parsed))
 	return nil
 }

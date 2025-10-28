@@ -113,11 +113,7 @@ var TimestampParseReplaceRule = map[string]string{
 
 // init パッケージ初期化時に正規表現を初期化
 func init() {
-	InitializeTimestampRegexps()
-}
-
-// InitializeTimestampRegexps 日時フォーマットを正規表現に変換して初期化します
-func InitializeTimestampRegexps() {
+	// 日時フォーマットを正規表現に変換して初期化します
 	formatToRegex := func(format string) regexp.Regexp {
 		// 順序を考慮して置換を実行
 		pattern := format

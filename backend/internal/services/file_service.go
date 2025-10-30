@@ -10,45 +10,48 @@ import (
 	"strings"
 	"sync"
 
-	penguinv1 "penguin-backend/gen/penguin/v1"
-	penguinv1connect "penguin-backend/gen/penguin/v1/penguinv1connect"
-	"penguin-backend/internal/models"
+	grpcv1 "grpc-backend/gen/grpc/v1"
+	grpcv1connect "grpc-backend/gen/grpc/v1/grpcv1connect"
+	"grpc-backend/internal/models"
 
 	"connectrpc.com/connect"
 )
 
 // FileService の実装
 
-// FileServiceHandler exposes FileService operations via Connect handlers.
-type FileServiceHandler struct {
-	penguinv1connect.UnimplementedFileServiceHandler
-	// handlers は任意のgrpcサービスハンドラーへの参照
-	handlers *RootHandler
+// FileService exposes FileService operations via Connect handlers.
+type FileService struct {
+	// Embed the unimplemented handler for forward compatibility
+	grpcv1connect.UnimplementedFileServiceHandler
 
-	// TargetPath はファイルサービスの絶対パスフォルダー
-	TargetPath string `json:"targetPath" yaml:"target_path" example:"/penguin/豊田築炉"`
+	// services は任意のgrpcサービスハンドラーへの参照
+	services *Services
+
+	// BasePath はファイルサービスの絶対パスフォルダー
+	BasePath string `json:"basePath" yaml:"base_path" example:"/penguin/豊田築炉"`
 }
 
-func NewFileServiceHandler(rootHandler *RootHandler, targetPath string) *FileServiceHandler {
-	return &FileServiceHandler{
-		handlers:   rootHandler,
-		TargetPath: targetPath,
+func NewFileService(services *Services, basePath string) *FileService {
+	return &FileService{
+		services: services,
+		BasePath: basePath,
 	}
 }
 
-func (h *FileServiceHandler) ListFileInfos(
+// ListFileInfos は指定されたパスのファイル情報一覧を返す
+func (s *FileService) ListFileInfos(
 	ctx context.Context,
-	req *connect.Request[penguinv1.ListFileInfosRequest]) (
-	*connect.Response[penguinv1.ListFileInfosResponse],
+	req *connect.Request[grpcv1.ListFileInfosRequest]) (
+	*connect.Response[grpcv1.ListFileInfosResponse],
 	error) {
 	// コンテキストを無視
 	_ = ctx
 
 	// 変数定義
 	var (
-		response *connect.Response[penguinv1.ListFileInfosResponse]
+		response *connect.Response[grpcv1.ListFileInfosResponse]
 		dirs     []os.DirEntry
-		fis      []*penguinv1.FileInfo = []*penguinv1.FileInfo{}
+		fis      []*grpcv1.FileInfo = []*grpcv1.FileInfo{}
 		err      error
 	)
 
@@ -56,13 +59,13 @@ func (h *FileServiceHandler) ListFileInfos(
 	relPath := req.Msg.GetPath()
 
 	// 絶対パスを取得
-	targetPath, err := h.GetAbsPathFrom(relPath)
+	absPath, err := s.GetAbsPathFrom(relPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// ファイルエントリ配列を取得
-	dirs, err = os.ReadDir(targetPath)
+	dirs, err = os.ReadDir(absPath)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +78,7 @@ func (h *FileServiceHandler) ListFileInfos(
 
 	// チャンネルとワーカーグループを設定
 	jobsChan := make(chan int, len(dirs))
-	fisChan := make(chan *penguinv1.FileInfo, len(dirs))
+	fisChan := make(chan *grpcv1.FileInfo, len(dirs))
 	// 並列処理用のワーカー数を決定（CPU数の2倍、最大16）
 	numWorkers := min(min(runtime.NumCPU()*2, 16), len(dirs))
 	// ワーカーグループを設定
@@ -87,11 +90,11 @@ func (h *FileServiceHandler) ListFileInfos(
 			defer wg.Done()
 			for index := range jobsChan {
 				dir := dirs[index]
-				fullpath := filepath.Join(targetPath, dir.Name())
+				fullpath := filepath.Join(absPath, dir.Name())
 
 				fi, _ := models.NewFileInfo(fullpath)
 				if fi != nil {
-					fisChan <- fi
+					fisChan <- fi.FileInfo
 				}
 			}
 		}()
@@ -110,7 +113,7 @@ func (h *FileServiceHandler) ListFileInfos(
 	}()
 
 	// 結果を収集
-	fis = make([]*penguinv1.FileInfo, 0, len(dirs))
+	fis = make([]*grpcv1.FileInfo, 0, len(dirs))
 	for fi := range fisChan {
 		fis = append(fis, fi)
 	}
@@ -121,29 +124,29 @@ func (h *FileServiceHandler) ListFileInfos(
 }
 
 // GetAbsPathFrom BasePathに引数の相対パスを追加した絶対パスを返す
-func (h *FileServiceHandler) GetAbsPathFrom(relPath string) (string, error) {
+func (s *FileService) GetAbsPathFrom(relPath string) (string, error) {
 
 	// 絶対パスがある場合はエラーを返す
 	if strings.HasPrefix(relPath, "~/") || filepath.IsAbs(relPath) {
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	return filepath.Join(h.TargetPath, relPath), nil
+	return filepath.Join(s.BasePath, relPath), nil
 }
 
 // CopyFile はファイルまたはディレクトリをコピーする
-func (h *FileServiceHandler) CopyFile(relSrc, relDst string) error {
+func (s *FileService) CopyFile(relSrc, relDst string) error {
 	var absSrc, absDst string
 	var err error
 
 	// relSrcがパスチェック及び絶対パス変換
-	absSrc, err = h.GetAbsPathFrom(relSrc)
+	absSrc, err = s.GetAbsPathFrom(relSrc)
 	if err != nil {
 		return err
 	}
 
 	// relDstのパスチェック及び絶対パス変換
-	absDst, err = h.GetAbsPathFrom(relDst)
+	absDst, err = s.GetAbsPathFrom(relDst)
 	if err != nil {
 		return err
 	}
@@ -156,15 +159,15 @@ func (h *FileServiceHandler) CopyFile(relSrc, relDst string) error {
 
 	// ディレクトリの場合
 	if srcOsFi.IsDir() {
-		return h.absCopyDir(absSrc, absDst)
+		return s.absCopyDir(absSrc, absDst)
 	}
 
 	// ファイルの場合
-	return h.absCopyFile(absSrc, absDst)
+	return s.absCopyFile(absSrc, absDst)
 }
 
 // absCopyFile はファイルをコピーする内部関数
-func (h *FileServiceHandler) absCopyFile(absSrc, absDst string) error {
+func (s *FileService) absCopyFile(absSrc, absDst string) error {
 	// コピー元ファイルを開く
 	srcFile, err := os.Open(absSrc)
 	if err != nil {
@@ -200,7 +203,7 @@ func (h *FileServiceHandler) absCopyFile(absSrc, absDst string) error {
 }
 
 // absCopyDir はディレクトリを再帰的にコピーする内部関数
-func (h *FileServiceHandler) absCopyDir(absSrc, absDst string) error {
+func (s *FileService) absCopyDir(absSrc, absDst string) error {
 	// コピー元ディレクトリの情報を取得
 	srcInfo, err := os.Stat(absSrc)
 	if err != nil {
@@ -225,12 +228,12 @@ func (h *FileServiceHandler) absCopyDir(absSrc, absDst string) error {
 
 		if entry.IsDir() {
 			// サブディレクトリの場合、再帰的にコピー
-			if err := h.absCopyDir(srcPath, dstPath); err != nil {
+			if err := s.absCopyDir(srcPath, dstPath); err != nil {
 				return err
 			}
 		} else {
 			// ファイルの場合、ファイルをコピー
-			if err := h.absCopyFile(srcPath, dstPath); err != nil {
+			if err := s.absCopyFile(srcPath, dstPath); err != nil {
 				return err
 			}
 		}
@@ -240,12 +243,12 @@ func (h *FileServiceHandler) absCopyDir(absSrc, absDst string) error {
 }
 
 // MoveFile はファイルを移動する
-func (h *FileServiceHandler) MoveFile(relSrc, relDst string) error {
-	absSrc, err := h.GetAbsPathFrom(relSrc)
+func (s *FileService) MoveFile(relSrc, relDst string) error {
+	absSrc, err := s.GetAbsPathFrom(relSrc)
 	if err != nil {
 		return err
 	}
-	absDst, err := h.GetAbsPathFrom(relDst)
+	absDst, err := s.GetAbsPathFrom(relDst)
 	if err != nil {
 		return err
 	}
@@ -265,8 +268,8 @@ func (h *FileServiceHandler) MoveFile(relSrc, relDst string) error {
 }
 
 // DeleteFile はファイルを削除する
-func (h *FileServiceHandler) DeleteFile(relPath string) error {
-	absPath, err := h.GetAbsPathFrom(relPath)
+func (s *FileService) DeleteFile(relPath string) error {
+	absPath, err := s.GetAbsPathFrom(relPath)
 	if err != nil {
 		return err
 	}

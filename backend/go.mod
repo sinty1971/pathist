@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	connectrpc.com/connect v1.19.1
 	connectrpc.com/grpcreflect v1.3.0
+	github.com/fsnotify/fsnotify v1.9.0
 	golang.org/x/crypto v0.43.0
 	golang.org/x/net v0.46.0
 	google.golang.org/protobuf v1.36.10

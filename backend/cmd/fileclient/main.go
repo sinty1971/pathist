@@ -77,8 +77,7 @@ func main() {
 			file.GetIsDirectory(),
 			file.GetSize(),
 			modified,
-			file.GetTargetPath(),
-			file.GetIdealPathYaml(),
+			file.GetPath(),
 		)
 	}
 }

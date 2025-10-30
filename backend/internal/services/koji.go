@@ -39,7 +39,7 @@ func (ks *KojiService) Initialize(container *Container, serviceOptions *Options)
 	ks.container = container
 
 	// 工事一覧フォルダーのフルパス
-	targetFolder, err := utils.CleanAbsPath(serviceOptions.KojiServiceTargetFolder)
+	targetFolder, err := utils.CleanAbsPath(serviceOptions.KojiServiceManagedFolder)
 	if err != nil {
 		return nil, err
 	}

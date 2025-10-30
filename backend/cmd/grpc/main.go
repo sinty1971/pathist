@@ -27,6 +27,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
+// コマンドライン引数
 var (
 	httpAddr  = flag.String("http-addr", ":9090", "HTTP (h2c) の待受アドレス")
 	httpsAddr = flag.String("https-addr", ":9443", "HTTPS の待受アドレス")
@@ -36,8 +37,10 @@ var (
 )
 
 func main() {
+	// コマンドライン引数の解析
 	flag.Parse()
 
+	// シグナルの受信を待機するコンテキストを作成
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -59,6 +62,10 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	fileHandler := rpc.NewFileServiceHandler(container.FileService)
+	filePath, fileConnectHandler := grpcv1connect.NewFileServiceHandler(fileHandler)
+	mux.Handle(filePath, fileConnectHandler)
+
 	kojiHandler := rpc.NewKojiServiceHandler(container.KojiService)
 	kojiPath, kojiConnectHandler := grpcv1connect.NewKojiServiceHandler(kojiHandler)
 	mux.Handle(kojiPath, kojiConnectHandler)
@@ -67,14 +74,10 @@ func main() {
 	companyPath, companyConnectHandler := grpcv1connect.NewCompanyServiceHandler(companyHandler)
 	mux.Handle(companyPath, companyConnectHandler)
 
-	fileHandler := rpc.NewFileServiceHandler(container.FileService)
-	filePath, fileConnectHandler := grpcv1connect.NewFileServiceHandler(fileHandler)
-	mux.Handle(filePath, fileConnectHandler)
-
 	reflector := grpcreflect.NewStaticReflector(
-		grpcv1connect.KojiServiceName,
-		grpcv1connect.CompanyServiceName,
 		grpcv1connect.FileServiceName,
+		grpcv1connect.CompanyServiceName,
+		grpcv1connect.KojiServiceName,
 	)
 	mux.Handle(grpcreflect.NewHandlerV1(reflector))
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))

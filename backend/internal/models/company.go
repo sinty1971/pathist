@@ -55,11 +55,11 @@ type Company struct {
 }
 
 // NewCompany 会社フォルダーパス名からCompanyを作成します
-func NewCompany(folderPath string) (*Company, error) {
+func NewCompany(managedFolder string) (*Company, error) {
 	// フォルダー名を取得
 	var folderName string
-	if lastSlash := strings.LastIndex(folderPath, "/"); lastSlash != -1 {
-		folderName = folderPath[lastSlash+1:]
+	if lastSlash := strings.LastIndex(managedFolder, "/"); lastSlash != -1 {
+		folderName = managedFolder[lastSlash+1:]
 	}
 
 	// ファイル名の[0-9] [会社名]の規則を解析
@@ -71,7 +71,7 @@ func NewCompany(folderPath string) (*Company, error) {
 	company := &Company{
 		Company: grpcv1.Company_builder{
 			Id:            GenerateCompanyId(result.ShortName),
-			ManagedFolder: folderPath,
+			ManagedFolder: managedFolder,
 			ShortName:     result.ShortName,
 			Category:      string(result.Category),
 

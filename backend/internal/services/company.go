@@ -2,16 +2,16 @@ package services
 
 import (
 	"fmt"
+	"grpc-backend/internal/models"
 	"os"
 	"path/filepath"
-	"penguin-backend/internal/models"
 	"penguin-backend/internal/utils"
 	"slices"
 	"strings"
 )
 
-// CompanyService は会社データ操作を処理します
-type CompanyService struct {
+// CompanyServiceOld は会社データ操作を処理します
+type CompanyServiceOld struct {
 	// container はトップコンテナのインスタンス	RootService *RootService
 	container *Container
 
@@ -23,19 +23,19 @@ type CompanyService struct {
 }
 
 // Cleanup はサービスをクリーンアップする
-func (cs *CompanyService) Cleanup() error {
+func (cs *CompanyServiceOld) Cleanup() error {
 	return nil
 }
 
 // GetPersistPath は会社の属性データのパスを返す
-func (cs *CompanyService) GetPersistPath(company *models.Company) string {
+func (cs *CompanyServiceOld) GetPersistPath(company *models.Company) string {
 	return filepath.Join(company.TargetFolder, cs.DatabaseService.persistFilename)
 }
 
 // BuildWithOption は opt でCompanyServiceを初期化します
 // rs はルートサービス
 // opts はオプション
-func (cs *CompanyService) Initialize(container *Container, serviceOptions *Options) (*CompanyService, error) {
+func (cs *CompanyServiceOld) Initialize(container *Container, serviceOptions *Options) (*CompanyServiceOld, error) {
 
 	// コンテナを設定
 	cs.container = container
@@ -46,7 +46,7 @@ func (cs *CompanyService) Initialize(container *Container, serviceOptions *Optio
 		models.CompanyCategoryReverseMap[category] = code
 	}
 	// targetFolderのパスチェック
-	targetFolder, err := utils.CleanAbsPath(serviceOptions.CompanyServiceTargetFolder)
+	targetFolder, err := utils.CleanAbsPath(serviceOptions.CompanyServiceManagedFolder)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (cs *CompanyService) Initialize(container *Container, serviceOptions *Optio
 // GetCompany は指定されたパスから会社を取得する
 // folderName: 会社フォルダー名
 
-func (cs *CompanyService) GetCompany(folderName string) (*models.Company, error) {
+func (cs *CompanyServiceOld) GetCompany(folderName string) (*models.Company, error) {
 	// 会社データモデルを作成
 	company, err := models.NewCompany(folderName)
 	if err != nil {
@@ -109,39 +109,13 @@ func GetCompaniesOptionsFunc(opts ...GetCompaniesOptions) GetCompaniesOptions {
 }
 
 // GetCompanies は会社一覧を取得する
-func (cs *CompanyService) GetCompanies(opts ...GetCompaniesOptions) []models.Company {
+func (cs *CompanyServiceOld) GetCompanies(opts ...GetCompaniesOptions) []models.Company {
 	opt := GetCompaniesOptionsFunc(opts...)
 
-	// ファイルシステムから会社フォルダー一覧を取得
-	entries, err := os.ReadDir(cs.TargetFolder)
-	if err != nil || len(entries) == 0 {
-		return []models.Company{}
-	}
-
-	// 会社データモデルを作成
-	companies := make([]models.Company, len(entries))
-	count := 0
-	for _, entry := range entries {
-		// 会社データモデルを作成、これはデータベースアクセスを行いません
-		entryPath := filepath.Join(cs.TargetFolder, entry.Name())
-		company, err := models.NewCompany(entryPath)
-		if err != nil {
-			continue
-		}
-
-		if opt.SyncDatabaseFile {
-			_ = cs.SyncDatabaseFile(company)
-		}
-
-		companies[count] = *company
-		count++
-	}
-
-	return companies[:count]
 }
 
 // SyncDatabaseFile は会社の属性データを読み込み、会社データモデルに反映する
-func (cs *CompanyService) SyncDatabaseFile(target *models.Company) error {
+func (cs *CompanyServiceOld) SyncDatabaseFile(target *models.Company) error {
 	// 会社の属性データを読み込む
 	database, err := cs.DatabaseService.Load(target)
 	if err != nil {
@@ -163,7 +137,7 @@ func (cs *CompanyService) SyncDatabaseFile(target *models.Company) error {
 }
 
 // GetCompanyByID は指定されたIDの会社を取得します
-func (cs *CompanyService) GetCompanyByID(id string) (*models.Company, error) {
+func (cs *CompanyServiceOld) GetCompanyByID(id string) (*models.Company, error) {
 
 	// 会社一覧を取得、データベースファイルと同期は行わない
 	opt := GetCompaniesOptions{SyncDatabaseFile: false}
@@ -185,7 +159,7 @@ func (cs *CompanyService) GetCompanyByID(id string) (*models.Company, error) {
 }
 
 // GetCompanyByName は会社名で会社インスタンスを取得します（大文字小文字を区別しない）
-func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error) {
+func (cs *CompanyServiceOld) GetCompanyByName(name string) (*models.Company, error) {
 
 	// 会社一覧を取得、データベースファイルと同期は行わない
 	opt := GetCompaniesOptions{SyncDatabaseFile: false}
@@ -211,7 +185,7 @@ func (cs *CompanyService) GetCompanyByName(name string) (*models.Company, error)
 
 // Update は会社情報を更新し、必要に応じてフォルダー名も変更します
 // updateCompany: 更新対象の会社データモデル
-func (cs *CompanyService) Update(updateCompany *models.Company) error {
+func (cs *CompanyServiceOld) Update(updateCompany *models.Company) error {
 	// 変更前のフォルダー名を保持しておく
 	prevFolderPath := updateCompany.TargetFolder
 
@@ -232,12 +206,12 @@ func (cs *CompanyService) Update(updateCompany *models.Company) error {
 }
 
 // GetCategories は会社のカテゴリー一覧を配列形式で取得
-func (cs *CompanyService) GetCategories() map[models.CompanyCategoryIndex]string {
+func (cs *CompanyServiceOld) GetCategories() map[models.CompanyCategoryIndex]string {
 	return models.CompanyCategoryMap
 }
 
 // Categories は会社カテゴリーを配列形式で取得します。
-func (cs *CompanyService) Categories() []models.CompanyCategory {
+func (cs *CompanyServiceOld) Categories() []models.CompanyCategory {
 	keys := make([]models.CompanyCategoryIndex, 0, len(models.CompanyCategoryMap))
 	for code := range models.CompanyCategoryMap {
 		keys = append(keys, code)

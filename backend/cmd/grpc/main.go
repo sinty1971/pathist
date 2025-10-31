@@ -44,7 +44,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	container, err := services.CreateContainer()
+	container, err := services.NewServices()
 	if err != nil {
 		log.Fatalf("サービスの初期化に失敗しました: %v", err)
 	}

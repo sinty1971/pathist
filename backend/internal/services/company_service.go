@@ -26,17 +26,20 @@ type CompanyService struct {
 	// managedFolder はこのサービスが管理する会社データのルートフォルダー
 	managedFolder string
 
+	// managedFolderWatcher は managedFolder のファイルシステム監視オブジェクト
+	managedFolderWatcher *fsnotify.Watcher
+
 	// companiesById は管理されている会社データのインデックスがIdのキャッシュマップ
 	companiesById map[string]*models.Company
 }
 
 // NewCompanyService CompanyService インスタンスを作成します
-func NewCompanyService(services *Services, managedFolder string) (*CompanyService, error) {
+func NewCompanyService(services *Services, options *Options) (*CompanyService, error) {
 
 	// インスタンス作成
 	cs := &CompanyService{
 		services:      services,
-		managedFolder: managedFolder,
+		managedFolder: options.CompanyServiceManagedFolder,
 		companiesById: make(map[string]*models.Company, 1000),
 	}
 
@@ -46,11 +49,15 @@ func NewCompanyService(services *Services, managedFolder string) (*CompanyServic
 	}
 
 	// managedFolderの監視を開始
-	if err := watchManagedFolder(managedFolder); err != nil {
+	if err := cs.watchManagedFolder(); err != nil {
 		return nil, err
 	}
 
 	return cs, nil
+}
+
+func (s *CompanyService) Cleanup() {
+	// 現在はクリーンアップ処理は不要
 }
 
 // UpdateCompanies ファイルシステムから会社データを再読み込みします
@@ -82,27 +89,27 @@ func (s *CompanyService) UpdateCompanies() error {
 
 // watchManagedFolder starts watching the provided managedFolder for changes.
 // Add callbacks or channels as needed to propagate events to your services.
-func watchManagedFolder(managedFolder string) error {
-	absPath, err := filepath.Abs(managedFolder)
+func (s *CompanyService) watchManagedFolder() error {
+	absPath, err := filepath.Abs(s.managedFolder)
 	if err != nil {
 		return err
 	}
 
-	watcher, err := fsnotify.NewWatcher()
+	s.managedFolderWatcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		return err
 	}
 	// 監視終了時に閉じる
 	go func() {
-		<-watcher.Errors
-		watcher.Close()
+		<-s.managedFolderWatcher.Errors
+		s.managedFolderWatcher.Close()
 	}()
 
 	// イベントループ
 	go func() {
 		for {
 			select {
-			case event, ok := <-watcher.Events:
+			case event, ok := <-s.managedFolderWatcher.Events:
 				if !ok {
 					return
 				}
@@ -113,14 +120,14 @@ func watchManagedFolder(managedFolder string) error {
 					// 例: reload metadata, update cache, etc.
 				}
 
-			case err := <-watcher.Errors:
+			case err := <-s.managedFolderWatcher.Errors:
 				log.Printf("[managed-folder] watcher error: %v", err)
 			}
 		}
 	}()
 
 	// フォルダを監視対象に追加
-	if err := watcher.Add(absPath); err != nil {
+	if err := s.managedFolderWatcher.Add(absPath); err != nil {
 		return err
 	}
 
@@ -128,16 +135,21 @@ func watchManagedFolder(managedFolder string) error {
 	return nil
 }
 
+// ListCompanies は管理されている会社情報の一覧を取得します
+// gRPCハンドラーです
 func (s *CompanyService) ListCompanies(
 	ctx context.Context, _ *connect.Request[grpcv1.ListCompaniesRequest]) (
-	response *connect.Response[grpcv1.ListCompaniesResponse], err error) {
+	*connect.Response[grpcv1.ListCompaniesResponse], error) {
+
+	// Responseの初期化
+	response := connect.NewResponse(&grpcv1.ListCompaniesResponse{})
 
 	// 会社データモデルを作成
 	grpcv1Companies := make([]*grpcv1.Company, len(s.companiesById))
-	count := 0
+	idx := 0
 	for _, v := range s.companiesById {
-		grpcv1Companies[count] = v.Company
-		count++
+		grpcv1Companies[idx] = v.Company
+		idx++
 	}
 
 	// Responseの更新とリターン
@@ -146,6 +158,7 @@ func (s *CompanyService) ListCompanies(
 }
 
 // GetCompany は会社IDから会社情報を取得します
+// gRPCハンドラーです
 func (s *CompanyService) GetCompany(
 	ctx context.Context, req *connect.Request[grpcv1.GetCompanyRequest]) (
 	response *connect.Response[grpcv1.GetCompanyResponse], err error) {

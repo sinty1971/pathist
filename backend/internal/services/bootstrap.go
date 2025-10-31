@@ -3,7 +3,7 @@ package services
 // Services は各サービスのハンドラーをまとめた構造体です。
 type Services struct {
 	FileService    *FileService
-	CompanyService *CompanyServiceOld
+	CompanyService *CompanyService
 	KojiService    *KojiService
 }
 
@@ -25,46 +25,43 @@ var DefaultOptions = Options{
 	KojiServiceManagedFolder:    "~/penguin/豊田築炉/2 工事",
 }
 
-// CreateContainer は与えられたオプションでサービス群を初期化します。
-func CreateContainer() (*Container, error) {
+// NewServices は与えられたオプションでサービス群を初期化します。
+func NewServices() (*Services, error) {
 
-	// コンテナを作成
-	container := &Container{}
-	var err error
+	// 変数宣言
+	var (
+		services = &Services{}
+		err      error
+	)
 
-	// FileServiceを初期化
-	fileService := &FileService{}
-	container.FileService, err = fileService.Initialize(container, &DefaultOptions)
-	if err != nil {
-		return nil, err
-	}
+	// FileServiceのインスタンス作成
+	services.FileService = NewFileService(services, &DefaultOptions)
 
 	// CompanyServiceを初期化
-	companyService := &CompanyServiceOld{}
-	container.CompanyService, err = companyService.Initialize(container, &DefaultOptions)
+	services.CompanyService, err = NewCompanyService(services, &DefaultOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	// KojiServiceを初期化
 	kojiService := &KojiService{}
-	container.KojiService, err = kojiService.Initialize(container, &DefaultOptions)
+	services.KojiService, err = kojiService.Initialize(services, &DefaultOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	return container, nil
+	return services, nil
 }
 
 // Cleanup はサービスをクリーンアップする
-func (c *Container) Cleanup() {
-	if c.FileService != nil {
-		c.FileService.Cleanup()
+func (s *Services) Cleanup() {
+	if s.FileService != nil {
+		s.FileService.Cleanup()
 	}
-	if c.CompanyService != nil {
-		c.CompanyService.Cleanup()
+	if s.CompanyService != nil {
+		s.CompanyService.Cleanup()
 	}
-	if c.KojiService != nil {
-		c.KojiService.Cleanup()
+	if s.KojiService != nil {
+		s.KojiService.Cleanup()
 	}
 }

@@ -31,11 +31,15 @@ type FileService struct {
 	BasePath string `json:"basePath" yaml:"base_path" example:"/penguin/豊田築炉"`
 }
 
-func NewFileService(services *Services, basePath string) *FileService {
+func NewFileService(services *Services, options *Options) *FileService {
 	return &FileService{
 		services: services,
-		BasePath: basePath,
+		BasePath: options.FileServiceFolder,
 	}
+}
+
+func (s *FileService) Cleanup() {
+	// 現在はクリーンアップ処理は不要
 }
 
 // ListFileInfos は指定されたパスのファイル情報一覧を返す

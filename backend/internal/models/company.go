@@ -10,6 +10,14 @@ import (
 	"grpc-backend/internal/utils"
 )
 
+// CompanyEx は gRPC grpc.v1.Company メッセージの拡張版です。
+type Company struct {
+	*grpcv1.Company
+
+	//insideFilename は管理フォルダー内の会社データファイル名を保持します
+	insideFilename string
+}
+
 // CompanyCategoryIndex は業種を表すenum型（string）
 type CompanyCategoryIndex string
 
@@ -47,11 +55,6 @@ var CompanyCategoryReverseMap = map[string]CompanyCategoryIndex{}
 type CompanyCategory struct {
 	Index CompanyCategoryIndex `json:"code" example:"1"`
 	Label string               `json:"label" example:"下請会社"`
-}
-
-// CompanyEx は gRPC grpc.v1.Company メッセージの拡張版です。
-type Company struct {
-	*grpcv1.Company
 }
 
 // NewCompany 会社フォルダーパス名からCompanyを作成します

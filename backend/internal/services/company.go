@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"grpc-backend/internal/models"
 	"os"
-	"path/filepath"
 	"penguin-backend/internal/utils"
 	"slices"
 	"strings"
@@ -20,16 +19,6 @@ type CompanyServiceOld struct {
 
 	// データベースサービス
 	DatabaseService *PersistService[*models.Company]
-}
-
-// Cleanup はサービスをクリーンアップする
-func (cs *CompanyServiceOld) Cleanup() error {
-	return nil
-}
-
-// GetPersistPath は会社の属性データのパスを返す
-func (cs *CompanyServiceOld) GetPersistPath(company *models.Company) string {
-	return filepath.Join(company.TargetFolder, cs.DatabaseService.persistFilename)
 }
 
 // BuildWithOption は opt でCompanyServiceを初期化します

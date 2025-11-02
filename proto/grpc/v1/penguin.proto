@@ -17,11 +17,15 @@ message FileInfo {
   google.protobuf.Timestamp modified_time = 5;
 }
 
+service FileService {
+  rpc GetFileInfos(GetFileInfosRequest) returns (GetFileInfosResponse);
+  rpc GetFileBasePath(GetFileBasePathRequest) returns (GetFileBasePathResponse);
+}
 message Company {
   string id = 1;
   string managed_folder = 2;
   string short_name = 3;
-  string category = 4;
+  int32 category_index = 4;
   string inside_ideal_path = 5;
   string inside_legal_name = 6;
   string inside_postal_code = 7;
@@ -33,9 +37,44 @@ message Company {
   repeated FileInfo inside_required_files = 13;
 }
 
-message CompanyCategoryInfo {
-  string code = 1;
+message CompanyCategory {
+  int32 index = 1;
   string label = 2;
+}
+
+service CompanyService {
+  rpc GetCompanyMapById(GetCompanyMapByIdRequest) returns (GetCompanyMapByIdResponse);
+  rpc GetCompanyById(GetCompanyByIdRequest) returns (GetCompanyByIdResponse);
+  rpc UpdateCompany(UpdateCompanyRequest) returns (UpdateCompanyResponse);
+  rpc GetCompanyCategories(GetCompanyCategoriesRequest) returns (GetCompanyCategoriesResponse);
+}
+
+message GetCompanyMapByIdRequest {}
+
+message GetCompanyMapByIdResponse {
+  map<string, Company> company_map_by_id = 1;
+}
+
+message GetCompanyByIdRequest {
+  string id = 1;
+}
+
+message GetCompanyByIdResponse {
+  Company company = 1;
+}
+
+message UpdateCompanyRequest {
+  Company company = 1;
+}
+
+message UpdateCompanyResponse {
+  map<string, Company> company_map_by_id = 1;
+}
+
+message GetCompanyCategoriesRequest {}
+
+message GetCompanyCategoriesResponse {
+  repeated CompanyCategory categories = 1;
 }
 
 message Koji {
@@ -52,11 +91,11 @@ message Koji {
   repeated FileInfo inside_required_files = 11;
 }
 
-message ListKojiesRequest {
+message GetKojiesRequest {
   string filter = 1;
 }
 
-message ListKojiesResponse {
+message GetKojiesResponse {
   repeated Koji kojies = 1;
 }
 
@@ -85,39 +124,11 @@ message UpdateKojiStandardFilesResponse {
   Koji koji = 1;
 }
 
-message ListCompaniesRequest {}
-
-message ListCompaniesResponse {
-  repeated Company companies = 1;
-}
-
-message GetCompanyRequest {
-  string id = 1;
-}
-
-message GetCompanyResponse {
-  Company company = 1;
-}
-
-message UpdateCompanyRequest {
-  Company company = 1;
-}
-
-message UpdateCompanyResponse {
-  Company company = 1;
-}
-
-message ListCompanyCategoriesRequest {}
-
-message ListCompanyCategoriesResponse {
-  repeated CompanyCategoryInfo categories = 1;
-}
-
-message ListFileInfosRequest {
+message GetFileInfosRequest {
   string path = 1;
 }
 
-message ListFileInfosResponse {
+message GetFileInfosResponse {
   repeated FileInfo file_infos = 1;
 }
 
@@ -128,20 +139,8 @@ message GetFileBasePathResponse {
 }
 
 service KojiService {
-  rpc ListKojies(ListKojiesRequest) returns (ListKojiesResponse);
+  rpc GetKojies(GetKojiesRequest) returns (GetKojiesResponse);
   rpc GetKoji(GetKojiRequest) returns (GetKojiResponse);
   rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
   rpc UpdateKojiStandardFiles(UpdateKojiStandardFilesRequest) returns (UpdateKojiStandardFilesResponse);
-}
-
-service CompanyService {
-  rpc ListCompanies(ListCompaniesRequest) returns (ListCompaniesResponse);
-  rpc GetCompany(GetCompanyRequest) returns (GetCompanyResponse);
-  rpc UpdateCompany(UpdateCompanyRequest) returns (UpdateCompanyResponse);
-  rpc ListCompanyCategories(ListCompanyCategoriesRequest) returns (ListCompanyCategoriesResponse);
-}
-
-service FileService {
-  rpc ListFileInfos(ListFileInfosRequest) returns (ListFileInfosResponse);
-  rpc GetFileBasePath(GetFileBasePathRequest) returns (GetFileBasePathResponse);
 }

@@ -3,58 +3,43 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	grpcv1 "grpc-backend/gen/grpc/v1"
+	"grpc-backend/internal/persist"
 	"grpc-backend/internal/utils"
 )
 
-// CompanyEx は gRPC grpc.v1.Company メッセージの拡張版です。
+// Company は gRPC grpc.v1.Company メッセージの拡張版です。
 type Company struct {
+	// Company メッセージ本体
 	*grpcv1.Company
 
-	//insideFilename は管理フォルダー内の会社データファイル名を保持します
-	insideFilename string
+	// insideFPS はファイル永続化サービス用のヘルパー
+	// FPS: File Persist Service
+	insideFPS persist.FilePersistService[*Company]
 }
 
-// CompanyCategoryIndex は業種を表すenum型（string）
-type CompanyCategoryIndex string
-
-const (
-	CompanyCategorySpecial  CompanyCategoryIndex = "0" // "0": 特別(自社・組合・未定)
-	CompanyCategoryAgency   CompanyCategoryIndex = "1" // "1": 応援会社
-	CompanyCategoryPeer     CompanyCategoryIndex = "2" // "2": 同業者（築炉会社）
-	CompanyCategoryPersonal CompanyCategoryIndex = "3" // "3": 一人親方
-	CompanyCategoryPrime    CompanyCategoryIndex = "4" // "4": 元請け
-	CompanyCategoryLease    CompanyCategoryIndex = "5" // "5": リース会社
-	CompanyCategorySales    CompanyCategoryIndex = "6" // "6": 販売会社
-	CompanyCategorySales2   CompanyCategoryIndex = "7" // "7": 販売会社（重複）
-	CompanyCategoryRecruit  CompanyCategoryIndex = "8" // "8": 求人会社
-	CompanyCategoryOther    CompanyCategoryIndex = "9" // 9: その他
-)
-
-// CompanyCategories はアプリケーション全体で使用される業種カテゴリーの一覧です
-// 将来的にはyamlファイルから読み込む予定
-var CompanyCategoryMap = map[CompanyCategoryIndex]string{
-	CompanyCategorySpecial:  "特別",
-	CompanyCategoryAgency:   "下請会社",
-	CompanyCategoryPeer:     "築炉会社",
-	CompanyCategoryPersonal: "一人親方",
-	CompanyCategoryPrime:    "元請け",
-	CompanyCategoryLease:    "リース会社",
-	CompanyCategorySales:    "販売会社",
-	CompanyCategorySales2:   "販売会社２",
-	CompanyCategoryRecruit:  "求人会社",
-	CompanyCategoryOther:    "その他",
+// GetFilePersistPath は永続化ファイルのパスを取得します
+// Persistable インターフェースの実装
+func (c *Company) GetFilePersistPath() string {
+	return filepath.Join(c.GetManagedFolder(), c.insideFPS.PersistFilename)
 }
 
-var CompanyCategoryReverseMap = map[string]CompanyCategoryIndex{}
+// GetObject は永続化対象のオブジェクトを取得します
+// Persistable インターフェースの実装
+func (c *Company) GetObject() any {
+	return c.Company
+}
 
-// CompanyCategory は業種コードとラベルのペアを表します。
-type CompanyCategory struct {
-	Index CompanyCategoryIndex `json:"code" example:"1"`
-	Label string               `json:"label" example:"下請会社"`
+// SetObject は永続化対象のオブジェクトを設定します
+// Persistable インターフェースの実装
+func (c *Company) SetObject(obj any) {
+	if company, ok := obj.(*grpcv1.Company); ok {
+		c.Company = company
+	}
 }
 
 // NewCompany 会社フォルダーパス名からCompanyを作成します
@@ -76,7 +61,7 @@ func NewCompany(managedFolder string) (*Company, error) {
 			Id:            GenerateCompanyId(result.ShortName),
 			ManagedFolder: managedFolder,
 			ShortName:     result.ShortName,
-			Category:      string(result.Category),
+			CategoryIndex: int32(result.Category),
 
 			InsideIdealPath:     "",
 			InsideLegalName:     result.ShortName,
@@ -154,33 +139,6 @@ func ParseCompanyName(name string) (parseCompanyNameResult, error) {
 	}
 
 	return result, nil
-}
-
-// IsValid は CompanyCategoryIndex が有効な範囲内かをチェックします
-func (cc *CompanyCategoryIndex) IsValid() bool {
-	if cc == nil {
-		return false
-	}
-	return *cc >= CompanyCategorySpecial && *cc <= CompanyCategoryOther
-}
-
-// ParseCompanyCategoryCode は数字コードからカテゴリー文字列に変換します
-func ParseCompanyCategoryCode(codeStr string) string {
-	// 数字コードをCompanyCategoryCodeに変換
-	// 変換に失敗してもCompanyCategoryCodeは文字列のため codeStr がそのまま返される
-	code := CompanyCategoryIndex(codeStr)
-	if str, exists := CompanyCategoryMap[code]; exists {
-		return str
-	}
-	return CompanyCategoryMap[CompanyCategorySpecial]
-}
-
-// ParseCompanyCategoryName は文字列からCompanyCategoryCodeに変換します
-func ParseCompanyCategoryName(name string) CompanyCategoryIndex {
-	if code, exists := CompanyCategoryReverseMap[name]; exists {
-		return code
-	}
-	return CompanyCategorySpecial
 }
 
 // AddTag は会社のタグリストにタグを追加します

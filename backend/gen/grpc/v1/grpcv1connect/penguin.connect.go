@@ -21,12 +21,12 @@ import (
 const _ = connect.IsAtLeastVersion1_13_0
 
 const (
-	// KojiServiceName is the fully-qualified name of the KojiService service.
-	KojiServiceName = "grpc.v1.KojiService"
-	// CompanyServiceName is the fully-qualified name of the CompanyService service.
-	CompanyServiceName = "grpc.v1.CompanyService"
 	// FileServiceName is the fully-qualified name of the FileService service.
 	FileServiceName = "grpc.v1.FileService"
+	// CompanyServiceName is the fully-qualified name of the CompanyService service.
+	CompanyServiceName = "grpc.v1.CompanyService"
+	// KojiServiceName is the fully-qualified name of the KojiService service.
+	KojiServiceName = "grpc.v1.KojiService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -37,8 +37,26 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// KojiServiceListKojiesProcedure is the fully-qualified name of the KojiService's ListKojies RPC.
-	KojiServiceListKojiesProcedure = "/grpc.v1.KojiService/ListKojies"
+	// FileServiceGetFileInfosProcedure is the fully-qualified name of the FileService's GetFileInfos
+	// RPC.
+	FileServiceGetFileInfosProcedure = "/grpc.v1.FileService/GetFileInfos"
+	// FileServiceGetFileBasePathProcedure is the fully-qualified name of the FileService's
+	// GetFileBasePath RPC.
+	FileServiceGetFileBasePathProcedure = "/grpc.v1.FileService/GetFileBasePath"
+	// CompanyServiceGetCompanyMapByIdProcedure is the fully-qualified name of the CompanyService's
+	// GetCompanyMapById RPC.
+	CompanyServiceGetCompanyMapByIdProcedure = "/grpc.v1.CompanyService/GetCompanyMapById"
+	// CompanyServiceGetCompanyByIdProcedure is the fully-qualified name of the CompanyService's
+	// GetCompanyById RPC.
+	CompanyServiceGetCompanyByIdProcedure = "/grpc.v1.CompanyService/GetCompanyById"
+	// CompanyServiceUpdateCompanyProcedure is the fully-qualified name of the CompanyService's
+	// UpdateCompany RPC.
+	CompanyServiceUpdateCompanyProcedure = "/grpc.v1.CompanyService/UpdateCompany"
+	// CompanyServiceGetCompanyCategoriesProcedure is the fully-qualified name of the CompanyService's
+	// GetCompanyCategories RPC.
+	CompanyServiceGetCompanyCategoriesProcedure = "/grpc.v1.CompanyService/GetCompanyCategories"
+	// KojiServiceGetKojiesProcedure is the fully-qualified name of the KojiService's GetKojies RPC.
+	KojiServiceGetKojiesProcedure = "/grpc.v1.KojiService/GetKojies"
 	// KojiServiceGetKojiProcedure is the fully-qualified name of the KojiService's GetKoji RPC.
 	KojiServiceGetKojiProcedure = "/grpc.v1.KojiService/GetKoji"
 	// KojiServiceUpdateKojiProcedure is the fully-qualified name of the KojiService's UpdateKoji RPC.
@@ -46,29 +64,255 @@ const (
 	// KojiServiceUpdateKojiStandardFilesProcedure is the fully-qualified name of the KojiService's
 	// UpdateKojiStandardFiles RPC.
 	KojiServiceUpdateKojiStandardFilesProcedure = "/grpc.v1.KojiService/UpdateKojiStandardFiles"
-	// CompanyServiceListCompaniesProcedure is the fully-qualified name of the CompanyService's
-	// ListCompanies RPC.
-	CompanyServiceListCompaniesProcedure = "/grpc.v1.CompanyService/ListCompanies"
-	// CompanyServiceGetCompanyProcedure is the fully-qualified name of the CompanyService's GetCompany
-	// RPC.
-	CompanyServiceGetCompanyProcedure = "/grpc.v1.CompanyService/GetCompany"
-	// CompanyServiceUpdateCompanyProcedure is the fully-qualified name of the CompanyService's
-	// UpdateCompany RPC.
-	CompanyServiceUpdateCompanyProcedure = "/grpc.v1.CompanyService/UpdateCompany"
-	// CompanyServiceListCompanyCategoriesProcedure is the fully-qualified name of the CompanyService's
-	// ListCompanyCategories RPC.
-	CompanyServiceListCompanyCategoriesProcedure = "/grpc.v1.CompanyService/ListCompanyCategories"
-	// FileServiceListFileInfosProcedure is the fully-qualified name of the FileService's ListFileInfos
-	// RPC.
-	FileServiceListFileInfosProcedure = "/grpc.v1.FileService/ListFileInfos"
-	// FileServiceGetFileBasePathProcedure is the fully-qualified name of the FileService's
-	// GetFileBasePath RPC.
-	FileServiceGetFileBasePathProcedure = "/grpc.v1.FileService/GetFileBasePath"
 )
+
+// FileServiceClient is a client for the grpc.v1.FileService service.
+type FileServiceClient interface {
+	GetFileInfos(context.Context, *connect.Request[v1.GetFileInfosRequest]) (*connect.Response[v1.GetFileInfosResponse], error)
+	GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error)
+}
+
+// NewFileServiceClient constructs a client for the grpc.v1.FileService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) FileServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	fileServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("FileService").Methods()
+	return &fileServiceClient{
+		getFileInfos: connect.NewClient[v1.GetFileInfosRequest, v1.GetFileInfosResponse](
+			httpClient,
+			baseURL+FileServiceGetFileInfosProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("GetFileInfos")),
+			connect.WithClientOptions(opts...),
+		),
+		getFileBasePath: connect.NewClient[v1.GetFileBasePathRequest, v1.GetFileBasePathResponse](
+			httpClient,
+			baseURL+FileServiceGetFileBasePathProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("GetFileBasePath")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// fileServiceClient implements FileServiceClient.
+type fileServiceClient struct {
+	getFileInfos    *connect.Client[v1.GetFileInfosRequest, v1.GetFileInfosResponse]
+	getFileBasePath *connect.Client[v1.GetFileBasePathRequest, v1.GetFileBasePathResponse]
+}
+
+// GetFileInfos calls grpc.v1.FileService.GetFileInfos.
+func (c *fileServiceClient) GetFileInfos(ctx context.Context, req *connect.Request[v1.GetFileInfosRequest]) (*connect.Response[v1.GetFileInfosResponse], error) {
+	return c.getFileInfos.CallUnary(ctx, req)
+}
+
+// GetFileBasePath calls grpc.v1.FileService.GetFileBasePath.
+func (c *fileServiceClient) GetFileBasePath(ctx context.Context, req *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error) {
+	return c.getFileBasePath.CallUnary(ctx, req)
+}
+
+// FileServiceHandler is an implementation of the grpc.v1.FileService service.
+type FileServiceHandler interface {
+	GetFileInfos(context.Context, *connect.Request[v1.GetFileInfosRequest]) (*connect.Response[v1.GetFileInfosResponse], error)
+	GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error)
+}
+
+// NewFileServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	fileServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("FileService").Methods()
+	fileServiceGetFileInfosHandler := connect.NewUnaryHandler(
+		FileServiceGetFileInfosProcedure,
+		svc.GetFileInfos,
+		connect.WithSchema(fileServiceMethods.ByName("GetFileInfos")),
+		connect.WithHandlerOptions(opts...),
+	)
+	fileServiceGetFileBasePathHandler := connect.NewUnaryHandler(
+		FileServiceGetFileBasePathProcedure,
+		svc.GetFileBasePath,
+		connect.WithSchema(fileServiceMethods.ByName("GetFileBasePath")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/grpc.v1.FileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case FileServiceGetFileInfosProcedure:
+			fileServiceGetFileInfosHandler.ServeHTTP(w, r)
+		case FileServiceGetFileBasePathProcedure:
+			fileServiceGetFileBasePathHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedFileServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedFileServiceHandler struct{}
+
+func (UnimplementedFileServiceHandler) GetFileInfos(context.Context, *connect.Request[v1.GetFileInfosRequest]) (*connect.Response[v1.GetFileInfosResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFileInfos is not implemented"))
+}
+
+func (UnimplementedFileServiceHandler) GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFileBasePath is not implemented"))
+}
+
+// CompanyServiceClient is a client for the grpc.v1.CompanyService service.
+type CompanyServiceClient interface {
+	GetCompanyMapById(context.Context, *connect.Request[v1.GetCompanyMapByIdRequest]) (*connect.Response[v1.GetCompanyMapByIdResponse], error)
+	GetCompanyById(context.Context, *connect.Request[v1.GetCompanyByIdRequest]) (*connect.Response[v1.GetCompanyByIdResponse], error)
+	UpdateCompany(context.Context, *connect.Request[v1.UpdateCompanyRequest]) (*connect.Response[v1.UpdateCompanyResponse], error)
+	GetCompanyCategories(context.Context, *connect.Request[v1.GetCompanyCategoriesRequest]) (*connect.Response[v1.GetCompanyCategoriesResponse], error)
+}
+
+// NewCompanyServiceClient constructs a client for the grpc.v1.CompanyService service. By default,
+// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
+// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
+// or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewCompanyServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CompanyServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	companyServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("CompanyService").Methods()
+	return &companyServiceClient{
+		getCompanyMapById: connect.NewClient[v1.GetCompanyMapByIdRequest, v1.GetCompanyMapByIdResponse](
+			httpClient,
+			baseURL+CompanyServiceGetCompanyMapByIdProcedure,
+			connect.WithSchema(companyServiceMethods.ByName("GetCompanyMapById")),
+			connect.WithClientOptions(opts...),
+		),
+		getCompanyById: connect.NewClient[v1.GetCompanyByIdRequest, v1.GetCompanyByIdResponse](
+			httpClient,
+			baseURL+CompanyServiceGetCompanyByIdProcedure,
+			connect.WithSchema(companyServiceMethods.ByName("GetCompanyById")),
+			connect.WithClientOptions(opts...),
+		),
+		updateCompany: connect.NewClient[v1.UpdateCompanyRequest, v1.UpdateCompanyResponse](
+			httpClient,
+			baseURL+CompanyServiceUpdateCompanyProcedure,
+			connect.WithSchema(companyServiceMethods.ByName("UpdateCompany")),
+			connect.WithClientOptions(opts...),
+		),
+		getCompanyCategories: connect.NewClient[v1.GetCompanyCategoriesRequest, v1.GetCompanyCategoriesResponse](
+			httpClient,
+			baseURL+CompanyServiceGetCompanyCategoriesProcedure,
+			connect.WithSchema(companyServiceMethods.ByName("GetCompanyCategories")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// companyServiceClient implements CompanyServiceClient.
+type companyServiceClient struct {
+	getCompanyMapById    *connect.Client[v1.GetCompanyMapByIdRequest, v1.GetCompanyMapByIdResponse]
+	getCompanyById       *connect.Client[v1.GetCompanyByIdRequest, v1.GetCompanyByIdResponse]
+	updateCompany        *connect.Client[v1.UpdateCompanyRequest, v1.UpdateCompanyResponse]
+	getCompanyCategories *connect.Client[v1.GetCompanyCategoriesRequest, v1.GetCompanyCategoriesResponse]
+}
+
+// GetCompanyMapById calls grpc.v1.CompanyService.GetCompanyMapById.
+func (c *companyServiceClient) GetCompanyMapById(ctx context.Context, req *connect.Request[v1.GetCompanyMapByIdRequest]) (*connect.Response[v1.GetCompanyMapByIdResponse], error) {
+	return c.getCompanyMapById.CallUnary(ctx, req)
+}
+
+// GetCompanyById calls grpc.v1.CompanyService.GetCompanyById.
+func (c *companyServiceClient) GetCompanyById(ctx context.Context, req *connect.Request[v1.GetCompanyByIdRequest]) (*connect.Response[v1.GetCompanyByIdResponse], error) {
+	return c.getCompanyById.CallUnary(ctx, req)
+}
+
+// UpdateCompany calls grpc.v1.CompanyService.UpdateCompany.
+func (c *companyServiceClient) UpdateCompany(ctx context.Context, req *connect.Request[v1.UpdateCompanyRequest]) (*connect.Response[v1.UpdateCompanyResponse], error) {
+	return c.updateCompany.CallUnary(ctx, req)
+}
+
+// GetCompanyCategories calls grpc.v1.CompanyService.GetCompanyCategories.
+func (c *companyServiceClient) GetCompanyCategories(ctx context.Context, req *connect.Request[v1.GetCompanyCategoriesRequest]) (*connect.Response[v1.GetCompanyCategoriesResponse], error) {
+	return c.getCompanyCategories.CallUnary(ctx, req)
+}
+
+// CompanyServiceHandler is an implementation of the grpc.v1.CompanyService service.
+type CompanyServiceHandler interface {
+	GetCompanyMapById(context.Context, *connect.Request[v1.GetCompanyMapByIdRequest]) (*connect.Response[v1.GetCompanyMapByIdResponse], error)
+	GetCompanyById(context.Context, *connect.Request[v1.GetCompanyByIdRequest]) (*connect.Response[v1.GetCompanyByIdResponse], error)
+	UpdateCompany(context.Context, *connect.Request[v1.UpdateCompanyRequest]) (*connect.Response[v1.UpdateCompanyResponse], error)
+	GetCompanyCategories(context.Context, *connect.Request[v1.GetCompanyCategoriesRequest]) (*connect.Response[v1.GetCompanyCategoriesResponse], error)
+}
+
+// NewCompanyServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewCompanyServiceHandler(svc CompanyServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	companyServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("CompanyService").Methods()
+	companyServiceGetCompanyMapByIdHandler := connect.NewUnaryHandler(
+		CompanyServiceGetCompanyMapByIdProcedure,
+		svc.GetCompanyMapById,
+		connect.WithSchema(companyServiceMethods.ByName("GetCompanyMapById")),
+		connect.WithHandlerOptions(opts...),
+	)
+	companyServiceGetCompanyByIdHandler := connect.NewUnaryHandler(
+		CompanyServiceGetCompanyByIdProcedure,
+		svc.GetCompanyById,
+		connect.WithSchema(companyServiceMethods.ByName("GetCompanyById")),
+		connect.WithHandlerOptions(opts...),
+	)
+	companyServiceUpdateCompanyHandler := connect.NewUnaryHandler(
+		CompanyServiceUpdateCompanyProcedure,
+		svc.UpdateCompany,
+		connect.WithSchema(companyServiceMethods.ByName("UpdateCompany")),
+		connect.WithHandlerOptions(opts...),
+	)
+	companyServiceGetCompanyCategoriesHandler := connect.NewUnaryHandler(
+		CompanyServiceGetCompanyCategoriesProcedure,
+		svc.GetCompanyCategories,
+		connect.WithSchema(companyServiceMethods.ByName("GetCompanyCategories")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/grpc.v1.CompanyService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case CompanyServiceGetCompanyMapByIdProcedure:
+			companyServiceGetCompanyMapByIdHandler.ServeHTTP(w, r)
+		case CompanyServiceGetCompanyByIdProcedure:
+			companyServiceGetCompanyByIdHandler.ServeHTTP(w, r)
+		case CompanyServiceUpdateCompanyProcedure:
+			companyServiceUpdateCompanyHandler.ServeHTTP(w, r)
+		case CompanyServiceGetCompanyCategoriesProcedure:
+			companyServiceGetCompanyCategoriesHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedCompanyServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedCompanyServiceHandler struct{}
+
+func (UnimplementedCompanyServiceHandler) GetCompanyMapById(context.Context, *connect.Request[v1.GetCompanyMapByIdRequest]) (*connect.Response[v1.GetCompanyMapByIdResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.GetCompanyMapById is not implemented"))
+}
+
+func (UnimplementedCompanyServiceHandler) GetCompanyById(context.Context, *connect.Request[v1.GetCompanyByIdRequest]) (*connect.Response[v1.GetCompanyByIdResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.GetCompanyById is not implemented"))
+}
+
+func (UnimplementedCompanyServiceHandler) UpdateCompany(context.Context, *connect.Request[v1.UpdateCompanyRequest]) (*connect.Response[v1.UpdateCompanyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.UpdateCompany is not implemented"))
+}
+
+func (UnimplementedCompanyServiceHandler) GetCompanyCategories(context.Context, *connect.Request[v1.GetCompanyCategoriesRequest]) (*connect.Response[v1.GetCompanyCategoriesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.GetCompanyCategories is not implemented"))
+}
 
 // KojiServiceClient is a client for the grpc.v1.KojiService service.
 type KojiServiceClient interface {
-	ListKojies(context.Context, *connect.Request[v1.ListKojiesRequest]) (*connect.Response[v1.ListKojiesResponse], error)
+	GetKojies(context.Context, *connect.Request[v1.GetKojiesRequest]) (*connect.Response[v1.GetKojiesResponse], error)
 	GetKoji(context.Context, *connect.Request[v1.GetKojiRequest]) (*connect.Response[v1.GetKojiResponse], error)
 	UpdateKoji(context.Context, *connect.Request[v1.UpdateKojiRequest]) (*connect.Response[v1.UpdateKojiResponse], error)
 	UpdateKojiStandardFiles(context.Context, *connect.Request[v1.UpdateKojiStandardFilesRequest]) (*connect.Response[v1.UpdateKojiStandardFilesResponse], error)
@@ -85,10 +329,10 @@ func NewKojiServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	kojiServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("KojiService").Methods()
 	return &kojiServiceClient{
-		listKojies: connect.NewClient[v1.ListKojiesRequest, v1.ListKojiesResponse](
+		getKojies: connect.NewClient[v1.GetKojiesRequest, v1.GetKojiesResponse](
 			httpClient,
-			baseURL+KojiServiceListKojiesProcedure,
-			connect.WithSchema(kojiServiceMethods.ByName("ListKojies")),
+			baseURL+KojiServiceGetKojiesProcedure,
+			connect.WithSchema(kojiServiceMethods.ByName("GetKojies")),
 			connect.WithClientOptions(opts...),
 		),
 		getKoji: connect.NewClient[v1.GetKojiRequest, v1.GetKojiResponse](
@@ -114,15 +358,15 @@ func NewKojiServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // kojiServiceClient implements KojiServiceClient.
 type kojiServiceClient struct {
-	listKojies              *connect.Client[v1.ListKojiesRequest, v1.ListKojiesResponse]
+	getKojies               *connect.Client[v1.GetKojiesRequest, v1.GetKojiesResponse]
 	getKoji                 *connect.Client[v1.GetKojiRequest, v1.GetKojiResponse]
 	updateKoji              *connect.Client[v1.UpdateKojiRequest, v1.UpdateKojiResponse]
 	updateKojiStandardFiles *connect.Client[v1.UpdateKojiStandardFilesRequest, v1.UpdateKojiStandardFilesResponse]
 }
 
-// ListKojies calls grpc.v1.KojiService.ListKojies.
-func (c *kojiServiceClient) ListKojies(ctx context.Context, req *connect.Request[v1.ListKojiesRequest]) (*connect.Response[v1.ListKojiesResponse], error) {
-	return c.listKojies.CallUnary(ctx, req)
+// GetKojies calls grpc.v1.KojiService.GetKojies.
+func (c *kojiServiceClient) GetKojies(ctx context.Context, req *connect.Request[v1.GetKojiesRequest]) (*connect.Response[v1.GetKojiesResponse], error) {
+	return c.getKojies.CallUnary(ctx, req)
 }
 
 // GetKoji calls grpc.v1.KojiService.GetKoji.
@@ -142,7 +386,7 @@ func (c *kojiServiceClient) UpdateKojiStandardFiles(ctx context.Context, req *co
 
 // KojiServiceHandler is an implementation of the grpc.v1.KojiService service.
 type KojiServiceHandler interface {
-	ListKojies(context.Context, *connect.Request[v1.ListKojiesRequest]) (*connect.Response[v1.ListKojiesResponse], error)
+	GetKojies(context.Context, *connect.Request[v1.GetKojiesRequest]) (*connect.Response[v1.GetKojiesResponse], error)
 	GetKoji(context.Context, *connect.Request[v1.GetKojiRequest]) (*connect.Response[v1.GetKojiResponse], error)
 	UpdateKoji(context.Context, *connect.Request[v1.UpdateKojiRequest]) (*connect.Response[v1.UpdateKojiResponse], error)
 	UpdateKojiStandardFiles(context.Context, *connect.Request[v1.UpdateKojiStandardFilesRequest]) (*connect.Response[v1.UpdateKojiStandardFilesResponse], error)
@@ -155,10 +399,10 @@ type KojiServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	kojiServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("KojiService").Methods()
-	kojiServiceListKojiesHandler := connect.NewUnaryHandler(
-		KojiServiceListKojiesProcedure,
-		svc.ListKojies,
-		connect.WithSchema(kojiServiceMethods.ByName("ListKojies")),
+	kojiServiceGetKojiesHandler := connect.NewUnaryHandler(
+		KojiServiceGetKojiesProcedure,
+		svc.GetKojies,
+		connect.WithSchema(kojiServiceMethods.ByName("GetKojies")),
 		connect.WithHandlerOptions(opts...),
 	)
 	kojiServiceGetKojiHandler := connect.NewUnaryHandler(
@@ -181,8 +425,8 @@ func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption
 	)
 	return "/grpc.v1.KojiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case KojiServiceListKojiesProcedure:
-			kojiServiceListKojiesHandler.ServeHTTP(w, r)
+		case KojiServiceGetKojiesProcedure:
+			kojiServiceGetKojiesHandler.ServeHTTP(w, r)
 		case KojiServiceGetKojiProcedure:
 			kojiServiceGetKojiHandler.ServeHTTP(w, r)
 		case KojiServiceUpdateKojiProcedure:
@@ -198,8 +442,8 @@ func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption
 // UnimplementedKojiServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedKojiServiceHandler struct{}
 
-func (UnimplementedKojiServiceHandler) ListKojies(context.Context, *connect.Request[v1.ListKojiesRequest]) (*connect.Response[v1.ListKojiesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.ListKojies is not implemented"))
+func (UnimplementedKojiServiceHandler) GetKojies(context.Context, *connect.Request[v1.GetKojiesRequest]) (*connect.Response[v1.GetKojiesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKojies is not implemented"))
 }
 
 func (UnimplementedKojiServiceHandler) GetKoji(context.Context, *connect.Request[v1.GetKojiRequest]) (*connect.Response[v1.GetKojiResponse], error) {
@@ -212,248 +456,4 @@ func (UnimplementedKojiServiceHandler) UpdateKoji(context.Context, *connect.Requ
 
 func (UnimplementedKojiServiceHandler) UpdateKojiStandardFiles(context.Context, *connect.Request[v1.UpdateKojiStandardFilesRequest]) (*connect.Response[v1.UpdateKojiStandardFilesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.UpdateKojiStandardFiles is not implemented"))
-}
-
-// CompanyServiceClient is a client for the grpc.v1.CompanyService service.
-type CompanyServiceClient interface {
-	ListCompanies(context.Context, *connect.Request[v1.ListCompaniesRequest]) (*connect.Response[v1.ListCompaniesResponse], error)
-	GetCompany(context.Context, *connect.Request[v1.GetCompanyRequest]) (*connect.Response[v1.GetCompanyResponse], error)
-	UpdateCompany(context.Context, *connect.Request[v1.UpdateCompanyRequest]) (*connect.Response[v1.UpdateCompanyResponse], error)
-	ListCompanyCategories(context.Context, *connect.Request[v1.ListCompanyCategoriesRequest]) (*connect.Response[v1.ListCompanyCategoriesResponse], error)
-}
-
-// NewCompanyServiceClient constructs a client for the grpc.v1.CompanyService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewCompanyServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CompanyServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	companyServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("CompanyService").Methods()
-	return &companyServiceClient{
-		listCompanies: connect.NewClient[v1.ListCompaniesRequest, v1.ListCompaniesResponse](
-			httpClient,
-			baseURL+CompanyServiceListCompaniesProcedure,
-			connect.WithSchema(companyServiceMethods.ByName("ListCompanies")),
-			connect.WithClientOptions(opts...),
-		),
-		getCompany: connect.NewClient[v1.GetCompanyRequest, v1.GetCompanyResponse](
-			httpClient,
-			baseURL+CompanyServiceGetCompanyProcedure,
-			connect.WithSchema(companyServiceMethods.ByName("GetCompany")),
-			connect.WithClientOptions(opts...),
-		),
-		updateCompany: connect.NewClient[v1.UpdateCompanyRequest, v1.UpdateCompanyResponse](
-			httpClient,
-			baseURL+CompanyServiceUpdateCompanyProcedure,
-			connect.WithSchema(companyServiceMethods.ByName("UpdateCompany")),
-			connect.WithClientOptions(opts...),
-		),
-		listCompanyCategories: connect.NewClient[v1.ListCompanyCategoriesRequest, v1.ListCompanyCategoriesResponse](
-			httpClient,
-			baseURL+CompanyServiceListCompanyCategoriesProcedure,
-			connect.WithSchema(companyServiceMethods.ByName("ListCompanyCategories")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// companyServiceClient implements CompanyServiceClient.
-type companyServiceClient struct {
-	listCompanies         *connect.Client[v1.ListCompaniesRequest, v1.ListCompaniesResponse]
-	getCompany            *connect.Client[v1.GetCompanyRequest, v1.GetCompanyResponse]
-	updateCompany         *connect.Client[v1.UpdateCompanyRequest, v1.UpdateCompanyResponse]
-	listCompanyCategories *connect.Client[v1.ListCompanyCategoriesRequest, v1.ListCompanyCategoriesResponse]
-}
-
-// ListCompanies calls grpc.v1.CompanyService.ListCompanies.
-func (c *companyServiceClient) ListCompanies(ctx context.Context, req *connect.Request[v1.ListCompaniesRequest]) (*connect.Response[v1.ListCompaniesResponse], error) {
-	return c.listCompanies.CallUnary(ctx, req)
-}
-
-// GetCompany calls grpc.v1.CompanyService.GetCompany.
-func (c *companyServiceClient) GetCompany(ctx context.Context, req *connect.Request[v1.GetCompanyRequest]) (*connect.Response[v1.GetCompanyResponse], error) {
-	return c.getCompany.CallUnary(ctx, req)
-}
-
-// UpdateCompany calls grpc.v1.CompanyService.UpdateCompany.
-func (c *companyServiceClient) UpdateCompany(ctx context.Context, req *connect.Request[v1.UpdateCompanyRequest]) (*connect.Response[v1.UpdateCompanyResponse], error) {
-	return c.updateCompany.CallUnary(ctx, req)
-}
-
-// ListCompanyCategories calls grpc.v1.CompanyService.ListCompanyCategories.
-func (c *companyServiceClient) ListCompanyCategories(ctx context.Context, req *connect.Request[v1.ListCompanyCategoriesRequest]) (*connect.Response[v1.ListCompanyCategoriesResponse], error) {
-	return c.listCompanyCategories.CallUnary(ctx, req)
-}
-
-// CompanyServiceHandler is an implementation of the grpc.v1.CompanyService service.
-type CompanyServiceHandler interface {
-	ListCompanies(context.Context, *connect.Request[v1.ListCompaniesRequest]) (*connect.Response[v1.ListCompaniesResponse], error)
-	GetCompany(context.Context, *connect.Request[v1.GetCompanyRequest]) (*connect.Response[v1.GetCompanyResponse], error)
-	UpdateCompany(context.Context, *connect.Request[v1.UpdateCompanyRequest]) (*connect.Response[v1.UpdateCompanyResponse], error)
-	ListCompanyCategories(context.Context, *connect.Request[v1.ListCompanyCategoriesRequest]) (*connect.Response[v1.ListCompanyCategoriesResponse], error)
-}
-
-// NewCompanyServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewCompanyServiceHandler(svc CompanyServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	companyServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("CompanyService").Methods()
-	companyServiceListCompaniesHandler := connect.NewUnaryHandler(
-		CompanyServiceListCompaniesProcedure,
-		svc.ListCompanies,
-		connect.WithSchema(companyServiceMethods.ByName("ListCompanies")),
-		connect.WithHandlerOptions(opts...),
-	)
-	companyServiceGetCompanyHandler := connect.NewUnaryHandler(
-		CompanyServiceGetCompanyProcedure,
-		svc.GetCompany,
-		connect.WithSchema(companyServiceMethods.ByName("GetCompany")),
-		connect.WithHandlerOptions(opts...),
-	)
-	companyServiceUpdateCompanyHandler := connect.NewUnaryHandler(
-		CompanyServiceUpdateCompanyProcedure,
-		svc.UpdateCompany,
-		connect.WithSchema(companyServiceMethods.ByName("UpdateCompany")),
-		connect.WithHandlerOptions(opts...),
-	)
-	companyServiceListCompanyCategoriesHandler := connect.NewUnaryHandler(
-		CompanyServiceListCompanyCategoriesProcedure,
-		svc.ListCompanyCategories,
-		connect.WithSchema(companyServiceMethods.ByName("ListCompanyCategories")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/grpc.v1.CompanyService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case CompanyServiceListCompaniesProcedure:
-			companyServiceListCompaniesHandler.ServeHTTP(w, r)
-		case CompanyServiceGetCompanyProcedure:
-			companyServiceGetCompanyHandler.ServeHTTP(w, r)
-		case CompanyServiceUpdateCompanyProcedure:
-			companyServiceUpdateCompanyHandler.ServeHTTP(w, r)
-		case CompanyServiceListCompanyCategoriesProcedure:
-			companyServiceListCompanyCategoriesHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedCompanyServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedCompanyServiceHandler struct{}
-
-func (UnimplementedCompanyServiceHandler) ListCompanies(context.Context, *connect.Request[v1.ListCompaniesRequest]) (*connect.Response[v1.ListCompaniesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.ListCompanies is not implemented"))
-}
-
-func (UnimplementedCompanyServiceHandler) GetCompany(context.Context, *connect.Request[v1.GetCompanyRequest]) (*connect.Response[v1.GetCompanyResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.GetCompany is not implemented"))
-}
-
-func (UnimplementedCompanyServiceHandler) UpdateCompany(context.Context, *connect.Request[v1.UpdateCompanyRequest]) (*connect.Response[v1.UpdateCompanyResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.UpdateCompany is not implemented"))
-}
-
-func (UnimplementedCompanyServiceHandler) ListCompanyCategories(context.Context, *connect.Request[v1.ListCompanyCategoriesRequest]) (*connect.Response[v1.ListCompanyCategoriesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.ListCompanyCategories is not implemented"))
-}
-
-// FileServiceClient is a client for the grpc.v1.FileService service.
-type FileServiceClient interface {
-	ListFileInfos(context.Context, *connect.Request[v1.ListFileInfosRequest]) (*connect.Response[v1.ListFileInfosResponse], error)
-	GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error)
-}
-
-// NewFileServiceClient constructs a client for the grpc.v1.FileService service. By default, it uses
-// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) FileServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	fileServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("FileService").Methods()
-	return &fileServiceClient{
-		listFileInfos: connect.NewClient[v1.ListFileInfosRequest, v1.ListFileInfosResponse](
-			httpClient,
-			baseURL+FileServiceListFileInfosProcedure,
-			connect.WithSchema(fileServiceMethods.ByName("ListFileInfos")),
-			connect.WithClientOptions(opts...),
-		),
-		getFileBasePath: connect.NewClient[v1.GetFileBasePathRequest, v1.GetFileBasePathResponse](
-			httpClient,
-			baseURL+FileServiceGetFileBasePathProcedure,
-			connect.WithSchema(fileServiceMethods.ByName("GetFileBasePath")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// fileServiceClient implements FileServiceClient.
-type fileServiceClient struct {
-	listFileInfos   *connect.Client[v1.ListFileInfosRequest, v1.ListFileInfosResponse]
-	getFileBasePath *connect.Client[v1.GetFileBasePathRequest, v1.GetFileBasePathResponse]
-}
-
-// ListFileInfos calls grpc.v1.FileService.ListFileInfos.
-func (c *fileServiceClient) ListFileInfos(ctx context.Context, req *connect.Request[v1.ListFileInfosRequest]) (*connect.Response[v1.ListFileInfosResponse], error) {
-	return c.listFileInfos.CallUnary(ctx, req)
-}
-
-// GetFileBasePath calls grpc.v1.FileService.GetFileBasePath.
-func (c *fileServiceClient) GetFileBasePath(ctx context.Context, req *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error) {
-	return c.getFileBasePath.CallUnary(ctx, req)
-}
-
-// FileServiceHandler is an implementation of the grpc.v1.FileService service.
-type FileServiceHandler interface {
-	ListFileInfos(context.Context, *connect.Request[v1.ListFileInfosRequest]) (*connect.Response[v1.ListFileInfosResponse], error)
-	GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error)
-}
-
-// NewFileServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	fileServiceMethods := v1.File_grpc_v1_penguin_proto.Services().ByName("FileService").Methods()
-	fileServiceListFileInfosHandler := connect.NewUnaryHandler(
-		FileServiceListFileInfosProcedure,
-		svc.ListFileInfos,
-		connect.WithSchema(fileServiceMethods.ByName("ListFileInfos")),
-		connect.WithHandlerOptions(opts...),
-	)
-	fileServiceGetFileBasePathHandler := connect.NewUnaryHandler(
-		FileServiceGetFileBasePathProcedure,
-		svc.GetFileBasePath,
-		connect.WithSchema(fileServiceMethods.ByName("GetFileBasePath")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/grpc.v1.FileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case FileServiceListFileInfosProcedure:
-			fileServiceListFileInfosHandler.ServeHTTP(w, r)
-		case FileServiceGetFileBasePathProcedure:
-			fileServiceGetFileBasePathHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedFileServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedFileServiceHandler struct{}
-
-func (UnimplementedFileServiceHandler) ListFileInfos(context.Context, *connect.Request[v1.ListFileInfosRequest]) (*connect.Response[v1.ListFileInfosResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.ListFileInfos is not implemented"))
-}
-
-func (UnimplementedFileServiceHandler) GetFileBasePath(context.Context, *connect.Request[v1.GetFileBasePathRequest]) (*connect.Response[v1.GetFileBasePathResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFileBasePath is not implemented"))
 }

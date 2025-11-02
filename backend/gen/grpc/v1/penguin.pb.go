@@ -151,7 +151,7 @@ type Company struct {
 	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id"`
 	xxx_hidden_ManagedFolder       string                 `protobuf:"bytes,2,opt,name=managed_folder,json=managedFolder"`
 	xxx_hidden_ShortName           string                 `protobuf:"bytes,3,opt,name=short_name,json=shortName"`
-	xxx_hidden_Category            string                 `protobuf:"bytes,4,opt,name=category"`
+	xxx_hidden_CategoryIndex       int32                  `protobuf:"varint,4,opt,name=category_index,json=categoryIndex"`
 	xxx_hidden_InsideIdealPath     string                 `protobuf:"bytes,5,opt,name=inside_ideal_path,json=insideIdealPath"`
 	xxx_hidden_InsideLegalName     string                 `protobuf:"bytes,6,opt,name=inside_legal_name,json=insideLegalName"`
 	xxx_hidden_InsidePostalCode    string                 `protobuf:"bytes,7,opt,name=inside_postal_code,json=insidePostalCode"`
@@ -211,11 +211,11 @@ func (x *Company) GetShortName() string {
 	return ""
 }
 
-func (x *Company) GetCategory() string {
+func (x *Company) GetCategoryIndex() int32 {
 	if x != nil {
-		return x.xxx_hidden_Category
+		return x.xxx_hidden_CategoryIndex
 	}
-	return ""
+	return 0
 }
 
 func (x *Company) GetInsideIdealPath() string {
@@ -295,8 +295,8 @@ func (x *Company) SetShortName(v string) {
 	x.xxx_hidden_ShortName = v
 }
 
-func (x *Company) SetCategory(v string) {
-	x.xxx_hidden_Category = v
+func (x *Company) SetCategoryIndex(v int32) {
+	x.xxx_hidden_CategoryIndex = v
 }
 
 func (x *Company) SetInsideIdealPath(v string) {
@@ -341,7 +341,7 @@ type Company_builder struct {
 	Id                  string
 	ManagedFolder       string
 	ShortName           string
-	Category            string
+	CategoryIndex       int32
 	InsideIdealPath     string
 	InsideLegalName     string
 	InsidePostalCode    string
@@ -360,7 +360,7 @@ func (b0 Company_builder) Build() *Company {
 	x.xxx_hidden_Id = b.Id
 	x.xxx_hidden_ManagedFolder = b.ManagedFolder
 	x.xxx_hidden_ShortName = b.ShortName
-	x.xxx_hidden_Category = b.Category
+	x.xxx_hidden_CategoryIndex = b.CategoryIndex
 	x.xxx_hidden_InsideIdealPath = b.InsideIdealPath
 	x.xxx_hidden_InsideLegalName = b.InsideLegalName
 	x.xxx_hidden_InsidePostalCode = b.InsidePostalCode
@@ -373,28 +373,28 @@ func (b0 Company_builder) Build() *Company {
 	return m0
 }
 
-type CompanyCategoryInfo struct {
+type CompanyCategory struct {
 	state            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Code  string                 `protobuf:"bytes,1,opt,name=code"`
+	xxx_hidden_Index int32                  `protobuf:"varint,1,opt,name=index"`
 	xxx_hidden_Label string                 `protobuf:"bytes,2,opt,name=label"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
-func (x *CompanyCategoryInfo) Reset() {
-	*x = CompanyCategoryInfo{}
+func (x *CompanyCategory) Reset() {
+	*x = CompanyCategory{}
 	mi := &file_grpc_v1_penguin_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CompanyCategoryInfo) String() string {
+func (x *CompanyCategory) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CompanyCategoryInfo) ProtoMessage() {}
+func (*CompanyCategory) ProtoMessage() {}
 
-func (x *CompanyCategoryInfo) ProtoReflect() protoreflect.Message {
+func (x *CompanyCategory) ProtoReflect() protoreflect.Message {
 	mi := &file_grpc_v1_penguin_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -406,41 +406,493 @@ func (x *CompanyCategoryInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *CompanyCategoryInfo) GetCode() string {
+func (x *CompanyCategory) GetIndex() int32 {
 	if x != nil {
-		return x.xxx_hidden_Code
+		return x.xxx_hidden_Index
 	}
-	return ""
+	return 0
 }
 
-func (x *CompanyCategoryInfo) GetLabel() string {
+func (x *CompanyCategory) GetLabel() string {
 	if x != nil {
 		return x.xxx_hidden_Label
 	}
 	return ""
 }
 
-func (x *CompanyCategoryInfo) SetCode(v string) {
-	x.xxx_hidden_Code = v
+func (x *CompanyCategory) SetIndex(v int32) {
+	x.xxx_hidden_Index = v
 }
 
-func (x *CompanyCategoryInfo) SetLabel(v string) {
+func (x *CompanyCategory) SetLabel(v string) {
 	x.xxx_hidden_Label = v
 }
 
-type CompanyCategoryInfo_builder struct {
+type CompanyCategory_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Code  string
+	Index int32
 	Label string
 }
 
-func (b0 CompanyCategoryInfo_builder) Build() *CompanyCategoryInfo {
-	m0 := &CompanyCategoryInfo{}
+func (b0 CompanyCategory_builder) Build() *CompanyCategory {
+	m0 := &CompanyCategory{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.xxx_hidden_Code = b.Code
+	x.xxx_hidden_Index = b.Index
 	x.xxx_hidden_Label = b.Label
+	return m0
+}
+
+type GetCompanyMapByIdRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCompanyMapByIdRequest) Reset() {
+	*x = GetCompanyMapByIdRequest{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyMapByIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyMapByIdRequest) ProtoMessage() {}
+
+func (x *GetCompanyMapByIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type GetCompanyMapByIdRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 GetCompanyMapByIdRequest_builder) Build() *GetCompanyMapByIdRequest {
+	m0 := &GetCompanyMapByIdRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type GetCompanyMapByIdResponse struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_CompanyMapById map[string]*Company    `protobuf:"bytes,1,rep,name=company_map_by_id,json=companyMapById" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *GetCompanyMapByIdResponse) Reset() {
+	*x = GetCompanyMapByIdResponse{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyMapByIdResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyMapByIdResponse) ProtoMessage() {}
+
+func (x *GetCompanyMapByIdResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCompanyMapByIdResponse) GetCompanyMapById() map[string]*Company {
+	if x != nil {
+		return x.xxx_hidden_CompanyMapById
+	}
+	return nil
+}
+
+func (x *GetCompanyMapByIdResponse) SetCompanyMapById(v map[string]*Company) {
+	x.xxx_hidden_CompanyMapById = v
+}
+
+type GetCompanyMapByIdResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	CompanyMapById map[string]*Company
+}
+
+func (b0 GetCompanyMapByIdResponse_builder) Build() *GetCompanyMapByIdResponse {
+	m0 := &GetCompanyMapByIdResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_CompanyMapById = b.CompanyMapById
+	return m0
+}
+
+type GetCompanyByIdRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCompanyByIdRequest) Reset() {
+	*x = GetCompanyByIdRequest{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyByIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyByIdRequest) ProtoMessage() {}
+
+func (x *GetCompanyByIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCompanyByIdRequest) GetId() string {
+	if x != nil {
+		return x.xxx_hidden_Id
+	}
+	return ""
+}
+
+func (x *GetCompanyByIdRequest) SetId(v string) {
+	x.xxx_hidden_Id = v
+}
+
+type GetCompanyByIdRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id string
+}
+
+func (b0 GetCompanyByIdRequest_builder) Build() *GetCompanyByIdRequest {
+	m0 := &GetCompanyByIdRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Id = b.Id
+	return m0
+}
+
+type GetCompanyByIdResponse struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Company *Company               `protobuf:"bytes,1,opt,name=company"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *GetCompanyByIdResponse) Reset() {
+	*x = GetCompanyByIdResponse{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyByIdResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyByIdResponse) ProtoMessage() {}
+
+func (x *GetCompanyByIdResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCompanyByIdResponse) GetCompany() *Company {
+	if x != nil {
+		return x.xxx_hidden_Company
+	}
+	return nil
+}
+
+func (x *GetCompanyByIdResponse) SetCompany(v *Company) {
+	x.xxx_hidden_Company = v
+}
+
+func (x *GetCompanyByIdResponse) HasCompany() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Company != nil
+}
+
+func (x *GetCompanyByIdResponse) ClearCompany() {
+	x.xxx_hidden_Company = nil
+}
+
+type GetCompanyByIdResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Company *Company
+}
+
+func (b0 GetCompanyByIdResponse_builder) Build() *GetCompanyByIdResponse {
+	m0 := &GetCompanyByIdResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Company = b.Company
+	return m0
+}
+
+type UpdateCompanyRequest struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Company *Company               `protobuf:"bytes,1,opt,name=company"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *UpdateCompanyRequest) Reset() {
+	*x = UpdateCompanyRequest{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCompanyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCompanyRequest) ProtoMessage() {}
+
+func (x *UpdateCompanyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *UpdateCompanyRequest) GetCompany() *Company {
+	if x != nil {
+		return x.xxx_hidden_Company
+	}
+	return nil
+}
+
+func (x *UpdateCompanyRequest) SetCompany(v *Company) {
+	x.xxx_hidden_Company = v
+}
+
+func (x *UpdateCompanyRequest) HasCompany() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Company != nil
+}
+
+func (x *UpdateCompanyRequest) ClearCompany() {
+	x.xxx_hidden_Company = nil
+}
+
+type UpdateCompanyRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Company *Company
+}
+
+func (b0 UpdateCompanyRequest_builder) Build() *UpdateCompanyRequest {
+	m0 := &UpdateCompanyRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Company = b.Company
+	return m0
+}
+
+type UpdateCompanyResponse struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_CompanyMapById map[string]*Company    `protobuf:"bytes,1,rep,name=company_map_by_id,json=companyMapById" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *UpdateCompanyResponse) Reset() {
+	*x = UpdateCompanyResponse{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCompanyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCompanyResponse) ProtoMessage() {}
+
+func (x *UpdateCompanyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *UpdateCompanyResponse) GetCompanyMapById() map[string]*Company {
+	if x != nil {
+		return x.xxx_hidden_CompanyMapById
+	}
+	return nil
+}
+
+func (x *UpdateCompanyResponse) SetCompanyMapById(v map[string]*Company) {
+	x.xxx_hidden_CompanyMapById = v
+}
+
+type UpdateCompanyResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	CompanyMapById map[string]*Company
+}
+
+func (b0 UpdateCompanyResponse_builder) Build() *UpdateCompanyResponse {
+	m0 := &UpdateCompanyResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_CompanyMapById = b.CompanyMapById
+	return m0
+}
+
+type GetCompanyCategoriesRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCompanyCategoriesRequest) Reset() {
+	*x = GetCompanyCategoriesRequest{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyCategoriesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyCategoriesRequest) ProtoMessage() {}
+
+func (x *GetCompanyCategoriesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type GetCompanyCategoriesRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 GetCompanyCategoriesRequest_builder) Build() *GetCompanyCategoriesRequest {
+	m0 := &GetCompanyCategoriesRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type GetCompanyCategoriesResponse struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Categories *[]*CompanyCategory    `protobuf:"bytes,1,rep,name=categories"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *GetCompanyCategoriesResponse) Reset() {
+	*x = GetCompanyCategoriesResponse{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyCategoriesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyCategoriesResponse) ProtoMessage() {}
+
+func (x *GetCompanyCategoriesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCompanyCategoriesResponse) GetCategories() []*CompanyCategory {
+	if x != nil {
+		if x.xxx_hidden_Categories != nil {
+			return *x.xxx_hidden_Categories
+		}
+	}
+	return nil
+}
+
+func (x *GetCompanyCategoriesResponse) SetCategories(v []*CompanyCategory) {
+	x.xxx_hidden_Categories = &v
+}
+
+type GetCompanyCategoriesResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Categories []*CompanyCategory
+}
+
+func (b0 GetCompanyCategoriesResponse_builder) Build() *GetCompanyCategoriesResponse {
+	m0 := &GetCompanyCategoriesResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Categories = &b.Categories
 	return m0
 }
 
@@ -463,7 +915,7 @@ type Koji struct {
 
 func (x *Koji) Reset() {
 	*x = Koji{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[3]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -475,7 +927,7 @@ func (x *Koji) String() string {
 func (*Koji) ProtoMessage() {}
 
 func (x *Koji) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[3]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -665,28 +1117,28 @@ func (b0 Koji_builder) Build() *Koji {
 	return m0
 }
 
-type ListKojiesRequest struct {
+type GetKojiesRequest struct {
 	state             protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Filter string                 `protobuf:"bytes,1,opt,name=filter"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
-func (x *ListKojiesRequest) Reset() {
-	*x = ListKojiesRequest{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[4]
+func (x *GetKojiesRequest) Reset() {
+	*x = GetKojiesRequest{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListKojiesRequest) String() string {
+func (x *GetKojiesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListKojiesRequest) ProtoMessage() {}
+func (*GetKojiesRequest) ProtoMessage() {}
 
-func (x *ListKojiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[4]
+func (x *GetKojiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,53 +1149,53 @@ func (x *ListKojiesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *ListKojiesRequest) GetFilter() string {
+func (x *GetKojiesRequest) GetFilter() string {
 	if x != nil {
 		return x.xxx_hidden_Filter
 	}
 	return ""
 }
 
-func (x *ListKojiesRequest) SetFilter(v string) {
+func (x *GetKojiesRequest) SetFilter(v string) {
 	x.xxx_hidden_Filter = v
 }
 
-type ListKojiesRequest_builder struct {
+type GetKojiesRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Filter string
 }
 
-func (b0 ListKojiesRequest_builder) Build() *ListKojiesRequest {
-	m0 := &ListKojiesRequest{}
+func (b0 GetKojiesRequest_builder) Build() *GetKojiesRequest {
+	m0 := &GetKojiesRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Filter = b.Filter
 	return m0
 }
 
-type ListKojiesResponse struct {
+type GetKojiesResponse struct {
 	state             protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Kojies *[]*Koji               `protobuf:"bytes,1,rep,name=kojies"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
-func (x *ListKojiesResponse) Reset() {
-	*x = ListKojiesResponse{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[5]
+func (x *GetKojiesResponse) Reset() {
+	*x = GetKojiesResponse{}
+	mi := &file_grpc_v1_penguin_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListKojiesResponse) String() string {
+func (x *GetKojiesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListKojiesResponse) ProtoMessage() {}
+func (*GetKojiesResponse) ProtoMessage() {}
 
-func (x *ListKojiesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[5]
+func (x *GetKojiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_penguin_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -754,7 +1206,7 @@ func (x *ListKojiesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *ListKojiesResponse) GetKojies() []*Koji {
+func (x *GetKojiesResponse) GetKojies() []*Koji {
 	if x != nil {
 		if x.xxx_hidden_Kojies != nil {
 			return *x.xxx_hidden_Kojies
@@ -763,18 +1215,18 @@ func (x *ListKojiesResponse) GetKojies() []*Koji {
 	return nil
 }
 
-func (x *ListKojiesResponse) SetKojies(v []*Koji) {
+func (x *GetKojiesResponse) SetKojies(v []*Koji) {
 	x.xxx_hidden_Kojies = &v
 }
 
-type ListKojiesResponse_builder struct {
+type GetKojiesResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Kojies []*Koji
 }
 
-func (b0 ListKojiesResponse_builder) Build() *ListKojiesResponse {
-	m0 := &ListKojiesResponse{}
+func (b0 GetKojiesResponse_builder) Build() *GetKojiesResponse {
+	m0 := &GetKojiesResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Kojies = &b.Kojies
@@ -790,7 +1242,7 @@ type GetKojiRequest struct {
 
 func (x *GetKojiRequest) Reset() {
 	*x = GetKojiRequest{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[6]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -802,7 +1254,7 @@ func (x *GetKojiRequest) String() string {
 func (*GetKojiRequest) ProtoMessage() {}
 
 func (x *GetKojiRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[6]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -847,7 +1299,7 @@ type GetKojiResponse struct {
 
 func (x *GetKojiResponse) Reset() {
 	*x = GetKojiResponse{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[7]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -859,7 +1311,7 @@ func (x *GetKojiResponse) String() string {
 func (*GetKojiResponse) ProtoMessage() {}
 
 func (x *GetKojiResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[7]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -915,7 +1367,7 @@ type UpdateKojiRequest struct {
 
 func (x *UpdateKojiRequest) Reset() {
 	*x = UpdateKojiRequest{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[8]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -927,7 +1379,7 @@ func (x *UpdateKojiRequest) String() string {
 func (*UpdateKojiRequest) ProtoMessage() {}
 
 func (x *UpdateKojiRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[8]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -983,7 +1435,7 @@ type UpdateKojiResponse struct {
 
 func (x *UpdateKojiResponse) Reset() {
 	*x = UpdateKojiResponse{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[9]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -995,7 +1447,7 @@ func (x *UpdateKojiResponse) String() string {
 func (*UpdateKojiResponse) ProtoMessage() {}
 
 func (x *UpdateKojiResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[9]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1052,7 +1504,7 @@ type UpdateKojiStandardFilesRequest struct {
 
 func (x *UpdateKojiStandardFilesRequest) Reset() {
 	*x = UpdateKojiStandardFilesRequest{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[10]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1064,7 +1516,7 @@ func (x *UpdateKojiStandardFilesRequest) String() string {
 func (*UpdateKojiStandardFilesRequest) ProtoMessage() {}
 
 func (x *UpdateKojiStandardFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[10]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1133,7 +1585,7 @@ type UpdateKojiStandardFilesResponse struct {
 
 func (x *UpdateKojiStandardFilesResponse) Reset() {
 	*x = UpdateKojiStandardFilesResponse{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[11]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1145,7 +1597,7 @@ func (x *UpdateKojiStandardFilesResponse) String() string {
 func (*UpdateKojiStandardFilesResponse) ProtoMessage() {}
 
 func (x *UpdateKojiStandardFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[11]
+	mi := &file_grpc_v1_penguin_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1192,492 +1644,27 @@ func (b0 UpdateKojiStandardFilesResponse_builder) Build() *UpdateKojiStandardFil
 	return m0
 }
 
-type ListCompaniesRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListCompaniesRequest) Reset() {
-	*x = ListCompaniesRequest{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListCompaniesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListCompaniesRequest) ProtoMessage() {}
-
-func (x *ListCompaniesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-type ListCompaniesRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-}
-
-func (b0 ListCompaniesRequest_builder) Build() *ListCompaniesRequest {
-	m0 := &ListCompaniesRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	return m0
-}
-
-type ListCompaniesResponse struct {
-	state                protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Companies *[]*Company            `protobuf:"bytes,1,rep,name=companies"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
-}
-
-func (x *ListCompaniesResponse) Reset() {
-	*x = ListCompaniesResponse{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListCompaniesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListCompaniesResponse) ProtoMessage() {}
-
-func (x *ListCompaniesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *ListCompaniesResponse) GetCompanies() []*Company {
-	if x != nil {
-		if x.xxx_hidden_Companies != nil {
-			return *x.xxx_hidden_Companies
-		}
-	}
-	return nil
-}
-
-func (x *ListCompaniesResponse) SetCompanies(v []*Company) {
-	x.xxx_hidden_Companies = &v
-}
-
-type ListCompaniesResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Companies []*Company
-}
-
-func (b0 ListCompaniesResponse_builder) Build() *ListCompaniesResponse {
-	m0 := &ListCompaniesResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Companies = &b.Companies
-	return m0
-}
-
-type GetCompanyRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetCompanyRequest) Reset() {
-	*x = GetCompanyRequest{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCompanyRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCompanyRequest) ProtoMessage() {}
-
-func (x *GetCompanyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetCompanyRequest) GetId() string {
-	if x != nil {
-		return x.xxx_hidden_Id
-	}
-	return ""
-}
-
-func (x *GetCompanyRequest) SetId(v string) {
-	x.xxx_hidden_Id = v
-}
-
-type GetCompanyRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Id string
-}
-
-func (b0 GetCompanyRequest_builder) Build() *GetCompanyRequest {
-	m0 := &GetCompanyRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Id = b.Id
-	return m0
-}
-
-type GetCompanyResponse struct {
-	state              protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Company *Company               `protobuf:"bytes,1,opt,name=company"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *GetCompanyResponse) Reset() {
-	*x = GetCompanyResponse{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCompanyResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCompanyResponse) ProtoMessage() {}
-
-func (x *GetCompanyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetCompanyResponse) GetCompany() *Company {
-	if x != nil {
-		return x.xxx_hidden_Company
-	}
-	return nil
-}
-
-func (x *GetCompanyResponse) SetCompany(v *Company) {
-	x.xxx_hidden_Company = v
-}
-
-func (x *GetCompanyResponse) HasCompany() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Company != nil
-}
-
-func (x *GetCompanyResponse) ClearCompany() {
-	x.xxx_hidden_Company = nil
-}
-
-type GetCompanyResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Company *Company
-}
-
-func (b0 GetCompanyResponse_builder) Build() *GetCompanyResponse {
-	m0 := &GetCompanyResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Company = b.Company
-	return m0
-}
-
-type UpdateCompanyRequest struct {
-	state              protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Company *Company               `protobuf:"bytes,1,opt,name=company"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *UpdateCompanyRequest) Reset() {
-	*x = UpdateCompanyRequest{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateCompanyRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateCompanyRequest) ProtoMessage() {}
-
-func (x *UpdateCompanyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *UpdateCompanyRequest) GetCompany() *Company {
-	if x != nil {
-		return x.xxx_hidden_Company
-	}
-	return nil
-}
-
-func (x *UpdateCompanyRequest) SetCompany(v *Company) {
-	x.xxx_hidden_Company = v
-}
-
-func (x *UpdateCompanyRequest) HasCompany() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Company != nil
-}
-
-func (x *UpdateCompanyRequest) ClearCompany() {
-	x.xxx_hidden_Company = nil
-}
-
-type UpdateCompanyRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Company *Company
-}
-
-func (b0 UpdateCompanyRequest_builder) Build() *UpdateCompanyRequest {
-	m0 := &UpdateCompanyRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Company = b.Company
-	return m0
-}
-
-type UpdateCompanyResponse struct {
-	state              protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Company *Company               `protobuf:"bytes,1,opt,name=company"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *UpdateCompanyResponse) Reset() {
-	*x = UpdateCompanyResponse{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateCompanyResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateCompanyResponse) ProtoMessage() {}
-
-func (x *UpdateCompanyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *UpdateCompanyResponse) GetCompany() *Company {
-	if x != nil {
-		return x.xxx_hidden_Company
-	}
-	return nil
-}
-
-func (x *UpdateCompanyResponse) SetCompany(v *Company) {
-	x.xxx_hidden_Company = v
-}
-
-func (x *UpdateCompanyResponse) HasCompany() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Company != nil
-}
-
-func (x *UpdateCompanyResponse) ClearCompany() {
-	x.xxx_hidden_Company = nil
-}
-
-type UpdateCompanyResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Company *Company
-}
-
-func (b0 UpdateCompanyResponse_builder) Build() *UpdateCompanyResponse {
-	m0 := &UpdateCompanyResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Company = b.Company
-	return m0
-}
-
-type ListCompanyCategoriesRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListCompanyCategoriesRequest) Reset() {
-	*x = ListCompanyCategoriesRequest{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListCompanyCategoriesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListCompanyCategoriesRequest) ProtoMessage() {}
-
-func (x *ListCompanyCategoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-type ListCompanyCategoriesRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-}
-
-func (b0 ListCompanyCategoriesRequest_builder) Build() *ListCompanyCategoriesRequest {
-	m0 := &ListCompanyCategoriesRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	return m0
-}
-
-type ListCompanyCategoriesResponse struct {
-	state                 protoimpl.MessageState  `protogen:"opaque.v1"`
-	xxx_hidden_Categories *[]*CompanyCategoryInfo `protobuf:"bytes,1,rep,name=categories"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
-}
-
-func (x *ListCompanyCategoriesResponse) Reset() {
-	*x = ListCompanyCategoriesResponse{}
-	mi := &file_grpc_v1_penguin_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListCompanyCategoriesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListCompanyCategoriesResponse) ProtoMessage() {}
-
-func (x *ListCompanyCategoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_penguin_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *ListCompanyCategoriesResponse) GetCategories() []*CompanyCategoryInfo {
-	if x != nil {
-		if x.xxx_hidden_Categories != nil {
-			return *x.xxx_hidden_Categories
-		}
-	}
-	return nil
-}
-
-func (x *ListCompanyCategoriesResponse) SetCategories(v []*CompanyCategoryInfo) {
-	x.xxx_hidden_Categories = &v
-}
-
-type ListCompanyCategoriesResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Categories []*CompanyCategoryInfo
-}
-
-func (b0 ListCompanyCategoriesResponse_builder) Build() *ListCompanyCategoriesResponse {
-	m0 := &ListCompanyCategoriesResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Categories = &b.Categories
-	return m0
-}
-
-type ListFileInfosRequest struct {
+type GetFileInfosRequest struct {
 	state           protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Path string                 `protobuf:"bytes,1,opt,name=path"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *ListFileInfosRequest) Reset() {
-	*x = ListFileInfosRequest{}
+func (x *GetFileInfosRequest) Reset() {
+	*x = GetFileInfosRequest{}
 	mi := &file_grpc_v1_penguin_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListFileInfosRequest) String() string {
+func (x *GetFileInfosRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListFileInfosRequest) ProtoMessage() {}
+func (*GetFileInfosRequest) ProtoMessage() {}
 
-func (x *ListFileInfosRequest) ProtoReflect() protoreflect.Message {
+func (x *GetFileInfosRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_grpc_v1_penguin_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1689,52 +1676,52 @@ func (x *ListFileInfosRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *ListFileInfosRequest) GetPath() string {
+func (x *GetFileInfosRequest) GetPath() string {
 	if x != nil {
 		return x.xxx_hidden_Path
 	}
 	return ""
 }
 
-func (x *ListFileInfosRequest) SetPath(v string) {
+func (x *GetFileInfosRequest) SetPath(v string) {
 	x.xxx_hidden_Path = v
 }
 
-type ListFileInfosRequest_builder struct {
+type GetFileInfosRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Path string
 }
 
-func (b0 ListFileInfosRequest_builder) Build() *ListFileInfosRequest {
-	m0 := &ListFileInfosRequest{}
+func (b0 GetFileInfosRequest_builder) Build() *GetFileInfosRequest {
+	m0 := &GetFileInfosRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Path = b.Path
 	return m0
 }
 
-type ListFileInfosResponse struct {
+type GetFileInfosResponse struct {
 	state                protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_FileInfos *[]*FileInfo           `protobuf:"bytes,1,rep,name=file_infos,json=fileInfos"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
 
-func (x *ListFileInfosResponse) Reset() {
-	*x = ListFileInfosResponse{}
+func (x *GetFileInfosResponse) Reset() {
+	*x = GetFileInfosResponse{}
 	mi := &file_grpc_v1_penguin_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListFileInfosResponse) String() string {
+func (x *GetFileInfosResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListFileInfosResponse) ProtoMessage() {}
+func (*GetFileInfosResponse) ProtoMessage() {}
 
-func (x *ListFileInfosResponse) ProtoReflect() protoreflect.Message {
+func (x *GetFileInfosResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_grpc_v1_penguin_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1746,7 +1733,7 @@ func (x *ListFileInfosResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *ListFileInfosResponse) GetFileInfos() []*FileInfo {
+func (x *GetFileInfosResponse) GetFileInfos() []*FileInfo {
 	if x != nil {
 		if x.xxx_hidden_FileInfos != nil {
 			return *x.xxx_hidden_FileInfos
@@ -1755,18 +1742,18 @@ func (x *ListFileInfosResponse) GetFileInfos() []*FileInfo {
 	return nil
 }
 
-func (x *ListFileInfosResponse) SetFileInfos(v []*FileInfo) {
+func (x *GetFileInfosResponse) SetFileInfos(v []*FileInfo) {
 	x.xxx_hidden_FileInfos = &v
 }
 
-type ListFileInfosResponse_builder struct {
+type GetFileInfosResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	FileInfos []*FileInfo
 }
 
-func (b0 ListFileInfosResponse_builder) Build() *ListFileInfosResponse {
-	m0 := &ListFileInfosResponse{}
+func (b0 GetFileInfosResponse_builder) Build() *GetFileInfosResponse {
+	m0 := &GetFileInfosResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_FileInfos = &b.FileInfos
@@ -1883,13 +1870,13 @@ const file_grpc_v1_penguin_proto_rawDesc = "" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12!\n" +
 	"\fis_directory\x18\x03 \x01(\bR\visDirectory\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12?\n" +
-	"\rmodified_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\"\xfd\x03\n" +
+	"\rmodified_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\"\x88\x04\n" +
 	"\aCompany\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0emanaged_folder\x18\x02 \x01(\tR\rmanagedFolder\x12\x1d\n" +
 	"\n" +
-	"short_name\x18\x03 \x01(\tR\tshortName\x12\x1a\n" +
-	"\bcategory\x18\x04 \x01(\tR\bcategory\x12*\n" +
+	"short_name\x18\x03 \x01(\tR\tshortName\x12%\n" +
+	"\x0ecategory_index\x18\x04 \x01(\x05R\rcategoryIndex\x12*\n" +
 	"\x11inside_ideal_path\x18\x05 \x01(\tR\x0finsideIdealPath\x12*\n" +
 	"\x11inside_legal_name\x18\x06 \x01(\tR\x0finsideLegalName\x12,\n" +
 	"\x12inside_postal_code\x18\a \x01(\tR\x10insidePostalCode\x12%\n" +
@@ -1900,10 +1887,32 @@ const file_grpc_v1_penguin_proto_rawDesc = "" +
 	"\x0einside_website\x18\v \x01(\tR\rinsideWebsite\x12\x1f\n" +
 	"\vinside_tags\x18\f \x03(\tR\n" +
 	"insideTags\x12E\n" +
-	"\x15inside_required_files\x18\r \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"?\n" +
-	"\x13CompanyCategoryInfo\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"\xcd\x03\n" +
+	"\x15inside_required_files\x18\r \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"=\n" +
+	"\x0fCompanyCategory\x12\x14\n" +
+	"\x05index\x18\x01 \x01(\x05R\x05index\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"\x1a\n" +
+	"\x18GetCompanyMapByIdRequest\"\xd3\x01\n" +
+	"\x19GetCompanyMapByIdResponse\x12a\n" +
+	"\x11company_map_by_id\x18\x01 \x03(\v26.grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntryR\x0ecompanyMapById\x1aS\n" +
+	"\x13CompanyMapByIdEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12&\n" +
+	"\x05value\x18\x02 \x01(\v2\x10.grpc.v1.CompanyR\x05value:\x028\x01\"'\n" +
+	"\x15GetCompanyByIdRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"D\n" +
+	"\x16GetCompanyByIdResponse\x12*\n" +
+	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"B\n" +
+	"\x14UpdateCompanyRequest\x12*\n" +
+	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"\xcb\x01\n" +
+	"\x15UpdateCompanyResponse\x12]\n" +
+	"\x11company_map_by_id\x18\x01 \x03(\v22.grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntryR\x0ecompanyMapById\x1aS\n" +
+	"\x13CompanyMapByIdEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12&\n" +
+	"\x05value\x18\x02 \x01(\v2\x10.grpc.v1.CompanyR\x05value:\x028\x01\"\x1d\n" +
+	"\x1bGetCompanyCategoriesRequest\"X\n" +
+	"\x1cGetCompanyCategoriesResponse\x128\n" +
+	"\n" +
+	"categories\x18\x01 \x03(\v2\x18.grpc.v1.CompanyCategoryR\n" +
+	"categories\"\xcd\x03\n" +
 	"\x04Koji\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12%\n" +
@@ -1918,10 +1927,10 @@ const file_grpc_v1_penguin_proto_rawDesc = "" +
 	"\vinside_tags\x18\n" +
 	" \x03(\tR\n" +
 	"insideTags\x12E\n" +
-	"\x15inside_required_files\x18\v \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"+\n" +
-	"\x11ListKojiesRequest\x12\x16\n" +
-	"\x06filter\x18\x01 \x01(\tR\x06filter\";\n" +
-	"\x12ListKojiesResponse\x12%\n" +
+	"\x15inside_required_files\x18\v \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"*\n" +
+	"\x10GetKojiesRequest\x12\x16\n" +
+	"\x06filter\x18\x01 \x01(\tR\x06filter\":\n" +
+	"\x11GetKojiesResponse\x12%\n" +
 	"\x06kojies\x18\x01 \x03(\v2\r.grpc.v1.KojiR\x06kojies\"1\n" +
 	"\x0eGetKojiRequest\x12\x1f\n" +
 	"\vfolder_name\x18\x01 \x01(\tR\n" +
@@ -1936,119 +1945,105 @@ const file_grpc_v1_penguin_proto_rawDesc = "" +
 	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\x12\x1a\n" +
 	"\bcurrents\x18\x02 \x03(\tR\bcurrents\"D\n" +
 	"\x1fUpdateKojiStandardFilesResponse\x12!\n" +
-	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"\x16\n" +
-	"\x14ListCompaniesRequest\"G\n" +
-	"\x15ListCompaniesResponse\x12.\n" +
-	"\tcompanies\x18\x01 \x03(\v2\x10.grpc.v1.CompanyR\tcompanies\"#\n" +
-	"\x11GetCompanyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"@\n" +
-	"\x12GetCompanyResponse\x12*\n" +
-	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"B\n" +
-	"\x14UpdateCompanyRequest\x12*\n" +
-	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"C\n" +
-	"\x15UpdateCompanyResponse\x12*\n" +
-	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"\x1e\n" +
-	"\x1cListCompanyCategoriesRequest\"]\n" +
-	"\x1dListCompanyCategoriesResponse\x12<\n" +
-	"\n" +
-	"categories\x18\x01 \x03(\v2\x1c.grpc.v1.CompanyCategoryInfoR\n" +
-	"categories\"*\n" +
-	"\x14ListFileInfosRequest\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"I\n" +
-	"\x15ListFileInfosResponse\x120\n" +
+	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\")\n" +
+	"\x13GetFileInfosRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"H\n" +
+	"\x14GetFileInfosResponse\x120\n" +
 	"\n" +
 	"file_infos\x18\x01 \x03(\v2\x11.grpc.v1.FileInfoR\tfileInfos\"\x18\n" +
 	"\x16GetFileBasePathRequest\"6\n" +
 	"\x17GetFileBasePathResponse\x12\x1b\n" +
-	"\tbase_path\x18\x01 \x01(\tR\bbasePath2\xc7\x02\n" +
-	"\vKojiService\x12E\n" +
-	"\n" +
-	"ListKojies\x12\x1a.grpc.v1.ListKojiesRequest\x1a\x1b.grpc.v1.ListKojiesResponse\x12<\n" +
+	"\tbase_path\x18\x01 \x01(\tR\bbasePath2\xb0\x01\n" +
+	"\vFileService\x12K\n" +
+	"\fGetFileInfos\x12\x1c.grpc.v1.GetFileInfosRequest\x1a\x1d.grpc.v1.GetFileInfosResponse\x12T\n" +
+	"\x0fGetFileBasePath\x12\x1f.grpc.v1.GetFileBasePathRequest\x1a .grpc.v1.GetFileBasePathResponse2\xf4\x02\n" +
+	"\x0eCompanyService\x12Z\n" +
+	"\x11GetCompanyMapById\x12!.grpc.v1.GetCompanyMapByIdRequest\x1a\".grpc.v1.GetCompanyMapByIdResponse\x12Q\n" +
+	"\x0eGetCompanyById\x12\x1e.grpc.v1.GetCompanyByIdRequest\x1a\x1f.grpc.v1.GetCompanyByIdResponse\x12N\n" +
+	"\rUpdateCompany\x12\x1d.grpc.v1.UpdateCompanyRequest\x1a\x1e.grpc.v1.UpdateCompanyResponse\x12c\n" +
+	"\x14GetCompanyCategories\x12$.grpc.v1.GetCompanyCategoriesRequest\x1a%.grpc.v1.GetCompanyCategoriesResponse2\xc4\x02\n" +
+	"\vKojiService\x12B\n" +
+	"\tGetKojies\x12\x19.grpc.v1.GetKojiesRequest\x1a\x1a.grpc.v1.GetKojiesResponse\x12<\n" +
 	"\aGetKoji\x12\x17.grpc.v1.GetKojiRequest\x1a\x18.grpc.v1.GetKojiResponse\x12E\n" +
 	"\n" +
 	"UpdateKoji\x12\x1a.grpc.v1.UpdateKojiRequest\x1a\x1b.grpc.v1.UpdateKojiResponse\x12l\n" +
-	"\x17UpdateKojiStandardFiles\x12'.grpc.v1.UpdateKojiStandardFilesRequest\x1a(.grpc.v1.UpdateKojiStandardFilesResponse2\xdf\x02\n" +
-	"\x0eCompanyService\x12N\n" +
-	"\rListCompanies\x12\x1d.grpc.v1.ListCompaniesRequest\x1a\x1e.grpc.v1.ListCompaniesResponse\x12E\n" +
-	"\n" +
-	"GetCompany\x12\x1a.grpc.v1.GetCompanyRequest\x1a\x1b.grpc.v1.GetCompanyResponse\x12N\n" +
-	"\rUpdateCompany\x12\x1d.grpc.v1.UpdateCompanyRequest\x1a\x1e.grpc.v1.UpdateCompanyResponse\x12f\n" +
-	"\x15ListCompanyCategories\x12%.grpc.v1.ListCompanyCategoriesRequest\x1a&.grpc.v1.ListCompanyCategoriesResponse2\xb3\x01\n" +
-	"\vFileService\x12N\n" +
-	"\rListFileInfos\x12\x1d.grpc.v1.ListFileInfosRequest\x1a\x1e.grpc.v1.ListFileInfosResponse\x12T\n" +
-	"\x0fGetFileBasePath\x12\x1f.grpc.v1.GetFileBasePathRequest\x1a .grpc.v1.GetFileBasePathResponseB+Z\x1fgrpc-backend/gen/grpc/v1;grpcv1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
+	"\x17UpdateKojiStandardFiles\x12'.grpc.v1.UpdateKojiStandardFilesRequest\x1a(.grpc.v1.UpdateKojiStandardFilesResponseB+Z\x1fgrpc-backend/gen/grpc/v1;grpcv1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
 
-var file_grpc_v1_penguin_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_grpc_v1_penguin_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_grpc_v1_penguin_proto_goTypes = []any{
 	(*FileInfo)(nil),                        // 0: grpc.v1.FileInfo
 	(*Company)(nil),                         // 1: grpc.v1.Company
-	(*CompanyCategoryInfo)(nil),             // 2: grpc.v1.CompanyCategoryInfo
-	(*Koji)(nil),                            // 3: grpc.v1.Koji
-	(*ListKojiesRequest)(nil),               // 4: grpc.v1.ListKojiesRequest
-	(*ListKojiesResponse)(nil),              // 5: grpc.v1.ListKojiesResponse
-	(*GetKojiRequest)(nil),                  // 6: grpc.v1.GetKojiRequest
-	(*GetKojiResponse)(nil),                 // 7: grpc.v1.GetKojiResponse
-	(*UpdateKojiRequest)(nil),               // 8: grpc.v1.UpdateKojiRequest
-	(*UpdateKojiResponse)(nil),              // 9: grpc.v1.UpdateKojiResponse
-	(*UpdateKojiStandardFilesRequest)(nil),  // 10: grpc.v1.UpdateKojiStandardFilesRequest
-	(*UpdateKojiStandardFilesResponse)(nil), // 11: grpc.v1.UpdateKojiStandardFilesResponse
-	(*ListCompaniesRequest)(nil),            // 12: grpc.v1.ListCompaniesRequest
-	(*ListCompaniesResponse)(nil),           // 13: grpc.v1.ListCompaniesResponse
-	(*GetCompanyRequest)(nil),               // 14: grpc.v1.GetCompanyRequest
-	(*GetCompanyResponse)(nil),              // 15: grpc.v1.GetCompanyResponse
-	(*UpdateCompanyRequest)(nil),            // 16: grpc.v1.UpdateCompanyRequest
-	(*UpdateCompanyResponse)(nil),           // 17: grpc.v1.UpdateCompanyResponse
-	(*ListCompanyCategoriesRequest)(nil),    // 18: grpc.v1.ListCompanyCategoriesRequest
-	(*ListCompanyCategoriesResponse)(nil),   // 19: grpc.v1.ListCompanyCategoriesResponse
-	(*ListFileInfosRequest)(nil),            // 20: grpc.v1.ListFileInfosRequest
-	(*ListFileInfosResponse)(nil),           // 21: grpc.v1.ListFileInfosResponse
+	(*CompanyCategory)(nil),                 // 2: grpc.v1.CompanyCategory
+	(*GetCompanyMapByIdRequest)(nil),        // 3: grpc.v1.GetCompanyMapByIdRequest
+	(*GetCompanyMapByIdResponse)(nil),       // 4: grpc.v1.GetCompanyMapByIdResponse
+	(*GetCompanyByIdRequest)(nil),           // 5: grpc.v1.GetCompanyByIdRequest
+	(*GetCompanyByIdResponse)(nil),          // 6: grpc.v1.GetCompanyByIdResponse
+	(*UpdateCompanyRequest)(nil),            // 7: grpc.v1.UpdateCompanyRequest
+	(*UpdateCompanyResponse)(nil),           // 8: grpc.v1.UpdateCompanyResponse
+	(*GetCompanyCategoriesRequest)(nil),     // 9: grpc.v1.GetCompanyCategoriesRequest
+	(*GetCompanyCategoriesResponse)(nil),    // 10: grpc.v1.GetCompanyCategoriesResponse
+	(*Koji)(nil),                            // 11: grpc.v1.Koji
+	(*GetKojiesRequest)(nil),                // 12: grpc.v1.GetKojiesRequest
+	(*GetKojiesResponse)(nil),               // 13: grpc.v1.GetKojiesResponse
+	(*GetKojiRequest)(nil),                  // 14: grpc.v1.GetKojiRequest
+	(*GetKojiResponse)(nil),                 // 15: grpc.v1.GetKojiResponse
+	(*UpdateKojiRequest)(nil),               // 16: grpc.v1.UpdateKojiRequest
+	(*UpdateKojiResponse)(nil),              // 17: grpc.v1.UpdateKojiResponse
+	(*UpdateKojiStandardFilesRequest)(nil),  // 18: grpc.v1.UpdateKojiStandardFilesRequest
+	(*UpdateKojiStandardFilesResponse)(nil), // 19: grpc.v1.UpdateKojiStandardFilesResponse
+	(*GetFileInfosRequest)(nil),             // 20: grpc.v1.GetFileInfosRequest
+	(*GetFileInfosResponse)(nil),            // 21: grpc.v1.GetFileInfosResponse
 	(*GetFileBasePathRequest)(nil),          // 22: grpc.v1.GetFileBasePathRequest
 	(*GetFileBasePathResponse)(nil),         // 23: grpc.v1.GetFileBasePathResponse
-	(*timestamppb.Timestamp)(nil),           // 24: google.protobuf.Timestamp
+	nil,                                     // 24: grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
+	nil,                                     // 25: grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
+	(*timestamppb.Timestamp)(nil),           // 26: google.protobuf.Timestamp
 }
 var file_grpc_v1_penguin_proto_depIdxs = []int32{
-	24, // 0: grpc.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
+	26, // 0: grpc.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
 	0,  // 1: grpc.v1.Company.inside_required_files:type_name -> grpc.v1.FileInfo
-	24, // 2: grpc.v1.Koji.start:type_name -> google.protobuf.Timestamp
-	24, // 3: grpc.v1.Koji.inside_end:type_name -> google.protobuf.Timestamp
-	0,  // 4: grpc.v1.Koji.inside_required_files:type_name -> grpc.v1.FileInfo
-	3,  // 5: grpc.v1.ListKojiesResponse.kojies:type_name -> grpc.v1.Koji
-	3,  // 6: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
-	3,  // 7: grpc.v1.UpdateKojiRequest.koji:type_name -> grpc.v1.Koji
-	3,  // 8: grpc.v1.UpdateKojiResponse.koji:type_name -> grpc.v1.Koji
-	3,  // 9: grpc.v1.UpdateKojiStandardFilesRequest.koji:type_name -> grpc.v1.Koji
-	3,  // 10: grpc.v1.UpdateKojiStandardFilesResponse.koji:type_name -> grpc.v1.Koji
-	1,  // 11: grpc.v1.ListCompaniesResponse.companies:type_name -> grpc.v1.Company
-	1,  // 12: grpc.v1.GetCompanyResponse.company:type_name -> grpc.v1.Company
-	1,  // 13: grpc.v1.UpdateCompanyRequest.company:type_name -> grpc.v1.Company
-	1,  // 14: grpc.v1.UpdateCompanyResponse.company:type_name -> grpc.v1.Company
-	2,  // 15: grpc.v1.ListCompanyCategoriesResponse.categories:type_name -> grpc.v1.CompanyCategoryInfo
-	0,  // 16: grpc.v1.ListFileInfosResponse.file_infos:type_name -> grpc.v1.FileInfo
-	4,  // 17: grpc.v1.KojiService.ListKojies:input_type -> grpc.v1.ListKojiesRequest
-	6,  // 18: grpc.v1.KojiService.GetKoji:input_type -> grpc.v1.GetKojiRequest
-	8,  // 19: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
-	10, // 20: grpc.v1.KojiService.UpdateKojiStandardFiles:input_type -> grpc.v1.UpdateKojiStandardFilesRequest
-	12, // 21: grpc.v1.CompanyService.ListCompanies:input_type -> grpc.v1.ListCompaniesRequest
-	14, // 22: grpc.v1.CompanyService.GetCompany:input_type -> grpc.v1.GetCompanyRequest
-	16, // 23: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
-	18, // 24: grpc.v1.CompanyService.ListCompanyCategories:input_type -> grpc.v1.ListCompanyCategoriesRequest
-	20, // 25: grpc.v1.FileService.ListFileInfos:input_type -> grpc.v1.ListFileInfosRequest
-	22, // 26: grpc.v1.FileService.GetFileBasePath:input_type -> grpc.v1.GetFileBasePathRequest
-	5,  // 27: grpc.v1.KojiService.ListKojies:output_type -> grpc.v1.ListKojiesResponse
-	7,  // 28: grpc.v1.KojiService.GetKoji:output_type -> grpc.v1.GetKojiResponse
-	9,  // 29: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
-	11, // 30: grpc.v1.KojiService.UpdateKojiStandardFiles:output_type -> grpc.v1.UpdateKojiStandardFilesResponse
-	13, // 31: grpc.v1.CompanyService.ListCompanies:output_type -> grpc.v1.ListCompaniesResponse
-	15, // 32: grpc.v1.CompanyService.GetCompany:output_type -> grpc.v1.GetCompanyResponse
-	17, // 33: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
-	19, // 34: grpc.v1.CompanyService.ListCompanyCategories:output_type -> grpc.v1.ListCompanyCategoriesResponse
-	21, // 35: grpc.v1.FileService.ListFileInfos:output_type -> grpc.v1.ListFileInfosResponse
-	23, // 36: grpc.v1.FileService.GetFileBasePath:output_type -> grpc.v1.GetFileBasePathResponse
-	27, // [27:37] is the sub-list for method output_type
-	17, // [17:27] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	24, // 2: grpc.v1.GetCompanyMapByIdResponse.company_map_by_id:type_name -> grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
+	1,  // 3: grpc.v1.GetCompanyByIdResponse.company:type_name -> grpc.v1.Company
+	1,  // 4: grpc.v1.UpdateCompanyRequest.company:type_name -> grpc.v1.Company
+	25, // 5: grpc.v1.UpdateCompanyResponse.company_map_by_id:type_name -> grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
+	2,  // 6: grpc.v1.GetCompanyCategoriesResponse.categories:type_name -> grpc.v1.CompanyCategory
+	26, // 7: grpc.v1.Koji.start:type_name -> google.protobuf.Timestamp
+	26, // 8: grpc.v1.Koji.inside_end:type_name -> google.protobuf.Timestamp
+	0,  // 9: grpc.v1.Koji.inside_required_files:type_name -> grpc.v1.FileInfo
+	11, // 10: grpc.v1.GetKojiesResponse.kojies:type_name -> grpc.v1.Koji
+	11, // 11: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
+	11, // 12: grpc.v1.UpdateKojiRequest.koji:type_name -> grpc.v1.Koji
+	11, // 13: grpc.v1.UpdateKojiResponse.koji:type_name -> grpc.v1.Koji
+	11, // 14: grpc.v1.UpdateKojiStandardFilesRequest.koji:type_name -> grpc.v1.Koji
+	11, // 15: grpc.v1.UpdateKojiStandardFilesResponse.koji:type_name -> grpc.v1.Koji
+	0,  // 16: grpc.v1.GetFileInfosResponse.file_infos:type_name -> grpc.v1.FileInfo
+	1,  // 17: grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry.value:type_name -> grpc.v1.Company
+	1,  // 18: grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry.value:type_name -> grpc.v1.Company
+	20, // 19: grpc.v1.FileService.GetFileInfos:input_type -> grpc.v1.GetFileInfosRequest
+	22, // 20: grpc.v1.FileService.GetFileBasePath:input_type -> grpc.v1.GetFileBasePathRequest
+	3,  // 21: grpc.v1.CompanyService.GetCompanyMapById:input_type -> grpc.v1.GetCompanyMapByIdRequest
+	5,  // 22: grpc.v1.CompanyService.GetCompanyById:input_type -> grpc.v1.GetCompanyByIdRequest
+	7,  // 23: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
+	9,  // 24: grpc.v1.CompanyService.GetCompanyCategories:input_type -> grpc.v1.GetCompanyCategoriesRequest
+	12, // 25: grpc.v1.KojiService.GetKojies:input_type -> grpc.v1.GetKojiesRequest
+	14, // 26: grpc.v1.KojiService.GetKoji:input_type -> grpc.v1.GetKojiRequest
+	16, // 27: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
+	18, // 28: grpc.v1.KojiService.UpdateKojiStandardFiles:input_type -> grpc.v1.UpdateKojiStandardFilesRequest
+	21, // 29: grpc.v1.FileService.GetFileInfos:output_type -> grpc.v1.GetFileInfosResponse
+	23, // 30: grpc.v1.FileService.GetFileBasePath:output_type -> grpc.v1.GetFileBasePathResponse
+	4,  // 31: grpc.v1.CompanyService.GetCompanyMapById:output_type -> grpc.v1.GetCompanyMapByIdResponse
+	6,  // 32: grpc.v1.CompanyService.GetCompanyById:output_type -> grpc.v1.GetCompanyByIdResponse
+	8,  // 33: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
+	10, // 34: grpc.v1.CompanyService.GetCompanyCategories:output_type -> grpc.v1.GetCompanyCategoriesResponse
+	13, // 35: grpc.v1.KojiService.GetKojies:output_type -> grpc.v1.GetKojiesResponse
+	15, // 36: grpc.v1.KojiService.GetKoji:output_type -> grpc.v1.GetKojiResponse
+	17, // 37: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
+	19, // 38: grpc.v1.KojiService.UpdateKojiStandardFiles:output_type -> grpc.v1.UpdateKojiStandardFilesResponse
+	29, // [29:39] is the sub-list for method output_type
+	19, // [19:29] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_grpc_v1_penguin_proto_init() }
@@ -2062,7 +2057,7 @@ func file_grpc_v1_penguin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_v1_penguin_proto_rawDesc), len(file_grpc_v1_penguin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

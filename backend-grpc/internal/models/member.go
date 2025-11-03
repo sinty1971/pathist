@@ -1,0 +1,24 @@
+package models
+
+import "time"
+
+type Member struct {
+	ID           string     `json:"id" yaml:"-" example:"ABC1234"`
+	Name         string     `json:"name" yaml:"name" example:"first middle Last"`
+	TargetFolder string     `json:"targetFolder" yaml:"folder_path" example:"/home/shin/penguin/豊田築炉/1 会社/豊田築炉工業/社員/山田太郎"`
+	CompanyName  string     `json:"companyName" yaml:"company_name" example:"豊田築炉工業株式会社"`
+	Position     string     `json:"position,omitempty" yaml:"position" example:"部長"`
+	Department   string     `json:"department,omitempty" example:"営業部"`
+	Email        string     `json:"email,omitempty" example:"yamada@example.com"`
+	Phone        string     `json:"phone,omitempty" example:"090-1234-5678"`
+	JoinDate     *time.Time `json:"joinDate,omitempty" yaml:"join_date" example:"2020-04-01T00:00:00Z"`
+
+	// 補助ファイルフィールド
+	Assets []FileInfo `json:"assets" yaml:"assets"`
+}
+
+// PersistFolder は属性ファイルを格納するフォルダーのパスを返します。
+// Persistableインターフェースの実装
+func (m *Member) PersistFolder() string {
+	return m.TargetFolder
+}

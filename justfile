@@ -28,11 +28,11 @@ backend-update:
 
 # Generate gRPC stubs for Koji service
 generate-grpc:
-    cd ./backend && mkdir -p .gocache && GOCACHE=$(pwd)/.gocache go generate ./tools/...
+    buf generate --path proto/v1/penguin.proto
 
 # Generate Connect-Web stubs for the frontend
-frontend-generate-grpc:
-    cd ./frontend && PATH="$$(pwd)/node_modules/.bin:$$PATH" protoc --experimental_editions --proto_path=../proto --es_out=target=ts,import_extension=ts:./src/gen ../proto/grpc/v1/penguin.proto
+frontend-generate-grpc: generate-grpc
+    @echo "Connect-Web stubs generated at frontend/src/gen/"
 
 # Install frontend dependencies  
 frontend-deps:
@@ -44,9 +44,7 @@ frontend-update:
     cd ./frontend && npm audit fix
 
 # Generate TypeScript types from OpenAPI spec
-generate-types:
-    cd ./frontend && npm run generate-grpc
-    @echo "Connect-Web stubs generated at frontend/src/gen/"
+generate-types: frontend-generate-grpc
 
 # Generate React Router v7 route structure diagram
 generate-routes:
@@ -86,7 +84,7 @@ stop-backend:
     echo "Stopping backend server..."
     pkill -f "go run cmd/grpc/main.go" 2>/dev/null
     pkill -f "cmd/grpc/main.go" 2>/dev/null
-    pkill -f "grpc-backend" 2>/dev/null
+    pkill -f "backend-grpc" 2>/dev/null
     for port in 9090 9443; do
         lsof -ti:$port | xargs -r kill -15 2>/dev/null
     done

@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "generate-grpc": "PATH=$PWD/node_modules/.bin:$PATH protoc --experimental_editions --proto_path=../proto --es_out=target=ts,import_extension=ts:./src/gen ../proto/grpc/v1/penguin.proto"
+    "generate-grpc": "cd .. && buf generate --path proto/grpc/v1/penguin.proto"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

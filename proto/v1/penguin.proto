@@ -1,0 +1,147 @@
+edition = "2023";
+
+package grpc.v1;
+
+import "google/protobuf/go_features.proto";
+import "google/protobuf/timestamp.proto";
+
+option features.(pb.go).api_level = API_OPAQUE;
+option features.field_presence = IMPLICIT;
+option go_package = "backend-grpc/gen/grpc/v1;grpcv1";
+
+message FileInfo {
+  string id = 1;
+  string path = 2;
+  bool is_directory = 3;
+  int64 size = 4;
+  google.protobuf.Timestamp modified_time = 5;
+}
+
+service FileService {
+  rpc GetFileInfos(GetFileInfosRequest) returns (GetFileInfosResponse);
+  rpc GetFileBasePath(GetFileBasePathRequest) returns (GetFileBasePathResponse);
+}
+message Company {
+  string id = 1;
+  string managed_folder = 2;
+  string short_name = 3;
+  int32 category_index = 4;
+  string inside_ideal_path = 5;
+  string inside_legal_name = 6;
+  string inside_postal_code = 7;
+  string inside_address = 8;
+  string inside_phone = 9;
+  string inside_email = 10;
+  string inside_website = 11;
+  repeated string inside_tags = 12;
+  repeated FileInfo inside_required_files = 13;
+}
+
+message CompanyCategory {
+  int32 index = 1;
+  string label = 2;
+}
+
+service CompanyService {
+  rpc GetCompanyMapById(GetCompanyMapByIdRequest) returns (GetCompanyMapByIdResponse);
+  rpc GetCompanyById(GetCompanyByIdRequest) returns (GetCompanyByIdResponse);
+  rpc UpdateCompany(UpdateCompanyRequest) returns (UpdateCompanyResponse);
+  rpc GetCompanyCategories(GetCompanyCategoriesRequest) returns (GetCompanyCategoriesResponse);
+}
+
+message GetCompanyMapByIdRequest {}
+
+message GetCompanyMapByIdResponse {
+  map<string, Company> company_map_by_id = 1;
+}
+
+message GetCompanyByIdRequest {
+  string id = 1;
+}
+
+message GetCompanyByIdResponse {
+  Company company = 1;
+}
+
+message UpdateCompanyRequest {
+  string current_company_id = 1;
+  Company updated_company = 2;
+}
+
+message UpdateCompanyResponse {
+  map<string, Company> company_map_by_id = 1;
+}
+
+message GetCompanyCategoriesRequest {}
+
+message GetCompanyCategoriesResponse {
+  repeated CompanyCategory categories = 1;
+}
+
+message Koji {
+  string id = 1;
+  string status = 2;
+  string managed_folder = 3;
+  google.protobuf.Timestamp start = 4;
+  string company_name = 5;
+  string location_name = 6;
+  string inside_ideal_path = 7;
+  google.protobuf.Timestamp inside_end = 8;
+  string inside_description = 9;
+  repeated string inside_tags = 10;
+  repeated FileInfo inside_required_files = 11;
+}
+
+message GetKojiesRequest {
+  string filter = 1;
+}
+
+message GetKojiesResponse {
+  repeated Koji kojies = 1;
+}
+
+message GetKojiRequest {
+  string folder_name = 1;
+}
+
+message GetKojiResponse {
+  Koji koji = 1;
+}
+
+message UpdateKojiRequest {
+  Koji koji = 1;
+}
+
+message UpdateKojiResponse {
+  Koji koji = 1;
+}
+
+message UpdateKojiStandardFilesRequest {
+  Koji koji = 1;
+  repeated string currents = 2;
+}
+
+message UpdateKojiStandardFilesResponse {
+  Koji koji = 1;
+}
+
+message GetFileInfosRequest {
+  string path = 1;
+}
+
+message GetFileInfosResponse {
+  repeated FileInfo file_infos = 1;
+}
+
+message GetFileBasePathRequest {}
+
+message GetFileBasePathResponse {
+  string base_path = 1;
+}
+
+service KojiService {
+  rpc GetKojies(GetKojiesRequest) returns (GetKojiesResponse);
+  rpc GetKoji(GetKojiRequest) returns (GetKojiResponse);
+  rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
+  rpc UpdateKojiStandardFiles(UpdateKojiStandardFilesRequest) returns (UpdateKojiStandardFilesResponse);
+}

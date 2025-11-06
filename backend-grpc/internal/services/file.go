@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	grpcv1 "backend-grpc/gen/grpc/v1"
-	grpcv1connect "backend-grpc/gen/grpc/v1/grpcv1connect"
+	grpc "backend-grpc/gen/grpc/v1"
+	grpcConnect "backend-grpc/gen/grpc/v1/grpcv1connect"
 	"backend-grpc/internal/models"
 
 	"connectrpc.com/connect"
@@ -22,7 +22,7 @@ import (
 // FileService exposes FileService operations via Connect handlers.
 type FileService struct {
 	// Embed the unimplemented handler for forward compatibility
-	grpcv1connect.UnimplementedFileServiceHandler
+	grpcConnect.UnimplementedFileServiceHandler
 
 	// services は任意のgrpcサービスハンドラーへの参照
 	services *Services
@@ -45,17 +45,17 @@ func (s *FileService) Cleanup() {
 // ListFileInfos は指定されたパスのファイル情報一覧を返す
 func (s *FileService) ListFileInfos(
 	ctx context.Context,
-	req *connect.Request[grpcv1.ListFileInfosRequest]) (
-	*connect.Response[grpcv1.ListFileInfosResponse],
+	req *connect.Request[grpc.ListFileInfosRequest]) (
+	*connect.Response[grpc.ListFileInfosResponse],
 	error) {
 	// コンテキストを無視
 	_ = ctx
 
 	// 変数定義
 	var (
-		response *connect.Response[grpcv1.ListFileInfosResponse]
+		response *connect.Response[grpc.ListFileInfosResponse]
 		dirs     []os.DirEntry
-		fis      []*grpcv1.FileInfo = []*grpcv1.FileInfo{}
+		fis      []*grpc.FileInfo = []*grpc.FileInfo{}
 		err      error
 	)
 
@@ -82,7 +82,7 @@ func (s *FileService) ListFileInfos(
 
 	// チャンネルとワーカーグループを設定
 	jobsChan := make(chan int, len(dirs))
-	fisChan := make(chan *grpcv1.FileInfo, len(dirs))
+	fisChan := make(chan *grpc.FileInfo, len(dirs))
 	// 並列処理用のワーカー数を決定（CPU数の2倍、最大16）
 	numWorkers := min(min(runtime.NumCPU()*2, 16), len(dirs))
 	// ワーカーグループを設定
@@ -117,7 +117,7 @@ func (s *FileService) ListFileInfos(
 	}()
 
 	// 結果を収集
-	fis = make([]*grpcv1.FileInfo, 0, len(dirs))
+	fis = make([]*grpc.FileInfo, 0, len(dirs))
 	for fi := range fisChan {
 		fis = append(fis, fi)
 	}

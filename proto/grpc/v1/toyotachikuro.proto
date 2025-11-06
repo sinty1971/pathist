@@ -7,8 +7,9 @@ import "google/protobuf/timestamp.proto";
 
 option features.(pb.go).api_level = API_OPAQUE;
 option features.field_presence = IMPLICIT;
-option go_package = "backend-grpc/gen/grpc/v1;grpcv1";
+option go_package = "grpc-backend/gen/grpc/v1;grpcv1";
 
+// FileInfo represents information about a file or directory
 message FileInfo {
   string id = 1;
   string path = 2;
@@ -17,10 +18,7 @@ message FileInfo {
   google.protobuf.Timestamp modified_time = 5;
 }
 
-service FileService {
-  rpc GetFileInfos(GetFileInfosRequest) returns (GetFileInfosResponse);
-  rpc GetFileBasePath(GetFileBasePathRequest) returns (GetFileBasePathResponse);
-}
+// Company represents a company entity with inside information
 message Company {
   string id = 1;
   string managed_folder = 2;
@@ -37,11 +35,34 @@ message Company {
   repeated FileInfo inside_required_files = 13;
 }
 
+// CompanyCategory represents a company category with index and label
 message CompanyCategory {
   int32 index = 1;
   string label = 2;
 }
 
+// Koji represents a construction project with inside information
+message Koji {
+  string id = 1;
+  string status = 2;
+  string managed_folder = 3;
+  google.protobuf.Timestamp start = 4;
+  string company_name = 5;
+  string location_name = 6;
+  string inside_ideal_path = 7;
+  google.protobuf.Timestamp inside_end = 8;
+  string inside_description = 9;
+  repeated string inside_tags = 10;
+  repeated FileInfo inside_required_files = 11;
+}
+
+// FileService provides operations for file management
+service FileService {
+  rpc GetFileInfos(GetFileInfosRequest) returns (GetFileInfosResponse);
+  rpc GetFileBasePath(GetFileBasePathRequest) returns (GetFileBasePathResponse);
+}
+
+// CompanyService provides operations for managing companies
 service CompanyService {
   rpc GetCompanyMapById(GetCompanyMapByIdRequest) returns (GetCompanyMapByIdResponse);
   rpc GetCompanyById(GetCompanyByIdRequest) returns (GetCompanyByIdResponse);
@@ -49,6 +70,30 @@ service CompanyService {
   rpc GetCompanyCategories(GetCompanyCategoriesRequest) returns (GetCompanyCategoriesResponse);
 }
 
+// KojiService provides operations for managing construction projects
+service KojiService {
+  rpc GetKojies(GetKojiesRequest) returns (GetKojiesResponse);
+  rpc GetKoji(GetKojiRequest) returns (GetKojiResponse);
+  rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
+  rpc UpdateKojiStandardFiles(UpdateKojiStandardFilesRequest) returns (UpdateKojiStandardFilesResponse);
+}
+
+// FileService messages
+message GetFileInfosRequest {
+  string path = 1;
+}
+
+message GetFileInfosResponse {
+  repeated FileInfo file_infos = 1;
+}
+
+message GetFileBasePathRequest {}
+
+message GetFileBasePathResponse {
+  string base_path = 1;
+}
+
+// CompanyService messages
 message GetCompanyMapByIdRequest {}
 
 message GetCompanyMapByIdResponse {
@@ -78,20 +123,7 @@ message GetCompanyCategoriesResponse {
   repeated CompanyCategory categories = 1;
 }
 
-message Koji {
-  string id = 1;
-  string status = 2;
-  string managed_folder = 3;
-  google.protobuf.Timestamp start = 4;
-  string company_name = 5;
-  string location_name = 6;
-  string inside_ideal_path = 7;
-  google.protobuf.Timestamp inside_end = 8;
-  string inside_description = 9;
-  repeated string inside_tags = 10;
-  repeated FileInfo inside_required_files = 11;
-}
-
+// KojiService messages
 message GetKojiesRequest {
   string filter = 1;
 }
@@ -123,25 +155,4 @@ message UpdateKojiStandardFilesRequest {
 
 message UpdateKojiStandardFilesResponse {
   Koji koji = 1;
-}
-
-message GetFileInfosRequest {
-  string path = 1;
-}
-
-message GetFileInfosResponse {
-  repeated FileInfo file_infos = 1;
-}
-
-message GetFileBasePathRequest {}
-
-message GetFileBasePathResponse {
-  string base_path = 1;
-}
-
-service KojiService {
-  rpc GetKojies(GetKojiesRequest) returns (GetKojiesResponse);
-  rpc GetKoji(GetKojiRequest) returns (GetKojiResponse);
-  rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
-  rpc UpdateKojiStandardFiles(UpdateKojiStandardFilesRequest) returns (UpdateKojiStandardFilesResponse);
 }

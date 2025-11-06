@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        (unknown)
-// source: v1/penguin.proto
+// source: grpc/v1/toyotachikuro.proto
 
 package grpcv1
 
@@ -22,6 +22,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// FileInfo represents information about a file or directory
 type FileInfo struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Id           string                 `protobuf:"bytes,1,opt,name=id"`
@@ -35,7 +36,7 @@ type FileInfo struct {
 
 func (x *FileInfo) Reset() {
 	*x = FileInfo{}
-	mi := &file_v1_penguin_proto_msgTypes[0]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +48,7 @@ func (x *FileInfo) String() string {
 func (*FileInfo) ProtoMessage() {}
 
 func (x *FileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[0]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -146,6 +147,7 @@ func (b0 FileInfo_builder) Build() *FileInfo {
 	return m0
 }
 
+// Company represents a company entity with inside information
 type Company struct {
 	state                          protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id"`
@@ -167,7 +169,7 @@ type Company struct {
 
 func (x *Company) Reset() {
 	*x = Company{}
-	mi := &file_v1_penguin_proto_msgTypes[1]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -179,7 +181,7 @@ func (x *Company) String() string {
 func (*Company) ProtoMessage() {}
 
 func (x *Company) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[1]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -373,6 +375,7 @@ func (b0 Company_builder) Build() *Company {
 	return m0
 }
 
+// CompanyCategory represents a company category with index and label
 type CompanyCategory struct {
 	state            protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Index int32                  `protobuf:"varint,1,opt,name=index"`
@@ -383,7 +386,7 @@ type CompanyCategory struct {
 
 func (x *CompanyCategory) Reset() {
 	*x = CompanyCategory{}
-	mi := &file_v1_penguin_proto_msgTypes[2]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -395,7 +398,7 @@ func (x *CompanyCategory) String() string {
 func (*CompanyCategory) ProtoMessage() {}
 
 func (x *CompanyCategory) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[2]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -444,472 +447,7 @@ func (b0 CompanyCategory_builder) Build() *CompanyCategory {
 	return m0
 }
 
-type GetCompanyMapByIdRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetCompanyMapByIdRequest) Reset() {
-	*x = GetCompanyMapByIdRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCompanyMapByIdRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCompanyMapByIdRequest) ProtoMessage() {}
-
-func (x *GetCompanyMapByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-type GetCompanyMapByIdRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-}
-
-func (b0 GetCompanyMapByIdRequest_builder) Build() *GetCompanyMapByIdRequest {
-	m0 := &GetCompanyMapByIdRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	return m0
-}
-
-type GetCompanyMapByIdResponse struct {
-	state                     protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_CompanyMapById map[string]*Company    `protobuf:"bytes,1,rep,name=company_map_by_id,json=companyMapById" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
-}
-
-func (x *GetCompanyMapByIdResponse) Reset() {
-	*x = GetCompanyMapByIdResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCompanyMapByIdResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCompanyMapByIdResponse) ProtoMessage() {}
-
-func (x *GetCompanyMapByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetCompanyMapByIdResponse) GetCompanyMapById() map[string]*Company {
-	if x != nil {
-		return x.xxx_hidden_CompanyMapById
-	}
-	return nil
-}
-
-func (x *GetCompanyMapByIdResponse) SetCompanyMapById(v map[string]*Company) {
-	x.xxx_hidden_CompanyMapById = v
-}
-
-type GetCompanyMapByIdResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	CompanyMapById map[string]*Company
-}
-
-func (b0 GetCompanyMapByIdResponse_builder) Build() *GetCompanyMapByIdResponse {
-	m0 := &GetCompanyMapByIdResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_CompanyMapById = b.CompanyMapById
-	return m0
-}
-
-type GetCompanyByIdRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetCompanyByIdRequest) Reset() {
-	*x = GetCompanyByIdRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCompanyByIdRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCompanyByIdRequest) ProtoMessage() {}
-
-func (x *GetCompanyByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetCompanyByIdRequest) GetId() string {
-	if x != nil {
-		return x.xxx_hidden_Id
-	}
-	return ""
-}
-
-func (x *GetCompanyByIdRequest) SetId(v string) {
-	x.xxx_hidden_Id = v
-}
-
-type GetCompanyByIdRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Id string
-}
-
-func (b0 GetCompanyByIdRequest_builder) Build() *GetCompanyByIdRequest {
-	m0 := &GetCompanyByIdRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Id = b.Id
-	return m0
-}
-
-type GetCompanyByIdResponse struct {
-	state              protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Company *Company               `protobuf:"bytes,1,opt,name=company"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *GetCompanyByIdResponse) Reset() {
-	*x = GetCompanyByIdResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCompanyByIdResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCompanyByIdResponse) ProtoMessage() {}
-
-func (x *GetCompanyByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetCompanyByIdResponse) GetCompany() *Company {
-	if x != nil {
-		return x.xxx_hidden_Company
-	}
-	return nil
-}
-
-func (x *GetCompanyByIdResponse) SetCompany(v *Company) {
-	x.xxx_hidden_Company = v
-}
-
-func (x *GetCompanyByIdResponse) HasCompany() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Company != nil
-}
-
-func (x *GetCompanyByIdResponse) ClearCompany() {
-	x.xxx_hidden_Company = nil
-}
-
-type GetCompanyByIdResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Company *Company
-}
-
-func (b0 GetCompanyByIdResponse_builder) Build() *GetCompanyByIdResponse {
-	m0 := &GetCompanyByIdResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Company = b.Company
-	return m0
-}
-
-type UpdateCompanyRequest struct {
-	state                       protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_CurrentCompanyId string                 `protobuf:"bytes,1,opt,name=current_company_id,json=currentCompanyId"`
-	xxx_hidden_UpdatedCompany   *Company               `protobuf:"bytes,2,opt,name=updated_company,json=updatedCompany"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
-}
-
-func (x *UpdateCompanyRequest) Reset() {
-	*x = UpdateCompanyRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateCompanyRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateCompanyRequest) ProtoMessage() {}
-
-func (x *UpdateCompanyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *UpdateCompanyRequest) GetCurrentCompanyId() string {
-	if x != nil {
-		return x.xxx_hidden_CurrentCompanyId
-	}
-	return ""
-}
-
-func (x *UpdateCompanyRequest) GetUpdatedCompany() *Company {
-	if x != nil {
-		return x.xxx_hidden_UpdatedCompany
-	}
-	return nil
-}
-
-func (x *UpdateCompanyRequest) SetCurrentCompanyId(v string) {
-	x.xxx_hidden_CurrentCompanyId = v
-}
-
-func (x *UpdateCompanyRequest) SetUpdatedCompany(v *Company) {
-	x.xxx_hidden_UpdatedCompany = v
-}
-
-func (x *UpdateCompanyRequest) HasUpdatedCompany() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_UpdatedCompany != nil
-}
-
-func (x *UpdateCompanyRequest) ClearUpdatedCompany() {
-	x.xxx_hidden_UpdatedCompany = nil
-}
-
-type UpdateCompanyRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	CurrentCompanyId string
-	UpdatedCompany   *Company
-}
-
-func (b0 UpdateCompanyRequest_builder) Build() *UpdateCompanyRequest {
-	m0 := &UpdateCompanyRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_CurrentCompanyId = b.CurrentCompanyId
-	x.xxx_hidden_UpdatedCompany = b.UpdatedCompany
-	return m0
-}
-
-type UpdateCompanyResponse struct {
-	state                     protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_CompanyMapById map[string]*Company    `protobuf:"bytes,1,rep,name=company_map_by_id,json=companyMapById" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
-}
-
-func (x *UpdateCompanyResponse) Reset() {
-	*x = UpdateCompanyResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateCompanyResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateCompanyResponse) ProtoMessage() {}
-
-func (x *UpdateCompanyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *UpdateCompanyResponse) GetCompanyMapById() map[string]*Company {
-	if x != nil {
-		return x.xxx_hidden_CompanyMapById
-	}
-	return nil
-}
-
-func (x *UpdateCompanyResponse) SetCompanyMapById(v map[string]*Company) {
-	x.xxx_hidden_CompanyMapById = v
-}
-
-type UpdateCompanyResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	CompanyMapById map[string]*Company
-}
-
-func (b0 UpdateCompanyResponse_builder) Build() *UpdateCompanyResponse {
-	m0 := &UpdateCompanyResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_CompanyMapById = b.CompanyMapById
-	return m0
-}
-
-type GetCompanyCategoriesRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetCompanyCategoriesRequest) Reset() {
-	*x = GetCompanyCategoriesRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCompanyCategoriesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCompanyCategoriesRequest) ProtoMessage() {}
-
-func (x *GetCompanyCategoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-type GetCompanyCategoriesRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-}
-
-func (b0 GetCompanyCategoriesRequest_builder) Build() *GetCompanyCategoriesRequest {
-	m0 := &GetCompanyCategoriesRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	return m0
-}
-
-type GetCompanyCategoriesResponse struct {
-	state                 protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Categories *[]*CompanyCategory    `protobuf:"bytes,1,rep,name=categories"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
-}
-
-func (x *GetCompanyCategoriesResponse) Reset() {
-	*x = GetCompanyCategoriesResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCompanyCategoriesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCompanyCategoriesResponse) ProtoMessage() {}
-
-func (x *GetCompanyCategoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetCompanyCategoriesResponse) GetCategories() []*CompanyCategory {
-	if x != nil {
-		if x.xxx_hidden_Categories != nil {
-			return *x.xxx_hidden_Categories
-		}
-	}
-	return nil
-}
-
-func (x *GetCompanyCategoriesResponse) SetCategories(v []*CompanyCategory) {
-	x.xxx_hidden_Categories = &v
-}
-
-type GetCompanyCategoriesResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Categories []*CompanyCategory
-}
-
-func (b0 GetCompanyCategoriesResponse_builder) Build() *GetCompanyCategoriesResponse {
-	m0 := &GetCompanyCategoriesResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Categories = &b.Categories
-	return m0
-}
-
+// Koji represents a construction project with inside information
 type Koji struct {
 	state                          protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id"`
@@ -929,7 +467,7 @@ type Koji struct {
 
 func (x *Koji) Reset() {
 	*x = Koji{}
-	mi := &file_v1_penguin_proto_msgTypes[11]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -941,7 +479,7 @@ func (x *Koji) String() string {
 func (*Koji) ProtoMessage() {}
 
 func (x *Koji) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[11]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1131,6 +669,691 @@ func (b0 Koji_builder) Build() *Koji {
 	return m0
 }
 
+// FileService messages
+type GetFileInfosRequest struct {
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path string                 `protobuf:"bytes,1,opt,name=path"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GetFileInfosRequest) Reset() {
+	*x = GetFileInfosRequest{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileInfosRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileInfosRequest) ProtoMessage() {}
+
+func (x *GetFileInfosRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetFileInfosRequest) GetPath() string {
+	if x != nil {
+		return x.xxx_hidden_Path
+	}
+	return ""
+}
+
+func (x *GetFileInfosRequest) SetPath(v string) {
+	x.xxx_hidden_Path = v
+}
+
+type GetFileInfosRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path string
+}
+
+func (b0 GetFileInfosRequest_builder) Build() *GetFileInfosRequest {
+	m0 := &GetFileInfosRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Path = b.Path
+	return m0
+}
+
+type GetFileInfosResponse struct {
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FileInfos *[]*FileInfo           `protobuf:"bytes,1,rep,name=file_infos,json=fileInfos"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *GetFileInfosResponse) Reset() {
+	*x = GetFileInfosResponse{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileInfosResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileInfosResponse) ProtoMessage() {}
+
+func (x *GetFileInfosResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetFileInfosResponse) GetFileInfos() []*FileInfo {
+	if x != nil {
+		if x.xxx_hidden_FileInfos != nil {
+			return *x.xxx_hidden_FileInfos
+		}
+	}
+	return nil
+}
+
+func (x *GetFileInfosResponse) SetFileInfos(v []*FileInfo) {
+	x.xxx_hidden_FileInfos = &v
+}
+
+type GetFileInfosResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	FileInfos []*FileInfo
+}
+
+func (b0 GetFileInfosResponse_builder) Build() *GetFileInfosResponse {
+	m0 := &GetFileInfosResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_FileInfos = &b.FileInfos
+	return m0
+}
+
+type GetFileBasePathRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFileBasePathRequest) Reset() {
+	*x = GetFileBasePathRequest{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileBasePathRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileBasePathRequest) ProtoMessage() {}
+
+func (x *GetFileBasePathRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type GetFileBasePathRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 GetFileBasePathRequest_builder) Build() *GetFileBasePathRequest {
+	m0 := &GetFileBasePathRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type GetFileBasePathResponse struct {
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_BasePath string                 `protobuf:"bytes,1,opt,name=base_path,json=basePath"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *GetFileBasePathResponse) Reset() {
+	*x = GetFileBasePathResponse{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileBasePathResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileBasePathResponse) ProtoMessage() {}
+
+func (x *GetFileBasePathResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetFileBasePathResponse) GetBasePath() string {
+	if x != nil {
+		return x.xxx_hidden_BasePath
+	}
+	return ""
+}
+
+func (x *GetFileBasePathResponse) SetBasePath(v string) {
+	x.xxx_hidden_BasePath = v
+}
+
+type GetFileBasePathResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	BasePath string
+}
+
+func (b0 GetFileBasePathResponse_builder) Build() *GetFileBasePathResponse {
+	m0 := &GetFileBasePathResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_BasePath = b.BasePath
+	return m0
+}
+
+// CompanyService messages
+type GetCompanyMapByIdRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCompanyMapByIdRequest) Reset() {
+	*x = GetCompanyMapByIdRequest{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyMapByIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyMapByIdRequest) ProtoMessage() {}
+
+func (x *GetCompanyMapByIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type GetCompanyMapByIdRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 GetCompanyMapByIdRequest_builder) Build() *GetCompanyMapByIdRequest {
+	m0 := &GetCompanyMapByIdRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type GetCompanyMapByIdResponse struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_CompanyMapById map[string]*Company    `protobuf:"bytes,1,rep,name=company_map_by_id,json=companyMapById" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *GetCompanyMapByIdResponse) Reset() {
+	*x = GetCompanyMapByIdResponse{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyMapByIdResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyMapByIdResponse) ProtoMessage() {}
+
+func (x *GetCompanyMapByIdResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCompanyMapByIdResponse) GetCompanyMapById() map[string]*Company {
+	if x != nil {
+		return x.xxx_hidden_CompanyMapById
+	}
+	return nil
+}
+
+func (x *GetCompanyMapByIdResponse) SetCompanyMapById(v map[string]*Company) {
+	x.xxx_hidden_CompanyMapById = v
+}
+
+type GetCompanyMapByIdResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	CompanyMapById map[string]*Company
+}
+
+func (b0 GetCompanyMapByIdResponse_builder) Build() *GetCompanyMapByIdResponse {
+	m0 := &GetCompanyMapByIdResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_CompanyMapById = b.CompanyMapById
+	return m0
+}
+
+type GetCompanyByIdRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCompanyByIdRequest) Reset() {
+	*x = GetCompanyByIdRequest{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyByIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyByIdRequest) ProtoMessage() {}
+
+func (x *GetCompanyByIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCompanyByIdRequest) GetId() string {
+	if x != nil {
+		return x.xxx_hidden_Id
+	}
+	return ""
+}
+
+func (x *GetCompanyByIdRequest) SetId(v string) {
+	x.xxx_hidden_Id = v
+}
+
+type GetCompanyByIdRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id string
+}
+
+func (b0 GetCompanyByIdRequest_builder) Build() *GetCompanyByIdRequest {
+	m0 := &GetCompanyByIdRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Id = b.Id
+	return m0
+}
+
+type GetCompanyByIdResponse struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Company *Company               `protobuf:"bytes,1,opt,name=company"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *GetCompanyByIdResponse) Reset() {
+	*x = GetCompanyByIdResponse{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyByIdResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyByIdResponse) ProtoMessage() {}
+
+func (x *GetCompanyByIdResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCompanyByIdResponse) GetCompany() *Company {
+	if x != nil {
+		return x.xxx_hidden_Company
+	}
+	return nil
+}
+
+func (x *GetCompanyByIdResponse) SetCompany(v *Company) {
+	x.xxx_hidden_Company = v
+}
+
+func (x *GetCompanyByIdResponse) HasCompany() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Company != nil
+}
+
+func (x *GetCompanyByIdResponse) ClearCompany() {
+	x.xxx_hidden_Company = nil
+}
+
+type GetCompanyByIdResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Company *Company
+}
+
+func (b0 GetCompanyByIdResponse_builder) Build() *GetCompanyByIdResponse {
+	m0 := &GetCompanyByIdResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Company = b.Company
+	return m0
+}
+
+type UpdateCompanyRequest struct {
+	state                       protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_CurrentCompanyId string                 `protobuf:"bytes,1,opt,name=current_company_id,json=currentCompanyId"`
+	xxx_hidden_UpdatedCompany   *Company               `protobuf:"bytes,2,opt,name=updated_company,json=updatedCompany"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
+}
+
+func (x *UpdateCompanyRequest) Reset() {
+	*x = UpdateCompanyRequest{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCompanyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCompanyRequest) ProtoMessage() {}
+
+func (x *UpdateCompanyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *UpdateCompanyRequest) GetCurrentCompanyId() string {
+	if x != nil {
+		return x.xxx_hidden_CurrentCompanyId
+	}
+	return ""
+}
+
+func (x *UpdateCompanyRequest) GetUpdatedCompany() *Company {
+	if x != nil {
+		return x.xxx_hidden_UpdatedCompany
+	}
+	return nil
+}
+
+func (x *UpdateCompanyRequest) SetCurrentCompanyId(v string) {
+	x.xxx_hidden_CurrentCompanyId = v
+}
+
+func (x *UpdateCompanyRequest) SetUpdatedCompany(v *Company) {
+	x.xxx_hidden_UpdatedCompany = v
+}
+
+func (x *UpdateCompanyRequest) HasUpdatedCompany() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_UpdatedCompany != nil
+}
+
+func (x *UpdateCompanyRequest) ClearUpdatedCompany() {
+	x.xxx_hidden_UpdatedCompany = nil
+}
+
+type UpdateCompanyRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	CurrentCompanyId string
+	UpdatedCompany   *Company
+}
+
+func (b0 UpdateCompanyRequest_builder) Build() *UpdateCompanyRequest {
+	m0 := &UpdateCompanyRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_CurrentCompanyId = b.CurrentCompanyId
+	x.xxx_hidden_UpdatedCompany = b.UpdatedCompany
+	return m0
+}
+
+type UpdateCompanyResponse struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_CompanyMapById map[string]*Company    `protobuf:"bytes,1,rep,name=company_map_by_id,json=companyMapById" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *UpdateCompanyResponse) Reset() {
+	*x = UpdateCompanyResponse{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCompanyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCompanyResponse) ProtoMessage() {}
+
+func (x *UpdateCompanyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *UpdateCompanyResponse) GetCompanyMapById() map[string]*Company {
+	if x != nil {
+		return x.xxx_hidden_CompanyMapById
+	}
+	return nil
+}
+
+func (x *UpdateCompanyResponse) SetCompanyMapById(v map[string]*Company) {
+	x.xxx_hidden_CompanyMapById = v
+}
+
+type UpdateCompanyResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	CompanyMapById map[string]*Company
+}
+
+func (b0 UpdateCompanyResponse_builder) Build() *UpdateCompanyResponse {
+	m0 := &UpdateCompanyResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_CompanyMapById = b.CompanyMapById
+	return m0
+}
+
+type GetCompanyCategoriesRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCompanyCategoriesRequest) Reset() {
+	*x = GetCompanyCategoriesRequest{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyCategoriesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyCategoriesRequest) ProtoMessage() {}
+
+func (x *GetCompanyCategoriesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type GetCompanyCategoriesRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 GetCompanyCategoriesRequest_builder) Build() *GetCompanyCategoriesRequest {
+	m0 := &GetCompanyCategoriesRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type GetCompanyCategoriesResponse struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Categories *[]*CompanyCategory    `protobuf:"bytes,1,rep,name=categories"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *GetCompanyCategoriesResponse) Reset() {
+	*x = GetCompanyCategoriesResponse{}
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCompanyCategoriesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCompanyCategoriesResponse) ProtoMessage() {}
+
+func (x *GetCompanyCategoriesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCompanyCategoriesResponse) GetCategories() []*CompanyCategory {
+	if x != nil {
+		if x.xxx_hidden_Categories != nil {
+			return *x.xxx_hidden_Categories
+		}
+	}
+	return nil
+}
+
+func (x *GetCompanyCategoriesResponse) SetCategories(v []*CompanyCategory) {
+	x.xxx_hidden_Categories = &v
+}
+
+type GetCompanyCategoriesResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Categories []*CompanyCategory
+}
+
+func (b0 GetCompanyCategoriesResponse_builder) Build() *GetCompanyCategoriesResponse {
+	m0 := &GetCompanyCategoriesResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Categories = &b.Categories
+	return m0
+}
+
+// KojiService messages
 type GetKojiesRequest struct {
 	state             protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Filter string                 `protobuf:"bytes,1,opt,name=filter"`
@@ -1140,7 +1363,7 @@ type GetKojiesRequest struct {
 
 func (x *GetKojiesRequest) Reset() {
 	*x = GetKojiesRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[12]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1152,7 +1375,7 @@ func (x *GetKojiesRequest) String() string {
 func (*GetKojiesRequest) ProtoMessage() {}
 
 func (x *GetKojiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[12]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1197,7 +1420,7 @@ type GetKojiesResponse struct {
 
 func (x *GetKojiesResponse) Reset() {
 	*x = GetKojiesResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[13]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1209,7 +1432,7 @@ func (x *GetKojiesResponse) String() string {
 func (*GetKojiesResponse) ProtoMessage() {}
 
 func (x *GetKojiesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[13]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1256,7 +1479,7 @@ type GetKojiRequest struct {
 
 func (x *GetKojiRequest) Reset() {
 	*x = GetKojiRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[14]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1268,7 +1491,7 @@ func (x *GetKojiRequest) String() string {
 func (*GetKojiRequest) ProtoMessage() {}
 
 func (x *GetKojiRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[14]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1313,7 +1536,7 @@ type GetKojiResponse struct {
 
 func (x *GetKojiResponse) Reset() {
 	*x = GetKojiResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[15]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1325,7 +1548,7 @@ func (x *GetKojiResponse) String() string {
 func (*GetKojiResponse) ProtoMessage() {}
 
 func (x *GetKojiResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[15]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1381,7 +1604,7 @@ type UpdateKojiRequest struct {
 
 func (x *UpdateKojiRequest) Reset() {
 	*x = UpdateKojiRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[16]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1393,7 +1616,7 @@ func (x *UpdateKojiRequest) String() string {
 func (*UpdateKojiRequest) ProtoMessage() {}
 
 func (x *UpdateKojiRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[16]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1449,7 +1672,7 @@ type UpdateKojiResponse struct {
 
 func (x *UpdateKojiResponse) Reset() {
 	*x = UpdateKojiResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[17]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1461,7 +1684,7 @@ func (x *UpdateKojiResponse) String() string {
 func (*UpdateKojiResponse) ProtoMessage() {}
 
 func (x *UpdateKojiResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[17]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1518,7 +1741,7 @@ type UpdateKojiStandardFilesRequest struct {
 
 func (x *UpdateKojiStandardFilesRequest) Reset() {
 	*x = UpdateKojiStandardFilesRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[18]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1530,7 +1753,7 @@ func (x *UpdateKojiStandardFilesRequest) String() string {
 func (*UpdateKojiStandardFilesRequest) ProtoMessage() {}
 
 func (x *UpdateKojiStandardFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[18]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1599,7 +1822,7 @@ type UpdateKojiStandardFilesResponse struct {
 
 func (x *UpdateKojiStandardFilesResponse) Reset() {
 	*x = UpdateKojiStandardFilesResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[19]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1611,7 +1834,7 @@ func (x *UpdateKojiStandardFilesResponse) String() string {
 func (*UpdateKojiStandardFilesResponse) ProtoMessage() {}
 
 func (x *UpdateKojiStandardFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[19]
+	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1658,227 +1881,11 @@ func (b0 UpdateKojiStandardFilesResponse_builder) Build() *UpdateKojiStandardFil
 	return m0
 }
 
-type GetFileInfosRequest struct {
-	state           protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Path string                 `protobuf:"bytes,1,opt,name=path"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
+var File_grpc_v1_toyotachikuro_proto protoreflect.FileDescriptor
 
-func (x *GetFileInfosRequest) Reset() {
-	*x = GetFileInfosRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFileInfosRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFileInfosRequest) ProtoMessage() {}
-
-func (x *GetFileInfosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetFileInfosRequest) GetPath() string {
-	if x != nil {
-		return x.xxx_hidden_Path
-	}
-	return ""
-}
-
-func (x *GetFileInfosRequest) SetPath(v string) {
-	x.xxx_hidden_Path = v
-}
-
-type GetFileInfosRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Path string
-}
-
-func (b0 GetFileInfosRequest_builder) Build() *GetFileInfosRequest {
-	m0 := &GetFileInfosRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Path = b.Path
-	return m0
-}
-
-type GetFileInfosResponse struct {
-	state                protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FileInfos *[]*FileInfo           `protobuf:"bytes,1,rep,name=file_infos,json=fileInfos"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
-}
-
-func (x *GetFileInfosResponse) Reset() {
-	*x = GetFileInfosResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFileInfosResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFileInfosResponse) ProtoMessage() {}
-
-func (x *GetFileInfosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetFileInfosResponse) GetFileInfos() []*FileInfo {
-	if x != nil {
-		if x.xxx_hidden_FileInfos != nil {
-			return *x.xxx_hidden_FileInfos
-		}
-	}
-	return nil
-}
-
-func (x *GetFileInfosResponse) SetFileInfos(v []*FileInfo) {
-	x.xxx_hidden_FileInfos = &v
-}
-
-type GetFileInfosResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	FileInfos []*FileInfo
-}
-
-func (b0 GetFileInfosResponse_builder) Build() *GetFileInfosResponse {
-	m0 := &GetFileInfosResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_FileInfos = &b.FileInfos
-	return m0
-}
-
-type GetFileBasePathRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFileBasePathRequest) Reset() {
-	*x = GetFileBasePathRequest{}
-	mi := &file_v1_penguin_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFileBasePathRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFileBasePathRequest) ProtoMessage() {}
-
-func (x *GetFileBasePathRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-type GetFileBasePathRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-}
-
-func (b0 GetFileBasePathRequest_builder) Build() *GetFileBasePathRequest {
-	m0 := &GetFileBasePathRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	return m0
-}
-
-type GetFileBasePathResponse struct {
-	state               protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_BasePath string                 `protobuf:"bytes,1,opt,name=base_path,json=basePath"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
-}
-
-func (x *GetFileBasePathResponse) Reset() {
-	*x = GetFileBasePathResponse{}
-	mi := &file_v1_penguin_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFileBasePathResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFileBasePathResponse) ProtoMessage() {}
-
-func (x *GetFileBasePathResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_penguin_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *GetFileBasePathResponse) GetBasePath() string {
-	if x != nil {
-		return x.xxx_hidden_BasePath
-	}
-	return ""
-}
-
-func (x *GetFileBasePathResponse) SetBasePath(v string) {
-	x.xxx_hidden_BasePath = v
-}
-
-type GetFileBasePathResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	BasePath string
-}
-
-func (b0 GetFileBasePathResponse_builder) Build() *GetFileBasePathResponse {
-	m0 := &GetFileBasePathResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_BasePath = b.BasePath
-	return m0
-}
-
-var File_v1_penguin_proto protoreflect.FileDescriptor
-
-const file_v1_penguin_proto_rawDesc = "" +
+const file_grpc_v1_toyotachikuro_proto_rawDesc = "" +
 	"\n" +
-	"\x10v1/penguin.proto\x12\agrpc.v1\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x01\n" +
+	"\x1bgrpc/v1/toyotachikuro.proto\x12\agrpc.v1\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x01\n" +
 	"\bFileInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12!\n" +
@@ -1904,7 +1911,30 @@ const file_v1_penguin_proto_rawDesc = "" +
 	"\x15inside_required_files\x18\r \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"=\n" +
 	"\x0fCompanyCategory\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\x05R\x05index\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"\x1a\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"\xcd\x03\n" +
+	"\x04Koji\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12%\n" +
+	"\x0emanaged_folder\x18\x03 \x01(\tR\rmanagedFolder\x120\n" +
+	"\x05start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12!\n" +
+	"\fcompany_name\x18\x05 \x01(\tR\vcompanyName\x12#\n" +
+	"\rlocation_name\x18\x06 \x01(\tR\flocationName\x12*\n" +
+	"\x11inside_ideal_path\x18\a \x01(\tR\x0finsideIdealPath\x129\n" +
+	"\n" +
+	"inside_end\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tinsideEnd\x12-\n" +
+	"\x12inside_description\x18\t \x01(\tR\x11insideDescription\x12\x1f\n" +
+	"\vinside_tags\x18\n" +
+	" \x03(\tR\n" +
+	"insideTags\x12E\n" +
+	"\x15inside_required_files\x18\v \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\")\n" +
+	"\x13GetFileInfosRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"H\n" +
+	"\x14GetFileInfosResponse\x120\n" +
+	"\n" +
+	"file_infos\x18\x01 \x03(\v2\x11.grpc.v1.FileInfoR\tfileInfos\"\x18\n" +
+	"\x16GetFileBasePathRequest\"6\n" +
+	"\x17GetFileBasePathResponse\x12\x1b\n" +
+	"\tbase_path\x18\x01 \x01(\tR\bbasePath\"\x1a\n" +
 	"\x18GetCompanyMapByIdRequest\"\xd3\x01\n" +
 	"\x19GetCompanyMapByIdResponse\x12a\n" +
 	"\x11company_map_by_id\x18\x01 \x03(\v26.grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntryR\x0ecompanyMapById\x1aS\n" +
@@ -1927,22 +1957,7 @@ const file_v1_penguin_proto_rawDesc = "" +
 	"\x1cGetCompanyCategoriesResponse\x128\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2\x18.grpc.v1.CompanyCategoryR\n" +
-	"categories\"\xcd\x03\n" +
-	"\x04Koji\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\x12%\n" +
-	"\x0emanaged_folder\x18\x03 \x01(\tR\rmanagedFolder\x120\n" +
-	"\x05start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12!\n" +
-	"\fcompany_name\x18\x05 \x01(\tR\vcompanyName\x12#\n" +
-	"\rlocation_name\x18\x06 \x01(\tR\flocationName\x12*\n" +
-	"\x11inside_ideal_path\x18\a \x01(\tR\x0finsideIdealPath\x129\n" +
-	"\n" +
-	"inside_end\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tinsideEnd\x12-\n" +
-	"\x12inside_description\x18\t \x01(\tR\x11insideDescription\x12\x1f\n" +
-	"\vinside_tags\x18\n" +
-	" \x03(\tR\n" +
-	"insideTags\x12E\n" +
-	"\x15inside_required_files\x18\v \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"*\n" +
+	"categories\"*\n" +
 	"\x10GetKojiesRequest\x12\x16\n" +
 	"\x06filter\x18\x01 \x01(\tR\x06filter\":\n" +
 	"\x11GetKojiesResponse\x12%\n" +
@@ -1960,15 +1975,7 @@ const file_v1_penguin_proto_rawDesc = "" +
 	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\x12\x1a\n" +
 	"\bcurrents\x18\x02 \x03(\tR\bcurrents\"D\n" +
 	"\x1fUpdateKojiStandardFilesResponse\x12!\n" +
-	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\")\n" +
-	"\x13GetFileInfosRequest\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"H\n" +
-	"\x14GetFileInfosResponse\x120\n" +
-	"\n" +
-	"file_infos\x18\x01 \x03(\v2\x11.grpc.v1.FileInfoR\tfileInfos\"\x18\n" +
-	"\x16GetFileBasePathRequest\"6\n" +
-	"\x17GetFileBasePathResponse\x12\x1b\n" +
-	"\tbase_path\x18\x01 \x01(\tR\bbasePath2\xb0\x01\n" +
+	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji2\xb0\x01\n" +
 	"\vFileService\x12K\n" +
 	"\fGetFileInfos\x12\x1c.grpc.v1.GetFileInfosRequest\x1a\x1d.grpc.v1.GetFileInfosResponse\x12T\n" +
 	"\x0fGetFileBasePath\x12\x1f.grpc.v1.GetFileBasePathRequest\x1a .grpc.v1.GetFileBasePathResponse2\xf4\x02\n" +
@@ -1982,79 +1989,79 @@ const file_v1_penguin_proto_rawDesc = "" +
 	"\aGetKoji\x12\x17.grpc.v1.GetKojiRequest\x1a\x18.grpc.v1.GetKojiResponse\x12E\n" +
 	"\n" +
 	"UpdateKoji\x12\x1a.grpc.v1.UpdateKojiRequest\x1a\x1b.grpc.v1.UpdateKojiResponse\x12l\n" +
-	"\x17UpdateKojiStandardFiles\x12'.grpc.v1.UpdateKojiStandardFilesRequest\x1a(.grpc.v1.UpdateKojiStandardFilesResponseB\x83\x01\n" +
-	"\vcom.grpc.v1B\fPenguinProtoP\x01Z\x1fbackend-grpc/gen/grpc/v1;grpcv1\xa2\x02\x03GXX\xaa\x02\aGrpc.V1\xca\x02\aGrpc\\V1\xe2\x02\x13Grpc\\V1\\GPBMetadata\xea\x02\bGrpc::V1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
+	"\x17UpdateKojiStandardFiles\x12'.grpc.v1.UpdateKojiStandardFilesRequest\x1a(.grpc.v1.UpdateKojiStandardFilesResponseB\x89\x01\n" +
+	"\vcom.grpc.v1B\x12ToyotachikuroProtoP\x01Z\x1fgrpc-backend/gen/grpc/v1;grpcv1\xa2\x02\x03GXX\xaa\x02\aGrpc.V1\xca\x02\aGrpc\\V1\xe2\x02\x13Grpc\\V1\\GPBMetadata\xea\x02\bGrpc::V1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
 
-var file_v1_penguin_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
-var file_v1_penguin_proto_goTypes = []any{
+var file_grpc_v1_toyotachikuro_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_grpc_v1_toyotachikuro_proto_goTypes = []any{
 	(*FileInfo)(nil),                        // 0: grpc.v1.FileInfo
 	(*Company)(nil),                         // 1: grpc.v1.Company
 	(*CompanyCategory)(nil),                 // 2: grpc.v1.CompanyCategory
-	(*GetCompanyMapByIdRequest)(nil),        // 3: grpc.v1.GetCompanyMapByIdRequest
-	(*GetCompanyMapByIdResponse)(nil),       // 4: grpc.v1.GetCompanyMapByIdResponse
-	(*GetCompanyByIdRequest)(nil),           // 5: grpc.v1.GetCompanyByIdRequest
-	(*GetCompanyByIdResponse)(nil),          // 6: grpc.v1.GetCompanyByIdResponse
-	(*UpdateCompanyRequest)(nil),            // 7: grpc.v1.UpdateCompanyRequest
-	(*UpdateCompanyResponse)(nil),           // 8: grpc.v1.UpdateCompanyResponse
-	(*GetCompanyCategoriesRequest)(nil),     // 9: grpc.v1.GetCompanyCategoriesRequest
-	(*GetCompanyCategoriesResponse)(nil),    // 10: grpc.v1.GetCompanyCategoriesResponse
-	(*Koji)(nil),                            // 11: grpc.v1.Koji
-	(*GetKojiesRequest)(nil),                // 12: grpc.v1.GetKojiesRequest
-	(*GetKojiesResponse)(nil),               // 13: grpc.v1.GetKojiesResponse
-	(*GetKojiRequest)(nil),                  // 14: grpc.v1.GetKojiRequest
-	(*GetKojiResponse)(nil),                 // 15: grpc.v1.GetKojiResponse
-	(*UpdateKojiRequest)(nil),               // 16: grpc.v1.UpdateKojiRequest
-	(*UpdateKojiResponse)(nil),              // 17: grpc.v1.UpdateKojiResponse
-	(*UpdateKojiStandardFilesRequest)(nil),  // 18: grpc.v1.UpdateKojiStandardFilesRequest
-	(*UpdateKojiStandardFilesResponse)(nil), // 19: grpc.v1.UpdateKojiStandardFilesResponse
-	(*GetFileInfosRequest)(nil),             // 20: grpc.v1.GetFileInfosRequest
-	(*GetFileInfosResponse)(nil),            // 21: grpc.v1.GetFileInfosResponse
-	(*GetFileBasePathRequest)(nil),          // 22: grpc.v1.GetFileBasePathRequest
-	(*GetFileBasePathResponse)(nil),         // 23: grpc.v1.GetFileBasePathResponse
+	(*Koji)(nil),                            // 3: grpc.v1.Koji
+	(*GetFileInfosRequest)(nil),             // 4: grpc.v1.GetFileInfosRequest
+	(*GetFileInfosResponse)(nil),            // 5: grpc.v1.GetFileInfosResponse
+	(*GetFileBasePathRequest)(nil),          // 6: grpc.v1.GetFileBasePathRequest
+	(*GetFileBasePathResponse)(nil),         // 7: grpc.v1.GetFileBasePathResponse
+	(*GetCompanyMapByIdRequest)(nil),        // 8: grpc.v1.GetCompanyMapByIdRequest
+	(*GetCompanyMapByIdResponse)(nil),       // 9: grpc.v1.GetCompanyMapByIdResponse
+	(*GetCompanyByIdRequest)(nil),           // 10: grpc.v1.GetCompanyByIdRequest
+	(*GetCompanyByIdResponse)(nil),          // 11: grpc.v1.GetCompanyByIdResponse
+	(*UpdateCompanyRequest)(nil),            // 12: grpc.v1.UpdateCompanyRequest
+	(*UpdateCompanyResponse)(nil),           // 13: grpc.v1.UpdateCompanyResponse
+	(*GetCompanyCategoriesRequest)(nil),     // 14: grpc.v1.GetCompanyCategoriesRequest
+	(*GetCompanyCategoriesResponse)(nil),    // 15: grpc.v1.GetCompanyCategoriesResponse
+	(*GetKojiesRequest)(nil),                // 16: grpc.v1.GetKojiesRequest
+	(*GetKojiesResponse)(nil),               // 17: grpc.v1.GetKojiesResponse
+	(*GetKojiRequest)(nil),                  // 18: grpc.v1.GetKojiRequest
+	(*GetKojiResponse)(nil),                 // 19: grpc.v1.GetKojiResponse
+	(*UpdateKojiRequest)(nil),               // 20: grpc.v1.UpdateKojiRequest
+	(*UpdateKojiResponse)(nil),              // 21: grpc.v1.UpdateKojiResponse
+	(*UpdateKojiStandardFilesRequest)(nil),  // 22: grpc.v1.UpdateKojiStandardFilesRequest
+	(*UpdateKojiStandardFilesResponse)(nil), // 23: grpc.v1.UpdateKojiStandardFilesResponse
 	nil,                                     // 24: grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
 	nil,                                     // 25: grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
 	(*timestamppb.Timestamp)(nil),           // 26: google.protobuf.Timestamp
 }
-var file_v1_penguin_proto_depIdxs = []int32{
+var file_grpc_v1_toyotachikuro_proto_depIdxs = []int32{
 	26, // 0: grpc.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
 	0,  // 1: grpc.v1.Company.inside_required_files:type_name -> grpc.v1.FileInfo
-	24, // 2: grpc.v1.GetCompanyMapByIdResponse.company_map_by_id:type_name -> grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
-	1,  // 3: grpc.v1.GetCompanyByIdResponse.company:type_name -> grpc.v1.Company
-	1,  // 4: grpc.v1.UpdateCompanyRequest.updated_company:type_name -> grpc.v1.Company
-	25, // 5: grpc.v1.UpdateCompanyResponse.company_map_by_id:type_name -> grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
-	2,  // 6: grpc.v1.GetCompanyCategoriesResponse.categories:type_name -> grpc.v1.CompanyCategory
-	26, // 7: grpc.v1.Koji.start:type_name -> google.protobuf.Timestamp
-	26, // 8: grpc.v1.Koji.inside_end:type_name -> google.protobuf.Timestamp
-	0,  // 9: grpc.v1.Koji.inside_required_files:type_name -> grpc.v1.FileInfo
-	11, // 10: grpc.v1.GetKojiesResponse.kojies:type_name -> grpc.v1.Koji
-	11, // 11: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
-	11, // 12: grpc.v1.UpdateKojiRequest.koji:type_name -> grpc.v1.Koji
-	11, // 13: grpc.v1.UpdateKojiResponse.koji:type_name -> grpc.v1.Koji
-	11, // 14: grpc.v1.UpdateKojiStandardFilesRequest.koji:type_name -> grpc.v1.Koji
-	11, // 15: grpc.v1.UpdateKojiStandardFilesResponse.koji:type_name -> grpc.v1.Koji
-	0,  // 16: grpc.v1.GetFileInfosResponse.file_infos:type_name -> grpc.v1.FileInfo
+	26, // 2: grpc.v1.Koji.start:type_name -> google.protobuf.Timestamp
+	26, // 3: grpc.v1.Koji.inside_end:type_name -> google.protobuf.Timestamp
+	0,  // 4: grpc.v1.Koji.inside_required_files:type_name -> grpc.v1.FileInfo
+	0,  // 5: grpc.v1.GetFileInfosResponse.file_infos:type_name -> grpc.v1.FileInfo
+	24, // 6: grpc.v1.GetCompanyMapByIdResponse.company_map_by_id:type_name -> grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
+	1,  // 7: grpc.v1.GetCompanyByIdResponse.company:type_name -> grpc.v1.Company
+	1,  // 8: grpc.v1.UpdateCompanyRequest.updated_company:type_name -> grpc.v1.Company
+	25, // 9: grpc.v1.UpdateCompanyResponse.company_map_by_id:type_name -> grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
+	2,  // 10: grpc.v1.GetCompanyCategoriesResponse.categories:type_name -> grpc.v1.CompanyCategory
+	3,  // 11: grpc.v1.GetKojiesResponse.kojies:type_name -> grpc.v1.Koji
+	3,  // 12: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
+	3,  // 13: grpc.v1.UpdateKojiRequest.koji:type_name -> grpc.v1.Koji
+	3,  // 14: grpc.v1.UpdateKojiResponse.koji:type_name -> grpc.v1.Koji
+	3,  // 15: grpc.v1.UpdateKojiStandardFilesRequest.koji:type_name -> grpc.v1.Koji
+	3,  // 16: grpc.v1.UpdateKojiStandardFilesResponse.koji:type_name -> grpc.v1.Koji
 	1,  // 17: grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry.value:type_name -> grpc.v1.Company
 	1,  // 18: grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry.value:type_name -> grpc.v1.Company
-	20, // 19: grpc.v1.FileService.GetFileInfos:input_type -> grpc.v1.GetFileInfosRequest
-	22, // 20: grpc.v1.FileService.GetFileBasePath:input_type -> grpc.v1.GetFileBasePathRequest
-	3,  // 21: grpc.v1.CompanyService.GetCompanyMapById:input_type -> grpc.v1.GetCompanyMapByIdRequest
-	5,  // 22: grpc.v1.CompanyService.GetCompanyById:input_type -> grpc.v1.GetCompanyByIdRequest
-	7,  // 23: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
-	9,  // 24: grpc.v1.CompanyService.GetCompanyCategories:input_type -> grpc.v1.GetCompanyCategoriesRequest
-	12, // 25: grpc.v1.KojiService.GetKojies:input_type -> grpc.v1.GetKojiesRequest
-	14, // 26: grpc.v1.KojiService.GetKoji:input_type -> grpc.v1.GetKojiRequest
-	16, // 27: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
-	18, // 28: grpc.v1.KojiService.UpdateKojiStandardFiles:input_type -> grpc.v1.UpdateKojiStandardFilesRequest
-	21, // 29: grpc.v1.FileService.GetFileInfos:output_type -> grpc.v1.GetFileInfosResponse
-	23, // 30: grpc.v1.FileService.GetFileBasePath:output_type -> grpc.v1.GetFileBasePathResponse
-	4,  // 31: grpc.v1.CompanyService.GetCompanyMapById:output_type -> grpc.v1.GetCompanyMapByIdResponse
-	6,  // 32: grpc.v1.CompanyService.GetCompanyById:output_type -> grpc.v1.GetCompanyByIdResponse
-	8,  // 33: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
-	10, // 34: grpc.v1.CompanyService.GetCompanyCategories:output_type -> grpc.v1.GetCompanyCategoriesResponse
-	13, // 35: grpc.v1.KojiService.GetKojies:output_type -> grpc.v1.GetKojiesResponse
-	15, // 36: grpc.v1.KojiService.GetKoji:output_type -> grpc.v1.GetKojiResponse
-	17, // 37: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
-	19, // 38: grpc.v1.KojiService.UpdateKojiStandardFiles:output_type -> grpc.v1.UpdateKojiStandardFilesResponse
+	4,  // 19: grpc.v1.FileService.GetFileInfos:input_type -> grpc.v1.GetFileInfosRequest
+	6,  // 20: grpc.v1.FileService.GetFileBasePath:input_type -> grpc.v1.GetFileBasePathRequest
+	8,  // 21: grpc.v1.CompanyService.GetCompanyMapById:input_type -> grpc.v1.GetCompanyMapByIdRequest
+	10, // 22: grpc.v1.CompanyService.GetCompanyById:input_type -> grpc.v1.GetCompanyByIdRequest
+	12, // 23: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
+	14, // 24: grpc.v1.CompanyService.GetCompanyCategories:input_type -> grpc.v1.GetCompanyCategoriesRequest
+	16, // 25: grpc.v1.KojiService.GetKojies:input_type -> grpc.v1.GetKojiesRequest
+	18, // 26: grpc.v1.KojiService.GetKoji:input_type -> grpc.v1.GetKojiRequest
+	20, // 27: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
+	22, // 28: grpc.v1.KojiService.UpdateKojiStandardFiles:input_type -> grpc.v1.UpdateKojiStandardFilesRequest
+	5,  // 29: grpc.v1.FileService.GetFileInfos:output_type -> grpc.v1.GetFileInfosResponse
+	7,  // 30: grpc.v1.FileService.GetFileBasePath:output_type -> grpc.v1.GetFileBasePathResponse
+	9,  // 31: grpc.v1.CompanyService.GetCompanyMapById:output_type -> grpc.v1.GetCompanyMapByIdResponse
+	11, // 32: grpc.v1.CompanyService.GetCompanyById:output_type -> grpc.v1.GetCompanyByIdResponse
+	13, // 33: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
+	15, // 34: grpc.v1.CompanyService.GetCompanyCategories:output_type -> grpc.v1.GetCompanyCategoriesResponse
+	17, // 35: grpc.v1.KojiService.GetKojies:output_type -> grpc.v1.GetKojiesResponse
+	19, // 36: grpc.v1.KojiService.GetKoji:output_type -> grpc.v1.GetKojiResponse
+	21, // 37: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
+	23, // 38: grpc.v1.KojiService.UpdateKojiStandardFiles:output_type -> grpc.v1.UpdateKojiStandardFilesResponse
 	29, // [29:39] is the sub-list for method output_type
 	19, // [19:29] is the sub-list for method input_type
 	19, // [19:19] is the sub-list for extension type_name
@@ -2062,26 +2069,26 @@ var file_v1_penguin_proto_depIdxs = []int32{
 	0,  // [0:19] is the sub-list for field type_name
 }
 
-func init() { file_v1_penguin_proto_init() }
-func file_v1_penguin_proto_init() {
-	if File_v1_penguin_proto != nil {
+func init() { file_grpc_v1_toyotachikuro_proto_init() }
+func file_grpc_v1_toyotachikuro_proto_init() {
+	if File_grpc_v1_toyotachikuro_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_penguin_proto_rawDesc), len(file_v1_penguin_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_v1_toyotachikuro_proto_rawDesc), len(file_grpc_v1_toyotachikuro_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   3,
 		},
-		GoTypes:           file_v1_penguin_proto_goTypes,
-		DependencyIndexes: file_v1_penguin_proto_depIdxs,
-		MessageInfos:      file_v1_penguin_proto_msgTypes,
+		GoTypes:           file_grpc_v1_toyotachikuro_proto_goTypes,
+		DependencyIndexes: file_grpc_v1_toyotachikuro_proto_depIdxs,
+		MessageInfos:      file_grpc_v1_toyotachikuro_proto_msgTypes,
 	}.Build()
-	File_v1_penguin_proto = out.File
-	file_v1_penguin_proto_goTypes = nil
-	file_v1_penguin_proto_depIdxs = nil
+	File_grpc_v1_toyotachikuro_proto = out.File
+	file_grpc_v1_toyotachikuro_proto_goTypes = nil
+	file_grpc_v1_toyotachikuro_proto_depIdxs = nil
 }

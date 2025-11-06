@@ -14,22 +14,23 @@ frontend:
 
 # Install backend dependencies
 backend-deps:
-    cd ./backend && go mod tidy
+    cd ./backend-grpc && go mod tidy
 
 # Generate SSL certificate for HTTP/2
 generate-cert:
-    cd ./backend && ./generate-cert.sh
+    cd ./backend-grpc && ./generate-cert.sh
 
 # Update all Go packages to latest versions
 # ただしメジャーなバージョンは更新しない
 backend-update:
-    cd ./backend && go get -u ./...
-    cd ./backend && go mod tidy
+    cd ./backend-grpc && go get -u ./...
+    cd ./backend-grpc && go mod tidy
 
-# Generate gRPC stubs for Koji service
+# Generate gRPC stubs for all services
 generate-grpc:
-    buf generate --path proto/v1/penguin.proto
-
+    @echo "Generating gRPC stubs..."
+    @buf generate
+    
 # Generate Connect-Web stubs for the frontend
 frontend-generate-grpc: generate-grpc
     @echo "Connect-Web stubs generated at frontend/src/gen/"

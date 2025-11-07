@@ -1354,27 +1354,26 @@ func (b0 GetCompanyCategoriesResponse_builder) Build() *GetCompanyCategoriesResp
 }
 
 // KojiService messages
-type GetKojiesRequest struct {
-	state             protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Filter string                 `protobuf:"bytes,1,opt,name=filter"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+type GetKojiMapByIdRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetKojiesRequest) Reset() {
-	*x = GetKojiesRequest{}
+func (x *GetKojiMapByIdRequest) Reset() {
+	*x = GetKojiMapByIdRequest{}
 	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetKojiesRequest) String() string {
+func (x *GetKojiMapByIdRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetKojiesRequest) ProtoMessage() {}
+func (*GetKojiMapByIdRequest) ProtoMessage() {}
 
-func (x *GetKojiesRequest) ProtoReflect() protoreflect.Message {
+func (x *GetKojiMapByIdRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1386,52 +1385,39 @@ func (x *GetKojiesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *GetKojiesRequest) GetFilter() string {
-	if x != nil {
-		return x.xxx_hidden_Filter
-	}
-	return ""
-}
-
-func (x *GetKojiesRequest) SetFilter(v string) {
-	x.xxx_hidden_Filter = v
-}
-
-type GetKojiesRequest_builder struct {
+type GetKojiMapByIdRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Filter string
 }
 
-func (b0 GetKojiesRequest_builder) Build() *GetKojiesRequest {
-	m0 := &GetKojiesRequest{}
+func (b0 GetKojiMapByIdRequest_builder) Build() *GetKojiMapByIdRequest {
+	m0 := &GetKojiMapByIdRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.xxx_hidden_Filter = b.Filter
 	return m0
 }
 
-type GetKojiesResponse struct {
-	state             protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Kojies *[]*Koji               `protobuf:"bytes,1,rep,name=kojies"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+type GetKojiMapByIdResponse struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_KojiMapById map[string]*Koji       `protobuf:"bytes,1,rep,name=koji_map_by_id,json=kojiMapById" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
-func (x *GetKojiesResponse) Reset() {
-	*x = GetKojiesResponse{}
+func (x *GetKojiMapByIdResponse) Reset() {
+	*x = GetKojiMapByIdResponse{}
 	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetKojiesResponse) String() string {
+func (x *GetKojiMapByIdResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetKojiesResponse) ProtoMessage() {}
+func (*GetKojiMapByIdResponse) ProtoMessage() {}
 
-func (x *GetKojiesResponse) ProtoReflect() protoreflect.Message {
+func (x *GetKojiMapByIdResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1443,54 +1429,52 @@ func (x *GetKojiesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *GetKojiesResponse) GetKojies() []*Koji {
+func (x *GetKojiMapByIdResponse) GetKojiMapById() map[string]*Koji {
 	if x != nil {
-		if x.xxx_hidden_Kojies != nil {
-			return *x.xxx_hidden_Kojies
-		}
+		return x.xxx_hidden_KojiMapById
 	}
 	return nil
 }
 
-func (x *GetKojiesResponse) SetKojies(v []*Koji) {
-	x.xxx_hidden_Kojies = &v
+func (x *GetKojiMapByIdResponse) SetKojiMapById(v map[string]*Koji) {
+	x.xxx_hidden_KojiMapById = v
 }
 
-type GetKojiesResponse_builder struct {
+type GetKojiMapByIdResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Kojies []*Koji
+	KojiMapById map[string]*Koji
 }
 
-func (b0 GetKojiesResponse_builder) Build() *GetKojiesResponse {
-	m0 := &GetKojiesResponse{}
+func (b0 GetKojiMapByIdResponse_builder) Build() *GetKojiMapByIdResponse {
+	m0 := &GetKojiMapByIdResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.xxx_hidden_Kojies = &b.Kojies
+	x.xxx_hidden_KojiMapById = b.KojiMapById
 	return m0
 }
 
-type GetKojiRequest struct {
-	state                 protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FolderName string                 `protobuf:"bytes,1,opt,name=folder_name,json=folderName"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+type GetKojiByIdRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetKojiRequest) Reset() {
-	*x = GetKojiRequest{}
+func (x *GetKojiByIdRequest) Reset() {
+	*x = GetKojiByIdRequest{}
 	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetKojiRequest) String() string {
+func (x *GetKojiByIdRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetKojiRequest) ProtoMessage() {}
+func (*GetKojiByIdRequest) ProtoMessage() {}
 
-func (x *GetKojiRequest) ProtoReflect() protoreflect.Message {
+func (x *GetKojiByIdRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1502,52 +1486,52 @@ func (x *GetKojiRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *GetKojiRequest) GetFolderName() string {
+func (x *GetKojiByIdRequest) GetId() string {
 	if x != nil {
-		return x.xxx_hidden_FolderName
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
-func (x *GetKojiRequest) SetFolderName(v string) {
-	x.xxx_hidden_FolderName = v
+func (x *GetKojiByIdRequest) SetId(v string) {
+	x.xxx_hidden_Id = v
 }
 
-type GetKojiRequest_builder struct {
+type GetKojiByIdRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	FolderName string
+	Id string
 }
 
-func (b0 GetKojiRequest_builder) Build() *GetKojiRequest {
-	m0 := &GetKojiRequest{}
+func (b0 GetKojiByIdRequest_builder) Build() *GetKojiByIdRequest {
+	m0 := &GetKojiByIdRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.xxx_hidden_FolderName = b.FolderName
+	x.xxx_hidden_Id = b.Id
 	return m0
 }
 
-type GetKojiResponse struct {
+type GetKojiByIdResponse struct {
 	state           protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Koji *Koji                  `protobuf:"bytes,1,opt,name=koji"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *GetKojiResponse) Reset() {
-	*x = GetKojiResponse{}
+func (x *GetKojiByIdResponse) Reset() {
+	*x = GetKojiByIdResponse{}
 	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetKojiResponse) String() string {
+func (x *GetKojiByIdResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetKojiResponse) ProtoMessage() {}
+func (*GetKojiByIdResponse) ProtoMessage() {}
 
-func (x *GetKojiResponse) ProtoReflect() protoreflect.Message {
+func (x *GetKojiByIdResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1559,36 +1543,36 @@ func (x *GetKojiResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *GetKojiResponse) GetKoji() *Koji {
+func (x *GetKojiByIdResponse) GetKoji() *Koji {
 	if x != nil {
 		return x.xxx_hidden_Koji
 	}
 	return nil
 }
 
-func (x *GetKojiResponse) SetKoji(v *Koji) {
+func (x *GetKojiByIdResponse) SetKoji(v *Koji) {
 	x.xxx_hidden_Koji = v
 }
 
-func (x *GetKojiResponse) HasKoji() bool {
+func (x *GetKojiByIdResponse) HasKoji() bool {
 	if x == nil {
 		return false
 	}
 	return x.xxx_hidden_Koji != nil
 }
 
-func (x *GetKojiResponse) ClearKoji() {
+func (x *GetKojiByIdResponse) ClearKoji() {
 	x.xxx_hidden_Koji = nil
 }
 
-type GetKojiResponse_builder struct {
+type GetKojiByIdResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Koji *Koji
 }
 
-func (b0 GetKojiResponse_builder) Build() *GetKojiResponse {
-	m0 := &GetKojiResponse{}
+func (b0 GetKojiByIdResponse_builder) Build() *GetKojiByIdResponse {
+	m0 := &GetKojiByIdResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Koji = b.Koji
@@ -1596,10 +1580,11 @@ func (b0 GetKojiResponse_builder) Build() *GetKojiResponse {
 }
 
 type UpdateKojiRequest struct {
-	state           protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Koji *Koji                  `protobuf:"bytes,1,opt,name=koji"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_CurrentKojiId string                 `protobuf:"bytes,1,opt,name=current_koji_id,json=currentKojiId"`
+	xxx_hidden_UpdatedKoji   *Koji                  `protobuf:"bytes,2,opt,name=updated_koji,json=updatedKoji"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *UpdateKojiRequest) Reset() {
@@ -1627,47 +1612,60 @@ func (x *UpdateKojiRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *UpdateKojiRequest) GetKoji() *Koji {
+func (x *UpdateKojiRequest) GetCurrentKojiId() string {
 	if x != nil {
-		return x.xxx_hidden_Koji
+		return x.xxx_hidden_CurrentKojiId
+	}
+	return ""
+}
+
+func (x *UpdateKojiRequest) GetUpdatedKoji() *Koji {
+	if x != nil {
+		return x.xxx_hidden_UpdatedKoji
 	}
 	return nil
 }
 
-func (x *UpdateKojiRequest) SetKoji(v *Koji) {
-	x.xxx_hidden_Koji = v
+func (x *UpdateKojiRequest) SetCurrentKojiId(v string) {
+	x.xxx_hidden_CurrentKojiId = v
 }
 
-func (x *UpdateKojiRequest) HasKoji() bool {
+func (x *UpdateKojiRequest) SetUpdatedKoji(v *Koji) {
+	x.xxx_hidden_UpdatedKoji = v
+}
+
+func (x *UpdateKojiRequest) HasUpdatedKoji() bool {
 	if x == nil {
 		return false
 	}
-	return x.xxx_hidden_Koji != nil
+	return x.xxx_hidden_UpdatedKoji != nil
 }
 
-func (x *UpdateKojiRequest) ClearKoji() {
-	x.xxx_hidden_Koji = nil
+func (x *UpdateKojiRequest) ClearUpdatedKoji() {
+	x.xxx_hidden_UpdatedKoji = nil
 }
 
 type UpdateKojiRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Koji *Koji
+	CurrentKojiId string
+	UpdatedKoji   *Koji
 }
 
 func (b0 UpdateKojiRequest_builder) Build() *UpdateKojiRequest {
 	m0 := &UpdateKojiRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.xxx_hidden_Koji = b.Koji
+	x.xxx_hidden_CurrentKojiId = b.CurrentKojiId
+	x.xxx_hidden_UpdatedKoji = b.UpdatedKoji
 	return m0
 }
 
 type UpdateKojiResponse struct {
-	state           protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Koji *Koji                  `protobuf:"bytes,1,opt,name=koji"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_KojiMapById map[string]*Koji       `protobuf:"bytes,1,rep,name=koji_map_by_id,json=kojiMapById" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *UpdateKojiResponse) Reset() {
@@ -1695,189 +1693,28 @@ func (x *UpdateKojiResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *UpdateKojiResponse) GetKoji() *Koji {
+func (x *UpdateKojiResponse) GetKojiMapById() map[string]*Koji {
 	if x != nil {
-		return x.xxx_hidden_Koji
+		return x.xxx_hidden_KojiMapById
 	}
 	return nil
 }
 
-func (x *UpdateKojiResponse) SetKoji(v *Koji) {
-	x.xxx_hidden_Koji = v
-}
-
-func (x *UpdateKojiResponse) HasKoji() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Koji != nil
-}
-
-func (x *UpdateKojiResponse) ClearKoji() {
-	x.xxx_hidden_Koji = nil
+func (x *UpdateKojiResponse) SetKojiMapById(v map[string]*Koji) {
+	x.xxx_hidden_KojiMapById = v
 }
 
 type UpdateKojiResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Koji *Koji
+	KojiMapById map[string]*Koji
 }
 
 func (b0 UpdateKojiResponse_builder) Build() *UpdateKojiResponse {
 	m0 := &UpdateKojiResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.xxx_hidden_Koji = b.Koji
-	return m0
-}
-
-type UpdateKojiStandardFilesRequest struct {
-	state               protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Koji     *Koji                  `protobuf:"bytes,1,opt,name=koji"`
-	xxx_hidden_Currents []string               `protobuf:"bytes,2,rep,name=currents"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
-}
-
-func (x *UpdateKojiStandardFilesRequest) Reset() {
-	*x = UpdateKojiStandardFilesRequest{}
-	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateKojiStandardFilesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateKojiStandardFilesRequest) ProtoMessage() {}
-
-func (x *UpdateKojiStandardFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *UpdateKojiStandardFilesRequest) GetKoji() *Koji {
-	if x != nil {
-		return x.xxx_hidden_Koji
-	}
-	return nil
-}
-
-func (x *UpdateKojiStandardFilesRequest) GetCurrents() []string {
-	if x != nil {
-		return x.xxx_hidden_Currents
-	}
-	return nil
-}
-
-func (x *UpdateKojiStandardFilesRequest) SetKoji(v *Koji) {
-	x.xxx_hidden_Koji = v
-}
-
-func (x *UpdateKojiStandardFilesRequest) SetCurrents(v []string) {
-	x.xxx_hidden_Currents = v
-}
-
-func (x *UpdateKojiStandardFilesRequest) HasKoji() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Koji != nil
-}
-
-func (x *UpdateKojiStandardFilesRequest) ClearKoji() {
-	x.xxx_hidden_Koji = nil
-}
-
-type UpdateKojiStandardFilesRequest_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Koji     *Koji
-	Currents []string
-}
-
-func (b0 UpdateKojiStandardFilesRequest_builder) Build() *UpdateKojiStandardFilesRequest {
-	m0 := &UpdateKojiStandardFilesRequest{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Koji = b.Koji
-	x.xxx_hidden_Currents = b.Currents
-	return m0
-}
-
-type UpdateKojiStandardFilesResponse struct {
-	state           protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Koji *Koji                  `protobuf:"bytes,1,opt,name=koji"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *UpdateKojiStandardFilesResponse) Reset() {
-	*x = UpdateKojiStandardFilesResponse{}
-	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateKojiStandardFilesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateKojiStandardFilesResponse) ProtoMessage() {}
-
-func (x *UpdateKojiStandardFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_v1_toyotachikuro_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *UpdateKojiStandardFilesResponse) GetKoji() *Koji {
-	if x != nil {
-		return x.xxx_hidden_Koji
-	}
-	return nil
-}
-
-func (x *UpdateKojiStandardFilesResponse) SetKoji(v *Koji) {
-	x.xxx_hidden_Koji = v
-}
-
-func (x *UpdateKojiStandardFilesResponse) HasKoji() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Koji != nil
-}
-
-func (x *UpdateKojiStandardFilesResponse) ClearKoji() {
-	x.xxx_hidden_Koji = nil
-}
-
-type UpdateKojiStandardFilesResponse_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Koji *Koji
-}
-
-func (b0 UpdateKojiStandardFilesResponse_builder) Build() *UpdateKojiStandardFilesResponse {
-	m0 := &UpdateKojiStandardFilesResponse{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Koji = b.Koji
+	x.xxx_hidden_KojiMapById = b.KojiMapById
 	return m0
 }
 
@@ -1957,25 +1794,25 @@ const file_grpc_v1_toyotachikuro_proto_rawDesc = "" +
 	"\x1cGetCompanyCategoriesResponse\x128\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2\x18.grpc.v1.CompanyCategoryR\n" +
-	"categories\"*\n" +
-	"\x10GetKojiesRequest\x12\x16\n" +
-	"\x06filter\x18\x01 \x01(\tR\x06filter\":\n" +
-	"\x11GetKojiesResponse\x12%\n" +
-	"\x06kojies\x18\x01 \x03(\v2\r.grpc.v1.KojiR\x06kojies\"1\n" +
-	"\x0eGetKojiRequest\x12\x1f\n" +
-	"\vfolder_name\x18\x01 \x01(\tR\n" +
-	"folderName\"4\n" +
-	"\x0fGetKojiResponse\x12!\n" +
-	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"6\n" +
-	"\x11UpdateKojiRequest\x12!\n" +
-	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"7\n" +
-	"\x12UpdateKojiResponse\x12!\n" +
-	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"_\n" +
-	"\x1eUpdateKojiStandardFilesRequest\x12!\n" +
-	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\x12\x1a\n" +
-	"\bcurrents\x18\x02 \x03(\tR\bcurrents\"D\n" +
-	"\x1fUpdateKojiStandardFilesResponse\x12!\n" +
-	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji2\xb0\x01\n" +
+	"categories\"\x17\n" +
+	"\x15GetKojiMapByIdRequest\"\xbe\x01\n" +
+	"\x16GetKojiMapByIdResponse\x12U\n" +
+	"\x0ekoji_map_by_id\x18\x01 \x03(\v20.grpc.v1.GetKojiMapByIdResponse.KojiMapByIdEntryR\vkojiMapById\x1aM\n" +
+	"\x10KojiMapByIdEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12#\n" +
+	"\x05value\x18\x02 \x01(\v2\r.grpc.v1.KojiR\x05value:\x028\x01\"$\n" +
+	"\x12GetKojiByIdRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"8\n" +
+	"\x13GetKojiByIdResponse\x12!\n" +
+	"\x04koji\x18\x01 \x01(\v2\r.grpc.v1.KojiR\x04koji\"m\n" +
+	"\x11UpdateKojiRequest\x12&\n" +
+	"\x0fcurrent_koji_id\x18\x01 \x01(\tR\rcurrentKojiId\x120\n" +
+	"\fupdated_koji\x18\x02 \x01(\v2\r.grpc.v1.KojiR\vupdatedKoji\"\xb6\x01\n" +
+	"\x12UpdateKojiResponse\x12Q\n" +
+	"\x0ekoji_map_by_id\x18\x01 \x03(\v2,.grpc.v1.UpdateKojiResponse.KojiMapByIdEntryR\vkojiMapById\x1aM\n" +
+	"\x10KojiMapByIdEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12#\n" +
+	"\x05value\x18\x02 \x01(\v2\r.grpc.v1.KojiR\x05value:\x028\x012\xb0\x01\n" +
 	"\vFileService\x12K\n" +
 	"\fGetFileInfos\x12\x1c.grpc.v1.GetFileInfosRequest\x1a\x1d.grpc.v1.GetFileInfosResponse\x12T\n" +
 	"\x0fGetFileBasePath\x12\x1f.grpc.v1.GetFileBasePathRequest\x1a .grpc.v1.GetFileBasePathResponse2\xf4\x02\n" +
@@ -1983,44 +1820,43 @@ const file_grpc_v1_toyotachikuro_proto_rawDesc = "" +
 	"\x11GetCompanyMapById\x12!.grpc.v1.GetCompanyMapByIdRequest\x1a\".grpc.v1.GetCompanyMapByIdResponse\x12Q\n" +
 	"\x0eGetCompanyById\x12\x1e.grpc.v1.GetCompanyByIdRequest\x1a\x1f.grpc.v1.GetCompanyByIdResponse\x12N\n" +
 	"\rUpdateCompany\x12\x1d.grpc.v1.UpdateCompanyRequest\x1a\x1e.grpc.v1.UpdateCompanyResponse\x12c\n" +
-	"\x14GetCompanyCategories\x12$.grpc.v1.GetCompanyCategoriesRequest\x1a%.grpc.v1.GetCompanyCategoriesResponse2\xc4\x02\n" +
-	"\vKojiService\x12B\n" +
-	"\tGetKojies\x12\x19.grpc.v1.GetKojiesRequest\x1a\x1a.grpc.v1.GetKojiesResponse\x12<\n" +
-	"\aGetKoji\x12\x17.grpc.v1.GetKojiRequest\x1a\x18.grpc.v1.GetKojiResponse\x12E\n" +
+	"\x14GetCompanyCategories\x12$.grpc.v1.GetCompanyCategoriesRequest\x1a%.grpc.v1.GetCompanyCategoriesResponse2\xf1\x01\n" +
+	"\vKojiService\x12Q\n" +
+	"\x0eGetKojiMapById\x12\x1e.grpc.v1.GetKojiMapByIdRequest\x1a\x1f.grpc.v1.GetKojiMapByIdResponse\x12H\n" +
+	"\vGetKojiById\x12\x1b.grpc.v1.GetKojiByIdRequest\x1a\x1c.grpc.v1.GetKojiByIdResponse\x12E\n" +
 	"\n" +
-	"UpdateKoji\x12\x1a.grpc.v1.UpdateKojiRequest\x1a\x1b.grpc.v1.UpdateKojiResponse\x12l\n" +
-	"\x17UpdateKojiStandardFiles\x12'.grpc.v1.UpdateKojiStandardFilesRequest\x1a(.grpc.v1.UpdateKojiStandardFilesResponseB\x89\x01\n" +
-	"\vcom.grpc.v1B\x12ToyotachikuroProtoP\x01Z\x1fgrpc-backend/gen/grpc/v1;grpcv1\xa2\x02\x03GXX\xaa\x02\aGrpc.V1\xca\x02\aGrpc\\V1\xe2\x02\x13Grpc\\V1\\GPBMetadata\xea\x02\bGrpc::V1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
+	"UpdateKoji\x12\x1a.grpc.v1.UpdateKojiRequest\x1a\x1b.grpc.v1.UpdateKojiResponseB\x89\x01\n" +
+	"\vcom.grpc.v1B\x12ToyotachikuroProtoP\x01Z\x1fbackend-grpc/gen/grpc/v1;grpcv1\xa2\x02\x03GXX\xaa\x02\aGrpc.V1\xca\x02\aGrpc\\V1\xe2\x02\x13Grpc\\V1\\GPBMetadata\xea\x02\bGrpc::V1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
 
 var file_grpc_v1_toyotachikuro_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_grpc_v1_toyotachikuro_proto_goTypes = []any{
-	(*FileInfo)(nil),                        // 0: grpc.v1.FileInfo
-	(*Company)(nil),                         // 1: grpc.v1.Company
-	(*CompanyCategory)(nil),                 // 2: grpc.v1.CompanyCategory
-	(*Koji)(nil),                            // 3: grpc.v1.Koji
-	(*GetFileInfosRequest)(nil),             // 4: grpc.v1.GetFileInfosRequest
-	(*GetFileInfosResponse)(nil),            // 5: grpc.v1.GetFileInfosResponse
-	(*GetFileBasePathRequest)(nil),          // 6: grpc.v1.GetFileBasePathRequest
-	(*GetFileBasePathResponse)(nil),         // 7: grpc.v1.GetFileBasePathResponse
-	(*GetCompanyMapByIdRequest)(nil),        // 8: grpc.v1.GetCompanyMapByIdRequest
-	(*GetCompanyMapByIdResponse)(nil),       // 9: grpc.v1.GetCompanyMapByIdResponse
-	(*GetCompanyByIdRequest)(nil),           // 10: grpc.v1.GetCompanyByIdRequest
-	(*GetCompanyByIdResponse)(nil),          // 11: grpc.v1.GetCompanyByIdResponse
-	(*UpdateCompanyRequest)(nil),            // 12: grpc.v1.UpdateCompanyRequest
-	(*UpdateCompanyResponse)(nil),           // 13: grpc.v1.UpdateCompanyResponse
-	(*GetCompanyCategoriesRequest)(nil),     // 14: grpc.v1.GetCompanyCategoriesRequest
-	(*GetCompanyCategoriesResponse)(nil),    // 15: grpc.v1.GetCompanyCategoriesResponse
-	(*GetKojiesRequest)(nil),                // 16: grpc.v1.GetKojiesRequest
-	(*GetKojiesResponse)(nil),               // 17: grpc.v1.GetKojiesResponse
-	(*GetKojiRequest)(nil),                  // 18: grpc.v1.GetKojiRequest
-	(*GetKojiResponse)(nil),                 // 19: grpc.v1.GetKojiResponse
-	(*UpdateKojiRequest)(nil),               // 20: grpc.v1.UpdateKojiRequest
-	(*UpdateKojiResponse)(nil),              // 21: grpc.v1.UpdateKojiResponse
-	(*UpdateKojiStandardFilesRequest)(nil),  // 22: grpc.v1.UpdateKojiStandardFilesRequest
-	(*UpdateKojiStandardFilesResponse)(nil), // 23: grpc.v1.UpdateKojiStandardFilesResponse
-	nil,                                     // 24: grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
-	nil,                                     // 25: grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
-	(*timestamppb.Timestamp)(nil),           // 26: google.protobuf.Timestamp
+	(*FileInfo)(nil),                     // 0: grpc.v1.FileInfo
+	(*Company)(nil),                      // 1: grpc.v1.Company
+	(*CompanyCategory)(nil),              // 2: grpc.v1.CompanyCategory
+	(*Koji)(nil),                         // 3: grpc.v1.Koji
+	(*GetFileInfosRequest)(nil),          // 4: grpc.v1.GetFileInfosRequest
+	(*GetFileInfosResponse)(nil),         // 5: grpc.v1.GetFileInfosResponse
+	(*GetFileBasePathRequest)(nil),       // 6: grpc.v1.GetFileBasePathRequest
+	(*GetFileBasePathResponse)(nil),      // 7: grpc.v1.GetFileBasePathResponse
+	(*GetCompanyMapByIdRequest)(nil),     // 8: grpc.v1.GetCompanyMapByIdRequest
+	(*GetCompanyMapByIdResponse)(nil),    // 9: grpc.v1.GetCompanyMapByIdResponse
+	(*GetCompanyByIdRequest)(nil),        // 10: grpc.v1.GetCompanyByIdRequest
+	(*GetCompanyByIdResponse)(nil),       // 11: grpc.v1.GetCompanyByIdResponse
+	(*UpdateCompanyRequest)(nil),         // 12: grpc.v1.UpdateCompanyRequest
+	(*UpdateCompanyResponse)(nil),        // 13: grpc.v1.UpdateCompanyResponse
+	(*GetCompanyCategoriesRequest)(nil),  // 14: grpc.v1.GetCompanyCategoriesRequest
+	(*GetCompanyCategoriesResponse)(nil), // 15: grpc.v1.GetCompanyCategoriesResponse
+	(*GetKojiMapByIdRequest)(nil),        // 16: grpc.v1.GetKojiMapByIdRequest
+	(*GetKojiMapByIdResponse)(nil),       // 17: grpc.v1.GetKojiMapByIdResponse
+	(*GetKojiByIdRequest)(nil),           // 18: grpc.v1.GetKojiByIdRequest
+	(*GetKojiByIdResponse)(nil),          // 19: grpc.v1.GetKojiByIdResponse
+	(*UpdateKojiRequest)(nil),            // 20: grpc.v1.UpdateKojiRequest
+	(*UpdateKojiResponse)(nil),           // 21: grpc.v1.UpdateKojiResponse
+	nil,                                  // 22: grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
+	nil,                                  // 23: grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
+	nil,                                  // 24: grpc.v1.GetKojiMapByIdResponse.KojiMapByIdEntry
+	nil,                                  // 25: grpc.v1.UpdateKojiResponse.KojiMapByIdEntry
+	(*timestamppb.Timestamp)(nil),        // 26: google.protobuf.Timestamp
 }
 var file_grpc_v1_toyotachikuro_proto_depIdxs = []int32{
 	26, // 0: grpc.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
@@ -2029,41 +1865,39 @@ var file_grpc_v1_toyotachikuro_proto_depIdxs = []int32{
 	26, // 3: grpc.v1.Koji.inside_end:type_name -> google.protobuf.Timestamp
 	0,  // 4: grpc.v1.Koji.inside_required_files:type_name -> grpc.v1.FileInfo
 	0,  // 5: grpc.v1.GetFileInfosResponse.file_infos:type_name -> grpc.v1.FileInfo
-	24, // 6: grpc.v1.GetCompanyMapByIdResponse.company_map_by_id:type_name -> grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
+	22, // 6: grpc.v1.GetCompanyMapByIdResponse.company_map_by_id:type_name -> grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry
 	1,  // 7: grpc.v1.GetCompanyByIdResponse.company:type_name -> grpc.v1.Company
 	1,  // 8: grpc.v1.UpdateCompanyRequest.updated_company:type_name -> grpc.v1.Company
-	25, // 9: grpc.v1.UpdateCompanyResponse.company_map_by_id:type_name -> grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
+	23, // 9: grpc.v1.UpdateCompanyResponse.company_map_by_id:type_name -> grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry
 	2,  // 10: grpc.v1.GetCompanyCategoriesResponse.categories:type_name -> grpc.v1.CompanyCategory
-	3,  // 11: grpc.v1.GetKojiesResponse.kojies:type_name -> grpc.v1.Koji
-	3,  // 12: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
-	3,  // 13: grpc.v1.UpdateKojiRequest.koji:type_name -> grpc.v1.Koji
-	3,  // 14: grpc.v1.UpdateKojiResponse.koji:type_name -> grpc.v1.Koji
-	3,  // 15: grpc.v1.UpdateKojiStandardFilesRequest.koji:type_name -> grpc.v1.Koji
-	3,  // 16: grpc.v1.UpdateKojiStandardFilesResponse.koji:type_name -> grpc.v1.Koji
-	1,  // 17: grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry.value:type_name -> grpc.v1.Company
-	1,  // 18: grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry.value:type_name -> grpc.v1.Company
+	24, // 11: grpc.v1.GetKojiMapByIdResponse.koji_map_by_id:type_name -> grpc.v1.GetKojiMapByIdResponse.KojiMapByIdEntry
+	3,  // 12: grpc.v1.GetKojiByIdResponse.koji:type_name -> grpc.v1.Koji
+	3,  // 13: grpc.v1.UpdateKojiRequest.updated_koji:type_name -> grpc.v1.Koji
+	25, // 14: grpc.v1.UpdateKojiResponse.koji_map_by_id:type_name -> grpc.v1.UpdateKojiResponse.KojiMapByIdEntry
+	1,  // 15: grpc.v1.GetCompanyMapByIdResponse.CompanyMapByIdEntry.value:type_name -> grpc.v1.Company
+	1,  // 16: grpc.v1.UpdateCompanyResponse.CompanyMapByIdEntry.value:type_name -> grpc.v1.Company
+	3,  // 17: grpc.v1.GetKojiMapByIdResponse.KojiMapByIdEntry.value:type_name -> grpc.v1.Koji
+	3,  // 18: grpc.v1.UpdateKojiResponse.KojiMapByIdEntry.value:type_name -> grpc.v1.Koji
 	4,  // 19: grpc.v1.FileService.GetFileInfos:input_type -> grpc.v1.GetFileInfosRequest
 	6,  // 20: grpc.v1.FileService.GetFileBasePath:input_type -> grpc.v1.GetFileBasePathRequest
 	8,  // 21: grpc.v1.CompanyService.GetCompanyMapById:input_type -> grpc.v1.GetCompanyMapByIdRequest
 	10, // 22: grpc.v1.CompanyService.GetCompanyById:input_type -> grpc.v1.GetCompanyByIdRequest
 	12, // 23: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
 	14, // 24: grpc.v1.CompanyService.GetCompanyCategories:input_type -> grpc.v1.GetCompanyCategoriesRequest
-	16, // 25: grpc.v1.KojiService.GetKojies:input_type -> grpc.v1.GetKojiesRequest
-	18, // 26: grpc.v1.KojiService.GetKoji:input_type -> grpc.v1.GetKojiRequest
+	16, // 25: grpc.v1.KojiService.GetKojiMapById:input_type -> grpc.v1.GetKojiMapByIdRequest
+	18, // 26: grpc.v1.KojiService.GetKojiById:input_type -> grpc.v1.GetKojiByIdRequest
 	20, // 27: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
-	22, // 28: grpc.v1.KojiService.UpdateKojiStandardFiles:input_type -> grpc.v1.UpdateKojiStandardFilesRequest
-	5,  // 29: grpc.v1.FileService.GetFileInfos:output_type -> grpc.v1.GetFileInfosResponse
-	7,  // 30: grpc.v1.FileService.GetFileBasePath:output_type -> grpc.v1.GetFileBasePathResponse
-	9,  // 31: grpc.v1.CompanyService.GetCompanyMapById:output_type -> grpc.v1.GetCompanyMapByIdResponse
-	11, // 32: grpc.v1.CompanyService.GetCompanyById:output_type -> grpc.v1.GetCompanyByIdResponse
-	13, // 33: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
-	15, // 34: grpc.v1.CompanyService.GetCompanyCategories:output_type -> grpc.v1.GetCompanyCategoriesResponse
-	17, // 35: grpc.v1.KojiService.GetKojies:output_type -> grpc.v1.GetKojiesResponse
-	19, // 36: grpc.v1.KojiService.GetKoji:output_type -> grpc.v1.GetKojiResponse
-	21, // 37: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
-	23, // 38: grpc.v1.KojiService.UpdateKojiStandardFiles:output_type -> grpc.v1.UpdateKojiStandardFilesResponse
-	29, // [29:39] is the sub-list for method output_type
-	19, // [19:29] is the sub-list for method input_type
+	5,  // 28: grpc.v1.FileService.GetFileInfos:output_type -> grpc.v1.GetFileInfosResponse
+	7,  // 29: grpc.v1.FileService.GetFileBasePath:output_type -> grpc.v1.GetFileBasePathResponse
+	9,  // 30: grpc.v1.CompanyService.GetCompanyMapById:output_type -> grpc.v1.GetCompanyMapByIdResponse
+	11, // 31: grpc.v1.CompanyService.GetCompanyById:output_type -> grpc.v1.GetCompanyByIdResponse
+	13, // 32: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
+	15, // 33: grpc.v1.CompanyService.GetCompanyCategories:output_type -> grpc.v1.GetCompanyCategoriesResponse
+	17, // 34: grpc.v1.KojiService.GetKojiMapById:output_type -> grpc.v1.GetKojiMapByIdResponse
+	19, // 35: grpc.v1.KojiService.GetKojiById:output_type -> grpc.v1.GetKojiByIdResponse
+	21, // 36: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
+	28, // [28:37] is the sub-list for method output_type
+	19, // [19:28] is the sub-list for method input_type
 	19, // [19:19] is the sub-list for extension type_name
 	19, // [19:19] is the sub-list for extension extendee
 	0,  // [0:19] is the sub-list for field type_name

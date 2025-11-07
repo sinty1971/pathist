@@ -2,7 +2,7 @@
 
 # Start the backend gRPC server (HTTP/2 over h2c)
 backend:
-    cd ./backend && go run cmd/grpc/main.go
+    cd ./backend-grpc && go run cmd/grpc/main.go
 
 # Start the backend gRPC server with TLS enabled
 backend-tls:

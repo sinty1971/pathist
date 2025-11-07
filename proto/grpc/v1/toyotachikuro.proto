@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 
 option features.(pb.go).api_level = API_OPAQUE;
 option features.field_presence = IMPLICIT;
-option go_package = "grpc-backend/gen/grpc/v1;grpcv1";
+option go_package = "backend-grpc/gen/grpc/v1;grpcv1";
 
 // FileInfo represents information about a file or directory
 message FileInfo {
@@ -72,10 +72,9 @@ service CompanyService {
 
 // KojiService provides operations for managing construction projects
 service KojiService {
-  rpc GetKojies(GetKojiesRequest) returns (GetKojiesResponse);
-  rpc GetKoji(GetKojiRequest) returns (GetKojiResponse);
+  rpc GetKojiMapById(GetKojiMapByIdRequest) returns (GetKojiMapByIdResponse);
+  rpc GetKojiById(GetKojiByIdRequest) returns (GetKojiByIdResponse);
   rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
-  rpc UpdateKojiStandardFiles(UpdateKojiStandardFilesRequest) returns (UpdateKojiStandardFilesResponse);
 }
 
 // FileService messages
@@ -124,35 +123,25 @@ message GetCompanyCategoriesResponse {
 }
 
 // KojiService messages
-message GetKojiesRequest {
-  string filter = 1;
+message GetKojiMapByIdRequest {}
+
+message GetKojiMapByIdResponse {
+  map<string, Koji> koji_map_by_id = 1;
 }
 
-message GetKojiesResponse {
-  repeated Koji kojies = 1;
+message GetKojiByIdRequest {
+  string id = 1;
 }
 
-message GetKojiRequest {
-  string folder_name = 1;
-}
-
-message GetKojiResponse {
+message GetKojiByIdResponse {
   Koji koji = 1;
 }
 
 message UpdateKojiRequest {
-  Koji koji = 1;
+  string current_koji_id = 1;
+  Koji updated_koji = 2;
 }
 
 message UpdateKojiResponse {
-  Koji koji = 1;
-}
-
-message UpdateKojiStandardFilesRequest {
-  Koji koji = 1;
-  repeated string currents = 2;
-}
-
-message UpdateKojiStandardFilesResponse {
-  Koji koji = 1;
+  map<string, Koji> koji_map_by_id = 1;
 }

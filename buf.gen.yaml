@@ -3,7 +3,7 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: grpc-backend/gen   # ← Go の import 先プレフィックスを合わせる
+      value: backend-grpc/gen   # ← Go の import 先プレフィックスを合わせる
 plugins:
   # - local: ./scripts/protoc-gen-protodoc.sh  # edition 対応のローカル Markdown ドキュメント生成
   #   out: docs/proto

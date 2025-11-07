@@ -152,6 +152,7 @@ func (c *Company) AddTag(tag string) {
 	c.SetInsideTags(append(c.GetInsideTags(), tag))
 }
 
+// Update は会社情報を更新します
 func (c *Company) Update(updatedCompany *Company) (*Company, error) {
 	if c == nil || updatedCompany == nil {
 		return nil, errors.New("company or updatedCompany is nil")

@@ -5,10 +5,10 @@
 package grpcv1connect
 
 import (
+	v1 "backend-grpc/gen/grpc/v1"
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v1 "grpc-backend/gen/grpc/v1"
 	http "net/http"
 	strings "strings"
 )
@@ -55,15 +55,13 @@ const (
 	// CompanyServiceGetCompanyCategoriesProcedure is the fully-qualified name of the CompanyService's
 	// GetCompanyCategories RPC.
 	CompanyServiceGetCompanyCategoriesProcedure = "/grpc.v1.CompanyService/GetCompanyCategories"
-	// KojiServiceGetKojiesProcedure is the fully-qualified name of the KojiService's GetKojies RPC.
-	KojiServiceGetKojiesProcedure = "/grpc.v1.KojiService/GetKojies"
-	// KojiServiceGetKojiProcedure is the fully-qualified name of the KojiService's GetKoji RPC.
-	KojiServiceGetKojiProcedure = "/grpc.v1.KojiService/GetKoji"
+	// KojiServiceGetKojiMapByIdProcedure is the fully-qualified name of the KojiService's
+	// GetKojiMapById RPC.
+	KojiServiceGetKojiMapByIdProcedure = "/grpc.v1.KojiService/GetKojiMapById"
+	// KojiServiceGetKojiByIdProcedure is the fully-qualified name of the KojiService's GetKojiById RPC.
+	KojiServiceGetKojiByIdProcedure = "/grpc.v1.KojiService/GetKojiById"
 	// KojiServiceUpdateKojiProcedure is the fully-qualified name of the KojiService's UpdateKoji RPC.
 	KojiServiceUpdateKojiProcedure = "/grpc.v1.KojiService/UpdateKoji"
-	// KojiServiceUpdateKojiStandardFilesProcedure is the fully-qualified name of the KojiService's
-	// UpdateKojiStandardFiles RPC.
-	KojiServiceUpdateKojiStandardFilesProcedure = "/grpc.v1.KojiService/UpdateKojiStandardFiles"
 )
 
 // FileServiceClient is a client for the grpc.v1.FileService service.
@@ -336,10 +334,9 @@ func (UnimplementedCompanyServiceHandler) GetCompanyCategories(context.Context, 
 
 // KojiServiceClient is a client for the grpc.v1.KojiService service.
 type KojiServiceClient interface {
-	GetKojies(context.Context, *v1.GetKojiesRequest) (*v1.GetKojiesResponse, error)
-	GetKoji(context.Context, *v1.GetKojiRequest) (*v1.GetKojiResponse, error)
+	GetKojiMapById(context.Context, *v1.GetKojiMapByIdRequest) (*v1.GetKojiMapByIdResponse, error)
+	GetKojiById(context.Context, *v1.GetKojiByIdRequest) (*v1.GetKojiByIdResponse, error)
 	UpdateKoji(context.Context, *v1.UpdateKojiRequest) (*v1.UpdateKojiResponse, error)
-	UpdateKojiStandardFiles(context.Context, *v1.UpdateKojiStandardFilesRequest) (*v1.UpdateKojiStandardFilesResponse, error)
 }
 
 // NewKojiServiceClient constructs a client for the grpc.v1.KojiService service. By default, it uses
@@ -353,16 +350,16 @@ func NewKojiServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	kojiServiceMethods := v1.File_grpc_v1_toyotachikuro_proto.Services().ByName("KojiService").Methods()
 	return &kojiServiceClient{
-		getKojies: connect.NewClient[v1.GetKojiesRequest, v1.GetKojiesResponse](
+		getKojiMapById: connect.NewClient[v1.GetKojiMapByIdRequest, v1.GetKojiMapByIdResponse](
 			httpClient,
-			baseURL+KojiServiceGetKojiesProcedure,
-			connect.WithSchema(kojiServiceMethods.ByName("GetKojies")),
+			baseURL+KojiServiceGetKojiMapByIdProcedure,
+			connect.WithSchema(kojiServiceMethods.ByName("GetKojiMapById")),
 			connect.WithClientOptions(opts...),
 		),
-		getKoji: connect.NewClient[v1.GetKojiRequest, v1.GetKojiResponse](
+		getKojiById: connect.NewClient[v1.GetKojiByIdRequest, v1.GetKojiByIdResponse](
 			httpClient,
-			baseURL+KojiServiceGetKojiProcedure,
-			connect.WithSchema(kojiServiceMethods.ByName("GetKoji")),
+			baseURL+KojiServiceGetKojiByIdProcedure,
+			connect.WithSchema(kojiServiceMethods.ByName("GetKojiById")),
 			connect.WithClientOptions(opts...),
 		),
 		updateKoji: connect.NewClient[v1.UpdateKojiRequest, v1.UpdateKojiResponse](
@@ -371,35 +368,28 @@ func NewKojiServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(kojiServiceMethods.ByName("UpdateKoji")),
 			connect.WithClientOptions(opts...),
 		),
-		updateKojiStandardFiles: connect.NewClient[v1.UpdateKojiStandardFilesRequest, v1.UpdateKojiStandardFilesResponse](
-			httpClient,
-			baseURL+KojiServiceUpdateKojiStandardFilesProcedure,
-			connect.WithSchema(kojiServiceMethods.ByName("UpdateKojiStandardFiles")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
 // kojiServiceClient implements KojiServiceClient.
 type kojiServiceClient struct {
-	getKojies               *connect.Client[v1.GetKojiesRequest, v1.GetKojiesResponse]
-	getKoji                 *connect.Client[v1.GetKojiRequest, v1.GetKojiResponse]
-	updateKoji              *connect.Client[v1.UpdateKojiRequest, v1.UpdateKojiResponse]
-	updateKojiStandardFiles *connect.Client[v1.UpdateKojiStandardFilesRequest, v1.UpdateKojiStandardFilesResponse]
+	getKojiMapById *connect.Client[v1.GetKojiMapByIdRequest, v1.GetKojiMapByIdResponse]
+	getKojiById    *connect.Client[v1.GetKojiByIdRequest, v1.GetKojiByIdResponse]
+	updateKoji     *connect.Client[v1.UpdateKojiRequest, v1.UpdateKojiResponse]
 }
 
-// GetKojies calls grpc.v1.KojiService.GetKojies.
-func (c *kojiServiceClient) GetKojies(ctx context.Context, req *v1.GetKojiesRequest) (*v1.GetKojiesResponse, error) {
-	response, err := c.getKojies.CallUnary(ctx, connect.NewRequest(req))
+// GetKojiMapById calls grpc.v1.KojiService.GetKojiMapById.
+func (c *kojiServiceClient) GetKojiMapById(ctx context.Context, req *v1.GetKojiMapByIdRequest) (*v1.GetKojiMapByIdResponse, error) {
+	response, err := c.getKojiMapById.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
 	return nil, err
 }
 
-// GetKoji calls grpc.v1.KojiService.GetKoji.
-func (c *kojiServiceClient) GetKoji(ctx context.Context, req *v1.GetKojiRequest) (*v1.GetKojiResponse, error) {
-	response, err := c.getKoji.CallUnary(ctx, connect.NewRequest(req))
+// GetKojiById calls grpc.v1.KojiService.GetKojiById.
+func (c *kojiServiceClient) GetKojiById(ctx context.Context, req *v1.GetKojiByIdRequest) (*v1.GetKojiByIdResponse, error) {
+	response, err := c.getKojiById.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -415,21 +405,11 @@ func (c *kojiServiceClient) UpdateKoji(ctx context.Context, req *v1.UpdateKojiRe
 	return nil, err
 }
 
-// UpdateKojiStandardFiles calls grpc.v1.KojiService.UpdateKojiStandardFiles.
-func (c *kojiServiceClient) UpdateKojiStandardFiles(ctx context.Context, req *v1.UpdateKojiStandardFilesRequest) (*v1.UpdateKojiStandardFilesResponse, error) {
-	response, err := c.updateKojiStandardFiles.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
 // KojiServiceHandler is an implementation of the grpc.v1.KojiService service.
 type KojiServiceHandler interface {
-	GetKojies(context.Context, *v1.GetKojiesRequest) (*v1.GetKojiesResponse, error)
-	GetKoji(context.Context, *v1.GetKojiRequest) (*v1.GetKojiResponse, error)
+	GetKojiMapById(context.Context, *v1.GetKojiMapByIdRequest) (*v1.GetKojiMapByIdResponse, error)
+	GetKojiById(context.Context, *v1.GetKojiByIdRequest) (*v1.GetKojiByIdResponse, error)
 	UpdateKoji(context.Context, *v1.UpdateKojiRequest) (*v1.UpdateKojiResponse, error)
-	UpdateKojiStandardFiles(context.Context, *v1.UpdateKojiStandardFilesRequest) (*v1.UpdateKojiStandardFilesResponse, error)
 }
 
 // NewKojiServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -439,16 +419,16 @@ type KojiServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	kojiServiceMethods := v1.File_grpc_v1_toyotachikuro_proto.Services().ByName("KojiService").Methods()
-	kojiServiceGetKojiesHandler := connect.NewUnaryHandlerSimple(
-		KojiServiceGetKojiesProcedure,
-		svc.GetKojies,
-		connect.WithSchema(kojiServiceMethods.ByName("GetKojies")),
+	kojiServiceGetKojiMapByIdHandler := connect.NewUnaryHandlerSimple(
+		KojiServiceGetKojiMapByIdProcedure,
+		svc.GetKojiMapById,
+		connect.WithSchema(kojiServiceMethods.ByName("GetKojiMapById")),
 		connect.WithHandlerOptions(opts...),
 	)
-	kojiServiceGetKojiHandler := connect.NewUnaryHandlerSimple(
-		KojiServiceGetKojiProcedure,
-		svc.GetKoji,
-		connect.WithSchema(kojiServiceMethods.ByName("GetKoji")),
+	kojiServiceGetKojiByIdHandler := connect.NewUnaryHandlerSimple(
+		KojiServiceGetKojiByIdProcedure,
+		svc.GetKojiById,
+		connect.WithSchema(kojiServiceMethods.ByName("GetKojiById")),
 		connect.WithHandlerOptions(opts...),
 	)
 	kojiServiceUpdateKojiHandler := connect.NewUnaryHandlerSimple(
@@ -457,22 +437,14 @@ func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(kojiServiceMethods.ByName("UpdateKoji")),
 		connect.WithHandlerOptions(opts...),
 	)
-	kojiServiceUpdateKojiStandardFilesHandler := connect.NewUnaryHandlerSimple(
-		KojiServiceUpdateKojiStandardFilesProcedure,
-		svc.UpdateKojiStandardFiles,
-		connect.WithSchema(kojiServiceMethods.ByName("UpdateKojiStandardFiles")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/grpc.v1.KojiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case KojiServiceGetKojiesProcedure:
-			kojiServiceGetKojiesHandler.ServeHTTP(w, r)
-		case KojiServiceGetKojiProcedure:
-			kojiServiceGetKojiHandler.ServeHTTP(w, r)
+		case KojiServiceGetKojiMapByIdProcedure:
+			kojiServiceGetKojiMapByIdHandler.ServeHTTP(w, r)
+		case KojiServiceGetKojiByIdProcedure:
+			kojiServiceGetKojiByIdHandler.ServeHTTP(w, r)
 		case KojiServiceUpdateKojiProcedure:
 			kojiServiceUpdateKojiHandler.ServeHTTP(w, r)
-		case KojiServiceUpdateKojiStandardFilesProcedure:
-			kojiServiceUpdateKojiStandardFilesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -482,18 +454,14 @@ func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption
 // UnimplementedKojiServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedKojiServiceHandler struct{}
 
-func (UnimplementedKojiServiceHandler) GetKojies(context.Context, *v1.GetKojiesRequest) (*v1.GetKojiesResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKojies is not implemented"))
+func (UnimplementedKojiServiceHandler) GetKojiMapById(context.Context, *v1.GetKojiMapByIdRequest) (*v1.GetKojiMapByIdResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKojiMapById is not implemented"))
 }
 
-func (UnimplementedKojiServiceHandler) GetKoji(context.Context, *v1.GetKojiRequest) (*v1.GetKojiResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKoji is not implemented"))
+func (UnimplementedKojiServiceHandler) GetKojiById(context.Context, *v1.GetKojiByIdRequest) (*v1.GetKojiByIdResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKojiById is not implemented"))
 }
 
 func (UnimplementedKojiServiceHandler) UpdateKoji(context.Context, *v1.UpdateKojiRequest) (*v1.UpdateKojiResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.UpdateKoji is not implemented"))
-}
-
-func (UnimplementedKojiServiceHandler) UpdateKojiStandardFiles(context.Context, *v1.UpdateKojiStandardFilesRequest) (*v1.UpdateKojiStandardFilesResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.UpdateKojiStandardFiles is not implemented"))
 }

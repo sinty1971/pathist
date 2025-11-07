@@ -2,6 +2,7 @@ package models
 
 import (
 	grpcv1 "backend-grpc/gen/grpc/v1"
+	"backend-grpc/internal/persist"
 	"backend-grpc/internal/utils"
 	"errors"
 	"math/big"
@@ -11,13 +12,31 @@ import (
 )
 
 type Koji struct {
+	// Koji メッセージ本体
 	*grpcv1.Koji
+
+	// insideFilePersistService はファイル永続化サービス用のヘルパー
+	insideFPS persist.FilePersistService[*Koji]
 }
 
-// PersistFolder は属性ファイルを格納するフォルダーのパスを返します。
-// Persistableインターフェースの実装
-func (k *Koji) GetTargetFolder() string {
-	return k.GetTargetFolder()
+// GetFilePersistPath は永続化ファイルのパスを取得します
+// Persistable インターフェースの実装
+func (k *Koji) GetFilePersistPath() string {
+	return filepath.Join(k.GetManagedFolder(), k.insideFPS.PersistFilename)
+}
+
+// GetObject は永続化対象のオブジェクトを取得します
+// Persistable インターフェースの実装
+func (k *Koji) GetObject() any {
+	return k.Koji
+}
+
+// SetObject は永続化対象のオブジェクトを設定します
+// Persistable インターフェースの実装
+func (k *Koji) SetObject(obj any) {
+	if koji, ok := obj.(*grpcv1.Koji); ok {
+		k.Koji = koji
+	}
 }
 
 // NewKoji FolderNameからKojiを作成します（高速化版）
@@ -146,6 +165,20 @@ func GenerateKojiStatus(start *Timestamp, end *Timestamp) string {
 	} else {
 		return "進行中"
 	}
+}
+
+func (k *Koji) Update(updatedKoji *Koji) (*Koji, error) {
+	if k == nil || updatedKoji == nil {
+		return nil, errors.New("koji or updatedKoji is nil")
+	}
+
+	// 管理フォルダーは変更しない
+	updatedKoji.SetManagedFolder(k.GetManagedFolder())
+
+	// 永続化サービスの設定を引き継ぐ
+	updatedKoji.insideFPS = k.insideFPS
+
+	return updatedKoji, nil
 }
 
 // UpdateFolderPath は工事フォルダー名を更新します

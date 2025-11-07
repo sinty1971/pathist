@@ -34,26 +34,30 @@ type CompanyService struct {
 }
 
 // NewCompanyService CompanyService インスタンスを作成します
-func NewCompanyService(services *Services, options *ServiceOptions) (*CompanyService, error) {
+func NewCompanyService(
+	services *Services,
+	options *ServiceOptions) (
+	s *CompanyService,
+	err error) {
 
 	// インスタンス作成
-	cs := &CompanyService{
+	s = &CompanyService{
 		services:      services,
 		managedFolder: options.CompanyServiceManagedFolder,
 		companiesById: make(map[string]*models.Company, 1000),
 	}
 
 	// companiesの情報を取得
-	if err := cs.UpdateCompanies(); err != nil {
-		return nil, err
+	if err = s.UpdateCompanies(); err != nil {
+		return
 	}
 
 	// managedFolderの監視を開始
-	if err := cs.watchManagedFolder(); err != nil {
-		return nil, err
+	if err = s.watchManagedFolder(); err != nil {
+		return
 	}
 
-	return cs, nil
+	return
 }
 
 func (s *CompanyService) Cleanup() {
@@ -61,16 +65,15 @@ func (s *CompanyService) Cleanup() {
 }
 
 // UpdateCompanies ファイルシステムから会社データを再読み込みします
-func (s *CompanyService) UpdateCompanies() error {
+func (s *CompanyService) UpdateCompanies() (err error) {
+
+	// 変数定義
+	var entries []os.DirEntry
 
 	// ファイルシステムから会社フォルダー一覧を取得
-	entries, err := os.ReadDir(s.managedFolder)
+	entries, err = os.ReadDir(s.managedFolder)
 	if err != nil {
-		return err
-	}
-
-	if len(entries) == 0 {
-		return errors.New("会社フォルダーが1つも存在しません")
+		return
 	}
 
 	// 会社データモデルを作成
@@ -138,8 +141,10 @@ func (s *CompanyService) watchManagedFolder() error {
 // GetCompanies は管理されている会社情報の一覧を取得します
 // gRPCサービスの実装です
 func (s *CompanyService) GetCompanyMapById(
-	ctx context.Context, _ *connect.Request[grpcv1.GetCompanyMapByIdRequest]) (
-	response connect.Response[grpcv1.GetCompanyMapByIdResponse], err error) {
+	ctx context.Context,
+	_ *connect.Request[grpcv1.GetCompanyMapByIdRequest]) (
+	response connect.Response[grpcv1.GetCompanyMapByIdResponse],
+	err error) {
 
 	// 会社データモデルを作成
 	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(s.companiesById))
@@ -155,8 +160,10 @@ func (s *CompanyService) GetCompanyMapById(
 // GetCompany は会社IDから会社情報を取得します
 // gRPCサービスの実装です
 func (s *CompanyService) GetCompanyById(
-	ctx context.Context, req *connect.Request[grpcv1.GetCompanyByIdRequest]) (
-	response *connect.Response[grpcv1.GetCompanyByIdResponse], err error) {
+	ctx context.Context,
+	req *connect.Request[grpcv1.GetCompanyByIdRequest]) (
+	response *connect.Response[grpcv1.GetCompanyByIdResponse],
+	err error) {
 
 	// Idの取得
 	id := req.Msg.GetId()
@@ -164,11 +171,14 @@ func (s *CompanyService) GetCompanyById(
 	// 会社情報を取得
 	company, exist := s.companiesById[id]
 	if !exist {
-		return response, connect.NewError(connect.CodeNotFound, errors.New("company not found"))
+		err = connect.NewError(connect.CodeNotFound, errors.New("company not found"))
+		return
 	}
+
+	// Responseの更新
 	response.Msg.SetCompany(company.Company)
 
-	return response, nil
+	return
 }
 
 // UpdateCompany は会社情報を更新します
@@ -177,8 +187,12 @@ func (s *CompanyService) GetCompanyById(
 // また、フォルダーの移動も発生する可能性があります。
 // Company.Id 更新対象の会社Id
 func (s *CompanyService) UpdateCompany(
-	ctx context.Context, req *connect.Request[grpcv1.UpdateCompanyRequest]) (
-	response *connect.Response[grpcv1.UpdateCompanyResponse], err error) {
+	// 引数
+	ctx context.Context,
+	req *connect.Request[grpcv1.UpdateCompanyRequest]) (
+	// 戻り値
+	res *connect.Response[grpcv1.UpdateCompanyResponse],
+	err error) {
 
 	// 既存の会社情報を取得
 	currentCompanyId := req.Msg.GetCurrentCompanyId()
@@ -213,9 +227,9 @@ func (s *CompanyService) UpdateCompany(
 	for _, v := range s.companiesById {
 		grpcv1CompanyMapById[v.Company.GetId()] = v.Company
 	}
-	response.Msg.SetCompanyMapById(grpcv1CompanyMapById)
+	res.Msg.SetCompanyMapById(grpcv1CompanyMapById)
 
-	return response, nil
+	return res, nil
 }
 
 // GetCompanyCategories は業種カテゴリーの一覧を取得します

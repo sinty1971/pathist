@@ -45,18 +45,16 @@ func (s *FileService) Cleanup() {
 // ListFileInfos は指定されたパスのファイル情報一覧を返す
 func (s *FileService) ListFileInfos(
 	ctx context.Context,
-	req *connect.Request[grpc.ListFileInfosRequest]) (
-	*connect.Response[grpc.ListFileInfosResponse],
-	error) {
+	req *connect.Request[grpc.GetFileInfosRequest]) (
+	res *connect.Response[grpc.GetFileInfosResponse],
+	err error) {
 	// コンテキストを無視
 	_ = ctx
 
 	// 変数定義
 	var (
-		response *connect.Response[grpc.ListFileInfosResponse]
-		dirs     []os.DirEntry
-		fis      []*grpc.FileInfo = []*grpc.FileInfo{}
-		err      error
+		dirs []os.DirEntry
+		fis  []*grpc.FileInfo = []*grpc.FileInfo{}
 	)
 
 	// リクエスト情報の取得
@@ -65,19 +63,20 @@ func (s *FileService) ListFileInfos(
 	// 絶対パスを取得
 	absPath, err := s.GetAbsPathFrom(relPath)
 	if err != nil {
-		return nil, err
+		return // naked return: res=nil, err=err
 	}
 
 	// ファイルエントリ配列を取得
 	dirs, err = os.ReadDir(absPath)
 	if err != nil {
-		return nil, err
+		return // naked return: res=nil, err=err
 	}
 	// ファイルエントリが0の場合は空配列を返す
 
 	if len(dirs) == 0 {
-		response.Msg.SetFileInfos(fis)
-		return response, nil
+		res = connect.NewResponse(&grpc.GetFileInfosResponse{})
+		res.Msg.SetFileInfos(fis)
+		return // naked return: res=res, err=nil
 	}
 
 	// チャンネルとワーカーグループを設定
@@ -123,87 +122,90 @@ func (s *FileService) ListFileInfos(
 	}
 
 	// レスポンスを更新して返す
-	response.Msg.SetFileInfos(fis)
-	return response, nil
+	res = connect.NewResponse(&grpc.GetFileInfosResponse{})
+	res.Msg.SetFileInfos(fis)
+	return // naked return: res=res, err=nil
 }
 
 // GetAbsPathFrom BasePathに引数の相対パスを追加した絶対パスを返す
-func (s *FileService) GetAbsPathFrom(relPath string) (string, error) {
+func (s *FileService) GetAbsPathFrom(relPath string) (res string, err error) {
 
 	// 絶対パスがある場合はエラーを返す
 	if strings.HasPrefix(relPath, "~/") || filepath.IsAbs(relPath) {
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	return filepath.Join(s.BasePath, relPath), nil
+	res = filepath.Join(s.BasePath, relPath)
+
+	return // naked return
 }
 
 // CopyFile はファイルまたはディレクトリをコピーする
-func (s *FileService) CopyFile(relSrc, relDst string) error {
+func (s *FileService) CopyFile(relSrc, relDst string) (err error) {
 	var absSrc, absDst string
-	var err error
 
 	// relSrcがパスチェック及び絶対パス変換
 	absSrc, err = s.GetAbsPathFrom(relSrc)
 	if err != nil {
-		return err
+		return
 	}
 
 	// relDstのパスチェック及び絶対パス変換
 	absDst, err = s.GetAbsPathFrom(relDst)
 	if err != nil {
-		return err
+		return
 	}
 
 	// コピー元の存在確認
 	srcOsFi, err := os.Stat(absSrc)
 	if err != nil {
-		return err
+		return
 	}
 
 	// ディレクトリの場合
 	if srcOsFi.IsDir() {
-		return s.absCopyDir(absSrc, absDst)
+		err = s.absCopyDir(absSrc, absDst)
+	} else {
+		// ファイルの場合
+		err = s.absCopyFile(absSrc, absDst)
 	}
 
-	// ファイルの場合
-	return s.absCopyFile(absSrc, absDst)
+	return
 }
 
 // absCopyFile はファイルをコピーする内部関数
-func (s *FileService) absCopyFile(absSrc, absDst string) error {
+func (s *FileService) absCopyFile(absSrc, absDst string) (err error) {
 	// コピー元ファイルを開く
 	srcFile, err := os.Open(absSrc)
 	if err != nil {
-		return err
+		return
 	}
 	defer srcFile.Close()
 
 	// コピー先のディレクトリが存在しない場合は作成
 	dstDir := filepath.Dir(absDst)
-	if err := os.MkdirAll(dstDir, 0755); err != nil {
-		return err
+	if err = os.MkdirAll(dstDir, 0755); err != nil {
+		return
 	}
 
 	// コピー先ファイルを作成
 	dstFile, err := os.Create(absDst)
 	if err != nil {
-		return err
+		return
 	}
 	defer dstFile.Close()
 
 	// ファイル内容をコピー
-	if _, err := io.Copy(dstFile, srcFile); err != nil {
-		return err
+	if _, err = io.Copy(dstFile, srcFile); err != nil {
+		return
 	}
 
 	// ファイル権限をコピー
-	srcInfo, err := os.Stat(absSrc)
-	if err != nil {
+	if fi, err := os.Stat(absSrc); err != nil {
 		return err
+	} else {
+		return os.Chmod(absDst, fi.Mode())
 	}
-
-	return os.Chmod(absDst, srcInfo.Mode())
 }
 
 // absCopyDir はディレクトリを再帰的にコピーする内部関数

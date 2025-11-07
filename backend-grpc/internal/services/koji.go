@@ -1,143 +1,136 @@
 package services
 
 import (
+	"backend-grpc/internal/utils"
+	"context"
 	"errors"
-	"fmt"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
-	"penguin-backend/internal/models"
-	"penguin-backend/internal/utils"
-	"regexp"
-	"sort"
-	"strings"
 	"sync"
+
+	grpcv1 "backend-grpc/gen/grpc/v1"
+	grpcv1connect "backend-grpc/gen/grpc/v1/grpcv1connect"
+	"backend-grpc/internal/models"
+
+	"connectrpc.com/connect"
+	"github.com/fsnotify/fsnotify"
 )
 
-// KojiServiceOld は工事情報取得サービスを提供する
-// 工事一覧フォルダーを管理します
-type KojiServiceOld struct {
-	// container はトップコンテナのインスタンス
-	container *Container
+// KojiService bridges existing KojiService logic to Connect handlers.
+type KojiService struct {
+	// Embed the unimplemented handler for forward compatibility
+	grpcv1connect.UnimplementedKojiServiceHandler
 
-	// データベースサービス
-	DatabaseService *PersistService[*models.Koji]
+	// services は任意のgrpcサービスハンドラーへの参照
+	services *Services
 
-	// 工事一覧フォルダーのフルパス
-	TargetFolder string
+	// managedFolder はこのサービスが管理する工事データのルートフォルダー
+	managedFolder string
+
+	// managedFolderWatcher は managedFolder のファイルシステム監視オブジェクト
+	managedFolderWatcher *fsnotify.Watcher
+
+	// kojiMapById は管理されている工事データのインデックスがIdのキャッシュマップ
+	kojiMapById map[string]*models.Koji
 }
 
-// Cleanup はサービスをクリーンアップする
-func (ks *KojiServiceOld) Cleanup() error {
+func NewKojiService(
+	services *Services, options *ServiceOptions) (
+	s *KojiService, err error) {
+	// インスタンス作成
+	s = &KojiService{
+		services:      services,
+		managedFolder: options.KojiServiceManagedFolder,
+		kojiMapById:   make(map[string]*models.Koji, 1000),
+	}
+
+	// kojiesByIdの情報を取得
+	if err = s.UpdateKojies(); err != nil {
+		return
+	}
+
+	// managedFolderの監視を開始
+	if err = s.watchManagedFolder(); err != nil {
+		return
+	}
+
+	return
+}
+
+func (s *KojiService) Cleanup() {
+	// 現在はクリーンアップ処理は不要
+}
+
+// watchManagedFolder starts watching the provided managedFolder for changes.
+// Add callbacks or channels as needed to propagate events to your services.
+func (s *KojiService) watchManagedFolder() error {
+	absPath, err := filepath.Abs(s.managedFolder)
+	if err != nil {
+		return err
+	}
+
+	s.managedFolderWatcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	// 監視終了時に閉じる
+	go func() {
+		<-s.managedFolderWatcher.Errors
+		s.managedFolderWatcher.Close()
+	}()
+
+	// イベントループ
+	go func() {
+		for {
+			select {
+			case event, ok := <-s.managedFolderWatcher.Events:
+				if !ok {
+					return
+				}
+				log.Printf("[managed-folder] event=%s path=%s", event.Op, event.Name)
+
+				if event.Op&(fsnotify.Create|fsnotify.Remove|fsnotify.Rename|fsnotify.Write) != 0 {
+					// 必要に応じてサービスへ通知する
+					// 例: reload metadata, update cache, etc.
+				}
+
+			case err := <-s.managedFolderWatcher.Errors:
+				log.Printf("[managed-folder] watcher error: %v", err)
+			}
+		}
+	}()
+
+	// フォルダを監視対象に追加
+	if err := s.managedFolderWatcher.Add(absPath); err != nil {
+		return err
+	}
+
+	log.Printf("watching managed folder: %s", absPath)
 	return nil
 }
 
-// Initialize はサービスを初期化する
-func (ks *KojiServiceOld) Initialize(container *Container, serviceOptions *ServiceOptions) (*KojiServiceOld, error) {
-
-	// コンテナを設定
-	ks.container = container
-
-	// 工事一覧フォルダーのフルパス
-	targetFolder, err := utils.CleanAbsPath(serviceOptions.KojiServiceManagedFolder)
-	if err != nil {
-		return nil, err
-	}
-
-	// folderPath がアクセス可能かチェック
-	fi, err := os.Stat(targetFolder)
-	if err != nil {
-		return nil, err
-	}
-
-	// フォルダーで無ければエラー
-	if !fi.IsDir() {
-		return nil, fmt.Errorf("工事一覧対象パスがフォルダーではありません: %s", targetFolder)
-	}
-
-	ks.TargetFolder = targetFolder
-
-	// 工事一覧用のリポジトリーサービスを作成
-	ks.DatabaseService = NewPersistService[*models.Koji](serviceOptions.PersistFilename)
-
-	return ks, nil
-}
-
-// GetKoji は指定されたパスから工事を取得する
-// folderName は工事フォルダー名 (Ex. '2025-0618 豊田築炉 名和工場')
-// 工事を返す
-func (ks *KojiServiceOld) GetKoji(folderName string) (*models.Koji, error) {
-	// フォルダー名からフルパスを作成
-	folderPath := filepath.Join(ks.TargetFolder, folderName)
-
-	// 工事データモデルを作成
-	koji, err := models.NewKoji(folderPath)
-	if err != nil {
-		return nil, fmt.Errorf("工事データモデルの作成に失敗しました: %v", err)
-	}
-
-	// データベースファイルから読み込む
-	err = ks.LoadDatabaseFile(koji)
-	if err != nil {
-		return nil, fmt.Errorf("データベースファイルからの読み込みに失敗しました: %v", err)
-	}
-
-	// 必須ファイルの設定
-	err = ks.UpdateRequiredFiles(koji)
-	if err != nil {
-		return nil, fmt.Errorf("必須ファイルの設定に失敗しました: %v", err)
-	}
-
-	return koji, nil
-}
-
-type getKojiesMode int
-
-const (
-	GetKoujiesModeRecent getKojiesMode = 1 << iota
-	GetKoujiesModeOld
-	GetKojiesModeSyncDatabase
-)
-
-func getKojiesModeFunc(modes ...getKojiesMode) getKojiesMode {
-	opt := getKojiesMode(GetKoujiesModeRecent)
-	for _, mode := range modes {
-		opt |= mode
-	}
-	return opt
-}
-
-// GetKojies は指定されたパスから工事データリストを取得する
-// modes: 取得モード
-// 工事データリストを返す
-func (ks *KojiServiceOld) GetKojies(modes ...getKojiesMode) []models.Koji {
-	// モードを決定
-	mode := getKojiesModeFunc(modes...)
-
-	// 未実装のモードはエラーを返す
-	if mode&GetKoujiesModeOld != 0 {
-		return []models.Koji{}
-	}
-
+func (s *KojiService) UpdateKojies() error {
 	// ファイルシステムから工事フォルダー一覧を取得
-	entries, err := os.ReadDir(ks.TargetFolder)
-	if err != nil || len(entries) == 0 {
-		return []models.Koji{}
+	entries, err := os.ReadDir(s.managedFolder)
+	if err != nil {
+		return err
 	}
 
 	// 工事フォルダー一覧の要素数を取得
-	entryLength := len(entries)
+	kojiesSize := len(entries)
 
 	// 並列処理用のワーカー数を決定
-	numWorkers := utils.DecideNumWorkers(entryLength,
+	numWorkers := utils.DecideNumWorkers(kojiesSize,
 		utils.WithMinWorkers(2),
 		utils.WithMaxWorkers(16),
 		utils.WithCPUMultiplier(2),
 	)
 
 	// バッファ付きチャンネルで効率化
-	jobs := make(chan int, entryLength)
-	results := make(chan *models.Koji, entryLength)
+	jobs := make(chan int, kojiesSize)
+	results := make(chan *models.Koji, kojiesSize)
 
 	// ワーカープールの起動
 	var wg sync.WaitGroup
@@ -146,11 +139,8 @@ func (ks *KojiServiceOld) GetKojies(modes ...getKojiesMode) []models.Koji {
 		go func() {
 			defer wg.Done()
 			for idx := range jobs {
-				kojiPath := path.Join(ks.TargetFolder, entries[idx].Name())
+				kojiPath := path.Join(s.managedFolder, entries[idx].Name())
 				if koji, err := models.NewKoji(kojiPath); err == nil {
-					if mode&GetKojiesModeSyncDatabase != 0 {
-						_ = ks.LoadDatabaseFile(koji)
-					}
 					results <- koji
 				} else {
 					results <- nil // エラーの場合はnilを返す
@@ -174,161 +164,93 @@ func (ks *KojiServiceOld) GetKojies(modes ...getKojiesMode) []models.Koji {
 	}()
 
 	// 結果を収集（最大サイズで確保し、後でスライス）
-	kojies := make([]models.Koji, entryLength)
-	count := 0
 	for result := range results {
 		if result != nil {
-			kojies[count] = *result
-			count++
+			s.kojiMapById[result.GetId()] = result
 		}
 	}
-	// 実際に成功した要素数にスライス
-	kojies = kojies[:count]
-
-	// 工事開始日で降順ソート（新しいものが最初）
-	sort.Slice(kojies, func(i, j int) bool {
-		// Compare関数を使用して比較（降順なので結果を反転）
-		cmp := kojies[i].StartDate.Compare(kojies[j].StartDate)
-		if cmp != 0 {
-			return cmp > 0
-		}
-		// 両方の開始日が同じ場合、フォルダー名で降順
-		return kojies[i].TargetFolder > kojies[j].TargetFolder
-	})
-
-	return kojies
-}
-
-// LoadDatabaseFile は工事データベースファイルからデータを取り込みます
-func (ks *KojiServiceOld) LoadDatabaseFile(target *models.Koji) error {
-	// 工事データベースファイルからデータを読み込む
-	database, err := ks.DatabaseService.Load(target)
-	if err != nil {
-		// ファイルが存在しない場合はデフォルト値を設定
-		target.UpdateStatus()
-
-		// 新規ファイルの場合は非同期で保存
-		go func() {
-			ks.DatabaseService.Save(target)
-		}()
-		return nil
-	}
-
-	// データベースファイルにしか保持されない内容をtargetに反映
-	target.Description = database.Description
-	target.EndDate = database.EndDate
-	target.Tags = database.Tags
-
-	// 計算が必要な項目の更新
-	target.UpdateStatus()
 
 	return nil
 }
 
-// UpdateRequiredFiles は工事の必須ファイルを更新します
-// データベースファイルの情報を優先するので、値が空の場合のみ更新する
-func (ks *KojiServiceOld) UpdateRequiredFiles(koji *models.Koji) error {
-	// 必須ファイルがすでに設定されている場合は更新しない
-	if len(koji.RequiredFiles) > 0 {
-		return errors.New("必須ファイルがすでに設定されています")
+// GetKojies は管理されている工事データ一覧を返す
+func (s *KojiService) GetKojiMapById(
+	ctx context.Context, req *connect.Request[grpcv1.GetKojiMapByIdRequest]) (
+	res *connect.Response[grpcv1.GetKojiMapByIdResponse], err error) {
+	_ = req // 現状フィルター未対応
+
+	grpcKojisById := make(map[string]*grpcv1.Koji, len(s.kojiMapById))
+	for _, v := range s.kojiMapById {
+		grpcKojisById[v.GetId()] = v.Koji
 	}
 
-	// 工事フォルダー内のファイルを取得
-	entries, err := os.ReadDir(koji.TargetFolder)
-	if err != nil {
-		// エラーの場合はデフォルトの必須ファイルを設定
-		requiredFile, err := models.NewFileInfo(path.Join(koji.TargetFolder, "工事.xlsx"))
-		if err != nil {
-			return err
-		}
-		koji.RequiredFiles = []models.FileInfo{*requiredFile}
-		return nil
-	}
-
-	// 必須ファイルの設定（現在は1個のみ）
-	var requiredFile *models.FileInfo
-	var found bool
-
-	// 日付パターンのコンパイル（1回のみ）
-	datePattern := regexp.MustCompile(`^20\d{2}-\d{4}`)
-
-	// 工事ファイルの検索
-	for _, file := range entries {
-		filename := file.Name()
-		// エクセルファイル以外はスキップ
-		if !utils.FilenameIsExcel(filename) {
-			continue
-		}
-
-		// ファイル名の解析
-		extension := filepath.Ext(filename)
-		filenameWithoutExt := strings.TrimSuffix(filename, extension)
-
-		// 条件に合うファイルかチェック
-		if !datePattern.MatchString(filenameWithoutExt) && filenameWithoutExt != "工事" {
-			continue
-		}
-
-		actualPath := path.Join(koji.TargetFolder, file.Name())
-		standardName := koji.GetFolderName() + extension
-		standardPath := path.Join(koji.TargetFolder, standardName)
-		requiredFile, err = models.NewFileInfo(actualPath, standardPath)
-		if err != nil {
-			continue
-		}
-		found = true
-		break
-	}
-
-	// 工事ファイルが見つからない場合はひな形を設定
-	if !found {
-		standardPath := path.Join(koji.TargetFolder, koji.GetFolderName()+".xlsx")
-		requiredFile, err = models.NewFileInfo("工事.xlsx", standardPath)
-
-		// テンプレートファイルのコピーは省略（高速化のため）
-		// 必要に応じて別途実行する
-	}
-
-	// 管理ファイルの設定
-	koji.RequiredFiles = []models.FileInfo{*requiredFile}
-
-	return nil
+	return res, nil
 }
 
-// Update は工事情報 FileInfoの情報を更新
-// kojiの詳細情報で @profile.yaml を更新
-// 移動元フォルダー名：FileInfo.Name
-// 移動先フォルダー名：StartDate, CompanyName, LocationNameから生成されたフォルダー名
-func (ks *KojiServiceOld) Update(target *models.Koji) error {
-	// 更新前の工事情報を保存
-	temp := *target
+func (s *KojiService) GetKojiById(
+	ctx context.Context,
+	req *connect.Request[grpcv1.GetKojiByIdRequest]) (
+	res *connect.Response[grpcv1.GetKojiByIdResponse],
+	err error) {
 
-	// フォルダー名の変更
-	if temp.UpdateFolderPath() {
-		// 工事IDの更新（フォルダー名の変更に伴う）
-		temp.UpdateID()
+	// リクエスト情報の取得
+	id := req.Msg.GetId()
 
-		// 必須ファイル情報の更新（フォルダー名の変更に伴う）
-		temp.RequiredFiles = []models.FileInfo{}
-		if err := ks.UpdateRequiredFiles(&temp); err != nil {
-			return err
-		}
-
-		// ファイルの移動
-		// TODO: ファイル移動の実装
-		// if err := ks.RootService.MoveFile(temp.GetFolderName(), target.GetFolderName()); err != nil {
-		// 	return err
-		// }
+	// 工事情報を取得
+	koji, exist := s.kojiMapById[id]
+	if !exist {
+		err = connect.NewError(connect.CodeNotFound, errors.New("koji not found"))
+		return
 	}
 
-	// フォルダー名の変更完了後、情報を更新
-	*target = temp
+	// Responseの更新
+	res.Msg.SetKoji(koji.Koji)
 
-	// 計算が必要な項目の更新
-	target.UpdateStatus()
+	return
+}
 
-	// 更新後の工事情報を属性ファイルに反映
-	return ks.DatabaseService.Save(target)
+func (s *KojiService) UpdateKoji(
+	ctx context.Context,
+	req *connect.Request[grpcv1.UpdateKojiRequest]) (
+	res *connect.Response[grpcv1.UpdateKojiResponse],
+	err error) {
+
+	// 既存の工事情報を取得
+	currentKojiId := req.Msg.GetCurrentKojiId()
+	currentKoji, exist := s.kojiMapById[currentKojiId]
+	if !exist {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("koji not found"))
+	}
+	// 更新後の工事情報を取得
+	grpcUpdatedKoji := req.Msg.GetUpdatedKoji()
+	if grpcUpdatedKoji == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("updated koji is nil"))
+	}
+	updatedKoji := &models.Koji{
+		Koji: grpcUpdatedKoji,
+	}
+
+	// 工事情報を更新
+	updatedKoji, err = currentKoji.Update(updatedKoji)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	// 工事情報のインデックスを更新
+	if _, exist := s.kojiMapById[currentKojiId]; exist {
+		delete(s.kojiMapById, currentKojiId)
+		// 新しいIDで再登録
+		s.kojiMapById[updatedKoji.GetId()] = updatedKoji
+	}
+
+	// Responseの作成
+	grpcv1KojiMapById := make(map[string]*grpcv1.Koji, len(s.kojiMapById))
+	for _, v := range s.kojiMapById {
+		grpcv1KojiMapById[v.GetId()] = v.Koji
+	}
+	res.Msg.SetKojiMapById(grpcv1KojiMapById)
+
+	return res, nil
 }
 
 // RenameStandardFile は標準ファイルの名前を変更し、工事データも更新する

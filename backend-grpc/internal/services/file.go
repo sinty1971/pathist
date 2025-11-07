@@ -13,8 +13,6 @@ import (
 	grpc "backend-grpc/gen/grpc/v1"
 	grpcConnect "backend-grpc/gen/grpc/v1/grpcv1connect"
 	"backend-grpc/internal/models"
-
-	"connectrpc.com/connect"
 )
 
 // FileService の実装
@@ -42,11 +40,11 @@ func (s *FileService) Cleanup() {
 	// 現在はクリーンアップ処理は不要
 }
 
-// ListFileInfos は指定されたパスのファイル情報一覧を返す
-func (s *FileService) ListFileInfos(
+// GetFileInfos は指定されたパスのファイル情報一覧を返す
+func (s *FileService) GetFileInfos(
 	ctx context.Context,
-	req *connect.Request[grpc.GetFileInfosRequest]) (
-	res *connect.Response[grpc.GetFileInfosResponse],
+	req *grpc.GetFileInfosRequest) (
+	res *grpc.GetFileInfosResponse,
 	err error) {
 	// コンテキストを無視
 	_ = ctx
@@ -58,7 +56,7 @@ func (s *FileService) ListFileInfos(
 	)
 
 	// リクエスト情報の取得
-	relPath := req.Msg.GetPath()
+	relPath := req.GetPath()
 
 	// 絶対パスを取得
 	absPath, err := s.GetAbsPathFrom(relPath)
@@ -74,8 +72,8 @@ func (s *FileService) ListFileInfos(
 	// ファイルエントリが0の場合は空配列を返す
 
 	if len(dirs) == 0 {
-		res = connect.NewResponse(&grpc.GetFileInfosResponse{})
-		res.Msg.SetFileInfos(fis)
+		res = &grpc.GetFileInfosResponse{}
+		res.SetFileInfos(fis)
 		return // naked return: res=res, err=nil
 	}
 
@@ -122,8 +120,8 @@ func (s *FileService) ListFileInfos(
 	}
 
 	// レスポンスを更新して返す
-	res = connect.NewResponse(&grpc.GetFileInfosResponse{})
-	res.Msg.SetFileInfos(fis)
+	res = &grpc.GetFileInfosResponse{}
+	res.SetFileInfos(fis)
 	return // naked return: res=res, err=nil
 }
 

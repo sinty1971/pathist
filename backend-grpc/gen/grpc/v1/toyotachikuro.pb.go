@@ -1821,9 +1821,9 @@ const file_grpc_v1_toyotachikuro_proto_rawDesc = "" +
 	"\x0eGetCompanyById\x12\x1e.grpc.v1.GetCompanyByIdRequest\x1a\x1f.grpc.v1.GetCompanyByIdResponse\x12N\n" +
 	"\rUpdateCompany\x12\x1d.grpc.v1.UpdateCompanyRequest\x1a\x1e.grpc.v1.UpdateCompanyResponse\x12c\n" +
 	"\x14GetCompanyCategories\x12$.grpc.v1.GetCompanyCategoriesRequest\x1a%.grpc.v1.GetCompanyCategoriesResponse2\xf1\x01\n" +
-	"\vKojiService\x12Q\n" +
-	"\x0eGetKojiMapById\x12\x1e.grpc.v1.GetKojiMapByIdRequest\x1a\x1f.grpc.v1.GetKojiMapByIdResponse\x12H\n" +
-	"\vGetKojiById\x12\x1b.grpc.v1.GetKojiByIdRequest\x1a\x1c.grpc.v1.GetKojiByIdResponse\x12E\n" +
+	"\vKojiService\x12H\n" +
+	"\vGetKojiById\x12\x1b.grpc.v1.GetKojiByIdRequest\x1a\x1c.grpc.v1.GetKojiByIdResponse\x12Q\n" +
+	"\x0eGetKojiMapById\x12\x1e.grpc.v1.GetKojiMapByIdRequest\x1a\x1f.grpc.v1.GetKojiMapByIdResponse\x12E\n" +
 	"\n" +
 	"UpdateKoji\x12\x1a.grpc.v1.UpdateKojiRequest\x1a\x1b.grpc.v1.UpdateKojiResponseB\x89\x01\n" +
 	"\vcom.grpc.v1B\x12ToyotachikuroProtoP\x01Z\x1fbackend-grpc/gen/grpc/v1;grpcv1\xa2\x02\x03GXX\xaa\x02\aGrpc.V1\xca\x02\aGrpc\\V1\xe2\x02\x13Grpc\\V1\\GPBMetadata\xea\x02\bGrpc::V1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
@@ -1884,8 +1884,8 @@ var file_grpc_v1_toyotachikuro_proto_depIdxs = []int32{
 	10, // 22: grpc.v1.CompanyService.GetCompanyById:input_type -> grpc.v1.GetCompanyByIdRequest
 	12, // 23: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
 	14, // 24: grpc.v1.CompanyService.GetCompanyCategories:input_type -> grpc.v1.GetCompanyCategoriesRequest
-	16, // 25: grpc.v1.KojiService.GetKojiMapById:input_type -> grpc.v1.GetKojiMapByIdRequest
-	18, // 26: grpc.v1.KojiService.GetKojiById:input_type -> grpc.v1.GetKojiByIdRequest
+	18, // 25: grpc.v1.KojiService.GetKojiById:input_type -> grpc.v1.GetKojiByIdRequest
+	16, // 26: grpc.v1.KojiService.GetKojiMapById:input_type -> grpc.v1.GetKojiMapByIdRequest
 	20, // 27: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
 	5,  // 28: grpc.v1.FileService.GetFileInfos:output_type -> grpc.v1.GetFileInfosResponse
 	7,  // 29: grpc.v1.FileService.GetFileBasePath:output_type -> grpc.v1.GetFileBasePathResponse
@@ -1893,8 +1893,8 @@ var file_grpc_v1_toyotachikuro_proto_depIdxs = []int32{
 	11, // 31: grpc.v1.CompanyService.GetCompanyById:output_type -> grpc.v1.GetCompanyByIdResponse
 	13, // 32: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
 	15, // 33: grpc.v1.CompanyService.GetCompanyCategories:output_type -> grpc.v1.GetCompanyCategoriesResponse
-	17, // 34: grpc.v1.KojiService.GetKojiMapById:output_type -> grpc.v1.GetKojiMapByIdResponse
-	19, // 35: grpc.v1.KojiService.GetKojiById:output_type -> grpc.v1.GetKojiByIdResponse
+	19, // 34: grpc.v1.KojiService.GetKojiById:output_type -> grpc.v1.GetKojiByIdResponse
+	17, // 35: grpc.v1.KojiService.GetKojiMapById:output_type -> grpc.v1.GetKojiMapByIdResponse
 	21, // 36: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
 	28, // [28:37] is the sub-list for method output_type
 	19, // [19:28] is the sub-list for method input_type

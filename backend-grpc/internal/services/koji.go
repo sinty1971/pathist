@@ -37,8 +37,10 @@ type KojiService struct {
 }
 
 func NewKojiService(
-	services *Services, options *ServiceOptions) (
-	s *KojiService, err error) {
+	services *Services,
+	options *ServiceOptions) (
+	s *KojiService,
+	err error) {
 	// インスタンス作成
 	s = &KojiService{
 		services:      services,
@@ -175,8 +177,10 @@ func (s *KojiService) UpdateKojies() error {
 
 // GetKojies は管理されている工事データ一覧を返す
 func (s *KojiService) GetKojiMapById(
-	ctx context.Context, req *connect.Request[grpcv1.GetKojiMapByIdRequest]) (
-	res *connect.Response[grpcv1.GetKojiMapByIdResponse], err error) {
+	ctx context.Context,
+	req *connect.Request[grpcv1.GetKojiMapByIdRequest]) (
+	res *connect.Response[grpcv1.GetKojiMapByIdResponse],
+	err error) {
 	_ = req // 現状フィルター未対応
 
 	grpcKojisById := make(map[string]*grpcv1.Koji, len(s.kojiMapById))

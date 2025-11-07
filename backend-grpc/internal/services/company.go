@@ -161,12 +161,12 @@ func (s *CompanyService) GetCompanyMapById(
 // gRPCサービスの実装です
 func (s *CompanyService) GetCompanyById(
 	ctx context.Context,
-	req *connect.Request[grpcv1.GetCompanyByIdRequest]) (
-	response *connect.Response[grpcv1.GetCompanyByIdResponse],
+	req *grpcv1.GetCompanyByIdRequest) (
+	res *grpcv1.GetCompanyByIdResponse,
 	err error) {
 
 	// Idの取得
-	id := req.Msg.GetId()
+	id := req.GetId()
 
 	// 会社情報を取得
 	company, exist := s.companiesById[id]
@@ -176,7 +176,7 @@ func (s *CompanyService) GetCompanyById(
 	}
 
 	// Responseの更新
-	response.Msg.SetCompany(company.Company)
+	res.SetCompany(company.Company)
 
 	return
 }
@@ -189,19 +189,19 @@ func (s *CompanyService) GetCompanyById(
 func (s *CompanyService) UpdateCompany(
 	// 引数
 	ctx context.Context,
-	req *connect.Request[grpcv1.UpdateCompanyRequest]) (
+	req *grpcv1.UpdateCompanyRequest) (
 	// 戻り値
-	res *connect.Response[grpcv1.UpdateCompanyResponse],
+	res *grpcv1.UpdateCompanyResponse,
 	err error) {
 
 	// 既存の会社情報を取得
-	currentCompanyId := req.Msg.GetCurrentCompanyId()
+	currentCompanyId := req.GetCurrentCompanyId()
 	currentCompany, exist := s.companiesById[currentCompanyId]
 	if !exist {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("company not found"))
 	}
 	// 更新後の会社情報を取得
-	grpcUpdatedCompany := req.Msg.GetUpdatedCompany()
+	grpcUpdatedCompany := req.GetUpdatedCompany()
 	if grpcUpdatedCompany == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("updated company is nil"))
 	}
@@ -227,15 +227,17 @@ func (s *CompanyService) UpdateCompany(
 	for _, v := range s.companiesById {
 		grpcv1CompanyMapById[v.Company.GetId()] = v.Company
 	}
-	res.Msg.SetCompanyMapById(grpcv1CompanyMapById)
+	res.SetCompanyMapById(grpcv1CompanyMapById)
 
 	return res, nil
 }
 
 // GetCompanyCategories は業種カテゴリーの一覧を取得します
 func (s *CompanyService) GetCompanyCategories(
-	ctx context.Context, _ *connect.Request[grpcv1.GetCompanyCategoriesRequest]) (
-	response *connect.Response[grpcv1.GetCompanyCategoriesResponse], err error) {
+	ctx context.Context,
+	_ *grpcv1.GetCompanyCategoriesRequest) (
+	res *grpcv1.GetCompanyCategoriesResponse,
+	err error) {
 
 	//
 	categories := make([]*grpcv1.CompanyCategory, 0, len(models.CompanyCategoryMap))
@@ -246,7 +248,7 @@ func (s *CompanyService) GetCompanyCategories(
 		}.Build())
 	}
 
-	response.Msg.SetCategories(categories)
+	res.SetCategories(categories)
 
-	return response, nil
+	return res, nil
 }

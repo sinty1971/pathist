@@ -72,8 +72,8 @@ service CompanyService {
 
 // KojiService provides operations for managing construction projects
 service KojiService {
-  rpc GetKojiMapById(GetKojiMapByIdRequest) returns (GetKojiMapByIdResponse);
   rpc GetKojiById(GetKojiByIdRequest) returns (GetKojiByIdResponse);
+  rpc GetKojiMapById(GetKojiMapByIdRequest) returns (GetKojiMapByIdResponse);
   rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
 }
 

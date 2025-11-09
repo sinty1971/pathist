@@ -10,6 +10,7 @@ import (
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	grpcv1connect "backend-grpc/gen/grpc/v1/grpcv1connect"
 	"backend-grpc/internal/models"
+	"backend-grpc/internal/utils"
 
 	"connectrpc.com/connect"
 	"github.com/fsnotify/fsnotify"
@@ -37,23 +38,30 @@ type CompanyService struct {
 func NewCompanyService(
 	services *Services,
 	options *ServiceOptions) (
-	s *CompanyService,
+	resService *CompanyService,
 	err error) {
 
+	// パスを正規化
+	managedFolder, err := utils.CleanAbsPath(options.CompanyServiceManagedFolder)
+	if err != nil {
+		return nil, err
+	}
+
 	// インスタンス作成
-	s = &CompanyService{
+	resService = &CompanyService{
 		services:      services,
-		managedFolder: options.CompanyServiceManagedFolder,
+		managedFolder: managedFolder,
 		companiesById: make(map[string]*models.Company, 1000),
 	}
 
 	// companiesの情報を取得
-	if err = s.UpdateCompanies(); err != nil {
+	if err = resService.UpdateCompanies(); err != nil {
+		log.Printf("Error updating companies: %v", err)
 		return
 	}
 
 	// managedFolderの監視を開始
-	if err = s.watchManagedFolder(); err != nil {
+	if err = resService.watchManagedFolder(); err != nil {
 		return
 	}
 
@@ -142,8 +150,8 @@ func (s *CompanyService) watchManagedFolder() error {
 // gRPCサービスの実装です
 func (s *CompanyService) GetCompanyMapById(
 	ctx context.Context,
-	_ *connect.Request[grpcv1.GetCompanyMapByIdRequest]) (
-	response connect.Response[grpcv1.GetCompanyMapByIdResponse],
+	_ *grpcv1.GetCompanyMapByIdRequest) (
+	res *grpcv1.GetCompanyMapByIdResponse,
 	err error) {
 
 	// 会社データモデルを作成
@@ -153,8 +161,8 @@ func (s *CompanyService) GetCompanyMapById(
 	}
 
 	// Responseの更新とリターン
-	response.Msg.SetCompanyMapById(grpcv1CompanyMapById)
-	return response, nil
+	res.SetCompanyMapById(grpcv1CompanyMapById)
+	return res, nil
 }
 
 // GetCompany は会社IDから会社情報を取得します

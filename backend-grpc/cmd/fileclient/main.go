@@ -11,8 +11,6 @@ import (
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	"backend-grpc/gen/grpc/v1/grpcv1connect"
-
-	"connectrpc.com/connect"
 )
 
 func main() {
@@ -29,18 +27,19 @@ func main() {
 
 	client := grpcv1connect.NewFileServiceClient(http.DefaultClient, *baseURL)
 
-	baseResp, err := client.GetFileBasePath(ctx, connect.NewRequest(
+	resFileBasePath, err := client.GetFileBasePath(
+		ctx,
 		grpcv1.GetFileBasePathRequest_builder{}.Build(),
-	))
+	)
 	if err != nil {
 		log.Fatalf("GetFileBasePath の呼び出しに失敗しました: %v", err)
 	}
 
-	req := connect.NewRequest(grpcv1.ListFileInfosRequest_builder{
+	req := grpcv1.GetFileInfosRequest_builder{
 		Path: *pathArg,
-	}.Build())
+	}.Build()
 
-	resp, err := client.ListFileInfos(ctx, req)
+	resFileInfos, err := client.GetFileInfos(ctx, req)
 	if err != nil {
 		log.Fatalf("ListFiles の呼び出しに失敗しました: %v", err)
 	}
@@ -51,9 +50,9 @@ func main() {
 			Path     string             `json:"path"`
 			Files    []*grpcv1.FileInfo `json:"files"`
 		}{
-			BasePath: baseResp.Msg.GetBasePath(),
-			Path:     req.Msg.GetPath(),
-			Files:    resp.Msg.GetFileInfos(),
+			BasePath: resFileBasePath.GetBasePath(),
+			Path:     req.GetPath(),
+			Files:    resFileInfos.GetFileInfos(),
 		}
 
 		data, err := json.MarshalIndent(output, "", "  ")
@@ -65,18 +64,14 @@ func main() {
 	}
 
 	// ターミナルで読みやすいように簡易フォーマットで出力する。
-	fmt.Printf("BasePath: %s\n", baseResp.Msg.GetBasePath())
-	fmt.Printf("Path: %s\n", req.Msg.GetPath())
+	fmt.Printf("BasePath: %s\n", resFileBasePath.GetBasePath())
+	fmt.Printf("Path: %s\n", req.GetPath())
 	fmt.Println("IsDir\tSize\tModified\tTargetPath\tIdealPath")
-	for _, file := range resp.Msg.GetFileInfos() {
-		modified := ""
-		if ts := file.GetModifiedTime(); ts != nil {
-			modified = ts.AsTime().Format(time.RFC3339)
-		}
-		fmt.Printf("%t\t%d\t%s\t%s\t%s\n",
+	for _, file := range resFileInfos.GetFileInfos() {
+		fmt.Printf("%t\t%d\t%s\t%s\n",
 			file.GetIsDirectory(),
 			file.GetSize(),
-			modified,
+			file.GetModifiedTime().AsTime().Format(time.RFC3339Nano),
 			file.GetPath(),
 		)
 	}

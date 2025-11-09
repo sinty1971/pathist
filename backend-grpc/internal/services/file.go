@@ -13,6 +13,7 @@ import (
 	grpc "backend-grpc/gen/grpc/v1"
 	grpcConnect "backend-grpc/gen/grpc/v1/grpcv1connect"
 	"backend-grpc/internal/models"
+	"backend-grpc/internal/utils"
 )
 
 // FileService の実装
@@ -30,14 +31,34 @@ type FileService struct {
 }
 
 func NewFileService(services *Services, options *ServiceOptions) *FileService {
+	// パスを正規化
+	basePath, err := utils.CleanAbsPath(options.FileServiceFolder)
+	if err != nil {
+		return nil
+	}
+
 	return &FileService{
 		services: services,
-		BasePath: options.FileServiceFolder,
+		BasePath: basePath,
 	}
 }
 
 func (s *FileService) Cleanup() {
 	// 現在はクリーンアップ処理は不要
+}
+
+func (s *FileService) GetFileBasePath(
+	ctx context.Context,
+	req *grpc.GetFileBasePathRequest) (
+	res *grpc.GetFileBasePathResponse,
+	err error) {
+	// コンテキストを無視
+	_ = ctx
+	_ = req
+
+	res = &grpc.GetFileBasePathResponse{}
+	res.SetBasePath(s.BasePath)
+	return // naked return: res=res, err=nil
 }
 
 // GetFileInfos は指定されたパスのファイル情報一覧を返す

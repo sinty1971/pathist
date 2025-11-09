@@ -39,22 +39,29 @@ type KojiService struct {
 func NewKojiService(
 	services *Services,
 	options *ServiceOptions) (
-	s *KojiService,
+	svc *KojiService,
 	err error) {
+
+	// パスを正規化
+	managedFolder, err := utils.CleanAbsPath(options.KojiServiceManagedFolder)
+	if err != nil {
+		return nil, err
+	}
+
 	// インスタンス作成
-	s = &KojiService{
+	svc = &KojiService{
 		services:      services,
-		managedFolder: options.KojiServiceManagedFolder,
+		managedFolder: managedFolder,
 		kojiMapById:   make(map[string]*models.Koji, 1000),
 	}
 
 	// kojiesByIdの情報を取得
-	if err = s.UpdateKojies(); err != nil {
+	if err = svc.UpdateKojies(); err != nil {
 		return
 	}
 
 	// managedFolderの監視を開始
-	if err = s.watchManagedFolder(); err != nil {
+	if err = svc.watchManagedFolder(); err != nil {
 		return
 	}
 
@@ -178,8 +185,8 @@ func (s *KojiService) UpdateKojies() error {
 // GetKojies は管理されている工事データ一覧を返す
 func (s *KojiService) GetKojiMapById(
 	ctx context.Context,
-	req *connect.Request[grpcv1.GetKojiMapByIdRequest]) (
-	res *connect.Response[grpcv1.GetKojiMapByIdResponse],
+	req *grpcv1.GetKojiMapByIdRequest) (
+	res *grpcv1.GetKojiMapByIdResponse,
 	err error) {
 	_ = req // 現状フィルター未対応
 
@@ -188,17 +195,20 @@ func (s *KojiService) GetKojiMapById(
 		grpcKojisById[v.GetId()] = v.Koji
 	}
 
-	return res, nil
+	res.SetKojiMapById(grpcKojisById)
+
+	return
 }
 
+// GetKojiById は指定されたIDの工事データを返す
 func (s *KojiService) GetKojiById(
 	ctx context.Context,
-	req *connect.Request[grpcv1.GetKojiByIdRequest]) (
-	res *connect.Response[grpcv1.GetKojiByIdResponse],
+	req *grpcv1.GetKojiByIdRequest) (
+	res *grpcv1.GetKojiByIdResponse,
 	err error) {
 
 	// リクエスト情報の取得
-	id := req.Msg.GetId()
+	id := req.GetId()
 
 	// 工事情報を取得
 	koji, exist := s.kojiMapById[id]
@@ -208,25 +218,25 @@ func (s *KojiService) GetKojiById(
 	}
 
 	// Responseの更新
-	res.Msg.SetKoji(koji.Koji)
+	res.SetKoji(koji.Koji)
 
 	return
 }
 
 func (s *KojiService) UpdateKoji(
 	ctx context.Context,
-	req *connect.Request[grpcv1.UpdateKojiRequest]) (
-	res *connect.Response[grpcv1.UpdateKojiResponse],
+	req *grpcv1.UpdateKojiRequest) (
+	res *grpcv1.UpdateKojiResponse,
 	err error) {
 
 	// 既存の工事情報を取得
-	currentKojiId := req.Msg.GetCurrentKojiId()
+	currentKojiId := req.GetCurrentKojiId()
 	currentKoji, exist := s.kojiMapById[currentKojiId]
 	if !exist {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("koji not found"))
 	}
 	// 更新後の工事情報を取得
-	grpcUpdatedKoji := req.Msg.GetUpdatedKoji()
+	grpcUpdatedKoji := req.GetUpdatedKoji()
 	if grpcUpdatedKoji == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("updated koji is nil"))
 	}
@@ -252,9 +262,9 @@ func (s *KojiService) UpdateKoji(
 	for _, v := range s.kojiMapById {
 		grpcv1KojiMapById[v.GetId()] = v.Koji
 	}
-	res.Msg.SetKojiMapById(grpcv1KojiMapById)
+	res.SetKojiMapById(grpcv1KojiMapById)
 
-	return res, nil
+	return
 }
 
 // RenameStandardFile は標準ファイルの名前を変更し、工事データも更新する

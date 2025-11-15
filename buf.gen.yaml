@@ -5,12 +5,11 @@ managed:
     - file_option: go_package_prefix
       value: backend-grpc/gen   # ← Go の import 先プレフィックスを合わせる
 plugins:
-  # - local: ./scripts/protoc-gen-protodoc.sh  # edition 対応のローカル Markdown ドキュメント生成
+  # ドキュメント生成プラグインはEditions 2023対応待ち
+  # - local: protoc-gen-doc
   #   out: docs/proto
-  #   strategy: all
   #   opt:
-  #     - filename=apis.md
-  #     - title=Penguin API ドキュメント
+  #     - markdown,apis.md:Penguin API ドキュメント
   - remote: buf.build/protocolbuffers/go   # protoc-gen-go 相当
     out: backend-grpc/gen
     opt:

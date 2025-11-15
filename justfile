@@ -4,6 +4,14 @@
 backend:
     cd ./backend-grpc && go run cmd/grpc/main.go
 
+# Test file service client
+fileclient *ARGS:
+    cd ./backend-grpc && go run cmd/fileclient/main.go {{ARGS}}
+
+# Test company service client
+companyclient *ARGS:
+    cd ./backend-grpc && go run cmd/companyclient/main.go {{ARGS}}
+
 # Start the backend gRPC server with TLS enabled
 backend-tls:
     cd ./backend && go run cmd/grpc/main.go -enable-tls
@@ -156,6 +164,11 @@ claude-code:
 architecture:
     @echo "Opening architecture diagram..."
     @xdg-open "https://mermaid.live/edit#$(cat doc/backend-architecture.md | grep -A 100 '```mermaid' | grep -B 100 '```' | grep -v '```' | base64 -w 0)" 2>/dev/null || open "https://mermaid.live/" 2>/dev/null || echo "Please visit https://mermaid.live/ and paste the mermaid code from doc/backend-architecture.md"
+
+# Show API documentation in browser
+docs:
+    @echo "Opening API documentation..."
+    @if command -v xdg-open > /dev/null; then xdg-open docs/proto/apis.md; elif command -v open > /dev/null; then open docs/proto/apis.md; else cat docs/proto/apis.md; fi
 
 # Show available commands
 help:

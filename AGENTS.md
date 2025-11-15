@@ -35,3 +35,7 @@
 - HTTP/2 を使う場合は `just generate-cert` でローカル証明書を再生成し、配布リポジトリにはコミットしないでください。運用環境では実証済みの証明書を `-cert` と `-key` フラグで指定します。
 - バックエンドはデフォルトで `~/penguin` 以下のファイルツリーを参照します。別ディレクトリを使用する場合はサービス初期化ロジックを更新し、アクセス権限とバックアップ方針を事前に決めてください。
 - gRPC サーバーで TLS を使う場合は `just backend-tls` を利用し、運用環境では `-cert` と `-key` フラグで実証済み証明書を指定してください。H2C 利用時でも必ず内部ネットワークでのアクセス制御を行ってください。
+
+## 
+
+go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest

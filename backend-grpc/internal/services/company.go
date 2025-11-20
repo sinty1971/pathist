@@ -56,7 +56,6 @@ func NewCompanyService(
 
 	// companiesの情報を取得
 	if err = resService.UpdateCompanies(); err != nil {
-		log.Printf("Error updating companies: %v", err)
 		return
 	}
 
@@ -154,6 +153,9 @@ func (s *CompanyService) GetCompanyMapById(
 	res *grpcv1.GetCompanyMapByIdResponse,
 	err error) {
 
+	// レスポンスを初期化
+	res = &grpcv1.GetCompanyMapByIdResponse{}
+
 	// 会社データモデルを作成
 	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(s.companiesById))
 	for _, v := range s.companiesById {
@@ -172,6 +174,9 @@ func (s *CompanyService) GetCompanyById(
 	req *grpcv1.GetCompanyByIdRequest) (
 	res *grpcv1.GetCompanyByIdResponse,
 	err error) {
+
+	// レスポンスを初期化
+	res = &grpcv1.GetCompanyByIdResponse{}
 
 	// Idの取得
 	id := req.GetId()
@@ -230,6 +235,9 @@ func (s *CompanyService) UpdateCompany(
 		s.companiesById[updatedCompany.GetId()] = updatedCompany
 	}
 
+	// レスポンスを初期化
+	res = &grpcv1.UpdateCompanyResponse{}
+
 	// Responseの作成
 	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(s.companiesById))
 	for _, v := range s.companiesById {
@@ -247,7 +255,9 @@ func (s *CompanyService) GetCompanyCategories(
 	res *grpcv1.GetCompanyCategoriesResponse,
 	err error) {
 
-	//
+	// レスポンスを初期化
+	res = &grpcv1.GetCompanyCategoriesResponse{}
+
 	categories := make([]*grpcv1.CompanyCategory, 0, len(models.CompanyCategoryMap))
 	for idx, label := range models.CompanyCategoryMap {
 		categories = append(categories, grpcv1.CompanyCategory_builder{

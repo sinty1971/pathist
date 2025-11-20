@@ -48,6 +48,7 @@ func main() {
 // showCompanyCategories は会社カテゴリー一覧を表示します
 func showCompanyCategories(ctx context.Context, client grpcv1connect.CompanyServiceClient, jsonOut bool) {
 	req := grpcv1.GetCompanyCategoriesRequest_builder{}.Build()
+	log.Printf("GetCompanyCategoriesRequest_builder, OK!\n")
 
 	res, err := client.GetCompanyCategories(ctx, req)
 	if err != nil {

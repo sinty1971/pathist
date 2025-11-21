@@ -1,4 +1,4 @@
-package utils
+package exts
 
 import (
 	"errors"
@@ -8,10 +8,10 @@ import (
 	"strings"
 )
 
-// CleanAbsPath は絶対パスを最短パスに変換します。
+// NormalizeAbsPath は絶対パスを最短パスに変換します。
 // absPath は絶対パスです。
 // '~' はホームディレクトリを展開して絶対パスに変換します。
-func CleanAbsPath(absPath string) (string, error) {
+func NormalizeAbsPath(absPath string) (string, error) {
 	// ホームディレクトリに展開
 	if strings.HasPrefix(absPath, "~/") {
 		usr, err := user.Current()

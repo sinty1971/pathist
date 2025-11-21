@@ -1,4 +1,4 @@
-package utils
+package exts
 
 import (
 	"math/big"

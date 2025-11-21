@@ -6,7 +6,7 @@ import (
 	"os"
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/utils"
+	exts "backend-grpc/internal/extentions"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -25,7 +25,7 @@ func NewFileInfo(targetPath string) (*FileInfo, error) {
 	var err error
 
 	// 絶対パスのクリーン化
-	targetPath, err = utils.CleanAbsPath(targetPath)
+	targetPath, err = exts.NormalizeAbsPath(targetPath)
 	if err != nil {
 		return nil, err
 	}

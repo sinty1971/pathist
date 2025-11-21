@@ -1,4 +1,4 @@
-package persist
+package exts
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// FilePersistable は永続化されるエンティティに必要な振る舞いを定義します。
-type FilePersistable interface {
-	// GetFilePersistPath はファイルの永続化フルパスを取得します。
-	GetFilePersistPath() string
+// ObjectPersistable は永続化されるエンティティに必要な振る舞いを定義します。
+type ObjectPersistable interface {
+	// GetPersistPath はファイルの永続化フルパスを取得します。
+	GetPersistPath() string
 
 	// GetObject は永続化対象のオブジェクトを取得します。
 	GetObject() any
@@ -19,16 +19,16 @@ type FilePersistable interface {
 	SetObject(any)
 }
 
-// FilePersistService はファイルベースのデータ永続化のサービスを提供します。
-type FilePersistService[T FilePersistable] struct {
+// ObjectPersistService はファイルベースのデータ永続化のサービスを提供します。
+type ObjectPersistService[T ObjectPersistable] struct {
 	PersistFilename string
 }
 
 // Load は永続化ファイルからデータを読み込みます。
-func (s *FilePersistService[T]) Load(entity T) (*T, error) {
+func (s *ObjectPersistService[T]) Load(entity T) (*T, error) {
 
 	// 永続化ファイルのフルパスを取得
-	persistPath := entity.GetFilePersistPath()
+	persistPath := entity.GetPersistPath()
 
 	// ファイルを読み込み
 	data, err := os.ReadFile(persistPath)
@@ -49,9 +49,9 @@ func (s *FilePersistService[T]) Load(entity T) (*T, error) {
 }
 
 // Save はデータを永続化ファイルに保存します。
-func (s *FilePersistService[T]) Save(entity T) error {
+func (s *ObjectPersistService[T]) Save(entity T) error {
 	// 永続化ファイルの有無等チェック
-	persistPath := entity.GetFilePersistPath()
+	persistPath := entity.GetPersistPath()
 	if _, err := os.Stat(persistPath); os.IsNotExist(err) {
 		return fmt.Errorf("永続化ファイルが存在しません: %s", persistPath)
 	} else if err != nil {

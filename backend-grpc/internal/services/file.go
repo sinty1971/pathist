@@ -12,8 +12,8 @@ import (
 
 	grpc "backend-grpc/gen/grpc/v1"
 	grpcConnect "backend-grpc/gen/grpc/v1/grpcv1connect"
+	exts "backend-grpc/internal/extentions"
 	"backend-grpc/internal/models"
-	"backend-grpc/internal/utils"
 )
 
 // FileService の実装
@@ -32,7 +32,7 @@ type FileService struct {
 
 func NewFileService(services *Services, options *ServiceOptions) *FileService {
 	// パスを正規化
-	basePath, err := utils.CleanAbsPath(options.FileServiceFolder)
+	basePath, err := exts.NormalizeAbsPath(options.FileServiceFolder)
 	if err != nil {
 		return nil
 	}

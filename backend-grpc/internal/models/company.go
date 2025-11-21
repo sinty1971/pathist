@@ -5,11 +5,11 @@ import (
 	"errors"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/persist"
-	"backend-grpc/internal/utils"
+	exts "backend-grpc/internal/extentions"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
@@ -17,15 +17,15 @@ type Company struct {
 	// Company メッセージ本体
 	*grpcv1.Company
 
-	// insideFPS はファイル永続化サービス用のヘルパー
+	// persist はファイル永続化サービス用のヘルパー
 	// FPS: File Persist Service
-	insideFPS persist.FilePersistService[*Company]
+	persist exts.ObjectPersistService[*Company]
 }
 
-// GetFilePersistPath は永続化ファイルのパスを取得します
+// GetPersistPath は永続化ファイルのパスを取得します
 // Persistable インターフェースの実装
-func (c *Company) GetFilePersistPath() string {
-	return filepath.Join(c.GetManagedFolder(), c.insideFPS.PersistFilename)
+func (c *Company) GetPersistPath() string {
+	return filepath.Join(c.GetManagedFolder(), c.persist.PersistFilename)
 }
 
 // GetObject は永続化対象のオブジェクトを取得します
@@ -44,101 +44,96 @@ func (c *Company) SetObject(obj any) {
 
 // NewCompany 会社フォルダーパス名からCompanyを作成します
 func NewCompany(managedFolder string) (*Company, error) {
+
+	// フォルダー名を解析
+	company, err := parseCompany(managedFolder)
+	if err != nil {
+		return nil, err
+	}
+
+	// Companyインスタンスを初期化
+	company.SetId(GenerateCompanyId(company.GetShortName()))
+	company.SetManagedFolder(managedFolder)
+	company.SetInsideIdealPath("")
+	company.SetInsideLegalName(company.GetShortName())
+	company.SetInsideRequiredFiles([]*grpcv1.FileInfo{})
+	company.SetInsidePostalCode("")
+	company.SetInsideAddress("")
+	company.SetInsidePhone("")
+	company.SetInsideEmail("")
+	company.SetInsideWebsite("")
+
+	return &company, nil
+}
+
+// GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
+func GenerateCompanyId(shortName string) string {
+	return exts.GenerateIdFromString(shortName)
+}
+
+// parseCompany は"[0-9] [会社名]"形式のファイル名を解析します
+// 会社名内にハイフンが含まれている場合は関連会社名または業務内容として処理します
+// 戻り値Companyは: Cateory, ShortName, Tags のみ設定されます
+func parseCompany(managedFolder string) (Company, error) {
+
 	// フォルダー名を取得
 	var folderName string
 	if lastSlash := strings.LastIndex(managedFolder, "/"); lastSlash != -1 {
 		folderName = managedFolder[lastSlash+1:]
 	}
 
-	// ファイル名の[0-9] [会社名]の規則を解析
-	result, err := ParseCompanyName(folderName)
-	if err != nil {
-		return nil, err
+	company := Company{
+		Company: grpcv1.Company_builder{}.Build(),
 	}
-
-	company := &Company{
-		Company: grpcv1.Company_builder{
-			Id:            GenerateCompanyId(result.ShortName),
-			ManagedFolder: managedFolder,
-			ShortName:     result.ShortName,
-			CategoryIndex: int32(result.Category),
-
-			InsideIdealPath:     "",
-			InsideLegalName:     result.ShortName,
-			InsideTags:          append([]string{"会社"}, result.Tags...),
-			InsideRequiredFiles: []*grpcv1.FileInfo{},
-			InsidePostalCode:    "",
-			InsideAddress:       "",
-			InsidePhone:         "",
-			InsideEmail:         "",
-			InsideWebsite:       "",
-		}.Build(),
-	}
-
-	// IDを更新とリターン
-	return company, nil
-}
-
-func GenerateCompanyId(shortName string) string {
-	return utils.GenerateIdFromString(shortName)
-}
-
-// parseCompanyNameResult は ParseCompanyName の戻り値を表します
-type parseCompanyNameResult struct {
-	Category  CompanyCategoryIndex
-	ShortName string
-	Tags      []string
-}
-
-// ParseCompanyName は"[0-9] [会社名]"形式のファイル名を解析します
-// 会社名内にハイフンが含まれている場合は関連会社名または業務内容として処理します
-// 戻り値: [0]業種, [1]会社名, error
-func ParseCompanyName(name string) (parseCompanyNameResult, error) {
-	result := parseCompanyNameResult{}
 
 	// 最小長チェック（"0 X"の最小3文字）
-	if len(name) < 3 {
-		return result, errors.New("ファイル名が短すぎます")
+	if len(folderName) < 3 {
+		return company, errors.New("ファイル名が短すぎます")
 	}
 
 	// 2番目の文字がスペースかチェック
-	if name[1] != ' ' {
-		return result, errors.New("2番目の文字がスペースではありません")
+	if folderName[1] != ' ' {
+		return company, errors.New("2番目の文字がスペースではありません")
 	}
 
 	// 最初の文字がCompanyCategoryCodeかチェック
-	code := CompanyCategoryIndex(name[0])
-	if !(&code).IsValid() {
-		return result, errors.New("最初の文字が業種コードではありません")
+	i, err := strconv.Atoi(string(folderName[0]))
+	if err != nil {
+		return company, err
 	}
+	idx := CompanyCategoryIndex(i)
+	if !(&idx).IsValid() {
+		return company, errors.New("最初の文字が業種コードではありません")
+	}
+	// 業種を取得
+	company.SetCategoryIndex(int32(idx))
 
 	// 会社名部分を取得
-	companyPart := name[2:]
+	companyPart := folderName[2:]
 	if companyPart == "" {
-		return result, errors.New("会社名が空です")
+		return company, errors.New("会社名が空です")
 	}
-
-	// 業種を取得
-	result.Category = code
 
 	// 会社名内にハイフンが含まれているかチェック
 	var relatedInfo string
 	if hyphenIndex := strings.Index(companyPart, "-"); hyphenIndex != -1 {
 		// ハイフン以降の文字列を取得
 		relatedInfo = companyPart[hyphenIndex+1:]
-		result.ShortName = companyPart[:hyphenIndex]
+		company.SetShortName(companyPart[:hyphenIndex])
 	} else {
 		// ハイフンがない場合は全体を会社名とする
-		result.ShortName = companyPart
+		company.SetShortName(companyPart)
 	}
 
 	// タグを作成
-	result.Tags = []string{CompanyCategoryMap[result.Category], result.ShortName}
+	category := CompanyCategoryMap[idx]
+	tags := []string{category, company.GetShortName()}
+	company.SetInsideTags(tags)
 	if relatedInfo != "" {
-		result.Tags = append(result.Tags, relatedInfo)
+		company.SetInsideTags(append(company.GetInsideTags(), relatedInfo))
 	}
 
-	return result, nil
+	return company, nil
 }
 
 // AddTag は会社のタグリストにタグを追加します
@@ -162,7 +157,7 @@ func (c *Company) Update(updatedCompany *Company) (*Company, error) {
 	updatedCompany.SetManagedFolder(c.GetManagedFolder())
 
 	// 永続化サービスの設定を引き継ぐ
-	updatedCompany.insideFPS = c.insideFPS
+	updatedCompany.persist = c.persist
 
 	return updatedCompany, nil
 }

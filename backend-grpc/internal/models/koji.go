@@ -2,8 +2,7 @@ package models
 
 import (
 	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/persist"
-	"backend-grpc/internal/utils"
+	exts "backend-grpc/internal/extentions"
 	"errors"
 	"math/big"
 	"path/filepath"
@@ -15,14 +14,14 @@ type Koji struct {
 	// Koji メッセージ本体
 	*grpcv1.Koji
 
-	// insideFilePersistService はファイル永続化サービス用のヘルパー
-	insideFPS persist.FilePersistService[*Koji]
+	// persist はファイル永続化サービス用のヘルパー
+	persist exts.ObjectPersistService[*Koji]
 }
 
-// GetFilePersistPath は永続化ファイルのパスを取得します
+// GetPersistPath は永続化ファイルのパスを取得します
 // Persistable インターフェースの実装
-func (k *Koji) GetFilePersistPath() string {
-	return filepath.Join(k.GetManagedFolder(), k.insideFPS.PersistFilename)
+func (k *Koji) GetPersistPath() string {
+	return filepath.Join(k.GetManagedFolder(), k.persist.PersistFilename)
 }
 
 // GetObject は永続化対象のオブジェクトを取得します
@@ -78,7 +77,7 @@ func parseKojiManagedFolder(managedFolder string) (*Timestamp, string, string, e
 	)
 
 	// フォルダー名を取得
-	foldername := utils.GetBaseName(managedFolder)
+	foldername := exts.GetBaseName(managedFolder)
 
 	// ファイル名から工事開始日の取得と日付除外文字列の取得
 	var withoutDate string
@@ -148,15 +147,18 @@ func GenerateKoujiId(start *Timestamp, companyName, locationName string) string 
 	copy(bytes[offset:], locationBytes)
 
 	// バイト配列からハッシュ文字列IDを生成
-	return utils.GenerateIdFromBytes(bytes)
+	return exts.GenerateIdFromBytes(bytes)
 }
 
 // GenerateKojiStatus はプロジェクトステータスを判定する
 func GenerateKojiStatus(start *Timestamp, end *Timestamp) string {
+	if start == nil || end == nil {
+		return "不明"
+	}
 
 	now := time.Now()
 
-	if start.IsValid() == false || end.IsValid() == false {
+	if !start.IsValid() || !end.IsValid() {
 		return "不明"
 	} else if now.Before(start.AsTime()) {
 		return "予定"
@@ -176,7 +178,7 @@ func (k *Koji) Update(updatedKoji *Koji) (*Koji, error) {
 	updatedKoji.SetManagedFolder(k.GetManagedFolder())
 
 	// 永続化サービスの設定を引き継ぐ
-	updatedKoji.insideFPS = k.insideFPS
+	updatedKoji.persist = k.persist
 
 	return updatedKoji, nil
 }

@@ -9,8 +9,8 @@ import (
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	grpcv1connect "backend-grpc/gen/grpc/v1/grpcv1connect"
+	exts "backend-grpc/internal/extentions"
 	"backend-grpc/internal/models"
-	"backend-grpc/internal/utils"
 
 	"connectrpc.com/connect"
 	"github.com/fsnotify/fsnotify"
@@ -30,37 +30,37 @@ type CompanyService struct {
 	// managedFolderWatcher は managedFolder のファイルシステム監視オブジェクト
 	managedFolderWatcher *fsnotify.Watcher
 
-	// companiesById は管理されている会社データのインデックスがIdのキャッシュマップ
-	companiesById map[string]*models.Company
+	// cacheById は管理されている会社データのインデックスがIdのキャッシュマップ
+	cacheById map[string]*models.Company
 }
 
 // NewCompanyService CompanyService インスタンスを作成します
 func NewCompanyService(
 	services *Services,
 	options *ServiceOptions) (
-	resService *CompanyService,
+	srv *CompanyService,
 	err error) {
 
 	// パスを正規化
-	managedFolder, err := utils.CleanAbsPath(options.CompanyServiceManagedFolder)
+	managedFolder, err := exts.NormalizeAbsPath(options.CompanyServiceManagedFolder)
 	if err != nil {
 		return nil, err
 	}
 
 	// インスタンス作成
-	resService = &CompanyService{
+	srv = &CompanyService{
 		services:      services,
 		managedFolder: managedFolder,
-		companiesById: make(map[string]*models.Company, 1000),
+		cacheById:     make(map[string]*models.Company, 1000),
 	}
 
 	// companiesの情報を取得
-	if err = resService.UpdateCompanies(); err != nil {
+	if err = srv.UpdateCompanies(); err != nil {
 		return
 	}
 
 	// managedFolderの監視を開始
-	if err = resService.watchManagedFolder(); err != nil {
+	if err = srv.watchManagedFolder(); err != nil {
 		return
 	}
 
@@ -92,7 +92,7 @@ func (s *CompanyService) UpdateCompanies() (err error) {
 			continue
 		}
 
-		s.companiesById[company.Company.GetId()] = company
+		s.cacheById[company.Company.GetId()] = company
 	}
 	return nil
 }
@@ -157,8 +157,8 @@ func (s *CompanyService) GetCompanyMapById(
 	res = &grpcv1.GetCompanyMapByIdResponse{}
 
 	// 会社データモデルを作成
-	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(s.companiesById))
-	for _, v := range s.companiesById {
+	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(s.cacheById))
+	for _, v := range s.cacheById {
 		grpcv1CompanyMapById[v.Company.GetId()] = v.Company
 	}
 
@@ -182,7 +182,7 @@ func (s *CompanyService) GetCompanyById(
 	id := req.GetId()
 
 	// 会社情報を取得
-	company, exist := s.companiesById[id]
+	company, exist := s.cacheById[id]
 	if !exist {
 		err = connect.NewError(connect.CodeNotFound, errors.New("company not found"))
 		return
@@ -209,7 +209,7 @@ func (s *CompanyService) UpdateCompany(
 
 	// 既存の会社情報を取得
 	currentCompanyId := req.GetCurrentCompanyId()
-	currentCompany, exist := s.companiesById[currentCompanyId]
+	currentCompany, exist := s.cacheById[currentCompanyId]
 	if !exist {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("company not found"))
 	}
@@ -229,18 +229,18 @@ func (s *CompanyService) UpdateCompany(
 	}
 
 	// 会社情報のインデックスを更新
-	if _, exist := s.companiesById[currentCompanyId]; exist {
-		delete(s.companiesById, currentCompanyId)
+	if _, exist := s.cacheById[currentCompanyId]; exist {
+		delete(s.cacheById, currentCompanyId)
 		// 新しいIDで再登録
-		s.companiesById[updatedCompany.GetId()] = updatedCompany
+		s.cacheById[updatedCompany.GetId()] = updatedCompany
 	}
 
 	// レスポンスを初期化
 	res = &grpcv1.UpdateCompanyResponse{}
 
 	// Responseの作成
-	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(s.companiesById))
-	for _, v := range s.companiesById {
+	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(s.cacheById))
+	for _, v := range s.cacheById {
 		grpcv1CompanyMapById[v.Company.GetId()] = v.Company
 	}
 	res.SetCompanyMapById(grpcv1CompanyMapById)

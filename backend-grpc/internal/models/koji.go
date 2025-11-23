@@ -14,25 +14,25 @@ type Koji struct {
 	// Koji メッセージ本体
 	*grpcv1.Koji
 
-	// persist はファイル永続化サービス用のヘルパー
-	persist exts.ObjectPersistService[*Koji]
+	// persistFilename は永続化サービス用のファイル名
+	persistFilename string
 }
 
 // GetPersistPath は永続化ファイルのパスを取得します
 // Persistable インターフェースの実装
 func (k *Koji) GetPersistPath() string {
-	return filepath.Join(k.GetManagedFolder(), k.persist.PersistFilename)
+	return filepath.Join(k.GetManagedFolder(), k.persistFilename)
 }
 
-// GetObject は永続化対象のオブジェクトを取得します
+// GetPersistInfo は永続化対象のオブジェクトを取得します
 // Persistable インターフェースの実装
-func (k *Koji) GetObject() any {
+func (k *Koji) GetPersistInfo() any {
 	return k.Koji
 }
 
-// SetObject は永続化対象のオブジェクトを設定します
+// SetPersistInfo は永続化対象のオブジェクトを設定します
 // Persistable インターフェースの実装
-func (k *Koji) SetObject(obj any) {
+func (k *Koji) SetPersistInfo(obj any) {
 	if koji, ok := obj.(*grpcv1.Koji); ok {
 		k.Koji = koji
 	}
@@ -178,7 +178,7 @@ func (k *Koji) Update(updatedKoji *Koji) (*Koji, error) {
 	updatedKoji.SetManagedFolder(k.GetManagedFolder())
 
 	// 永続化サービスの設定を引き継ぐ
-	updatedKoji.persist = k.persist
+	updatedKoji.persistFilename = k.persistFilename
 
 	return updatedKoji, nil
 }

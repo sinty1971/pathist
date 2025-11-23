@@ -26,21 +26,27 @@ type FileService struct {
 	// services は任意のgrpcサービスハンドラーへの参照
 	services *Services
 
-	// BasePath はファイルサービスの絶対パスフォルダー
-	BasePath string `json:"basePath" yaml:"base_path" example:"/penguin/豊田築炉"`
+	// ManagedFolder はファイルサービスの絶対パスフォルダー
+	ManagedFolder string `json:"managedFolder" yaml:"managed_folder" example:"/penguin/豊田築炉"`
 }
 
-func NewFileService(services *Services, options *ServiceOptions) *FileService {
-	// パスを正規化
-	basePath, err := exts.NormalizeAbsPath(options.FileServiceFolder)
-	if err != nil {
-		return nil
+func (srv *FileService) Start(services *Services, options *map[string]string) error {
+	// オプションの取得
+	optManagedFolder, exists := (*options)["FileServiceFolder"]
+	if !exists {
+		return errors.New("FileServiceFolder option is required")
 	}
 
-	return &FileService{
-		services: services,
-		BasePath: basePath,
+	// パスを正規化
+	managedFolder, err := exts.NormalizeAbsPath(optManagedFolder)
+	if err != nil {
+		return err
 	}
+
+	srv.services = services
+	srv.ManagedFolder = managedFolder
+
+	return nil
 }
 
 func (s *FileService) Cleanup() {
@@ -57,7 +63,7 @@ func (s *FileService) GetFileBasePath(
 	_ = req
 
 	res = &grpc.GetFileBasePathResponse{}
-	res.SetBasePath(s.BasePath)
+	res.SetBasePath(s.ManagedFolder)
 	return // naked return: res=res, err=nil
 }
 
@@ -154,7 +160,7 @@ func (s *FileService) GetAbsPathFrom(relPath string) (res string, err error) {
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	res = filepath.Join(s.BasePath, relPath)
+	res = filepath.Join(s.ManagedFolder, relPath)
 
 	return // naked return
 }

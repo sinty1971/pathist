@@ -2,69 +2,86 @@ package exts
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
 )
 
-// ObjectPersistable は永続化されるエンティティに必要な振る舞いを定義します。
-type ObjectPersistable interface {
+// Persistable は永続化されるエンティティに必要な振る舞いを定義します。
+type Persistable interface {
 	// GetPersistPath はファイルの永続化フルパスを取得します。
 	GetPersistPath() string
 
-	// GetObject は永続化対象のオブジェクトを取得します。
-	GetObject() any
+	// GetPersistInfo は永続化対象のオブジェクトを取得します。
+	GetPersistInfo() any
 
-	// SetObject は永続化対象のオブジェクトを設定します。
-	SetObject(any)
+	// SetPersistInfo は永続化対象のオブジェクトを設定します。
+	SetPersistInfo(any)
 }
 
-// ObjectPersistService はファイルベースのデータ永続化のサービスを提供します。
-type ObjectPersistService[T ObjectPersistable] struct {
-	PersistFilename string
+// PersistService はファイルベースのデータ永続化のサービスを提供します。
+type PersistService[T Persistable] struct {
+	persistableObject T
 }
 
-// Load は永続化ファイルからデータを読み込みます。
-func (s *ObjectPersistService[T]) Load(entity T) (*T, error) {
+// PersistService のコンストラクタ
+func CreatePersistService[T Persistable](persistable T) *PersistService[T] {
+	return &PersistService[T]{
+		persistableObject: persistable,
+	}
+}
+
+// LoadPersistInfo は永続化ファイルからデータを読み込みます。
+func (s *PersistService[T]) LoadPersistInfo() error {
 
 	// 永続化ファイルのフルパスを取得
-	persistPath := entity.GetPersistPath()
+	persistPath := s.persistableObject.GetPersistPath()
 
 	// ファイルを読み込み
-	data, err := os.ReadFile(persistPath)
+	in, err := os.ReadFile(persistPath)
 	if err != nil {
-		return nil, err
+		// ファイルが存在しない場合は一度 SavePersittInfo を呼び出して初期ファイルを作成する
+		if os.IsNotExist(err) {
+			if err := s.SavePersistInfo(); err != nil {
+				return fmt.Errorf("初期永続化ファイルの作成に失敗しました: %w", err)
+			}
+			// 再度読み込みを試みる
+			_, err = os.ReadFile(persistPath)
+			if err != nil {
+				return fmt.Errorf("永続化ファイルの読み込みに失敗しました: %w", err)
+			}
+			return err
+		}
 	}
 
 	// YAMLをデコード
-	object := entity.GetObject()
-	if err := yaml.Unmarshal(data, object); err != nil {
-		return nil, err
+	out := s.persistableObject.GetPersistInfo()
+
+	if err := yaml.Unmarshal(in, out); err != nil {
+		return fmt.Errorf("YAMLのデコードに失敗しました: %w", err)
 	}
 
-	// エンティティにデコード結果を設定
-	entity.SetObject(object)
+	// エンティティにデコード結果を設定（既に out に反映されているが念のため）
+	s.persistableObject.SetPersistInfo(out)
 
-	return &entity, nil
+	return nil
 }
 
-// Save はデータを永続化ファイルに保存します。
-func (s *ObjectPersistService[T]) Save(entity T) error {
-	// 永続化ファイルの有無等チェック
-	persistPath := entity.GetPersistPath()
-	if _, err := os.Stat(persistPath); os.IsNotExist(err) {
-		return fmt.Errorf("永続化ファイルが存在しません: %s", persistPath)
-	} else if err != nil {
-		return err
-	}
+// SavePersistInfo はデータを永続化ファイルに保存します。
+func (s *PersistService[T]) SavePersistInfo() error {
+	// 永続化ファイルパスの取得
+	persistPath := s.persistableObject.GetPersistPath()
 
 	// データをYAMLにエンコード
-	obj := entity.GetObject()
-	yamlText, err := yaml.Marshal(obj)
+	in := s.persistableObject.GetPersistInfo()
+	log.Printf("in:%v", in)
+	out, err := yaml.Marshal(in)
+	log.Printf("out:%v", out)
 	if err != nil {
 		return fmt.Errorf("データのエンコードに失敗しました: %w", err)
 	}
 
 	// ファイルに書き込み
-	return os.WriteFile(persistPath, yamlText, 0644)
+	return os.WriteFile(persistPath, out, 0644)
 }

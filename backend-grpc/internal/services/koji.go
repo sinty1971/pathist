@@ -36,36 +36,34 @@ type KojiService struct {
 	kojiMapById map[string]*models.Koji
 }
 
-func NewKojiService(
-	services *Services,
-	options *ServiceOptions) (
-	svc *KojiService,
-	err error) {
-
+func (s *KojiService) Start(services *Services, options *map[string]string) error {
+	// オプションの取得
+	optManagedFolder, exists := (*options)["KojiServiceManagedFolder"]
+	if !exists {
+		return errors.New("KojiServiceManagedFolder option is required")
+	}
 	// パスを正規化
-	managedFolder, err := exts.NormalizeAbsPath(options.KojiServiceManagedFolder)
+	managedFolder, err := exts.NormalizeAbsPath(optManagedFolder)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// インスタンス作成
-	svc = &KojiService{
-		services:      services,
-		managedFolder: managedFolder,
-		kojiMapById:   make(map[string]*models.Koji, 1000),
-	}
+	// 情報の初期化
+	s.services = services
+	s.managedFolder = managedFolder
+	s.kojiMapById = make(map[string]*models.Koji, 1000)
 
 	// kojiesByIdの情報を取得
-	if err = svc.UpdateKojies(); err != nil {
-		return
+	if err = s.UpdateKojies(); err != nil {
+		return err
 	}
 
 	// managedFolderの監視を開始
-	if err = svc.watchManagedFolder(); err != nil {
-		return
+	if err = s.watchManagedFolder(); err != nil {
+		return err
 	}
 
-	return
+	return nil
 }
 
 func (s *KojiService) Cleanup() {

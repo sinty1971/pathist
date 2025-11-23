@@ -17,26 +17,34 @@ type Company struct {
 	// Company メッセージ本体
 	*grpcv1.Company
 
-	// persist はファイル永続化サービス用のヘルパー
-	// FPS: File Persist Service
-	persist exts.ObjectPersistService[*Company]
+	// persistFilename は永続化サービス用のファイル名
+	persistFilename string
 }
 
 // GetPersistPath は永続化ファイルのパスを取得します
 // Persistable インターフェースの実装
 func (c *Company) GetPersistPath() string {
-	return filepath.Join(c.GetManagedFolder(), c.persist.PersistFilename)
+	return filepath.Join(c.GetManagedFolder(), c.persistFilename)
 }
 
-// GetObject は永続化対象のオブジェクトを取得します
+// GetPersistInfo は永続化対象のオブジェクトを取得します
 // Persistable インターフェースの実装
-func (c *Company) GetObject() any {
-	return c.Company
+func (c *Company) GetPersistInfo() any {
+	// Companyモデル自体を返すことで、MarshalYAMLメソッドが使われる
+	return c
 }
 
-// SetObject は永続化対象のオブジェクトを設定します
+// SetPersistInfo は永続化対象のオブジェクトを設定します
 // Persistable インターフェースの実装
-func (c *Company) SetObject(obj any) {
+func (c *Company) SetPersistInfo(obj any) {
+	// Companyモデルが渡される場合
+	if company, ok := obj.(*Company); ok {
+		c.Company = company.Company
+		c.persistFilename = company.persistFilename
+		return
+	}
+
+	// grpcv1.Companyが直接渡される場合（後方互換性）
 	if company, ok := obj.(*grpcv1.Company); ok {
 		c.Company = company
 	}
@@ -62,6 +70,9 @@ func NewCompany(managedFolder string) (*Company, error) {
 	company.SetInsidePhone("")
 	company.SetInsideEmail("")
 	company.SetInsideWebsite("")
+
+	// 永続化用ファイル名を設定
+	company.persistFilename = "@company.yaml"
 
 	return &company, nil
 }
@@ -157,37 +168,107 @@ func (c *Company) Update(updatedCompany *Company) (*Company, error) {
 	updatedCompany.SetManagedFolder(c.GetManagedFolder())
 
 	// 永続化サービスの設定を引き継ぐ
-	updatedCompany.persist = c.persist
+	updatedCompany.persistFilename = c.persistFilename
 
 	return updatedCompany, nil
 }
 
 // MarshalYAML は YAML 用のシリアライズを行います。
 func (c Company) MarshalYAML() (any, error) {
-	return c.Company, nil
+	// Getterを使って明示的にマップ化
+	return c.MarshalMap(), nil
 }
 
 // UnmarshalYAML は YAML からの復元を行います。
 func (c *Company) UnmarshalYAML(unmarshal func(any) error) error {
-	enc := &grpcv1.Company{}
-	if err := unmarshal(enc); err != nil {
+	var m map[string]any
+	if err := unmarshal(&m); err != nil {
 		return err
 	}
-	c.Company = enc
+
+	if err := c.UnmarshalMap(m); err != nil {
+		return err
+	}
 	return nil
 }
 
 // MarshalJSON は JSON 用のシリアライズを行います。
 func (c Company) MarshalJSON() ([]byte, error) {
-	return json.Marshal(c.Company)
+	return json.Marshal(c.MarshalMap())
 }
 
 // UnmarshalJSON は JSON からの復元を行います。
 func (c *Company) UnmarshalJSON(data []byte) error {
-	enc := &grpcv1.Company{}
-	if err := json.Unmarshal(data, enc); err != nil {
+	var m map[string]any
+
+	if err := json.Unmarshal(data, &m); err != nil {
 		return err
 	}
-	c.Company = enc
+
+	if err := c.UnmarshalMap(m); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Company) MarshalMap() map[string]any {
+	return map[string]any{
+		"inside_ideal_path":     c.GetInsideIdealPath(),
+		"inside_legal_name":     c.GetInsideLegalName(),
+		"inside_postal_code":    c.GetInsidePostalCode(),
+		"inside_address":        c.GetInsideAddress(),
+		"inside_phone":          c.GetInsidePhone(),
+		"inside_email":          c.GetInsideEmail(),
+		"inside_website":        c.GetInsideWebsite(),
+		"inside_tags":           c.GetInsideTags(),
+		"inside_required_files": c.GetInsideRequiredFiles(),
+	}
+}
+
+func (c *Company) UnmarshalMap(m map[string]any) error {
+	if v, ok := m["inside_ideal_path"].(string); ok {
+		c.SetInsideIdealPath(v)
+	}
+	if v, ok := m["inside_legal_name"].(string); ok {
+		c.SetInsideLegalName(v)
+	}
+	if v, ok := m["inside_postal_code"].(string); ok {
+		c.SetInsidePostalCode(v)
+	}
+	if v, ok := m["inside_address"].(string); ok {
+		c.SetInsideAddress(v)
+	}
+	if v, ok := m["inside_phone"].(string); ok {
+		c.SetInsidePhone(v)
+	}
+	if v, ok := m["inside_email"].(string); ok {
+		c.SetInsideEmail(v)
+	}
+	if v, ok := m["inside_website"].(string); ok {
+		c.SetInsideWebsite(v)
+	}
+	if v, ok := m["inside_tags"].([]any); ok {
+		tags := make([]string, 0, len(v))
+		for _, tag := range v {
+			if tagStr, ok := tag.(string); ok {
+				tags = append(tags, tagStr)
+			}
+		}
+		c.SetInsideTags(tags)
+	}
+	if v, ok := m["inside_required_files"].([]any); ok {
+		files := make([]*grpcv1.FileInfo, 0, len(v))
+		for _, file := range v {
+			if fileMap, ok := file.(map[string]any); ok {
+				fileInfo := &grpcv1.FileInfo{}
+				fileData, _ := json.Marshal(fileMap)
+				json.Unmarshal(fileData, fileInfo)
+				files = append(files, fileInfo)
+			}
+		}
+		c.SetInsideRequiredFiles(files)
+	}
+
 	return nil
 }

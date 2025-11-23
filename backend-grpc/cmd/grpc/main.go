@@ -40,36 +40,38 @@ func main() {
 	// コマンドライン引数の解析
 	flag.Parse()
 
-	// シグナルの受信を待機するコンテキストを作成
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	// サービスコレクションの初期化
+	srvCollection := services.NewServices()
+	defer srvCollection.CleanupAll()
 
-	services, err := services.NewServices()
-	if err != nil {
-		log.Fatalf("サービスの初期化に失敗しました: %v", err)
-	}
-	defer services.Cleanup()
+	// 各サービスの初期化
+	fileService := &services.FileService{}
+	companyService := &services.CompanyService{}
+	kojiService := &services.KojiService{}
 
-	if services.KojiService == nil {
-		log.Fatal("KojiService が初期化されていません")
-	}
-	if services.CompanyService == nil {
-		log.Fatal("CompanyService が初期化されていません")
-	}
-	if services.FileService == nil {
-		log.Fatal("FileService が初期化されていません")
-	}
+	// サービスをサービスコレクションに追加
+	srvCollection.AddService("FileService", fileService)
+	srvCollection.AddService("CompanyService", companyService)
+	srvCollection.AddService("KojiService", kojiService)
 
+	// サービスの起動
+	if err := srvCollection.StartAll(); err != nil {
+		log.Fatalf("Failed to start services: %v", err)
+	}
+	defer srvCollection.CleanupAll()
+
+	// gRPC ハンドラの設定
+	filePath, fileConnectHandler := grpcv1connect.NewFileServiceHandler(fileService)
+	companyPath, companyConnectHandler := grpcv1connect.NewCompanyServiceHandler(companyService)
+	kojiPath, kojiConnectHandler := grpcv1connect.NewKojiServiceHandler(kojiService)
+
+	// http ハンドラの設定
 	mux := http.NewServeMux()
 
-	filePath, fileConnectHandler := grpcv1connect.NewFileServiceHandler(services.FileService)
+	// gRPC ハンドラの登録
 	mux.Handle(filePath, fileConnectHandler)
-
-	kojiPath, kojiConnectHandler := grpcv1connect.NewKojiServiceHandler(services.KojiService)
-	mux.Handle(kojiPath, kojiConnectHandler)
-
-	companyPath, companyConnectHandler := grpcv1connect.NewCompanyServiceHandler(services.CompanyService)
 	mux.Handle(companyPath, companyConnectHandler)
+	mux.Handle(kojiPath, kojiConnectHandler)
 
 	reflector := grpcreflect.NewStaticReflector(
 		grpcv1connect.FileServiceName,
@@ -117,6 +119,11 @@ func main() {
 		}()
 	}
 
+	// シグナルの受信を待機するコンテキストを作成
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// シグナル受信を待機
 	<-ctx.Done()
 	log.Printf("停止シグナルを受信しました。サーバーをシャットダウンします。")
 

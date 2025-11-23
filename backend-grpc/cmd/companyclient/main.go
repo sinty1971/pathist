@@ -95,6 +95,7 @@ func showCompanyById(ctx context.Context, client grpcv1connect.CompanyServiceCli
 
 	// ターミナル表示
 	company := res.GetCompany()
+	log.Println("Leagal Name:", company.GetInsideLegalName())
 	fmt.Printf("Company Information (ID: %s)\n", companyID)
 	fmt.Println(strings.Repeat("=", 50))
 	fmt.Printf("ID: %s\n", company.GetId())
@@ -155,8 +156,8 @@ func showAllCompanies(ctx context.Context, client grpcv1connect.CompanyServiceCl
 		}
 
 		legalName := company.GetInsideLegalName()
-		if len(legalName) > 20 {
-			legalName = legalName[:17] + "..."
+		if len(legalName) > 30 {
+			legalName = legalName[:27] + "..."
 		}
 
 		fmt.Printf("%-15s\t%-15s\t%-20s\t%d\n",

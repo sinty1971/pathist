@@ -1,6 +1,7 @@
 package models
 
 import (
+	"backend-grpc/internal/ext"
 	"errors"
 	"fmt"
 	"maps"
@@ -10,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	exts "backend-grpc/internal/extentions"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -28,7 +27,7 @@ func (ts *Timestamp) GetID() string {
 	bytes := big.NewInt(int64(ts.GetSeconds())*1_000_000_000 + int64(ts.GetNanos())).Bytes()
 
 	// 時刻をナノ秒精度の文字列に変換してIDを生成
-	return exts.GenerateIdFromBytes(bytes)
+	return ext.GenerateIdFromBytes(bytes)
 }
 
 // MarshalYAML implements yaml.Marshaler

@@ -1,8 +1,7 @@
-package exts
+package ext
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -75,9 +74,7 @@ func (s *PersistService[T]) SavePersistInfo() error {
 
 	// データをYAMLにエンコード
 	in := s.persistableObject.GetPersistInfo()
-	log.Printf("in:%v", in)
 	out, err := yaml.Marshal(in)
-	log.Printf("out:%v", out)
 	if err != nil {
 		return fmt.Errorf("データのエンコードに失敗しました: %w", err)
 	}

@@ -1,0 +1,12 @@
+package ext
+
+// DefaultStringMap はサービスのデフォルト設定を定義します。
+// これらの値は、環境変数が設定されていない場合に使用されます。
+var ConfigMap = map[string]string{
+	"FileServiceFolder":           "~/penguin",
+	"CompanyServiceManagedFolder": "~/penguin/豊田築炉/1 会社",
+	"CompanyPersistFilename":      "@inside.yaml",
+	"KojiServiceManagedFolder":    "~/penguin/豊田築炉/2 工事",
+	"KojiPersistFilename":         "@koji.yaml",
+	"MemberPersistFilename":       "@member.yaml",
+}

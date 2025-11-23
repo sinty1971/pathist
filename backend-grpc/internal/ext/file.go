@@ -1,4 +1,4 @@
-package exts
+package ext
 
 import (
 	"errors"
@@ -22,12 +22,16 @@ func NormalizeAbsPath(absPath string) (string, error) {
 	}
 	cleanPath := filepath.Clean(absPath)
 
-	// 絶対パスチェック
-	if filepath.IsAbs(cleanPath) {
-		return cleanPath, nil
+	// シンボリックリンクを解決して絶対パスチェック
+	resolvedPath, err := filepath.EvalSymlinks(cleanPath)
+	if err == nil {
+		if filepath.IsAbs(cleanPath) {
+			// 絶対パスチェック
+			return resolvedPath, nil
+		}
+		err = errors.New("絶対パスの条件を満たしていません。")
 	}
-
-	return "", errors.New("絶対パスではありません")
+	return "", err
 }
 
 // パスからファイル名またはフォルダー名を取得します

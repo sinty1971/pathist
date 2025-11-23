@@ -1,4 +1,4 @@
-package exts
+package ext
 
 import (
 	"runtime"

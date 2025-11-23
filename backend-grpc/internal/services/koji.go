@@ -1,7 +1,7 @@
 package services
 
 import (
-	exts "backend-grpc/internal/extentions"
+	"backend-grpc/internal/ext"
 	"context"
 	"errors"
 	"log"
@@ -43,7 +43,7 @@ func (s *KojiService) Start(services *Services, options *map[string]string) erro
 		return errors.New("KojiServiceManagedFolder option is required")
 	}
 	// パスを正規化
-	managedFolder, err := exts.NormalizeAbsPath(optManagedFolder)
+	managedFolder, err := ext.NormalizeAbsPath(optManagedFolder)
 	if err != nil {
 		return err
 	}
@@ -129,10 +129,10 @@ func (s *KojiService) UpdateKojies() error {
 	kojiesSize := len(entries)
 
 	// 並列処理用のワーカー数を決定
-	numWorkers := exts.DecideNumWorkers(kojiesSize,
-		exts.WithMinWorkers(2),
-		exts.WithMaxWorkers(16),
-		exts.WithCPUMultiplier(2),
+	numWorkers := ext.DecideNumWorkers(kojiesSize,
+		ext.WithMinWorkers(2),
+		ext.WithMaxWorkers(16),
+		ext.WithCPUMultiplier(2),
 	)
 
 	// バッファ付きチャンネルで効率化

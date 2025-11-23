@@ -12,7 +12,7 @@ import (
 
 	grpc "backend-grpc/gen/grpc/v1"
 	grpcConnect "backend-grpc/gen/grpc/v1/grpcv1connect"
-	exts "backend-grpc/internal/extentions"
+	"backend-grpc/internal/ext"
 	"backend-grpc/internal/models"
 )
 
@@ -38,7 +38,7 @@ func (srv *FileService) Start(services *Services, options *map[string]string) er
 	}
 
 	// パスを正規化
-	managedFolder, err := exts.NormalizeAbsPath(optManagedFolder)
+	managedFolder, err := ext.NormalizeAbsPath(optManagedFolder)
 	if err != nil {
 		return err
 	}

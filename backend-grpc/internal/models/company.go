@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
-	exts "backend-grpc/internal/extentions"
+	"backend-grpc/internal/ext"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
@@ -17,14 +17,14 @@ type Company struct {
 	// Company メッセージ本体
 	*grpcv1.Company
 
-	// persistFilename は永続化サービス用のファイル名
-	persistFilename string
+	// PersistFilename は永続化サービス用のファイル名
+	PersistFilename string
 }
 
 // GetPersistPath は永続化ファイルのパスを取得します
 // Persistable インターフェースの実装
 func (c *Company) GetPersistPath() string {
-	return filepath.Join(c.GetManagedFolder(), c.persistFilename)
+	return filepath.Join(c.GetManagedFolder(), c.PersistFilename)
 }
 
 // GetPersistInfo は永続化対象のオブジェクトを取得します
@@ -40,7 +40,7 @@ func (c *Company) SetPersistInfo(obj any) {
 	// Companyモデルが渡される場合
 	if company, ok := obj.(*Company); ok {
 		c.Company = company.Company
-		c.persistFilename = company.persistFilename
+		c.PersistFilename = company.PersistFilename
 		return
 	}
 
@@ -70,16 +70,14 @@ func NewCompany(managedFolder string) (*Company, error) {
 	company.SetInsidePhone("")
 	company.SetInsideEmail("")
 	company.SetInsideWebsite("")
-
-	// 永続化用ファイル名を設定
-	company.persistFilename = "@company.yaml"
+	company.PersistFilename = ext.ConfigMap["CompanyPersistFilename"]
 
 	return &company, nil
 }
 
 // GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
 func GenerateCompanyId(shortName string) string {
-	return exts.GenerateIdFromString(shortName)
+	return ext.GenerateIdFromString(shortName)
 }
 
 // parseCompany は"[0-9] [会社名]"形式のファイル名を解析します
@@ -168,7 +166,7 @@ func (c *Company) Update(updatedCompany *Company) (*Company, error) {
 	updatedCompany.SetManagedFolder(c.GetManagedFolder())
 
 	// 永続化サービスの設定を引き継ぐ
-	updatedCompany.persistFilename = c.persistFilename
+	updatedCompany.PersistFilename = c.PersistFilename
 
 	return updatedCompany, nil
 }

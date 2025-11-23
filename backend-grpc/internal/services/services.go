@@ -1,15 +1,6 @@
 package services
 
-// DefaultServicesOptionMap はサービスのデフォルト設定を定義します。
-// これらの値は、環境変数が設定されていない場合に使用されます。
-var DefaultServicesOptionMap = map[string]string{
-	"FileServiceFolder":           "~/penguin",
-	"CompanyServiceManagedFolder": "~/penguin/豊田築炉/1 会社",
-	"KojiServiceManagedFolder":    "~/penguin/豊田築炉/2 工事",
-	"PersistCompanyFilename":      "@inside.yaml",
-	"PersistKojiFilename":         "@koji.yaml",
-	"PersistMemberFilename":       "@member.yaml",
-}
+import "backend-grpc/internal/ext"
 
 // Sevice は各サービスが実装すべきインターフェースを定義します。
 type Sevice interface {
@@ -39,7 +30,7 @@ func (ss *Services) AddService(serviceName string, service Sevice) {
 // StartAll はすべてのサービスを起動する
 func (ss *Services) StartAll() error {
 	for _, s := range ss.ServiceMap {
-		if err := (*s).Start(ss, &DefaultServicesOptionMap); err != nil {
+		if err := (*s).Start(ss, &ext.ConfigMap); err != nil {
 			return err
 		}
 	}

@@ -9,7 +9,7 @@ import (
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	grpcv1connect "backend-grpc/gen/grpc/v1/grpcv1connect"
-	exts "backend-grpc/internal/extentions"
+	"backend-grpc/internal/ext"
 	"backend-grpc/internal/models"
 
 	"connectrpc.com/connect"
@@ -36,27 +36,22 @@ type CompanyService struct {
 	cacheById map[string]*models.Company
 }
 
+// Start は CompanyService を初期化して開始します
 func (srv *CompanyService) Start(services *Services, options *map[string]string) error {
-
-	log.Printf("Starting CompanyService...")
-
-	// パスを正規化
+	// パスをの取得と正規化
 	optManagedFolder, exists := (*options)["CompanyServiceManagedFolder"]
 	if !exists {
 		return errors.New("CompanyServiceManagedFolder option is required")
 	}
-
-	managedFolder, err := exts.NormalizeAbsPath(optManagedFolder)
+	managedFolder, err := ext.NormalizeAbsPath(optManagedFolder)
 	if err != nil {
 		return err
 	}
 
-	// インスタンス作成
-	srv = &CompanyService{
-		services:      services,
-		managedFolder: managedFolder,
-		cacheById:     make(map[string]*models.Company, 1000),
-	}
+	// 既存インスタンスに値をセット（再代入しないこと）
+	srv.services = services
+	srv.managedFolder = managedFolder
+	srv.cacheById = make(map[string]*models.Company, 1000)
 	srv.managedWatchCtx, srv.managedWatchCancel = context.WithCancel(context.Background())
 
 	// companiesの情報を取得
@@ -111,7 +106,7 @@ func (srv *CompanyService) UpdateCompanies() (err error) {
 
 	// 会社の内部情報の取得
 	for _, company := range srv.cacheById {
-		ps := exts.CreatePersistService(company)
+		ps := ext.CreatePersistService(company)
 		if err := ps.LoadPersistInfo(); err != nil {
 			log.Printf("Failed to load persist info for company ID %s: %v", company.GetId(), err)
 		}
@@ -119,14 +114,13 @@ func (srv *CompanyService) UpdateCompanies() (err error) {
 	return nil
 }
 
-// watchManagedFolder starts watching the provided managedFolder for changes.
-// Add callbacks or channels as needed to propagate events to your services.
+// watchManagedFolder は指定された managedFolder の変更を監視します。
+// 必要に応じてイベントをサービスに伝播するためのコールバックやチャネルを追加してください。
 func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
-	absPath, err := filepath.Abs(srv.managedFolder)
-	if err != nil {
-		return err
-	}
+	// 変数定義
+	var err error
 
+	// fsnotify ウォッチャーを作成
 	srv.managedFolderWatcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -134,14 +128,17 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 
 	// イベントループ（イベント・エラーを単一ゴルーチンで処理）
 	go func() {
+		// 終了時にウォッチャーをクローズ
 		defer srv.managedFolderWatcher.Close()
+
 		for {
+			log.Println("Waiting for managed folder events...")
 			select {
 			case event, ok := <-srv.managedFolderWatcher.Events:
+				log.Printf("[managed-folder] event=%s path=%s", event.Op, event.Name)
 				if !ok {
 					return
 				}
-				log.Printf("[managed-folder] event=%s path=%s", event.Op, event.Name)
 
 				// 新しいディレクトリが作成された場合、監視対象に追加
 				if event.Op&fsnotify.Create != 0 {
@@ -165,10 +162,10 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 				}
 
 			case err, ok := <-srv.managedFolderWatcher.Errors:
+				log.Printf("[managed-folder] watcher error: %v", err)
 				if !ok {
 					return
 				}
-				log.Printf("[managed-folder] watcher error: %v", err)
 
 			case <-ctx.Done():
 				log.Printf("[managed-folder] stop watching (context canceled)")
@@ -178,11 +175,11 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 	}()
 
 	// ルートフォルダと全サブディレクトリを監視対象に追加
-	if err := srv.addWatchRecursively(absPath); err != nil {
+	if err := srv.addWatchRecursively(srv.managedFolder); err != nil {
 		return err
 	}
 
-	log.Printf("watching managed folder (recursively): %s", absPath)
+	log.Printf("watching managed folder (recursively): %s", srv.managedFolder)
 	return nil
 }
 

@@ -107,31 +107,49 @@ func (srv *CompanyService) UpdateCachedCompanyMap() error {
 
 	// 会社の内部情報の取得
 	for _, company := range srv.cachedCompanyMap {
-		ps := ext.CreatePersistService(company)
-		if err := ps.LoadPersistInfo(); err != nil {
+		if err := company.LoadPersistData(); err != nil {
 			log.Printf("Failed to load persist info for company ID %s: %v", company.GetId(), err)
 		}
 	}
 	return nil
 }
 
-func (srv *CompanyService) UpdateCachedCompany(managedFolder string) (*models.Company, error) {
+func (srv *CompanyService) UpdateCachedCompany(newCompany *models.Company) (*models.Company, error) {
 
-	// Companyインスタンスの作成
-	newCompany := models.NewCompany()
-	if err := newCompany.ParseFromManagedFolder(managedFolder); err != nil {
-		return nil, err
+	// Idから更新前の会社情報を取得
+	prevCompany, exist := srv.cachedCompanyMap[newCompany.GetId()]
+	if !exist {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された会社Idを見つけることができませんでした。"))
 	}
 
-	//
-	ps := ext.CreatePersistService(newCompany)
-	if err := ps.LoadPersistInfo(); err != nil {
-		log.Printf("Failed to load persist info for company ID %s: %v", newCompany.GetId(), err)
-	}
-	id := newCompany.GetId()
-	srv.cachedCompanyMap[id] = newCompany
+	// 会社の短縮名・管理フォルダー・業種カテゴリーが変更された場合は
+	// 管理フォルダーの情報を元に既存情報を削除し新たに作成する
+	if (newCompany.GetShortName() != prevCompany.GetShortName()) ||
+		(newCompany.GetManagedFolder() != prevCompany.GetManagedFolder()) ||
+		(newCompany.GetCategoryIndex() != prevCompany.GetCategoryIndex()) {
+		managedFolder := newCompany.GetManagedFolder()
 
-	return newCompany, nil
+		// Companyインスタンスの作成
+		if err := newCompany.ParseFromManagedFolder(managedFolder); err != nil {
+			return nil, err
+		}
+		// キャッシュから削除
+		delete(srv.cachedCompanyMap, prevCompany.GetId())
+
+		// フォルダー監視の登録解除及び登録
+		srv.managedFolderWatcher.Remove(prevCompany.GetManagedFolder())
+		srv.managedFolderWatcher.Add(managedFolder)
+	}
+
+	// キャッシュに登録
+	srv.cachedCompanyMap[newCompany.GetId()] = newCompany
+
+	// persist情報の書き込み
+	if err := newCompany.SavePersistData(); err != nil {
+		log.Printf("Failed to save persist info for company ID %s: %v", newCompany.GetId(), err)
+	}
+
+	return prevCompany, nil
 }
 
 // watchManagedFolder は指定された managedFolder の変更を監視します。
@@ -177,7 +195,9 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 				managedFolder := filepath.Join(srv.managedFolder, companyFolders[0])
 
 				// 会社のキャッシュを更新
-				newCompany, err := srv.UpdateCachedCompany(managedFolder)
+				newCompany := models.NewCompany()
+				newCompany.SetManagedFolder(managedFolder)
+				_, err := srv.UpdateCachedCompany(newCompany)
 				if err != nil {
 					log.Println("Failed to update. ManagedFolder =", managedFolder)
 					return
@@ -225,36 +245,36 @@ func (srv *CompanyService) addWatchRecursive(root string) error {
 
 // GetCompanies は管理されている会社情報の一覧を取得します
 // gRPCサービスの実装です
-func (srv *CompanyService) GetCompanyMapById(
+func (srv *CompanyService) GetCompanyMap(
 	ctx context.Context,
-	_ *grpcv1.GetCompanyMapByIdRequest) (
-	res *grpcv1.GetCompanyMapByIdResponse,
+	_ *grpcv1.GetCompanyMapRequest) (
+	res *grpcv1.GetCompanyMapResponse,
 	err error) {
 
 	// レスポンスを初期化
-	res = &grpcv1.GetCompanyMapByIdResponse{}
+	res = grpcv1.GetCompanyMapResponse_builder{}.Build()
 
 	// 会社データモデルを作成
-	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(srv.cachedCompanyMap))
+	grpcv1CompanyMap := make(map[string]*grpcv1.Company, len(srv.cachedCompanyMap))
 	for _, v := range srv.cachedCompanyMap {
-		grpcv1CompanyMapById[v.Company.GetId()] = v.Company
+		grpcv1CompanyMap[v.Company.GetId()] = v.Company
 	}
 
 	// Responseの更新とリターン
-	res.SetCompanyMapById(grpcv1CompanyMapById)
+	res.SetCompanyMap(grpcv1CompanyMap)
 	return res, nil
 }
 
 // GetCompany は会社IDから会社情報を取得します
 // gRPCサービスの実装です
-func (srv *CompanyService) GetCompanyById(
+func (srv *CompanyService) GetCompany(
 	ctx context.Context,
-	req *grpcv1.GetCompanyByIdRequest) (
-	res *grpcv1.GetCompanyByIdResponse,
+	req *grpcv1.GetCompanyRequest) (
+	res *grpcv1.GetCompanyResponse,
 	err error) {
 
 	// レスポンスを初期化
-	res = &grpcv1.GetCompanyByIdResponse{}
+	res = grpcv1.GetCompanyResponse_builder{}.Build()
 
 	// Idの取得
 	id := req.GetId()
@@ -278,63 +298,31 @@ func (srv *CompanyService) GetCompanyById(
 // また、フォルダーの移動も発生する可能性があります。
 // Company.Id 更新対象の会社Id
 func (srv *CompanyService) UpdateCompany(
-	// 引数
-	ctx context.Context,
-	req *grpcv1.UpdateCompanyRequest) (
-	// 戻り値
-	res *grpcv1.UpdateCompanyResponse,
-	err error) {
+	_ context.Context, req *grpcv1.UpdateCompanyRequest) (
+	*grpcv1.UpdateCompanyResponse, error) {
 
-	// 既存の会社情報を取得
-	currentCompanyId := req.GetCurrentCompanyId()
-	currentCompany, exist := srv.cachedCompanyMap[currentCompanyId]
-	if !exist {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("company not found"))
-	}
-	// 更新後の会社情報を取得
-	grpcUpdatedCompany := req.GetUpdatedCompany()
-	if grpcUpdatedCompany == nil {
+	// models.Companyインスタンスの作成
+	newCompany := &models.Company{Company: req.GetNewCompany()}
+
+	prevCompany, err := srv.UpdateCachedCompany(newCompany)
+	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("updated company is nil"))
 	}
-	updatedCompany := &models.Company{
-		Company: grpcUpdatedCompany,
-	}
-
-	// 会社情報を更新
-	updatedCompany, err = currentCompany.Update(updatedCompany)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-
-	// 会社情報のインデックスを更新
-	if _, exist := srv.cachedCompanyMap[currentCompanyId]; exist {
-		delete(srv.cachedCompanyMap, currentCompanyId)
-		// 新しいIDで再登録
-		srv.cachedCompanyMap[updatedCompany.GetId()] = updatedCompany
-	}
-
-	// レスポンスを初期化
-	res = &grpcv1.UpdateCompanyResponse{}
 
 	// Responseの作成
-	grpcv1CompanyMapById := make(map[string]*grpcv1.Company, len(srv.cachedCompanyMap))
-	for _, v := range srv.cachedCompanyMap {
-		grpcv1CompanyMapById[v.Company.GetId()] = v.Company
-	}
-	res.SetCompanyMapById(grpcv1CompanyMapById)
+	res := grpcv1.UpdateCompanyResponse_builder{}.Build()
+	res.SetPrevCompany(prevCompany.Company)
 
 	return res, nil
 }
 
 // GetCompanyCategories は業種カテゴリーの一覧を取得します
 func (srv *CompanyService) GetCompanyCategories(
-	ctx context.Context,
-	_ *grpcv1.GetCompanyCategoriesRequest) (
-	res *grpcv1.GetCompanyCategoriesResponse,
-	err error) {
+	_ context.Context, _ *grpcv1.GetCompanyCategoriesRequest) (
+	*grpcv1.GetCompanyCategoriesResponse, error) {
 
 	// レスポンスを初期化
-	res = &grpcv1.GetCompanyCategoriesResponse{}
+	res := grpcv1.GetCompanyCategoriesResponse_builder{}.Build()
 
 	categories := make([]*grpcv1.CompanyCategory, 0, len(models.CompanyCategoryMap))
 	for idx, label := range models.CompanyCategoryMap {

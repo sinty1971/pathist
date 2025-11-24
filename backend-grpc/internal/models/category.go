@@ -3,7 +3,7 @@ package models
 import "errors"
 
 // CompanyCategoryIndex は業種を表すenum型（int）
-type CompanyCategoryIndex int
+type CompanyCategoryIndex int32
 
 // 業種カテゴリーの定義
 const (

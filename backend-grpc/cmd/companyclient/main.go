@@ -37,7 +37,7 @@ func main() {
 
 	// 特定の会社ID指定時
 	if *companyID != "" {
-		showCompanyById(ctx, client, *companyID, *jsonOut)
+		showCompany(ctx, client, *companyID, *jsonOut)
 		return
 	}
 
@@ -73,15 +73,15 @@ func showCompanyCategories(ctx context.Context, client grpcv1connect.CompanyServ
 	}
 }
 
-// showCompanyById は指定されたIDの会社情報を表示します
-func showCompanyById(ctx context.Context, client grpcv1connect.CompanyServiceClient, companyID string, jsonOut bool) {
-	req := grpcv1.GetCompanyByIdRequest_builder{
+// showCompany は指定されたIDの会社情報を表示します
+func showCompany(ctx context.Context, client grpcv1connect.CompanyServiceClient, companyID string, jsonOut bool) {
+	req := grpcv1.GetCompanyRequest_builder{
 		Id: companyID,
 	}.Build()
 
-	res, err := client.GetCompanyById(ctx, req)
+	res, err := client.GetCompany(ctx, req)
 	if err != nil {
-		log.Fatalf("GetCompanyById の呼び出しに失敗しました: %v", err)
+		log.Fatalf("GetCompany の呼び出しに失敗しました: %v", err)
 	}
 
 	if jsonOut {
@@ -125,14 +125,14 @@ func showCompanyById(ctx context.Context, client grpcv1connect.CompanyServiceCli
 
 // showAllCompanies は全会社の一覧を表示します
 func showAllCompanies(ctx context.Context, client grpcv1connect.CompanyServiceClient, jsonOut bool) {
-	req := grpcv1.GetCompanyMapByIdRequest_builder{}.Build()
+	req := grpcv1.GetCompanyMapRequest_builder{}.Build()
 
-	res, err := client.GetCompanyMapById(ctx, req)
+	res, err := client.GetCompanyMap(ctx, req)
 	if err != nil {
-		log.Fatalf("GetCompanyMapById の呼び出しに失敗しました: %v", err)
+		log.Fatalf("GetCompanyMap の呼び出しに失敗しました: %v", err)
 	}
 
-	companyMap := res.GetCompanyMapById()
+	companyMap := res.GetCompanyMap()
 
 	if jsonOut {
 		data, err := json.MarshalIndent(companyMap, "", "  ")

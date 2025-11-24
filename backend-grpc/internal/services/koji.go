@@ -32,8 +32,8 @@ type KojiService struct {
 	// managedFolderWatcher は managedFolder のファイルシステム監視オブジェクト
 	managedFolderWatcher *fsnotify.Watcher
 
-	// kojiMapById は管理されている工事データのインデックスがIdのキャッシュマップ
-	kojiMapById map[string]*models.Koji
+	// kojiMap は管理されている工事データのインデックスがIdのキャッシュマップ
+	kojiMap map[string]*models.Koji
 }
 
 func (s *KojiService) Start(services *Services, options *map[string]string) error {
@@ -51,7 +51,7 @@ func (s *KojiService) Start(services *Services, options *map[string]string) erro
 	// 情報の初期化
 	s.services = services
 	s.managedFolder = managedFolder
-	s.kojiMapById = make(map[string]*models.Koji, 1000)
+	s.kojiMap = make(map[string]*models.Koji, 1000)
 
 	// kojiesByIdの情報を取得
 	if err = s.UpdateKojies(); err != nil {
@@ -173,7 +173,7 @@ func (s *KojiService) UpdateKojies() error {
 	// 結果を収集（最大サイズで確保し、後でスライス）
 	for result := range results {
 		if result != nil {
-			s.kojiMapById[result.GetId()] = result
+			s.kojiMap[result.GetId()] = result
 		}
 	}
 
@@ -181,19 +181,19 @@ func (s *KojiService) UpdateKojies() error {
 }
 
 // GetKojies は管理されている工事データ一覧を返す
-func (s *KojiService) GetKojiMapById(
+func (s *KojiService) GetKojiMap(
 	ctx context.Context,
-	req *grpcv1.GetKojiMapByIdRequest) (
-	res *grpcv1.GetKojiMapByIdResponse,
+	req *grpcv1.GetKojiMapRequest) (
+	res *grpcv1.GetKojiMapResponse,
 	err error) {
 	_ = req // 現状フィルター未対応
 
-	grpcKojisById := make(map[string]*grpcv1.Koji, len(s.kojiMapById))
-	for _, v := range s.kojiMapById {
-		grpcKojisById[v.GetId()] = v.Koji
+	grpcKojiMap := make(map[string]*grpcv1.Koji, len(s.kojiMap))
+	for _, v := range s.kojiMap {
+		grpcKojiMap[v.GetId()] = v.Koji
 	}
 
-	res.SetKojiMapById(grpcKojisById)
+	res.SetKojiMap(grpcKojiMap)
 
 	return
 }
@@ -201,15 +201,15 @@ func (s *KojiService) GetKojiMapById(
 // GetKojiById は指定されたIDの工事データを返す
 func (s *KojiService) GetKojiById(
 	ctx context.Context,
-	req *grpcv1.GetKojiByIdRequest) (
-	res *grpcv1.GetKojiByIdResponse,
+	req *grpcv1.GetKojiRequest) (
+	res *grpcv1.GetKojiResponse,
 	err error) {
 
 	// リクエスト情報の取得
 	id := req.GetId()
 
 	// 工事情報を取得
-	koji, exist := s.kojiMapById[id]
+	koji, exist := s.kojiMap[id]
 	if !exist {
 		err = connect.NewError(connect.CodeNotFound, errors.New("koji not found"))
 		return
@@ -222,47 +222,41 @@ func (s *KojiService) GetKojiById(
 }
 
 func (s *KojiService) UpdateKoji(
-	ctx context.Context,
-	req *grpcv1.UpdateKojiRequest) (
-	res *grpcv1.UpdateKojiResponse,
-	err error) {
+	_ context.Context, req *grpcv1.UpdateKojiRequest) (
+	*grpcv1.UpdateKojiResponse, error) {
 
 	// 既存の工事情報を取得
-	currentKojiId := req.GetCurrentKojiId()
-	currentKoji, exist := s.kojiMapById[currentKojiId]
+	grpcNewKoji := req.GetNewKoji()
+	prevKoji, exist := s.kojiMap[grpcNewKoji.GetId()]
 	if !exist {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("koji not found"))
 	}
-	// 更新後の工事情報を取得
-	grpcUpdatedKoji := req.GetUpdatedKoji()
-	if grpcUpdatedKoji == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("updated koji is nil"))
-	}
-	updatedKoji := &models.Koji{
-		Koji: grpcUpdatedKoji,
-	}
+
+	newKoji := &models.Koji{Koji: grpcNewKoji}
 
 	// 工事情報を更新
-	updatedKoji, err = currentKoji.Update(updatedKoji)
+	newKoji, err := prevKoji.Update(newKoji)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	// 工事情報のインデックスを更新
-	if _, exist := s.kojiMapById[currentKojiId]; exist {
-		delete(s.kojiMapById, currentKojiId)
+	if _, exist := s.kojiMap[prevKoji.GetId()]; exist {
+		delete(s.kojiMap, prevKoji.GetId())
 		// 新しいIDで再登録
-		s.kojiMapById[updatedKoji.GetId()] = updatedKoji
+		s.kojiMap[newKoji.GetId()] = newKoji
 	}
 
 	// Responseの作成
-	grpcv1KojiMapById := make(map[string]*grpcv1.Koji, len(s.kojiMapById))
-	for _, v := range s.kojiMapById {
+	res := grpcv1.UpdateKojiResponse_builder{}.Build()
+
+	grpcv1KojiMapById := make(map[string]*grpcv1.Koji, len(s.kojiMap))
+	for _, v := range s.kojiMap {
 		grpcv1KojiMapById[v.GetId()] = v.Koji
 	}
-	res.SetKojiMapById(grpcv1KojiMapById)
+	res.SetPrevKoji(prevKoji.Koji)
 
-	return
+	return res, nil
 }
 
 // RenameStandardFile は標準ファイルの名前を変更し、工事データも更新する

@@ -116,8 +116,8 @@ func (h *Company) AddInsideTags(tags ...string) {
 
 // Update は会社情報を更新します
 func (h *Company) Update(updatedCompany *Company) (*Company, error) {
-	if h == nil || updatedCompany == nil {
-		return nil, errors.New("company or updatedCompany is nil")
+	if updatedCompany == nil {
+		return nil, errors.New("updatedCompany is nil")
 	}
 
 	// 管理フォルダーは変更しない
@@ -127,6 +127,18 @@ func (h *Company) Update(updatedCompany *Company) (*Company, error) {
 	updatedCompany.PersistFilename = h.PersistFilename
 
 	return updatedCompany, nil
+}
+
+// LoadPersistData は永続化対象のオブジェクトを読み込みます
+func (h *Company) LoadPersistData() error {
+	persistService := ext.CreatePersistService(h)
+	return persistService.Load()
+}
+
+// SavePersistData は永続化対象のオブジェクトを保存します
+func (h *Company) SavePersistData() error {
+	persistService := ext.CreatePersistService(h)
+	return persistService.Save()
 }
 
 // GetPersistData は永続化対象のオブジェクトを取得します
@@ -145,20 +157,9 @@ func (h *Company) GetPersistData() map[string]any {
 	}
 }
 
-// MarshalJSON は JSON 用のシリアライズを行います。
-func (h Company) MarshalJSON() ([]byte, error) {
-	return json.Marshal(h.GetPersistData())
-}
-
-// MarshalYAML は YAML 用のシリアライズを行います。
-func (h Company) MarshalYAML() (any, error) {
-	// Getterを使って明示的にマップ化
-	return h.GetPersistData(), nil
-}
-
 // SetPersistData は永続化対象のオブジェクトを設定します
 // Persistable インターフェースの実装
-func (h *Company) SetPersistData(persistData map[string]any) {
+func (h *Company) SetPersistData(persistData map[string]any) error {
 	// 文字列フィールドの一括処理
 	stringFields := map[string]func(string){
 		"inside_ideal_path":  h.SetInsideIdealPath,
@@ -173,18 +174,28 @@ func (h *Company) SetPersistData(persistData map[string]any) {
 		if v, ok := persistData[key].(string); ok {
 			setter(v)
 		} else {
-			log.Printf("%v の項目がファイル %s にありません", v, h.PersistFilename)
+			log.Printf("%s の項目がファイル %s にありません", key, h.PersistFilename)
 		}
 	}
 
 	if tags, ok := persistData["inside_tags"].([]string); ok {
+		h.SetInsideTags(tags)
+	} else if tagsAny, ok := persistData["inside_tags"].([]any); ok {
+		tags := make([]string, 0, len(tagsAny))
+		for _, tag := range tagsAny {
+			if s, ok := tag.(string); ok {
+				tags = append(tags, s)
+			} else {
+				log.Printf("inside_tags の要素が文字列ではありません: %v", tag)
+			}
+		}
 		h.SetInsideTags(tags)
 	}
 	if v, ok := persistData["inside_required_files"].([]any); ok {
 		files := make([]*grpcv1.FileInfo, 0, len(v))
 		for _, file := range v {
 			if fileMap, ok := file.(map[string]any); ok {
-				fileInfo := &grpcv1.FileInfo{}
+				fileInfo := grpcv1.FileInfo_builder{}.Build()
 				fileData, _ := json.Marshal(fileMap)
 				json.Unmarshal(fileData, fileInfo)
 				files = append(files, fileInfo)
@@ -192,6 +203,19 @@ func (h *Company) SetPersistData(persistData map[string]any) {
 		}
 		h.SetInsideRequiredFiles(files)
 	}
+
+	return nil
+}
+
+// MarshalJSON は JSON 用のシリアライズを行います。
+func (h Company) MarshalJSON() ([]byte, error) {
+	return json.Marshal(h.GetPersistData())
+}
+
+// MarshalYAML は YAML 用のシリアライズを行います。
+func (h Company) MarshalYAML() (any, error) {
+	// Getterを使って明示的にマップ化
+	return h.GetPersistData(), nil
 }
 
 // UnmarshalYAML は YAML からの復元を行います。
@@ -201,19 +225,15 @@ func (h *Company) UnmarshalYAML(unmarshal func(any) error) error {
 		return err
 	}
 
-	h.SetPersistData(m)
-	return nil
+	return h.SetPersistData(m)
 }
 
 // UnmarshalJSON は JSON からの復元を行います。
 func (h *Company) UnmarshalJSON(data []byte) error {
 	var m map[string]any
-
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
 	}
 
-	h.SetPersistData(m)
-
-	return nil
+	return h.SetPersistData(m)
 }

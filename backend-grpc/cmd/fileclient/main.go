@@ -27,12 +27,12 @@ func main() {
 
 	client := grpcv1connect.NewFileServiceClient(http.DefaultClient, *baseURL)
 
-	resFileBasePath, err := client.GetFileBasePath(
+	resFileBasePath, err := client.GetFileManagedFolder(
 		ctx,
-		grpcv1.GetFileBasePathRequest_builder{}.Build(),
+		grpcv1.GetFileManagedFolderRequest_builder{}.Build(),
 	)
 	if err != nil {
-		log.Fatalf("GetFileBasePath の呼び出しに失敗しました: %v", err)
+		log.Fatalf("GetFileManagedFolder の呼び出しに失敗しました: %v", err)
 	}
 
 	req := grpcv1.GetFileInfosRequest_builder{
@@ -46,13 +46,13 @@ func main() {
 
 	if *jsonOut {
 		output := struct {
-			BasePath string             `json:"basePath"`
-			Path     string             `json:"path"`
-			Files    []*grpcv1.FileInfo `json:"files"`
+			ManagedFolder string             `json:"managedFolder"`
+			Path          string             `json:"path"`
+			Files         []*grpcv1.FileInfo `json:"files"`
 		}{
-			BasePath: resFileBasePath.GetBasePath(),
-			Path:     req.GetPath(),
-			Files:    resFileInfos.GetFileInfos(),
+			ManagedFolder: resFileBasePath.GetManagedFolder(),
+			Path:          req.GetPath(),
+			Files:         resFileInfos.GetFileInfos(),
 		}
 
 		data, err := json.MarshalIndent(output, "", "  ")
@@ -64,7 +64,7 @@ func main() {
 	}
 
 	// ターミナルで読みやすいように簡易フォーマットで出力する。
-	fmt.Printf("BasePath: %s\n", resFileBasePath.GetBasePath())
+	fmt.Printf("ManagedFolder: %s\n", resFileBasePath.GetManagedFolder())
 	fmt.Printf("Path: %s\n", req.GetPath())
 	fmt.Println("IsDir\tSize\tModified\tTargetPath\tIdealPath")
 	for _, file := range resFileInfos.GetFileInfos() {

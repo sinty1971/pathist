@@ -55,15 +55,15 @@ func (s *FileService) Cleanup() {
 
 func (s *FileService) GetFileBasePath(
 	ctx context.Context,
-	req *grpc.GetFileBasePathRequest) (
-	res *grpc.GetFileBasePathResponse,
+	req *grpc.GetFileManagedFolderRequest) (
+	res *grpc.GetFileManagedFolderResponse,
 	err error) {
 	// コンテキストを無視
 	_ = ctx
 	_ = req
 
-	res = &grpc.GetFileBasePathResponse{}
-	res.SetBasePath(s.ManagedFolder)
+	res = grpc.GetFileManagedFolderResponse_builder{}.Build()
+	res.SetManagedFolder(s.ManagedFolder)
 	return // naked return: res=res, err=nil
 }
 
@@ -99,7 +99,7 @@ func (s *FileService) GetFileInfos(
 	// ファイルエントリが0の場合は空配列を返す
 
 	if len(dirs) == 0 {
-		res = &grpc.GetFileInfosResponse{}
+		res = grpc.GetFileInfosResponse_builder{}.Build()
 		res.SetFileInfos(fis)
 		return // naked return: res=res, err=nil
 	}
@@ -147,7 +147,7 @@ func (s *FileService) GetFileInfos(
 	}
 
 	// レスポンスを更新して返す
-	res = &grpc.GetFileInfosResponse{}
+	res = grpc.GetFileInfosResponse_builder{}.Build()
 	res.SetFileInfos(fis)
 	return // naked return: res=res, err=nil
 }

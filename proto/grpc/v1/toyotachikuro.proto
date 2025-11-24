@@ -59,21 +59,21 @@ message Koji {
 // FileService provides operations for file management
 service FileService {
   rpc GetFileInfos(GetFileInfosRequest) returns (GetFileInfosResponse);
-  rpc GetFileBasePath(GetFileBasePathRequest) returns (GetFileBasePathResponse);
+  rpc GetFileManagedFolder(GetFileManagedFolderRequest) returns (GetFileManagedFolderResponse);
 }
 
 // CompanyService provides operations for managing companies
 service CompanyService {
-  rpc GetCompanyMapById(GetCompanyMapByIdRequest) returns (GetCompanyMapByIdResponse);
-  rpc GetCompanyById(GetCompanyByIdRequest) returns (GetCompanyByIdResponse);
+  rpc GetCompanyMap(GetCompanyMapRequest) returns (GetCompanyMapResponse);
+  rpc GetCompany(GetCompanyRequest) returns (GetCompanyResponse);
   rpc UpdateCompany(UpdateCompanyRequest) returns (UpdateCompanyResponse);
   rpc GetCompanyCategories(GetCompanyCategoriesRequest) returns (GetCompanyCategoriesResponse);
 }
 
 // KojiService provides operations for managing construction projects
 service KojiService {
-  rpc GetKojiById(GetKojiByIdRequest) returns (GetKojiByIdResponse);
-  rpc GetKojiMapById(GetKojiMapByIdRequest) returns (GetKojiMapByIdResponse);
+  rpc GetKoji(GetKojiRequest) returns (GetKojiResponse);
+  rpc GetKojiMap(GetKojiMapRequest) returns (GetKojiMapResponse);
   rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
 }
 
@@ -86,34 +86,33 @@ message GetFileInfosResponse {
   repeated FileInfo file_infos = 1;
 }
 
-message GetFileBasePathRequest {}
+message GetFileManagedFolderRequest {}
 
-message GetFileBasePathResponse {
-  string base_path = 1;
+message GetFileManagedFolderResponse {
+  string managed_folder = 1;
 }
 
 // CompanyService messages
-message GetCompanyMapByIdRequest {}
+message GetCompanyMapRequest {}
 
-message GetCompanyMapByIdResponse {
-  map<string, Company> company_map_by_id = 1;
+message GetCompanyMapResponse {
+  map<string, Company> company_map = 1;
 }
 
-message GetCompanyByIdRequest {
+message GetCompanyRequest {
   string id = 1;
 }
 
-message GetCompanyByIdResponse {
+message GetCompanyResponse {
   Company company = 1;
 }
 
 message UpdateCompanyRequest {
-  string current_company_id = 1;
-  Company updated_company = 2;
+  Company new_company = 1;
 }
 
 message UpdateCompanyResponse {
-  map<string, Company> company_map_by_id = 1;
+  Company prev_company = 1;
 }
 
 message GetCompanyCategoriesRequest {}
@@ -123,25 +122,24 @@ message GetCompanyCategoriesResponse {
 }
 
 // KojiService messages
-message GetKojiMapByIdRequest {}
+message GetKojiMapRequest {}
 
-message GetKojiMapByIdResponse {
-  map<string, Koji> koji_map_by_id = 1;
+message GetKojiMapResponse {
+  map<string, Koji> koji_map = 1;
 }
 
-message GetKojiByIdRequest {
+message GetKojiRequest {
   string id = 1;
 }
 
-message GetKojiByIdResponse {
+message GetKojiResponse {
   Koji koji = 1;
 }
 
 message UpdateKojiRequest {
-  string current_koji_id = 1;
-  Koji updated_koji = 2;
+  Koji new_koji = 1;
 }
 
 message UpdateKojiResponse {
-  map<string, Koji> koji_map_by_id = 1;
+  Koji prev_koji = 1;
 }

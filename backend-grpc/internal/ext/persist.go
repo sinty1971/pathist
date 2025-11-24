@@ -16,7 +16,7 @@ type Persistable interface {
 	GetPersistData() map[string]any
 
 	// SetPersistData は永続化対象のオブジェクトを設定します。
-	SetPersistData(map[string]any)
+	SetPersistData(map[string]any) error
 }
 
 // PersistService はファイルベースのデータ永続化のサービスを提供します。
@@ -31,8 +31,8 @@ func CreatePersistService[T Persistable](persistData T) *PersistService[T] {
 	}
 }
 
-// LoadPersistInfo は永続化ファイルからデータを読み込みます。
-func (srv *PersistService[T]) LoadPersistInfo() error {
+// Load は永続化ファイルからデータを読み込みます。
+func (srv *PersistService[T]) Load() error {
 
 	// 永続化ファイルのフルパスを取得
 	persistPath := srv.persistData.GetPersistPath()
@@ -40,17 +40,9 @@ func (srv *PersistService[T]) LoadPersistInfo() error {
 	// ファイルを読み込み
 	in, err := os.ReadFile(persistPath)
 	if err != nil {
-		// ファイルが存在しない場合は一度 SavePersittInfo を呼び出して初期ファイルを作成する
+		// ファイルが存在しない場合は一度 Save を呼び出してファイルを作成する
 		if os.IsNotExist(err) {
-			if err := srv.SavePersistInfo(); err != nil {
-				return fmt.Errorf("初期永続化ファイルの作成に失敗しました: %w", err)
-			}
-			// 再度読み込みを試みる
-			_, err = os.ReadFile(persistPath)
-			if err != nil {
-				return fmt.Errorf("永続化ファイルの読み込みに失敗しました: %w", err)
-			}
-			return err
+			return srv.Save()
 		}
 	}
 
@@ -67,8 +59,8 @@ func (srv *PersistService[T]) LoadPersistInfo() error {
 	return nil
 }
 
-// SavePersistInfo はデータを永続化ファイルに保存します。
-func (srv *PersistService[T]) SavePersistInfo() error {
+// Save はデータを永続化ファイルに保存します。
+func (srv *PersistService[T]) Save() error {
 	// 永続化ファイルパスの取得
 	persistPath := srv.persistData.GetPersistPath()
 

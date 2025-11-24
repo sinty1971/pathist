@@ -40,26 +40,25 @@ const (
 	// FileServiceGetFileInfosProcedure is the fully-qualified name of the FileService's GetFileInfos
 	// RPC.
 	FileServiceGetFileInfosProcedure = "/grpc.v1.FileService/GetFileInfos"
-	// FileServiceGetFileBasePathProcedure is the fully-qualified name of the FileService's
-	// GetFileBasePath RPC.
-	FileServiceGetFileBasePathProcedure = "/grpc.v1.FileService/GetFileBasePath"
-	// CompanyServiceGetCompanyMapByIdProcedure is the fully-qualified name of the CompanyService's
-	// GetCompanyMapById RPC.
-	CompanyServiceGetCompanyMapByIdProcedure = "/grpc.v1.CompanyService/GetCompanyMapById"
-	// CompanyServiceGetCompanyByIdProcedure is the fully-qualified name of the CompanyService's
-	// GetCompanyById RPC.
-	CompanyServiceGetCompanyByIdProcedure = "/grpc.v1.CompanyService/GetCompanyById"
+	// FileServiceGetFileManagedFolderProcedure is the fully-qualified name of the FileService's
+	// GetFileManagedFolder RPC.
+	FileServiceGetFileManagedFolderProcedure = "/grpc.v1.FileService/GetFileManagedFolder"
+	// CompanyServiceGetCompanyMapProcedure is the fully-qualified name of the CompanyService's
+	// GetCompanyMap RPC.
+	CompanyServiceGetCompanyMapProcedure = "/grpc.v1.CompanyService/GetCompanyMap"
+	// CompanyServiceGetCompanyProcedure is the fully-qualified name of the CompanyService's GetCompany
+	// RPC.
+	CompanyServiceGetCompanyProcedure = "/grpc.v1.CompanyService/GetCompany"
 	// CompanyServiceUpdateCompanyProcedure is the fully-qualified name of the CompanyService's
 	// UpdateCompany RPC.
 	CompanyServiceUpdateCompanyProcedure = "/grpc.v1.CompanyService/UpdateCompany"
 	// CompanyServiceGetCompanyCategoriesProcedure is the fully-qualified name of the CompanyService's
 	// GetCompanyCategories RPC.
 	CompanyServiceGetCompanyCategoriesProcedure = "/grpc.v1.CompanyService/GetCompanyCategories"
-	// KojiServiceGetKojiByIdProcedure is the fully-qualified name of the KojiService's GetKojiById RPC.
-	KojiServiceGetKojiByIdProcedure = "/grpc.v1.KojiService/GetKojiById"
-	// KojiServiceGetKojiMapByIdProcedure is the fully-qualified name of the KojiService's
-	// GetKojiMapById RPC.
-	KojiServiceGetKojiMapByIdProcedure = "/grpc.v1.KojiService/GetKojiMapById"
+	// KojiServiceGetKojiProcedure is the fully-qualified name of the KojiService's GetKoji RPC.
+	KojiServiceGetKojiProcedure = "/grpc.v1.KojiService/GetKoji"
+	// KojiServiceGetKojiMapProcedure is the fully-qualified name of the KojiService's GetKojiMap RPC.
+	KojiServiceGetKojiMapProcedure = "/grpc.v1.KojiService/GetKojiMap"
 	// KojiServiceUpdateKojiProcedure is the fully-qualified name of the KojiService's UpdateKoji RPC.
 	KojiServiceUpdateKojiProcedure = "/grpc.v1.KojiService/UpdateKoji"
 )
@@ -67,7 +66,7 @@ const (
 // FileServiceClient is a client for the grpc.v1.FileService service.
 type FileServiceClient interface {
 	GetFileInfos(context.Context, *v1.GetFileInfosRequest) (*v1.GetFileInfosResponse, error)
-	GetFileBasePath(context.Context, *v1.GetFileBasePathRequest) (*v1.GetFileBasePathResponse, error)
+	GetFileManagedFolder(context.Context, *v1.GetFileManagedFolderRequest) (*v1.GetFileManagedFolderResponse, error)
 }
 
 // NewFileServiceClient constructs a client for the grpc.v1.FileService service. By default, it uses
@@ -87,10 +86,10 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(fileServiceMethods.ByName("GetFileInfos")),
 			connect.WithClientOptions(opts...),
 		),
-		getFileBasePath: connect.NewClient[v1.GetFileBasePathRequest, v1.GetFileBasePathResponse](
+		getFileManagedFolder: connect.NewClient[v1.GetFileManagedFolderRequest, v1.GetFileManagedFolderResponse](
 			httpClient,
-			baseURL+FileServiceGetFileBasePathProcedure,
-			connect.WithSchema(fileServiceMethods.ByName("GetFileBasePath")),
+			baseURL+FileServiceGetFileManagedFolderProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("GetFileManagedFolder")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -98,8 +97,8 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // fileServiceClient implements FileServiceClient.
 type fileServiceClient struct {
-	getFileInfos    *connect.Client[v1.GetFileInfosRequest, v1.GetFileInfosResponse]
-	getFileBasePath *connect.Client[v1.GetFileBasePathRequest, v1.GetFileBasePathResponse]
+	getFileInfos         *connect.Client[v1.GetFileInfosRequest, v1.GetFileInfosResponse]
+	getFileManagedFolder *connect.Client[v1.GetFileManagedFolderRequest, v1.GetFileManagedFolderResponse]
 }
 
 // GetFileInfos calls grpc.v1.FileService.GetFileInfos.
@@ -111,9 +110,9 @@ func (c *fileServiceClient) GetFileInfos(ctx context.Context, req *v1.GetFileInf
 	return nil, err
 }
 
-// GetFileBasePath calls grpc.v1.FileService.GetFileBasePath.
-func (c *fileServiceClient) GetFileBasePath(ctx context.Context, req *v1.GetFileBasePathRequest) (*v1.GetFileBasePathResponse, error) {
-	response, err := c.getFileBasePath.CallUnary(ctx, connect.NewRequest(req))
+// GetFileManagedFolder calls grpc.v1.FileService.GetFileManagedFolder.
+func (c *fileServiceClient) GetFileManagedFolder(ctx context.Context, req *v1.GetFileManagedFolderRequest) (*v1.GetFileManagedFolderResponse, error) {
+	response, err := c.getFileManagedFolder.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -123,7 +122,7 @@ func (c *fileServiceClient) GetFileBasePath(ctx context.Context, req *v1.GetFile
 // FileServiceHandler is an implementation of the grpc.v1.FileService service.
 type FileServiceHandler interface {
 	GetFileInfos(context.Context, *v1.GetFileInfosRequest) (*v1.GetFileInfosResponse, error)
-	GetFileBasePath(context.Context, *v1.GetFileBasePathRequest) (*v1.GetFileBasePathResponse, error)
+	GetFileManagedFolder(context.Context, *v1.GetFileManagedFolderRequest) (*v1.GetFileManagedFolderResponse, error)
 }
 
 // NewFileServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -139,18 +138,18 @@ func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(fileServiceMethods.ByName("GetFileInfos")),
 		connect.WithHandlerOptions(opts...),
 	)
-	fileServiceGetFileBasePathHandler := connect.NewUnaryHandlerSimple(
-		FileServiceGetFileBasePathProcedure,
-		svc.GetFileBasePath,
-		connect.WithSchema(fileServiceMethods.ByName("GetFileBasePath")),
+	fileServiceGetFileManagedFolderHandler := connect.NewUnaryHandlerSimple(
+		FileServiceGetFileManagedFolderProcedure,
+		svc.GetFileManagedFolder,
+		connect.WithSchema(fileServiceMethods.ByName("GetFileManagedFolder")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/grpc.v1.FileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case FileServiceGetFileInfosProcedure:
 			fileServiceGetFileInfosHandler.ServeHTTP(w, r)
-		case FileServiceGetFileBasePathProcedure:
-			fileServiceGetFileBasePathHandler.ServeHTTP(w, r)
+		case FileServiceGetFileManagedFolderProcedure:
+			fileServiceGetFileManagedFolderHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -164,14 +163,14 @@ func (UnimplementedFileServiceHandler) GetFileInfos(context.Context, *v1.GetFile
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFileInfos is not implemented"))
 }
 
-func (UnimplementedFileServiceHandler) GetFileBasePath(context.Context, *v1.GetFileBasePathRequest) (*v1.GetFileBasePathResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFileBasePath is not implemented"))
+func (UnimplementedFileServiceHandler) GetFileManagedFolder(context.Context, *v1.GetFileManagedFolderRequest) (*v1.GetFileManagedFolderResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFileManagedFolder is not implemented"))
 }
 
 // CompanyServiceClient is a client for the grpc.v1.CompanyService service.
 type CompanyServiceClient interface {
-	GetCompanyMapById(context.Context, *v1.GetCompanyMapByIdRequest) (*v1.GetCompanyMapByIdResponse, error)
-	GetCompanyById(context.Context, *v1.GetCompanyByIdRequest) (*v1.GetCompanyByIdResponse, error)
+	GetCompanyMap(context.Context, *v1.GetCompanyMapRequest) (*v1.GetCompanyMapResponse, error)
+	GetCompany(context.Context, *v1.GetCompanyRequest) (*v1.GetCompanyResponse, error)
 	UpdateCompany(context.Context, *v1.UpdateCompanyRequest) (*v1.UpdateCompanyResponse, error)
 	GetCompanyCategories(context.Context, *v1.GetCompanyCategoriesRequest) (*v1.GetCompanyCategoriesResponse, error)
 }
@@ -187,16 +186,16 @@ func NewCompanyServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 	baseURL = strings.TrimRight(baseURL, "/")
 	companyServiceMethods := v1.File_grpc_v1_toyotachikuro_proto.Services().ByName("CompanyService").Methods()
 	return &companyServiceClient{
-		getCompanyMapById: connect.NewClient[v1.GetCompanyMapByIdRequest, v1.GetCompanyMapByIdResponse](
+		getCompanyMap: connect.NewClient[v1.GetCompanyMapRequest, v1.GetCompanyMapResponse](
 			httpClient,
-			baseURL+CompanyServiceGetCompanyMapByIdProcedure,
-			connect.WithSchema(companyServiceMethods.ByName("GetCompanyMapById")),
+			baseURL+CompanyServiceGetCompanyMapProcedure,
+			connect.WithSchema(companyServiceMethods.ByName("GetCompanyMap")),
 			connect.WithClientOptions(opts...),
 		),
-		getCompanyById: connect.NewClient[v1.GetCompanyByIdRequest, v1.GetCompanyByIdResponse](
+		getCompany: connect.NewClient[v1.GetCompanyRequest, v1.GetCompanyResponse](
 			httpClient,
-			baseURL+CompanyServiceGetCompanyByIdProcedure,
-			connect.WithSchema(companyServiceMethods.ByName("GetCompanyById")),
+			baseURL+CompanyServiceGetCompanyProcedure,
+			connect.WithSchema(companyServiceMethods.ByName("GetCompany")),
 			connect.WithClientOptions(opts...),
 		),
 		updateCompany: connect.NewClient[v1.UpdateCompanyRequest, v1.UpdateCompanyResponse](
@@ -216,24 +215,24 @@ func NewCompanyServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // companyServiceClient implements CompanyServiceClient.
 type companyServiceClient struct {
-	getCompanyMapById    *connect.Client[v1.GetCompanyMapByIdRequest, v1.GetCompanyMapByIdResponse]
-	getCompanyById       *connect.Client[v1.GetCompanyByIdRequest, v1.GetCompanyByIdResponse]
+	getCompanyMap        *connect.Client[v1.GetCompanyMapRequest, v1.GetCompanyMapResponse]
+	getCompany           *connect.Client[v1.GetCompanyRequest, v1.GetCompanyResponse]
 	updateCompany        *connect.Client[v1.UpdateCompanyRequest, v1.UpdateCompanyResponse]
 	getCompanyCategories *connect.Client[v1.GetCompanyCategoriesRequest, v1.GetCompanyCategoriesResponse]
 }
 
-// GetCompanyMapById calls grpc.v1.CompanyService.GetCompanyMapById.
-func (c *companyServiceClient) GetCompanyMapById(ctx context.Context, req *v1.GetCompanyMapByIdRequest) (*v1.GetCompanyMapByIdResponse, error) {
-	response, err := c.getCompanyMapById.CallUnary(ctx, connect.NewRequest(req))
+// GetCompanyMap calls grpc.v1.CompanyService.GetCompanyMap.
+func (c *companyServiceClient) GetCompanyMap(ctx context.Context, req *v1.GetCompanyMapRequest) (*v1.GetCompanyMapResponse, error) {
+	response, err := c.getCompanyMap.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
 	return nil, err
 }
 
-// GetCompanyById calls grpc.v1.CompanyService.GetCompanyById.
-func (c *companyServiceClient) GetCompanyById(ctx context.Context, req *v1.GetCompanyByIdRequest) (*v1.GetCompanyByIdResponse, error) {
-	response, err := c.getCompanyById.CallUnary(ctx, connect.NewRequest(req))
+// GetCompany calls grpc.v1.CompanyService.GetCompany.
+func (c *companyServiceClient) GetCompany(ctx context.Context, req *v1.GetCompanyRequest) (*v1.GetCompanyResponse, error) {
+	response, err := c.getCompany.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -260,8 +259,8 @@ func (c *companyServiceClient) GetCompanyCategories(ctx context.Context, req *v1
 
 // CompanyServiceHandler is an implementation of the grpc.v1.CompanyService service.
 type CompanyServiceHandler interface {
-	GetCompanyMapById(context.Context, *v1.GetCompanyMapByIdRequest) (*v1.GetCompanyMapByIdResponse, error)
-	GetCompanyById(context.Context, *v1.GetCompanyByIdRequest) (*v1.GetCompanyByIdResponse, error)
+	GetCompanyMap(context.Context, *v1.GetCompanyMapRequest) (*v1.GetCompanyMapResponse, error)
+	GetCompany(context.Context, *v1.GetCompanyRequest) (*v1.GetCompanyResponse, error)
 	UpdateCompany(context.Context, *v1.UpdateCompanyRequest) (*v1.UpdateCompanyResponse, error)
 	GetCompanyCategories(context.Context, *v1.GetCompanyCategoriesRequest) (*v1.GetCompanyCategoriesResponse, error)
 }
@@ -273,16 +272,16 @@ type CompanyServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewCompanyServiceHandler(svc CompanyServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	companyServiceMethods := v1.File_grpc_v1_toyotachikuro_proto.Services().ByName("CompanyService").Methods()
-	companyServiceGetCompanyMapByIdHandler := connect.NewUnaryHandlerSimple(
-		CompanyServiceGetCompanyMapByIdProcedure,
-		svc.GetCompanyMapById,
-		connect.WithSchema(companyServiceMethods.ByName("GetCompanyMapById")),
+	companyServiceGetCompanyMapHandler := connect.NewUnaryHandlerSimple(
+		CompanyServiceGetCompanyMapProcedure,
+		svc.GetCompanyMap,
+		connect.WithSchema(companyServiceMethods.ByName("GetCompanyMap")),
 		connect.WithHandlerOptions(opts...),
 	)
-	companyServiceGetCompanyByIdHandler := connect.NewUnaryHandlerSimple(
-		CompanyServiceGetCompanyByIdProcedure,
-		svc.GetCompanyById,
-		connect.WithSchema(companyServiceMethods.ByName("GetCompanyById")),
+	companyServiceGetCompanyHandler := connect.NewUnaryHandlerSimple(
+		CompanyServiceGetCompanyProcedure,
+		svc.GetCompany,
+		connect.WithSchema(companyServiceMethods.ByName("GetCompany")),
 		connect.WithHandlerOptions(opts...),
 	)
 	companyServiceUpdateCompanyHandler := connect.NewUnaryHandlerSimple(
@@ -299,10 +298,10 @@ func NewCompanyServiceHandler(svc CompanyServiceHandler, opts ...connect.Handler
 	)
 	return "/grpc.v1.CompanyService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case CompanyServiceGetCompanyMapByIdProcedure:
-			companyServiceGetCompanyMapByIdHandler.ServeHTTP(w, r)
-		case CompanyServiceGetCompanyByIdProcedure:
-			companyServiceGetCompanyByIdHandler.ServeHTTP(w, r)
+		case CompanyServiceGetCompanyMapProcedure:
+			companyServiceGetCompanyMapHandler.ServeHTTP(w, r)
+		case CompanyServiceGetCompanyProcedure:
+			companyServiceGetCompanyHandler.ServeHTTP(w, r)
 		case CompanyServiceUpdateCompanyProcedure:
 			companyServiceUpdateCompanyHandler.ServeHTTP(w, r)
 		case CompanyServiceGetCompanyCategoriesProcedure:
@@ -316,12 +315,12 @@ func NewCompanyServiceHandler(svc CompanyServiceHandler, opts ...connect.Handler
 // UnimplementedCompanyServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCompanyServiceHandler struct{}
 
-func (UnimplementedCompanyServiceHandler) GetCompanyMapById(context.Context, *v1.GetCompanyMapByIdRequest) (*v1.GetCompanyMapByIdResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.GetCompanyMapById is not implemented"))
+func (UnimplementedCompanyServiceHandler) GetCompanyMap(context.Context, *v1.GetCompanyMapRequest) (*v1.GetCompanyMapResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.GetCompanyMap is not implemented"))
 }
 
-func (UnimplementedCompanyServiceHandler) GetCompanyById(context.Context, *v1.GetCompanyByIdRequest) (*v1.GetCompanyByIdResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.GetCompanyById is not implemented"))
+func (UnimplementedCompanyServiceHandler) GetCompany(context.Context, *v1.GetCompanyRequest) (*v1.GetCompanyResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.CompanyService.GetCompany is not implemented"))
 }
 
 func (UnimplementedCompanyServiceHandler) UpdateCompany(context.Context, *v1.UpdateCompanyRequest) (*v1.UpdateCompanyResponse, error) {
@@ -334,8 +333,8 @@ func (UnimplementedCompanyServiceHandler) GetCompanyCategories(context.Context, 
 
 // KojiServiceClient is a client for the grpc.v1.KojiService service.
 type KojiServiceClient interface {
-	GetKojiById(context.Context, *v1.GetKojiByIdRequest) (*v1.GetKojiByIdResponse, error)
-	GetKojiMapById(context.Context, *v1.GetKojiMapByIdRequest) (*v1.GetKojiMapByIdResponse, error)
+	GetKoji(context.Context, *v1.GetKojiRequest) (*v1.GetKojiResponse, error)
+	GetKojiMap(context.Context, *v1.GetKojiMapRequest) (*v1.GetKojiMapResponse, error)
 	UpdateKoji(context.Context, *v1.UpdateKojiRequest) (*v1.UpdateKojiResponse, error)
 }
 
@@ -350,16 +349,16 @@ func NewKojiServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	kojiServiceMethods := v1.File_grpc_v1_toyotachikuro_proto.Services().ByName("KojiService").Methods()
 	return &kojiServiceClient{
-		getKojiById: connect.NewClient[v1.GetKojiByIdRequest, v1.GetKojiByIdResponse](
+		getKoji: connect.NewClient[v1.GetKojiRequest, v1.GetKojiResponse](
 			httpClient,
-			baseURL+KojiServiceGetKojiByIdProcedure,
-			connect.WithSchema(kojiServiceMethods.ByName("GetKojiById")),
+			baseURL+KojiServiceGetKojiProcedure,
+			connect.WithSchema(kojiServiceMethods.ByName("GetKoji")),
 			connect.WithClientOptions(opts...),
 		),
-		getKojiMapById: connect.NewClient[v1.GetKojiMapByIdRequest, v1.GetKojiMapByIdResponse](
+		getKojiMap: connect.NewClient[v1.GetKojiMapRequest, v1.GetKojiMapResponse](
 			httpClient,
-			baseURL+KojiServiceGetKojiMapByIdProcedure,
-			connect.WithSchema(kojiServiceMethods.ByName("GetKojiMapById")),
+			baseURL+KojiServiceGetKojiMapProcedure,
+			connect.WithSchema(kojiServiceMethods.ByName("GetKojiMap")),
 			connect.WithClientOptions(opts...),
 		),
 		updateKoji: connect.NewClient[v1.UpdateKojiRequest, v1.UpdateKojiResponse](
@@ -373,23 +372,23 @@ func NewKojiServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // kojiServiceClient implements KojiServiceClient.
 type kojiServiceClient struct {
-	getKojiById    *connect.Client[v1.GetKojiByIdRequest, v1.GetKojiByIdResponse]
-	getKojiMapById *connect.Client[v1.GetKojiMapByIdRequest, v1.GetKojiMapByIdResponse]
-	updateKoji     *connect.Client[v1.UpdateKojiRequest, v1.UpdateKojiResponse]
+	getKoji    *connect.Client[v1.GetKojiRequest, v1.GetKojiResponse]
+	getKojiMap *connect.Client[v1.GetKojiMapRequest, v1.GetKojiMapResponse]
+	updateKoji *connect.Client[v1.UpdateKojiRequest, v1.UpdateKojiResponse]
 }
 
-// GetKojiById calls grpc.v1.KojiService.GetKojiById.
-func (c *kojiServiceClient) GetKojiById(ctx context.Context, req *v1.GetKojiByIdRequest) (*v1.GetKojiByIdResponse, error) {
-	response, err := c.getKojiById.CallUnary(ctx, connect.NewRequest(req))
+// GetKoji calls grpc.v1.KojiService.GetKoji.
+func (c *kojiServiceClient) GetKoji(ctx context.Context, req *v1.GetKojiRequest) (*v1.GetKojiResponse, error) {
+	response, err := c.getKoji.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
 	return nil, err
 }
 
-// GetKojiMapById calls grpc.v1.KojiService.GetKojiMapById.
-func (c *kojiServiceClient) GetKojiMapById(ctx context.Context, req *v1.GetKojiMapByIdRequest) (*v1.GetKojiMapByIdResponse, error) {
-	response, err := c.getKojiMapById.CallUnary(ctx, connect.NewRequest(req))
+// GetKojiMap calls grpc.v1.KojiService.GetKojiMap.
+func (c *kojiServiceClient) GetKojiMap(ctx context.Context, req *v1.GetKojiMapRequest) (*v1.GetKojiMapResponse, error) {
+	response, err := c.getKojiMap.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -407,8 +406,8 @@ func (c *kojiServiceClient) UpdateKoji(ctx context.Context, req *v1.UpdateKojiRe
 
 // KojiServiceHandler is an implementation of the grpc.v1.KojiService service.
 type KojiServiceHandler interface {
-	GetKojiById(context.Context, *v1.GetKojiByIdRequest) (*v1.GetKojiByIdResponse, error)
-	GetKojiMapById(context.Context, *v1.GetKojiMapByIdRequest) (*v1.GetKojiMapByIdResponse, error)
+	GetKoji(context.Context, *v1.GetKojiRequest) (*v1.GetKojiResponse, error)
+	GetKojiMap(context.Context, *v1.GetKojiMapRequest) (*v1.GetKojiMapResponse, error)
 	UpdateKoji(context.Context, *v1.UpdateKojiRequest) (*v1.UpdateKojiResponse, error)
 }
 
@@ -419,16 +418,16 @@ type KojiServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	kojiServiceMethods := v1.File_grpc_v1_toyotachikuro_proto.Services().ByName("KojiService").Methods()
-	kojiServiceGetKojiByIdHandler := connect.NewUnaryHandlerSimple(
-		KojiServiceGetKojiByIdProcedure,
-		svc.GetKojiById,
-		connect.WithSchema(kojiServiceMethods.ByName("GetKojiById")),
+	kojiServiceGetKojiHandler := connect.NewUnaryHandlerSimple(
+		KojiServiceGetKojiProcedure,
+		svc.GetKoji,
+		connect.WithSchema(kojiServiceMethods.ByName("GetKoji")),
 		connect.WithHandlerOptions(opts...),
 	)
-	kojiServiceGetKojiMapByIdHandler := connect.NewUnaryHandlerSimple(
-		KojiServiceGetKojiMapByIdProcedure,
-		svc.GetKojiMapById,
-		connect.WithSchema(kojiServiceMethods.ByName("GetKojiMapById")),
+	kojiServiceGetKojiMapHandler := connect.NewUnaryHandlerSimple(
+		KojiServiceGetKojiMapProcedure,
+		svc.GetKojiMap,
+		connect.WithSchema(kojiServiceMethods.ByName("GetKojiMap")),
 		connect.WithHandlerOptions(opts...),
 	)
 	kojiServiceUpdateKojiHandler := connect.NewUnaryHandlerSimple(
@@ -439,10 +438,10 @@ func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption
 	)
 	return "/grpc.v1.KojiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case KojiServiceGetKojiByIdProcedure:
-			kojiServiceGetKojiByIdHandler.ServeHTTP(w, r)
-		case KojiServiceGetKojiMapByIdProcedure:
-			kojiServiceGetKojiMapByIdHandler.ServeHTTP(w, r)
+		case KojiServiceGetKojiProcedure:
+			kojiServiceGetKojiHandler.ServeHTTP(w, r)
+		case KojiServiceGetKojiMapProcedure:
+			kojiServiceGetKojiMapHandler.ServeHTTP(w, r)
 		case KojiServiceUpdateKojiProcedure:
 			kojiServiceUpdateKojiHandler.ServeHTTP(w, r)
 		default:
@@ -454,12 +453,12 @@ func NewKojiServiceHandler(svc KojiServiceHandler, opts ...connect.HandlerOption
 // UnimplementedKojiServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedKojiServiceHandler struct{}
 
-func (UnimplementedKojiServiceHandler) GetKojiById(context.Context, *v1.GetKojiByIdRequest) (*v1.GetKojiByIdResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKojiById is not implemented"))
+func (UnimplementedKojiServiceHandler) GetKoji(context.Context, *v1.GetKojiRequest) (*v1.GetKojiResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKoji is not implemented"))
 }
 
-func (UnimplementedKojiServiceHandler) GetKojiMapById(context.Context, *v1.GetKojiMapByIdRequest) (*v1.GetKojiMapByIdResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKojiMapById is not implemented"))
+func (UnimplementedKojiServiceHandler) GetKojiMap(context.Context, *v1.GetKojiMapRequest) (*v1.GetKojiMapResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.KojiService.GetKojiMap is not implemented"))
 }
 
 func (UnimplementedKojiServiceHandler) UpdateKoji(context.Context, *v1.UpdateKojiRequest) (*v1.UpdateKojiResponse, error) {

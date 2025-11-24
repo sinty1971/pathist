@@ -20,7 +20,7 @@ import (
 	"github.com/gohugoio/hugo/watcher/filenotify"
 )
 
-// CompanyService bridges CompanyService logic to Connect handlers.
+// CompanyService の実装
 type CompanyService struct {
 	// Embed the unimplemented handler for forward compatibility
 	grpcv1connect.UnimplementedCompanyServiceHandler
@@ -83,24 +83,20 @@ func (srv *CompanyService) Cleanup() {
 // UpdateCachedCompanyMap 会社のキャッシュデータを更新します
 func (srv *CompanyService) UpdateCachedCompanyMap() error {
 
-	// 変数定義
-	var entries []os.DirEntry
-
 	// ファイルシステムから会社フォルダー一覧を取得
 	entries, err := os.ReadDir(srv.managedFolder)
 	if err != nil {
 		return err
 	}
 
-	// キャッシュを作り直す（削除済み会社を残さない）
+	// キャッシュデータのクリア
 	srv.cachedCompanyMap = make(map[string]*models.Company, len(entries))
 
 	// 会社データモデルを作成
 	for _, entry := range entries {
-		// Companyインスタンスの作成
-		managedFolder := filepath.Join(srv.managedFolder, entry.Name())
+		// Companyインスタンスの作成と初期化
 		company := models.NewCompany()
-		if err := company.ParseFromManagedFolder(managedFolder); err == nil {
+		if err := company.ParseFromManagedFolder(srv.managedFolder, entry.Name()); err == nil {
 			srv.cachedCompanyMap[company.GetId()] = company
 		}
 	}

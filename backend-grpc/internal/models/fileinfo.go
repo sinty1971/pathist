@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
 	"os"
 
@@ -51,45 +50,52 @@ func NewFileInfo(targetPath string) (*FileInfo, error) {
 		}.Build()}, nil
 }
 
-// MarshalYAML は YAML 用のシリアライズを行います。
-func (fi FileInfo) MarshalYAML() (any, error) {
-	if fi.FileInfo == nil {
-		return FileInfo{}, nil
-	}
-	return fi, nil
+// GetPersistData は永続化対象のオブジェクトを取得します
+// Persistable インターフェースの実装
+func (obj *FileInfo) GetPersistData() (map[string]any, error) {
+	return map[string]any{
+		"path": obj.GetPath(),
+	}, nil
 }
 
-// UnmarshalYAML は YAML からの復元を行います。
-func (fi *FileInfo) UnmarshalYAML(unmarshal func(any) error) error {
-	var enc FileInfo
-	if err := unmarshal(&enc); err != nil {
-		return err
+// SetPersistData は永続化対象のオブジェクトを設定します
+// Persistable インターフェースの実装
+func (obj *FileInfo) SetPersistData(persistData map[string]any) error {
+	// マップとセッター関数の対応表
+	setterMap := map[string]func(string){
+		"path": obj.SetPath,
 	}
-	return fi.applyEncoding(enc)
+
+	// デフォルトの文字列フィールド設定処理を呼び出し
+	return ext.DefaultSetPersistData(persistData, setterMap)
 }
 
 // MarshalJSON は JSON Serde を従来形式で行います。
-func (fi FileInfo) MarshalJSON() ([]byte, error) {
-	if fi.FileInfo == nil {
-		return json.Marshal(FileInfo{})
-	}
-	return json.Marshal(fi)
+func (obj FileInfo) MarshalJSON() ([]byte, error) {
+	return ext.DefaultMarshalJSON(obj.GetPersistData)
 }
 
 // UnmarshalJSON は JSON からの復元を行います。
-func (fi *FileInfo) UnmarshalJSON(data []byte) error {
-	var enc FileInfo
-	if err := json.Unmarshal(data, &enc); err != nil {
-		return err
-	}
-	return fi.applyEncoding(enc)
+func (obj *FileInfo) UnmarshalJSON(data []byte) error {
+	return ext.DefaultUnmarshalJSON(data, obj.SetPersistData)
 }
 
-func (fi *FileInfo) applyEncoding(enc FileInfo) error {
-	fi.FileInfo.SetPath(enc.GetPath())
-	fi.FileInfo.SetIsDirectory(enc.GetIsDirectory())
-	fi.FileInfo.SetSize(enc.GetSize())
-	fi.FileInfo.SetModifiedTime(enc.GetModifiedTime())
+// MarshalYAML は YAML 用のシリアライズを行います。
+func (obj FileInfo) MarshalYAML() (any, error) {
+	return ext.DefaultMarshalYAML(obj.GetPersistData)
+}
+
+// UnmarshalYAML は YAML からの復元を行います。
+func (obj *FileInfo) UnmarshalYAML(unmarshal func(any) error) error {
+	return ext.DefaultUnmarshalYAML(unmarshal, obj.SetPersistData)
+}
+
+// applyEncoding は別の FileInfo の内容を適用します。
+func (obj *FileInfo) applyEncoding(enc FileInfo) error {
+	obj.FileInfo.SetPath(enc.GetPath())
+	obj.FileInfo.SetIsDirectory(enc.GetIsDirectory())
+	obj.FileInfo.SetSize(enc.GetSize())
+	obj.FileInfo.SetModifiedTime(enc.GetModifiedTime())
 
 	return nil
 }

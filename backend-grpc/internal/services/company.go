@@ -16,7 +16,7 @@ import (
 	"backend-grpc/internal/models"
 
 	"connectrpc.com/connect"
-	"github.com/jonoton/go-watcher"
+	"github.com/gohugoio/hugo/watcher/filenotify"
 )
 
 // CompanyService bridges CompanyService logic to Connect handlers.
@@ -31,7 +31,7 @@ type CompanyService struct {
 	managedFolder string
 
 	// managedFolderWatcher は managedFolder のファイルシステム監視オブジェクト
-	managedFolderWatcher *watcher.Watcher
+	managedFolderWatcher filenotify.FileWatcher
 	managedWatchCtx      context.Context
 	managedWatchCancel   context.CancelFunc
 
@@ -142,8 +142,8 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 		pollIntervalMillSec = 3000
 	}
 
-	// ポーリングベースのウォッチャーを作成
-	srv.managedFolderWatcher = watcher.New(time.Duration(pollIntervalMillSec) * time.Millisecond)
+	// ポーリングベースのウォッチャーを作成（fsnotify が使えない環境向け）
+	srv.managedFolderWatcher = filenotify.NewPollingWatcher(time.Duration(pollIntervalMillSec) * time.Millisecond)
 
 	// イベントループ（イベント・エラーを単一ゴルーチンで処理）
 	go func() {
@@ -151,13 +151,13 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 
 		for {
 			select {
-			case event, ok := <-srv.managedFolderWatcher.Events:
+			case event, ok := <-srv.managedFolderWatcher.Events():
 				if !ok {
 					return
 				}
 
 				// 会社フォルダーを取得
-				companyFolder := strings.Replace(event.Path, srv.managedFolder, "", 1)
+				companyFolder := strings.Replace(event.Name, srv.managedFolder, "", 1)
 				companyFolder = strings.Trim(companyFolder, string(os.PathSeparator))
 				log.Printf("[managed-folder] detected change: %s %s", event.Op.String(), companyFolder)
 				companyFolders := strings.Split(companyFolder, string(os.PathSeparator))
@@ -174,6 +174,9 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 				}
 				log.Println("Update Company.ShortName=", newCompany.GetShortName())
 
+			case err := <-srv.managedFolderWatcher.Errors():
+				log.Printf("[managed-folder] error: %v", err)
+
 			case <-ctx.Done():
 				log.Printf("[managed-folder] stop watching (context canceled)")
 				return
@@ -181,12 +184,12 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 		}
 	}()
 
-	// 監視対象を登録（再帰監視はライブラリ側で実施）
-	if err := srv.managedFolderWatcher.Watch(srv.managedFolder); err != nil {
+	// 監視対象を登録
+	if err := srv.managedFolderWatcher.Add(srv.managedFolder); err != nil {
 		return err
 	}
 
-	log.Printf("watching managed folder (recursively): %s", srv.managedFolder)
+	log.Printf("watching managed folder (polling): %s", srv.managedFolder)
 	return nil
 }
 

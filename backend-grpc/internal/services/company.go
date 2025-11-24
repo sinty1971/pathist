@@ -16,6 +16,7 @@ import (
 	"backend-grpc/internal/models"
 
 	"connectrpc.com/connect"
+	"github.com/fsnotify/fsnotify"
 	"github.com/gohugoio/hugo/watcher/filenotify"
 )
 
@@ -156,6 +157,15 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 					return
 				}
 
+				// 新規ディレクトリを検出したら即座にウォッチに追加（再帰監視の補完）
+				if event.Op&fsnotify.Create == fsnotify.Create {
+					if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
+						if err := srv.addWatchRecursive(event.Name); err != nil {
+							log.Printf("[managed-folder] failed to add new dir watch: %v", err)
+						}
+					}
+				}
+
 				// 会社フォルダーを取得
 				companyFolder := strings.Replace(event.Name, srv.managedFolder, "", 1)
 				companyFolder = strings.Trim(companyFolder, string(os.PathSeparator))
@@ -184,13 +194,33 @@ func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
 		}
 	}()
 
-	// 監視対象を登録
-	if err := srv.managedFolderWatcher.Add(srv.managedFolder); err != nil {
+	// 監視対象を登録（全ディレクトリを再帰的に追加）
+	if err := srv.addWatchRecursive(srv.managedFolder); err != nil {
 		return err
 	}
 
-	log.Printf("watching managed folder (polling): %s", srv.managedFolder)
+	log.Printf("watching managed folder recursively (polling): %s", srv.managedFolder)
 	return nil
+}
+
+// addWatchRecursive は指定ディレクトリ以下のすべてのディレクトリをウォッチャーに登録します。
+// filenotify の Add は重複時にエラーを返すため、その場合は無視します。
+func (srv *CompanyService) addWatchRecursive(root string) error {
+	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		if err := srv.managedFolderWatcher.Add(path); err != nil {
+			// "watch exists" を許容
+			if !strings.Contains(err.Error(), "exists") {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // GetCompanies は管理されている会社情報の一覧を取得します

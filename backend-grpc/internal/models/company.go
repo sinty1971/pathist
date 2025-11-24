@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"log"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -21,58 +23,20 @@ type Company struct {
 	PersistFilename string
 }
 
+// NewCompany インスタンス作成と初期化を行います
+func NewCompany() *Company {
+
+	// インスタンス作成と初期化
+	return &Company{
+		Company:         grpcv1.Company_builder{}.Build(),
+		PersistFilename: ext.ConfigMap["CompanyPersistFilename"],
+	}
+}
+
 // GetPersistPath は永続化ファイルのパスを取得します
 // Persistable インターフェースの実装
-func (c *Company) GetPersistPath() string {
-	return filepath.Join(c.GetManagedFolder(), c.PersistFilename)
-}
-
-// GetPersistInfo は永続化対象のオブジェクトを取得します
-// Persistable インターフェースの実装
-func (c *Company) GetPersistInfo() any {
-	// Companyモデル自体を返すことで、MarshalYAMLメソッドが使われる
-	return c
-}
-
-// SetPersistInfo は永続化対象のオブジェクトを設定します
-// Persistable インターフェースの実装
-func (c *Company) SetPersistInfo(obj any) {
-	// Companyモデルが渡される場合
-	if company, ok := obj.(*Company); ok {
-		c.Company = company.Company
-		c.PersistFilename = company.PersistFilename
-		return
-	}
-
-	// grpcv1.Companyが直接渡される場合（後方互換性）
-	if company, ok := obj.(*grpcv1.Company); ok {
-		c.Company = company
-	}
-}
-
-// NewCompany 会社フォルダーパス名からCompanyを作成します
-func NewCompany(managedFolder string) (*Company, error) {
-
-	// フォルダー名を解析
-	company, err := parseCompany(managedFolder)
-	if err != nil {
-		return nil, err
-	}
-
-	// Companyインスタンスを初期化
-	company.SetId(GenerateCompanyId(company.GetShortName()))
-	company.SetManagedFolder(managedFolder)
-	company.SetInsideIdealPath("")
-	company.SetInsideLegalName(company.GetShortName())
-	company.SetInsideRequiredFiles([]*grpcv1.FileInfo{})
-	company.SetInsidePostalCode("")
-	company.SetInsideAddress("")
-	company.SetInsidePhone("")
-	company.SetInsideEmail("")
-	company.SetInsideWebsite("")
-	company.PersistFilename = ext.ConfigMap["CompanyPersistFilename"]
-
-	return &company, nil
+func (h *Company) GetPersistPath() string {
+	return filepath.Join(h.GetManagedFolder(), h.PersistFilename)
 }
 
 // GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
@@ -80,182 +44,143 @@ func GenerateCompanyId(shortName string) string {
 	return ext.GenerateIdFromString(shortName)
 }
 
-// parseCompany は"[0-9] [会社名]"形式のファイル名を解析します
-// 会社名内にハイフンが含まれている場合は関連会社名または業務内容として処理します
-// 戻り値Companyは: Cateory, ShortName, Tags のみ設定されます
-func parseCompany(managedFolder string) (Company, error) {
+// ParseFromManagedFolder は"[0-9] [会社名]"形式のファイル名となっているパスを解析します
+// 会社名内のハイフン（含まれる場合）以前の文字列を会社名、ハイフン以降の文字列を関連名として扱います
+// 戻り値Companyは: Id, ManagedFolder, Cateory, ShortName, Tags のみ設定されます
+func (h *Company) ParseFromManagedFolder(managedFolder string) error {
 
-	// フォルダー名を取得
+	// 引数 managedFolder のチェックとフォルダー名を取得
 	var folderName string
-	if lastSlash := strings.LastIndex(managedFolder, "/"); lastSlash != -1 {
-		folderName = managedFolder[lastSlash+1:]
-	}
-
-	company := Company{
-		Company: grpcv1.Company_builder{}.Build(),
-	}
-
-	// 最小長チェック（"0 X"の最小3文字）
-	if len(folderName) < 3 {
-		return company, errors.New("ファイル名が短すぎます")
-	}
-
-	// 2番目の文字がスペースかチェック
-	if folderName[1] != ' ' {
-		return company, errors.New("2番目の文字がスペースではありません")
-	}
-
-	// 最初の文字がCompanyCategoryCodeかチェック
-	i, err := strconv.Atoi(string(folderName[0]))
-	if err != nil {
-		return company, err
-	}
-	idx := CompanyCategoryIndex(i)
-	if !(&idx).IsValid() {
-		return company, errors.New("最初の文字が業種コードではありません")
-	}
-	// 業種を取得
-	company.SetCategoryIndex(int32(idx))
-
-	// 会社名部分を取得
-	companyPart := folderName[2:]
-	if companyPart == "" {
-		return company, errors.New("会社名が空です")
-	}
-
-	// 会社名内にハイフンが含まれているかチェック
-	var relatedInfo string
-	if hyphenIndex := strings.Index(companyPart, "-"); hyphenIndex != -1 {
-		// ハイフン以降の文字列を取得
-		relatedInfo = companyPart[hyphenIndex+1:]
-		company.SetShortName(companyPart[:hyphenIndex])
+	folderParts := strings.Split(managedFolder, string(os.PathSeparator))
+	if idx := len(folderParts) - 1; idx < 0 {
+		return errors.New("managedFolderの値が無効です")
+	} else if folderName = folderParts[idx]; len(folderName) < 3 {
+		return errors.New("managedFolderのファイル名形式が無効です（長さが短い）")
+	} else if folderName[1] != ' ' {
+		// 2番目の文字がスペースかチェック
+		return errors.New("managedFolderのファイル名形式が無効です")
 	} else {
-		// ハイフンがない場合は全体を会社名とする
-		company.SetShortName(companyPart)
+		h.SetManagedFolder(managedFolder)
 	}
 
-	// タグを作成
-	category := CompanyCategoryMap[idx]
-	tags := []string{category, company.GetShortName()}
-	company.SetInsideTags(tags)
-	if relatedInfo != "" {
-		company.SetInsideTags(append(company.GetInsideTags(), relatedInfo))
+	// CompanyCategoryIndexの取得
+	var categoryIndex CompanyCategoryIndex
+	if number, err := strconv.Atoi(string(folderName[0])); err != nil {
+		return err
+	} else if categoryIndex = CompanyCategoryIndex(number); categoryIndex.Error() != nil {
+		return categoryIndex.Error()
+	} else {
+		h.SetCategoryIndex(categoryIndex.ToInt32())
 	}
 
-	return company, nil
+	// 会社名と関連名の取得
+	var companyName string
+	var relatedName string
+
+	// 会社フォルダー名の解析
+	if companyPart := strings.Split(folderName[2:], " ")[0]; companyPart == "" {
+		return errors.New("会社名が取得できません")
+	} else if idx := strings.Index(companyPart, "-"); idx > -1 {
+		// ハイフン以前の文字列を会社名とする
+		companyName = companyPart[:idx]
+		// ハイフン以降の文字列を関連文字列とする
+		relatedName = companyPart[idx+1:]
+	} else {
+		companyName = companyPart
+	}
+
+	// 会社IDと会社名の設定
+	h.SetId(GenerateCompanyId(companyName))
+	h.SetShortName(companyName)
+
+	// タグの設定
+	h.AddInsideTags([]string{
+		companyName,
+		CompanyCategoryMap[categoryIndex],
+		relatedName}...,
+	)
+
+	return nil
 }
 
-// AddTag は会社のタグリストにタグを追加します
-func (c *Company) AddTag(tag string) {
-	if c == nil {
-		return
+// AddInsideTags は会社のタグリストにタグを追加します
+func (h *Company) AddInsideTags(tags ...string) {
+	insideTags := h.GetInsideTags()
+	for _, tag := range tags {
+		if tag != "" && !slices.Contains(insideTags, tag) {
+			insideTags = append(insideTags, tag)
+		}
 	}
-	if slices.Contains(c.GetInsideTags(), tag) {
-		return // タグは既に存在します
-	}
-	c.SetInsideTags(append(c.GetInsideTags(), tag))
+	h.SetInsideTags(tags)
 }
 
 // Update は会社情報を更新します
-func (c *Company) Update(updatedCompany *Company) (*Company, error) {
-	if c == nil || updatedCompany == nil {
+func (h *Company) Update(updatedCompany *Company) (*Company, error) {
+	if h == nil || updatedCompany == nil {
 		return nil, errors.New("company or updatedCompany is nil")
 	}
 
 	// 管理フォルダーは変更しない
-	updatedCompany.SetManagedFolder(c.GetManagedFolder())
+	updatedCompany.SetManagedFolder(h.GetManagedFolder())
 
 	// 永続化サービスの設定を引き継ぐ
-	updatedCompany.PersistFilename = c.PersistFilename
+	updatedCompany.PersistFilename = h.PersistFilename
 
 	return updatedCompany, nil
 }
 
-// MarshalYAML は YAML 用のシリアライズを行います。
-func (c Company) MarshalYAML() (any, error) {
-	// Getterを使って明示的にマップ化
-	return c.MarshalMap(), nil
-}
-
-// UnmarshalYAML は YAML からの復元を行います。
-func (c *Company) UnmarshalYAML(unmarshal func(any) error) error {
-	var m map[string]any
-	if err := unmarshal(&m); err != nil {
-		return err
+// GetPersistData は永続化対象のオブジェクトを取得します
+// Persistable インターフェースの実装
+func (h *Company) GetPersistData() map[string]any {
+	return map[string]any{
+		"inside_ideal_path":     h.GetInsideIdealPath(),
+		"inside_legal_name":     h.GetInsideLegalName(),
+		"inside_postal_code":    h.GetInsidePostalCode(),
+		"inside_address":        h.GetInsideAddress(),
+		"inside_phone":          h.GetInsidePhone(),
+		"inside_email":          h.GetInsideEmail(),
+		"inside_website":        h.GetInsideWebsite(),
+		"inside_tags":           h.GetInsideTags(),
+		"inside_required_files": h.GetInsideRequiredFiles(),
 	}
-
-	if err := c.UnmarshalMap(m); err != nil {
-		return err
-	}
-	return nil
 }
 
 // MarshalJSON は JSON 用のシリアライズを行います。
-func (c Company) MarshalJSON() ([]byte, error) {
-	return json.Marshal(c.MarshalMap())
+func (h Company) MarshalJSON() ([]byte, error) {
+	return json.Marshal(h.GetPersistData())
 }
 
-// UnmarshalJSON は JSON からの復元を行います。
-func (c *Company) UnmarshalJSON(data []byte) error {
-	var m map[string]any
-
-	if err := json.Unmarshal(data, &m); err != nil {
-		return err
-	}
-
-	if err := c.UnmarshalMap(m); err != nil {
-		return err
-	}
-
-	return nil
+// MarshalYAML は YAML 用のシリアライズを行います。
+func (h Company) MarshalYAML() (any, error) {
+	// Getterを使って明示的にマップ化
+	return h.GetPersistData(), nil
 }
 
-func (c *Company) MarshalMap() map[string]any {
-	return map[string]any{
-		"inside_ideal_path":     c.GetInsideIdealPath(),
-		"inside_legal_name":     c.GetInsideLegalName(),
-		"inside_postal_code":    c.GetInsidePostalCode(),
-		"inside_address":        c.GetInsideAddress(),
-		"inside_phone":          c.GetInsidePhone(),
-		"inside_email":          c.GetInsideEmail(),
-		"inside_website":        c.GetInsideWebsite(),
-		"inside_tags":           c.GetInsideTags(),
-		"inside_required_files": c.GetInsideRequiredFiles(),
+// SetPersistData は永続化対象のオブジェクトを設定します
+// Persistable インターフェースの実装
+func (h *Company) SetPersistData(persistData map[string]any) {
+	// 文字列フィールドの一括処理
+	stringFields := map[string]func(string){
+		"inside_ideal_path":  h.SetInsideIdealPath,
+		"inside_legal_name":  h.SetInsideLegalName,
+		"inside_postal_code": h.SetInsidePostalCode,
+		"inside_address":     h.SetInsideAddress,
+		"inside_phone":       h.SetInsidePhone,
+		"inside_email":       h.SetInsideEmail,
+		"inside_website":     h.SetInsideWebsite,
 	}
-}
-
-func (c *Company) UnmarshalMap(m map[string]any) error {
-	if v, ok := m["inside_ideal_path"].(string); ok {
-		c.SetInsideIdealPath(v)
-	}
-	if v, ok := m["inside_legal_name"].(string); ok {
-		c.SetInsideLegalName(v)
-	}
-	if v, ok := m["inside_postal_code"].(string); ok {
-		c.SetInsidePostalCode(v)
-	}
-	if v, ok := m["inside_address"].(string); ok {
-		c.SetInsideAddress(v)
-	}
-	if v, ok := m["inside_phone"].(string); ok {
-		c.SetInsidePhone(v)
-	}
-	if v, ok := m["inside_email"].(string); ok {
-		c.SetInsideEmail(v)
-	}
-	if v, ok := m["inside_website"].(string); ok {
-		c.SetInsideWebsite(v)
-	}
-	if v, ok := m["inside_tags"].([]any); ok {
-		tags := make([]string, 0, len(v))
-		for _, tag := range v {
-			if tagStr, ok := tag.(string); ok {
-				tags = append(tags, tagStr)
-			}
+	for key, setter := range stringFields {
+		if v, ok := persistData[key].(string); ok {
+			setter(v)
+		} else {
+			log.Printf("%v の項目がファイル %s にありません", v, h.PersistFilename)
 		}
-		c.SetInsideTags(tags)
 	}
-	if v, ok := m["inside_required_files"].([]any); ok {
+
+	if tags, ok := persistData["inside_tags"].([]string); ok {
+		h.SetInsideTags(tags)
+	}
+	if v, ok := persistData["inside_required_files"].([]any); ok {
 		files := make([]*grpcv1.FileInfo, 0, len(v))
 		for _, file := range v {
 			if fileMap, ok := file.(map[string]any); ok {
@@ -265,8 +190,30 @@ func (c *Company) UnmarshalMap(m map[string]any) error {
 				files = append(files, fileInfo)
 			}
 		}
-		c.SetInsideRequiredFiles(files)
+		h.SetInsideRequiredFiles(files)
 	}
+}
+
+// UnmarshalYAML は YAML からの復元を行います。
+func (h *Company) UnmarshalYAML(unmarshal func(any) error) error {
+	var m map[string]any
+	if err := unmarshal(&m); err != nil {
+		return err
+	}
+
+	h.SetPersistData(m)
+	return nil
+}
+
+// UnmarshalJSON は JSON からの復元を行います。
+func (h *Company) UnmarshalJSON(data []byte) error {
+	var m map[string]any
+
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+
+	h.SetPersistData(m)
 
 	return nil
 }

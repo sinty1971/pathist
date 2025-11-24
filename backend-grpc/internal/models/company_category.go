@@ -1,5 +1,7 @@
 package models
 
+import "errors"
+
 // CompanyCategoryIndex は業種を表すenum型（int）
 type CompanyCategoryIndex int
 
@@ -45,7 +47,14 @@ func init() {
 	}
 }
 
+func (h CompanyCategoryIndex) ToInt32() int32 {
+	return int32(h)
+}
+
 // IsValid は CompanyCategoryIndex が有効な範囲内かをチェックします
-func (cc *CompanyCategoryIndex) IsValid() bool {
-	return CompanyCategoryMin <= *cc && *cc <= CompanyCategoryMax
+func (h CompanyCategoryIndex) Error() error {
+	if CompanyCategoryMin <= h && h <= CompanyCategoryMax {
+		return nil
+	}
+	return errors.New("invalid CompanyCategoryIndex")
 }

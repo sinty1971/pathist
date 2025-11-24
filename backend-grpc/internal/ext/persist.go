@@ -12,37 +12,37 @@ type Persistable interface {
 	// GetPersistPath はファイルの永続化フルパスを取得します。
 	GetPersistPath() string
 
-	// GetPersistInfo は永続化対象のオブジェクトを取得します。
-	GetPersistInfo() any
+	// GetPersistData は永続化対象のオブジェクトを取得します。
+	GetPersistData() map[string]any
 
-	// SetPersistInfo は永続化対象のオブジェクトを設定します。
-	SetPersistInfo(any)
+	// SetPersistData は永続化対象のオブジェクトを設定します。
+	SetPersistData(map[string]any)
 }
 
 // PersistService はファイルベースのデータ永続化のサービスを提供します。
 type PersistService[T Persistable] struct {
-	persistableObject T
+	persistData T
 }
 
 // PersistService のコンストラクタ
-func CreatePersistService[T Persistable](persistable T) *PersistService[T] {
+func CreatePersistService[T Persistable](persistData T) *PersistService[T] {
 	return &PersistService[T]{
-		persistableObject: persistable,
+		persistData: persistData,
 	}
 }
 
 // LoadPersistInfo は永続化ファイルからデータを読み込みます。
-func (s *PersistService[T]) LoadPersistInfo() error {
+func (srv *PersistService[T]) LoadPersistInfo() error {
 
 	// 永続化ファイルのフルパスを取得
-	persistPath := s.persistableObject.GetPersistPath()
+	persistPath := srv.persistData.GetPersistPath()
 
 	// ファイルを読み込み
 	in, err := os.ReadFile(persistPath)
 	if err != nil {
 		// ファイルが存在しない場合は一度 SavePersittInfo を呼び出して初期ファイルを作成する
 		if os.IsNotExist(err) {
-			if err := s.SavePersistInfo(); err != nil {
+			if err := srv.SavePersistInfo(); err != nil {
 				return fmt.Errorf("初期永続化ファイルの作成に失敗しました: %w", err)
 			}
 			// 再度読み込みを試みる
@@ -55,25 +55,25 @@ func (s *PersistService[T]) LoadPersistInfo() error {
 	}
 
 	// YAMLをデコード
-	out := s.persistableObject.GetPersistInfo()
+	out := srv.persistData.GetPersistData()
 
 	if err := yaml.Unmarshal(in, out); err != nil {
 		return fmt.Errorf("YAMLのデコードに失敗しました: %w", err)
 	}
 
 	// エンティティにデコード結果を設定（既に out に反映されているが念のため）
-	s.persistableObject.SetPersistInfo(out)
+	srv.persistData.SetPersistData(out)
 
 	return nil
 }
 
 // SavePersistInfo はデータを永続化ファイルに保存します。
-func (s *PersistService[T]) SavePersistInfo() error {
+func (srv *PersistService[T]) SavePersistInfo() error {
 	// 永続化ファイルパスの取得
-	persistPath := s.persistableObject.GetPersistPath()
+	persistPath := srv.persistData.GetPersistPath()
 
 	// データをYAMLにエンコード
-	in := s.persistableObject.GetPersistInfo()
+	in := srv.persistData.GetPersistData()
 	out, err := yaml.Marshal(in)
 	if err != nil {
 		return fmt.Errorf("データのエンコードに失敗しました: %w", err)

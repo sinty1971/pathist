@@ -1,4 +1,4 @@
-package ext
+package core
 
 // DefaultStringMap はサービスのデフォルト設定を定義します。
 // これらの値は、環境変数が設定されていない場合に使用されます。

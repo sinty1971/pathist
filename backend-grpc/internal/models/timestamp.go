@@ -1,7 +1,7 @@
 package models
 
 import (
-	"backend-grpc/internal/ext"
+	"backend-grpc/internal/core"
 	"errors"
 	"fmt"
 	"maps"
@@ -27,7 +27,7 @@ func (ts *Timestamp) GetID() string {
 	bytes := big.NewInt(int64(ts.GetSeconds())*1_000_000_000 + int64(ts.GetNanos())).Bytes()
 
 	// 時刻をナノ秒精度の文字列に変換してIDを生成
-	return ext.GenerateIdFromBytes(bytes)
+	return core.GenerateIdFromBytes(bytes)
 }
 
 // MarshalYAML implements yaml.Marshaler

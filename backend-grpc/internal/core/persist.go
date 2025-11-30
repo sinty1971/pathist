@@ -1,4 +1,4 @@
-package ext
+package core
 
 import (
 	"encoding/json"
@@ -21,35 +21,23 @@ type Persistable interface {
 	SetPersistData(map[string]any) error
 }
 
-// PersistService はファイルベースのデータ永続化のサービスを提供します。
-type PersistService[T Persistable] struct {
-	persistData T
-}
-
-// PersistService のコンストラクタ
-func CreatePersistService[T Persistable](persistData T) *PersistService[T] {
-	return &PersistService[T]{
-		persistData: persistData,
-	}
-}
-
-// Load は永続化ファイルからデータを読み込みます。
-func (srv *PersistService[T]) Load() error {
+// LoadPersistData は永続化ファイルからデータを読み込みます。
+func LoadPersistData(obj Persistable) error {
 
 	// 永続化ファイルのフルパスを取得
-	persistPath := srv.persistData.GetPersistPath()
+	persistPath := obj.GetPersistPath()
 
 	// ファイルを読み込み
 	in, err := os.ReadFile(persistPath)
 	if err != nil {
 		// ファイルが存在しない場合は一度 Save を呼び出してファイルを作成する
 		if os.IsNotExist(err) {
-			return srv.Save()
+			return SavePersistData(obj)
 		}
 	}
 
 	// YAMLをデコード
-	out, err := srv.persistData.GetPersistData()
+	out, err := obj.GetPersistData()
 	if err != nil {
 		return fmt.Errorf("永続化データの取得に失敗しました: %w", err)
 	}
@@ -59,18 +47,18 @@ func (srv *PersistService[T]) Load() error {
 	}
 
 	// エンティティにデコード結果を設定（既に out に反映されているが念のため）
-	srv.persistData.SetPersistData(out)
+	obj.SetPersistData(out)
 
 	return nil
 }
 
-// Save はデータを永続化ファイルに保存します。
-func (srv *PersistService[T]) Save() error {
+// SavePersistData はデータを永続化ファイルに保存します。
+func SavePersistData(obj Persistable) error {
 	// 永続化ファイルパスの取得
-	persistPath := srv.persistData.GetPersistPath()
+	persistPath := obj.GetPersistPath()
 
 	// データをYAMLにエンコード
-	in, err := srv.persistData.GetPersistData()
+	in, err := obj.GetPersistData()
 	if err != nil {
 		return fmt.Errorf("永続化データの取得に失敗しました: %w", err)
 	}
@@ -83,16 +71,6 @@ func (srv *PersistService[T]) Save() error {
 
 	// ファイルに書き込み
 	return os.WriteFile(persistPath, out, 0644)
-}
-
-func DefaultLoadPersitData[T Persistable](obj T) error {
-	persistService := CreatePersistService(obj)
-	return persistService.Load()
-}
-
-func DefaultSavePersistData[T Persistable](obj T) error {
-	persistService := CreatePersistService(obj)
-	return persistService.Save()
 }
 
 // DefaultSetPersistData は永続化対象のオブジェクトを設定するデフォルト実装です。

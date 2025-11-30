@@ -1,6 +1,6 @@
 package services
 
-import "backend-grpc/internal/ext"
+import "backend-grpc/internal/core"
 
 // Sevice は各サービスが実装すべきインターフェースを定義します。
 type Sevice interface {
@@ -30,7 +30,7 @@ func (ss *Services) AddService(serviceName string, service Sevice) {
 // StartAll はすべてのサービスを起動する
 func (ss *Services) StartAll() error {
 	for _, s := range ss.ServiceMap {
-		if err := (*s).Start(ss, &ext.ConfigMap); err != nil {
+		if err := (*s).Start(ss, &core.ConfigMap); err != nil {
 			return err
 		}
 	}

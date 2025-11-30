@@ -3,14 +3,12 @@ package models
 import (
 	"encoding/json"
 	"errors"
-	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/ext"
+	"backend-grpc/internal/core"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
@@ -28,19 +26,28 @@ func NewCompany() *Company {
 	// インスタンス作成と初期化
 	return &Company{
 		Company:         grpcv1.Company_builder{}.Build(),
-		PersistFilename: ext.ConfigMap["CompanyPersistFilename"],
+		PersistFilename: core.ConfigMap["CompanyPersistFilename"],
 	}
-}
-
-// GetPersistPath は永続化ファイルのパスを取得します
-// Persistable インターフェースの実装
-func (obj *Company) GetPersistPath() string {
-	return filepath.Join(obj.GetManagedFolder(), obj.PersistFilename)
 }
 
 // GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
 func GenerateCompanyId(shortName string) string {
-	return ext.GenerateIdFromString(shortName)
+	return core.GenerateIdFromString(shortName)
+}
+
+// NeedsRenameManagedFolder ファイル名変更の必要があるかチェック
+func (obj *Company) NeedsRenameManagedFolder(newCompany *Company) bool {
+	return (obj.GetShortName() != newCompany.GetShortName()) ||
+		(obj.GetManagedFolder() != newCompany.GetManagedFolder()) ||
+		(obj.GetCategoryIndex() != newCompany.GetCategoryIndex())
+}
+
+// CreateManagedFolder は会社の管理フォルダー名をパラメーターから生成します
+func (obj *Company) CreateManagedFolder() string {
+	base := filepath.Dir(obj.GetManagedFolder())
+	categoryIndex := CompanyCategoryIndex(obj.GetCategoryIndex())
+	folderName := strconv.Itoa(int(categoryIndex)) + " " + obj.GetShortName()
+	return filepath.Join(base, folderName)
 }
 
 // ParseFromManagedFolder は"[0-9] [会社名]"形式のファイル名となっているパスを解析します
@@ -51,28 +58,24 @@ func (obj *Company) ParseFromManagedFolder(managedFolders ...string) error {
 	// パスを結合
 	managedFolder := filepath.Join(managedFolders...)
 
-	// 引数 managedFolder のチェックとフォルダー名を取得
-	var folderName string
-	folderParts := strings.Split(managedFolder, string(os.PathSeparator))
-	if idx := len(folderParts) - 1; idx < 0 {
-		return errors.New("managedFolderの値が無効です")
-	} else if folderName = folderParts[idx]; len(folderName) < 3 {
+	// 引数 managedFolder からフォルダー名取得とチェック
+	// "[0-9] [会社名]"の解析
+	folderName := filepath.Base(managedFolder)
+	if len(folderName) < 3 {
 		return errors.New("managedFolderのファイル名形式が無効です（長さが短い）")
 	} else if folderName[1] != ' ' {
 		// 2番目の文字がスペースかチェック
 		return errors.New("managedFolderのファイル名形式が無効です")
-	} else {
-		obj.SetManagedFolder(managedFolder)
 	}
 
 	// CompanyCategoryIndexの取得
-	var categoryIndex CompanyCategoryIndex
-	if number, err := strconv.Atoi(string(folderName[0])); err != nil {
+	number, err := strconv.Atoi(string(folderName[0]))
+	if err != nil {
 		return err
-	} else if categoryIndex = CompanyCategoryIndex(number); categoryIndex.Error() != nil {
-		return categoryIndex.Error()
-	} else {
-		obj.SetCategoryIndex(categoryIndex.ToInt32())
+	}
+	categoryIndex := CompanyCategoryIndex(number)
+	if err := categoryIndex.Error(); err != nil {
+		return err
 	}
 
 	// 会社名と関連名の取得
@@ -80,41 +83,34 @@ func (obj *Company) ParseFromManagedFolder(managedFolders ...string) error {
 	var relatedName string
 
 	// 会社フォルダー名の解析
-	if companyPart := strings.Split(folderName[2:], " ")[0]; companyPart == "" {
+	companyParts := strings.Split(folderName[2:], " ")
+	if len(companyParts) == 0 || companyParts[0] == "" {
 		return errors.New("会社名が取得できません")
-	} else if idx := strings.Index(companyPart, "-"); idx > -1 {
+	}
+	companyPart0 := companyParts[0]
+	if idx := strings.Index(companyPart0, "-"); idx > -1 {
 		// ハイフン以前の文字列を会社名とする
-		companyName = companyPart[:idx]
+		companyName = companyPart0[:idx]
 		// ハイフン以降の文字列を関連文字列とする
-		relatedName = companyPart[idx+1:]
+		relatedName = companyPart0[idx+1:]
 	} else {
-		companyName = companyPart
+		companyName = companyPart0
 	}
 
-	// 会社IDと会社名の設定
+	// ID,ManagedFolder,Category,ShortNameの設定
 	obj.SetId(GenerateCompanyId(companyName))
+	obj.SetManagedFolder(managedFolder)
+	obj.SetCategoryIndex(categoryIndex.ToInt32())
 	obj.SetShortName(companyName)
 
 	// タグの設定
-	obj.AddInsideTags([]string{
+	core.ModelAddInsideTags(obj, []string{
 		companyName,
 		CompanyCategoryMap[categoryIndex],
 		relatedName}...,
 	)
 
 	return nil
-}
-
-// AddInsideTags は会社のタグリストにタグを追加します
-func (obj *Company) AddInsideTags(tags ...string) {
-	insideTags := obj.GetInsideTags()
-	for _, tag := range tags {
-		if tag == "" || slices.Contains(insideTags, tag) {
-			continue
-		}
-		insideTags = append(insideTags, tag)
-	}
-	obj.SetInsideTags(insideTags)
 }
 
 // Update は会社情報を更新します
@@ -132,14 +128,12 @@ func (obj *Company) Update(updatedCompany *Company) (*Company, error) {
 	return updatedCompany, nil
 }
 
-// LoadPersistData は永続化対象のオブジェクトを読み込みます
-func (obj *Company) LoadPersistData() error {
-	return ext.DefaultLoadPersitData(obj)
-}
+// Persistable インターフェースの実装
+//
 
-// SavePersistData は永続化対象のオブジェクトを保存します
-func (obj *Company) SavePersistData() error {
-	return ext.DefaultSavePersistData(obj)
+// GetPersistPath は永続化ファイルのパスを取得します
+func (obj *Company) GetPersistPath() string {
+	return filepath.Join(obj.GetManagedFolder(), obj.PersistFilename)
 }
 
 // GetPersistData は永続化対象のオブジェクトを取得します
@@ -170,7 +164,7 @@ func (obj *Company) SetPersistData(persistData map[string]any) error {
 		"inside_phone":       obj.SetInsidePhone,
 		"inside_email":       obj.SetInsideEmail,
 		"inside_website":     obj.SetInsideWebsite,
-		"inside_tags":        obj.altSetInsideTags,
+		"inside_tags":        obj.setRawInsideTags,
 	}
 
 	// 配列フィールドの処理
@@ -188,33 +182,33 @@ func (obj *Company) SetPersistData(persistData map[string]any) error {
 	}
 
 	// デフォルトの文字列フィールド設定処理を呼び出し
-	return ext.DefaultSetPersistData(persistData, setterMap)
+	return core.DefaultSetPersistData(persistData, setterMap)
 }
 
-func (obj *Company) altSetInsideTags(raw string) {
+func (obj *Company) setRawInsideTags(raw string) {
 	var tags []string
 	if err := json.Unmarshal([]byte(raw), &tags); err != nil {
 		return
 	}
-	obj.AddInsideTags(tags...)
+	core.ModelAddInsideTags(obj, tags...)
 }
 
 // MarshalJSON は JSON 用のシリアライズを行います。
 func (obj Company) MarshalJSON() ([]byte, error) {
-	return ext.DefaultMarshalJSON(obj.GetPersistData)
+	return core.DefaultMarshalJSON(obj.GetPersistData)
 }
 
 // UnmarshalYAML は YAML からの復元を行います。
 func (obj *Company) UnmarshalYAML(unmarshal func(any) error) error {
-	return ext.DefaultUnmarshalYAML(unmarshal, obj.SetPersistData)
+	return core.DefaultUnmarshalYAML(unmarshal, obj.SetPersistData)
 }
 
 // MarshalYAML は YAML 用のシリアライズを行います。
 func (obj Company) MarshalYAML() (any, error) {
-	return ext.DefaultMarshalYAML(obj.GetPersistData)
+	return core.DefaultMarshalYAML(obj.GetPersistData)
 }
 
 // UnmarshalJSON は JSON からの復元を行います。
 func (obj *Company) UnmarshalJSON(json []byte) error {
-	return ext.DefaultUnmarshalJSON(json, obj.SetPersistData)
+	return core.DefaultUnmarshalJSON(json, obj.SetPersistData)
 }

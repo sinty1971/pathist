@@ -5,7 +5,7 @@ import (
 	"os"
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/ext"
+	"backend-grpc/internal/core"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -24,7 +24,7 @@ func NewFileInfo(targetPath string) (*FileInfo, error) {
 	var err error
 
 	// 絶対パスのクリーン化
-	targetPath, err = ext.NormalizeAbsPath(targetPath)
+	targetPath, err = core.NormalizeAbsPath(targetPath)
 	if err != nil {
 		return nil, err
 	}
@@ -61,41 +61,31 @@ func (obj *FileInfo) GetPersistData() (map[string]any, error) {
 // SetPersistData は永続化対象のオブジェクトを設定します
 // Persistable インターフェースの実装
 func (obj *FileInfo) SetPersistData(persistData map[string]any) error {
-	// マップとセッター関数の対応表
+	// フィールド名とセッター関数の対応表
 	setterMap := map[string]func(string){
 		"path": obj.SetPath,
 	}
 
-	// デフォルトの文字列フィールド設定処理を呼び出し
-	return ext.DefaultSetPersistData(persistData, setterMap)
+	// デフォルトのフィールド設定処理を呼び出し
+	return core.DefaultSetPersistData(persistData, setterMap)
 }
 
 // MarshalJSON は JSON Serde を従来形式で行います。
 func (obj FileInfo) MarshalJSON() ([]byte, error) {
-	return ext.DefaultMarshalJSON(obj.GetPersistData)
+	return core.DefaultMarshalJSON(obj.GetPersistData)
 }
 
 // UnmarshalJSON は JSON からの復元を行います。
 func (obj *FileInfo) UnmarshalJSON(data []byte) error {
-	return ext.DefaultUnmarshalJSON(data, obj.SetPersistData)
+	return core.DefaultUnmarshalJSON(data, obj.SetPersistData)
 }
 
 // MarshalYAML は YAML 用のシリアライズを行います。
 func (obj FileInfo) MarshalYAML() (any, error) {
-	return ext.DefaultMarshalYAML(obj.GetPersistData)
+	return core.DefaultMarshalYAML(obj.GetPersistData)
 }
 
 // UnmarshalYAML は YAML からの復元を行います。
 func (obj *FileInfo) UnmarshalYAML(unmarshal func(any) error) error {
-	return ext.DefaultUnmarshalYAML(unmarshal, obj.SetPersistData)
-}
-
-// applyEncoding は別の FileInfo の内容を適用します。
-func (obj *FileInfo) applyEncoding(enc FileInfo) error {
-	obj.FileInfo.SetPath(enc.GetPath())
-	obj.FileInfo.SetIsDirectory(enc.GetIsDirectory())
-	obj.FileInfo.SetSize(enc.GetSize())
-	obj.FileInfo.SetModifiedTime(enc.GetModifiedTime())
-
-	return nil
+	return core.DefaultUnmarshalYAML(unmarshal, obj.SetPersistData)
 }

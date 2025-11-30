@@ -5,19 +5,13 @@ import (
 	"errors"
 	"log"
 	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	grpcv1connect "backend-grpc/gen/grpc/v1/grpcv1connect"
-	"backend-grpc/internal/ext"
+	"backend-grpc/internal/core"
 	"backend-grpc/internal/models"
 
 	"connectrpc.com/connect"
-	"github.com/fsnotify/fsnotify"
-	"github.com/gohugoio/hugo/watcher/filenotify"
 )
 
 // CompanyService の実装
@@ -31,13 +25,8 @@ type CompanyService struct {
 	// managedFolder はこのサービスが管理する会社データのルートフォルダー
 	managedFolder string
 
-	// managedFolderWatcher は managedFolder のファイルシステム監視オブジェクト
-	managedFolderWatcher filenotify.FileWatcher
-	managedWatchCtx      context.Context
-	managedWatchCancel   context.CancelFunc
-
-	// cachedCompanyMap は会社データのキャッシュマップ
-	cachedCompanyMap map[string]*models.Company
+	// companyCacheMap は会社データのキャッシュマップ
+	companyCacheMap map[string]*models.Company
 }
 
 // Start は CompanyService を初期化して開始します
@@ -47,7 +36,7 @@ func (srv *CompanyService) Start(services *Services, options *map[string]string)
 	if !exists {
 		return errors.New("CompanyServiceManagedFolder option is required")
 	}
-	managedFolder, err := ext.NormalizeAbsPath(optManagedFolder)
+	managedFolder, err := core.NormalizeAbsPath(optManagedFolder)
 	if err != nil {
 		return err
 	}
@@ -55,16 +44,10 @@ func (srv *CompanyService) Start(services *Services, options *map[string]string)
 	// 既存インスタンスに値をセット（再代入しないこと）
 	srv.services = services
 	srv.managedFolder = managedFolder
-	srv.cachedCompanyMap = make(map[string]*models.Company, 1000)
-	srv.managedWatchCtx, srv.managedWatchCancel = context.WithCancel(context.Background())
+	srv.companyCacheMap = map[string]*models.Company{}
 
 	// companiesの情報を取得
-	if err = srv.UpdateCachedCompanyMap(); err != nil {
-		return err
-	}
-
-	// managedFolderの監視を開始
-	if err = srv.watchManagedFolder(srv.managedWatchCtx); err != nil {
+	if err = srv.ReloadCompanyCacheMap(); err != nil {
 		return err
 	}
 
@@ -72,16 +55,11 @@ func (srv *CompanyService) Start(services *Services, options *map[string]string)
 }
 
 func (srv *CompanyService) Cleanup() {
-	if srv.managedWatchCancel != nil {
-		srv.managedWatchCancel()
-	}
-	if srv.managedFolderWatcher != nil {
-		srv.managedFolderWatcher.Close()
-	}
+	// 現状クリーンアップは不要（監視を廃止したため）
 }
 
-// UpdateCachedCompanyMap 会社のキャッシュデータを更新します
-func (srv *CompanyService) UpdateCachedCompanyMap() error {
+// ReloadCompanyCacheMap 会社のキャッシュデータを更新します
+func (srv *CompanyService) ReloadCompanyCacheMap() error {
 
 	// ファイルシステムから会社フォルダー一覧を取得
 	entries, err := os.ReadDir(srv.managedFolder)
@@ -89,154 +67,64 @@ func (srv *CompanyService) UpdateCachedCompanyMap() error {
 		return err
 	}
 
-	// キャッシュデータのクリア
-	srv.cachedCompanyMap = make(map[string]*models.Company, len(entries))
+	// キャッシュデータの初期化
+	srv.companyCacheMap = make(map[string]*models.Company, len(entries))
 
-	// 会社データモデルを作成
+	// 全てのCompanyインスタンスを作成
 	for _, entry := range entries {
 		// Companyインスタンスの作成と初期化
 		company := models.NewCompany()
 		if err := company.ParseFromManagedFolder(srv.managedFolder, entry.Name()); err == nil {
-			srv.cachedCompanyMap[company.GetId()] = company
+			srv.companyCacheMap[company.GetId()] = company
 		}
 	}
 
 	// 会社の内部情報の取得
-	for _, company := range srv.cachedCompanyMap {
-		if err := company.LoadPersistData(); err != nil {
+	for _, company := range srv.companyCacheMap {
+		if err := core.LoadPersistData(company); err != nil {
 			log.Printf("Failed to load persist info for company ID %s: %v", company.GetId(), err)
 		}
 	}
 	return nil
 }
 
-func (srv *CompanyService) UpdateCachedCompany(newCompany *models.Company) (*models.Company, error) {
+// UpdateCompanyCache は指定 id のキャッシュ情報を新しい会社情報で更新します
+// prevId: 更新対象の会社ID、存在しない場合は追加
+// newCompany: 更新後の会社情報
+func (srv *CompanyService) UpdateCompanyCache(prevId string, newCompany *models.Company) (*models.Company, error) {
 
 	// Idから更新前の会社情報を取得
-	prevCompany, exist := srv.cachedCompanyMap[newCompany.GetId()]
-	if !exist {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された会社Idを見つけることができませんでした。"))
+	prevCompany, exist := srv.companyCacheMap[prevId]
+
+	// キャッシュから削除
+	if exist {
+		delete(srv.companyCacheMap, prevId)
 	}
 
-	// 会社の短縮名・管理フォルダー・業種カテゴリーが変更された場合は
-	// 管理フォルダーの情報を元に既存情報を削除し新たに作成する
-	if (newCompany.GetShortName() != prevCompany.GetShortName()) ||
-		(newCompany.GetManagedFolder() != prevCompany.GetManagedFolder()) ||
-		(newCompany.GetCategoryIndex() != prevCompany.GetCategoryIndex()) {
-		managedFolder := newCompany.GetManagedFolder()
+	// 新しい会社情報の管理フォルダー名を生成
+	newManagedFolder := newCompany.CreateManagedFolder()
+	if err := newCompany.ParseFromManagedFolder(newManagedFolder); err != nil {
+		return nil, err
+	}
 
-		// Companyインスタンスの作成
-		if err := newCompany.ParseFromManagedFolder(managedFolder); err != nil {
+	// 管理フォルダーの変更がある場合はフォルダー移動を実施
+	if exist && prevCompany.GetManagedFolder() != newCompany.GetManagedFolder() {
+		// 管理フォルダーの変更がある場合はフォルダー移動を実施
+		prevManagedFolder := prevCompany.GetManagedFolder()
+		if err := os.Rename(prevManagedFolder, newManagedFolder); err != nil {
 			return nil, err
 		}
-		// キャッシュから削除
-		delete(srv.cachedCompanyMap, prevCompany.GetId())
-
-		// フォルダー監視の登録解除及び登録
-		srv.managedFolderWatcher.Remove(prevCompany.GetManagedFolder())
-		srv.managedFolderWatcher.Add(managedFolder)
 	}
 
-	// キャッシュに登録
-	srv.cachedCompanyMap[newCompany.GetId()] = newCompany
+	// 既存の情報を更新
+	srv.companyCacheMap[newCompany.GetId()] = newCompany
 
 	// persist情報の書き込み
-	if err := newCompany.SavePersistData(); err != nil {
+	if err := core.SavePersistData(newCompany); err != nil {
 		log.Printf("Failed to save persist info for company ID %s: %v", newCompany.GetId(), err)
 	}
 
 	return prevCompany, nil
-}
-
-// watchManagedFolder は指定された managedFolder の変更を監視します。
-// 必要に応じてイベントをサービスに伝播するためのコールバックやチャネルを追加してください。
-func (srv *CompanyService) watchManagedFolder(ctx context.Context) error {
-	// ポーリング間隔の取得
-	pollIntervalMillSec, err := strconv.ParseInt(ext.ConfigMap["CompanyPollIntervalMillSec"], 10, 64)
-	if err != nil {
-		pollIntervalMillSec = 3000
-	}
-
-	// ポーリングベースのウォッチャーを作成（fsnotify が使えない環境向け）
-	srv.managedFolderWatcher = filenotify.NewPollingWatcher(time.Duration(pollIntervalMillSec) * time.Millisecond)
-
-	// イベントループ（イベント・エラーを単一ゴルーチンで処理）
-	go func() {
-		defer srv.managedFolderWatcher.Close()
-
-		for {
-			select {
-			case event, ok := <-srv.managedFolderWatcher.Events():
-				if !ok {
-					return
-				}
-
-				// 新規ディレクトリを検出したら即座にウォッチに追加（再帰監視の補完）
-				if event.Op&fsnotify.Create == fsnotify.Create {
-					if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
-						if err := srv.addWatchRecursive(event.Name); err != nil {
-							log.Printf("[managed-folder] failed to add new dir watch: %v", err)
-						}
-					}
-				}
-
-				// 会社フォルダーを取得
-				companyFolder := strings.Replace(event.Name, srv.managedFolder, "", 1)
-				companyFolder = strings.Trim(companyFolder, string(os.PathSeparator))
-				log.Printf("[managed-folder] detected change: %s %s", event.Op.String(), companyFolder)
-				companyFolders := strings.Split(companyFolder, string(os.PathSeparator))
-				if len(companyFolders) < 1 {
-					return
-				}
-				managedFolder := filepath.Join(srv.managedFolder, companyFolders[0])
-
-				// 会社のキャッシュを更新
-				newCompany := models.NewCompany()
-				newCompany.SetManagedFolder(managedFolder)
-				_, err := srv.UpdateCachedCompany(newCompany)
-				if err != nil {
-					log.Println("Failed to update. ManagedFolder =", managedFolder)
-					return
-				}
-				log.Println("Update Company.ShortName=", newCompany.GetShortName())
-
-			case err := <-srv.managedFolderWatcher.Errors():
-				log.Printf("[managed-folder] error: %v", err)
-
-			case <-ctx.Done():
-				log.Printf("[managed-folder] stop watching (context canceled)")
-				return
-			}
-		}
-	}()
-
-	// 監視対象を登録（全ディレクトリを再帰的に追加）
-	if err := srv.addWatchRecursive(srv.managedFolder); err != nil {
-		return err
-	}
-
-	log.Printf("watching managed folder recursively (polling): %s", srv.managedFolder)
-	return nil
-}
-
-// addWatchRecursive は指定ディレクトリ以下のすべてのディレクトリをウォッチャーに登録します。
-// filenotify の Add は重複時にエラーを返すため、その場合は無視します。
-func (srv *CompanyService) addWatchRecursive(root string) error {
-	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !d.IsDir() {
-			return nil
-		}
-		if err := srv.managedFolderWatcher.Add(path); err != nil {
-			// "watch exists" を許容
-			if !strings.Contains(err.Error(), "exists") {
-				return err
-			}
-		}
-		return nil
-	})
 }
 
 // GetCompanies は管理されている会社情報の一覧を取得します
@@ -251,8 +139,8 @@ func (srv *CompanyService) GetCompanyMap(
 	res = grpcv1.GetCompanyMapResponse_builder{}.Build()
 
 	// 会社データモデルを作成
-	grpcv1CompanyMap := make(map[string]*grpcv1.Company, len(srv.cachedCompanyMap))
-	for _, v := range srv.cachedCompanyMap {
+	grpcv1CompanyMap := make(map[string]*grpcv1.Company, len(srv.companyCacheMap))
+	for _, v := range srv.companyCacheMap {
 		grpcv1CompanyMap[v.Company.GetId()] = v.Company
 	}
 
@@ -276,7 +164,7 @@ func (srv *CompanyService) GetCompany(
 	id := req.GetId()
 
 	// 会社情報を取得
-	company, exist := srv.cachedCompanyMap[id]
+	company, exist := srv.companyCacheMap[id]
 	if !exist {
 		err = connect.NewError(connect.CodeNotFound, errors.New("company not found"))
 		return
@@ -297,10 +185,11 @@ func (srv *CompanyService) UpdateCompany(
 	_ context.Context, req *grpcv1.UpdateCompanyRequest) (
 	*grpcv1.UpdateCompanyResponse, error) {
 
-	// models.Companyインスタンスの作成
+	// リクエスト情報の取得
+	prevId := req.GetPrevId()
 	newCompany := &models.Company{Company: req.GetNewCompany()}
 
-	prevCompany, err := srv.UpdateCachedCompany(newCompany)
+	prevCompany, err := srv.UpdateCompanyCache(prevId, newCompany)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("updated company is nil"))
 	}

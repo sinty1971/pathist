@@ -2,7 +2,7 @@ package models
 
 import (
 	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/ext"
+	"backend-grpc/internal/core"
 	"errors"
 	"math/big"
 	"path/filepath"
@@ -77,7 +77,7 @@ func parseKojiManagedFolder(managedFolder string) (*Timestamp, string, string, e
 	)
 
 	// フォルダー名を取得
-	foldername := ext.GetBaseName(managedFolder)
+	foldername := core.GetBaseName(managedFolder)
 
 	// ファイル名から工事開始日の取得と日付除外文字列の取得
 	var withoutDate string
@@ -147,7 +147,7 @@ func GenerateKoujiId(start *Timestamp, companyName, locationName string) string 
 	copy(bytes[offset:], locationBytes)
 
 	// バイト配列からハッシュ文字列IDを生成
-	return ext.GenerateIdFromBytes(bytes)
+	return core.GenerateIdFromBytes(bytes)
 }
 
 // GenerateKojiStatus はプロジェクトステータスを判定する

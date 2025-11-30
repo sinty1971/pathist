@@ -1114,7 +1114,8 @@ func (b0 GetCompanyResponse_builder) Build() *GetCompanyResponse {
 
 type UpdateCompanyRequest struct {
 	state                 protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_NewCompany *Company               `protobuf:"bytes,1,opt,name=new_company,json=newCompany"`
+	xxx_hidden_PrevId     string                 `protobuf:"bytes,1,opt,name=prev_id,json=prevId"`
+	xxx_hidden_NewCompany *Company               `protobuf:"bytes,2,opt,name=new_company,json=newCompany"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1144,11 +1145,22 @@ func (x *UpdateCompanyRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
+func (x *UpdateCompanyRequest) GetPrevId() string {
+	if x != nil {
+		return x.xxx_hidden_PrevId
+	}
+	return ""
+}
+
 func (x *UpdateCompanyRequest) GetNewCompany() *Company {
 	if x != nil {
 		return x.xxx_hidden_NewCompany
 	}
 	return nil
+}
+
+func (x *UpdateCompanyRequest) SetPrevId(v string) {
+	x.xxx_hidden_PrevId = v
 }
 
 func (x *UpdateCompanyRequest) SetNewCompany(v *Company) {
@@ -1169,6 +1181,7 @@ func (x *UpdateCompanyRequest) ClearNewCompany() {
 type UpdateCompanyRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
+	PrevId     string
 	NewCompany *Company
 }
 
@@ -1176,6 +1189,7 @@ func (b0 UpdateCompanyRequest_builder) Build() *UpdateCompanyRequest {
 	m0 := &UpdateCompanyRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
+	x.xxx_hidden_PrevId = b.PrevId
 	x.xxx_hidden_NewCompany = b.NewCompany
 	return m0
 }
@@ -1776,9 +1790,10 @@ const file_grpc_v1_toyotachikuro_proto_rawDesc = "" +
 	"\x11GetCompanyRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"@\n" +
 	"\x12GetCompanyResponse\x12*\n" +
-	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"I\n" +
-	"\x14UpdateCompanyRequest\x121\n" +
-	"\vnew_company\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\n" +
+	"\acompany\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\acompany\"b\n" +
+	"\x14UpdateCompanyRequest\x12\x17\n" +
+	"\aprev_id\x18\x01 \x01(\tR\x06prevId\x121\n" +
+	"\vnew_company\x18\x02 \x01(\v2\x10.grpc.v1.CompanyR\n" +
 	"newCompany\"L\n" +
 	"\x15UpdateCompanyResponse\x123\n" +
 	"\fprev_company\x18\x01 \x01(\v2\x10.grpc.v1.CompanyR\vprevCompany\"\x1d\n" +

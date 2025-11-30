@@ -108,7 +108,8 @@ message GetCompanyResponse {
 }
 
 message UpdateCompanyRequest {
-  Company new_company = 1;
+  string prev_id = 1;
+  Company new_company = 2;
 }
 
 message UpdateCompanyResponse {

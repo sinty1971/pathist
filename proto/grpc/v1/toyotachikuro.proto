@@ -93,7 +93,9 @@ message GetFileManagedFolderResponse {
 }
 
 // CompanyService messages
-message GetCompanyMapRequest {}
+message GetCompanyMapRequest {
+  bool refresh = 1;
+}
 
 message GetCompanyMapResponse {
   map<string, Company> company_map = 1;

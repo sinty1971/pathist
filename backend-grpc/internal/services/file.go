@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -54,33 +53,24 @@ func (s *FileService) Cleanup() {
 }
 
 func (s *FileService) GetFileBasePath(
-	ctx context.Context,
-	req *grpc.GetFileManagedFolderRequest) (
-	res *grpc.GetFileManagedFolderResponse,
-	err error) {
+	ctx context.Context, req *grpc.GetFileManagedFolderRequest) (
+	*grpc.GetFileManagedFolderResponse, error) {
 	// コンテキストを無視
 	_ = ctx
 	_ = req
 
-	res = grpc.GetFileManagedFolderResponse_builder{}.Build()
+	res := grpc.GetFileManagedFolderResponse_builder{}.Build()
 	res.SetManagedFolder(s.ManagedFolder)
-	return // naked return: res=res, err=nil
+	return res, nil
 }
 
 // GetFileInfos は指定されたパスのファイル情報一覧を返す
 func (s *FileService) GetFileInfos(
-	ctx context.Context,
-	req *grpc.GetFileInfosRequest) (
-	res *grpc.GetFileInfosResponse,
-	err error) {
-	// コンテキストを無視
-	_ = ctx
+	ctx context.Context, req *grpc.GetFileInfosRequest) (
+	*grpc.GetFileInfosResponse, error) {
 
-	// 変数定義
-	var (
-		dirs []os.DirEntry
-		fis  []*grpc.FileInfo = []*grpc.FileInfo{}
-	)
+	// 無視する引数
+	_ = ctx
 
 	// リクエスト情報の取得
 	relPath := req.GetPath()
@@ -88,68 +78,66 @@ func (s *FileService) GetFileInfos(
 	// 絶対パスを取得
 	absPath, err := s.GetAbsPathFrom(relPath)
 	if err != nil {
-		return // naked return: res=nil, err=err
+		return nil, err
 	}
 
 	// ファイルエントリ配列を取得
-	dirs, err = os.ReadDir(absPath)
+	dirs, err := os.ReadDir(absPath)
 	if err != nil {
-		return // naked return: res=nil, err=err
+		return nil, err
 	}
+
 	// ファイルエントリが0の場合は空配列を返す
-
-	if len(dirs) == 0 {
-		res = grpc.GetFileInfosResponse_builder{}.Build()
+	res := grpc.GetFileInfosResponse_builder{}.Build()
+	fis := make([]*grpc.FileInfo, 0)
+	dirsNum := len(dirs)
+	if dirsNum == 0 {
 		res.SetFileInfos(fis)
-		return // naked return: res=res, err=nil
+		return res, nil
 	}
 
-	// チャンネルとワーカーグループを設定
-	jobsChan := make(chan int, len(dirs))
-	fisChan := make(chan *grpc.FileInfo, len(dirs))
-	// 並列処理用のワーカー数を決定（CPU数の2倍、最大16）
-	numWorkers := min(min(runtime.NumCPU()*2, 16), len(dirs))
-	// ワーカーグループを設定
+	// ワーカーグループとチャンネルを設定
+	workerNum := core.DecideNumWorkers(dirsNum)
 	var wg sync.WaitGroup
+	channelIn := make(chan int, dirsNum)
+	channelOut := make(chan *grpc.FileInfo, dirsNum)
+
 	// ワーカーを起動
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for index := range jobsChan {
-				dir := dirs[index]
+	for range workerNum {
+		wg.Go(func() {
+			for idx := range channelIn {
+				dir := dirs[idx]
 				fullpath := filepath.Join(absPath, dir.Name())
 
-				fi, _ := models.NewFileInfo(fullpath)
-				if fi != nil {
-					fisChan <- fi.FileInfo
+				fi := models.NewFileInfo()
+				if err := fi.ParseFromPath(fullpath); err == nil {
+					channelOut <- fi.FileInfo
 				}
 			}
-		}()
+		})
 	}
 
 	// ジョブを送信
-	for i := range dirs {
-		jobsChan <- i
+	for idx := range dirs {
+		channelIn <- idx
 	}
-	close(jobsChan)
+	close(channelIn)
 
 	// ワーカーの完了を待つ
 	go func() {
 		wg.Wait()
-		close(fisChan)
+		close(channelOut)
 	}()
 
 	// 結果を収集
 	fis = make([]*grpc.FileInfo, 0, len(dirs))
-	for fi := range fisChan {
+	for fi := range channelOut {
 		fis = append(fis, fi)
 	}
 
 	// レスポンスを更新して返す
-	res = grpc.GetFileInfosResponse_builder{}.Build()
 	res.SetFileInfos(fis)
-	return // naked return: res=res, err=nil
+	return res, nil
 }
 
 // GetAbsPathFrom BasePathに引数の相対パスを追加した絶対パスを返す

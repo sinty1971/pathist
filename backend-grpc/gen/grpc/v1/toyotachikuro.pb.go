@@ -888,9 +888,10 @@ func (b0 GetFileManagedFolderResponse_builder) Build() *GetFileManagedFolderResp
 
 // CompanyService messages
 type GetCompanyMapRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Refresh bool                   `protobuf:"varint,1,opt,name=refresh"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *GetCompanyMapRequest) Reset() {
@@ -918,15 +919,28 @@ func (x *GetCompanyMapRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
+func (x *GetCompanyMapRequest) GetRefresh() bool {
+	if x != nil {
+		return x.xxx_hidden_Refresh
+	}
+	return false
+}
+
+func (x *GetCompanyMapRequest) SetRefresh(v bool) {
+	x.xxx_hidden_Refresh = v
+}
+
 type GetCompanyMapRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
+	Refresh bool
 }
 
 func (b0 GetCompanyMapRequest_builder) Build() *GetCompanyMapRequest {
 	m0 := &GetCompanyMapRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
+	x.xxx_hidden_Refresh = b.Refresh
 	return m0
 }
 
@@ -1779,8 +1793,9 @@ const file_grpc_v1_toyotachikuro_proto_rawDesc = "" +
 	"file_infos\x18\x01 \x03(\v2\x11.grpc.v1.FileInfoR\tfileInfos\"\x1d\n" +
 	"\x1bGetFileManagedFolderRequest\"E\n" +
 	"\x1cGetFileManagedFolderResponse\x12%\n" +
-	"\x0emanaged_folder\x18\x01 \x01(\tR\rmanagedFolder\"\x16\n" +
-	"\x14GetCompanyMapRequest\"\xb9\x01\n" +
+	"\x0emanaged_folder\x18\x01 \x01(\tR\rmanagedFolder\"0\n" +
+	"\x14GetCompanyMapRequest\x12\x18\n" +
+	"\arefresh\x18\x01 \x01(\bR\arefresh\"\xb9\x01\n" +
 	"\x15GetCompanyMapResponse\x12O\n" +
 	"\vcompany_map\x18\x01 \x03(\v2..grpc.v1.GetCompanyMapResponse.CompanyMapEntryR\n" +
 	"companyMap\x1aO\n" +

@@ -11,3 +11,9 @@ var ConfigMap = map[string]string{
 	"KojiPersistFilename":         "@koji.yaml",
 	"MemberPersistFilename":       "@member.yaml",
 }
+
+var WorkerConfigMap = map[string]int{
+	"MinumWorkers":   2,
+	"MaximumWorkers": 16,
+	"CpuMultiplier":  2,
+}

@@ -27,7 +27,7 @@ func (ts *Timestamp) GetID() string {
 	bytes := big.NewInt(int64(ts.GetSeconds())*1_000_000_000 + int64(ts.GetNanos())).Bytes()
 
 	// 時刻をナノ秒精度の文字列に変換してIDを生成
-	return core.GenerateIdFromBytes(bytes)
+	return core.ParseIdFromBytes(bytes)
 }
 
 // MarshalYAML implements yaml.Marshaler

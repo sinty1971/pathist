@@ -25,8 +25,8 @@ type CompanyService struct {
 	// managedFolder はこのサービスが管理する会社データのルートフォルダー
 	managedFolder string
 
-	// companyCacheMap は会社データのキャッシュマップ
-	companyCacheMap map[string]*models.Company
+	// companyMap は会社データのキャッシュマップ
+	companyMap map[string]*models.Company
 }
 
 // Start は CompanyService を初期化して開始します
@@ -44,10 +44,10 @@ func (srv *CompanyService) Start(services *Services, options *map[string]string)
 	// 既存インスタンスに値をセット（再代入しないこと）
 	srv.services = services
 	srv.managedFolder = managedFolder
-	srv.companyCacheMap = map[string]*models.Company{}
+	srv.companyMap = map[string]*models.Company{}
 
 	// companiesの情報を取得
-	if err = srv.ReloadCompanyCacheMap(); err != nil {
+	if err = srv.UpdateCompanyCacheMap(); err != nil {
 		return err
 	}
 
@@ -58,8 +58,8 @@ func (srv *CompanyService) Cleanup() {
 	// 現状クリーンアップは不要（監視を廃止したため）
 }
 
-// ReloadCompanyCacheMap 会社のキャッシュデータを更新します
-func (srv *CompanyService) ReloadCompanyCacheMap() error {
+// UpdateCompanyCacheMap 会社のキャッシュデータを更新します
+func (srv *CompanyService) UpdateCompanyCacheMap() error {
 
 	// ファイルシステムから会社フォルダー一覧を取得
 	entries, err := os.ReadDir(srv.managedFolder)
@@ -68,20 +68,20 @@ func (srv *CompanyService) ReloadCompanyCacheMap() error {
 	}
 
 	// キャッシュデータの初期化
-	srv.companyCacheMap = make(map[string]*models.Company, len(entries))
+	srv.companyMap = make(map[string]*models.Company, len(entries))
 
 	// 全てのCompanyインスタンスを作成
 	for _, entry := range entries {
 		// Companyインスタンスの作成と初期化
 		company := models.NewCompany()
 		if err := company.ParseFromManagedFolder(srv.managedFolder, entry.Name()); err == nil {
-			srv.companyCacheMap[company.GetId()] = company
+			srv.companyMap[company.GetId()] = company
 		}
 	}
 
 	// 会社の内部情報の取得
-	for _, company := range srv.companyCacheMap {
-		if err := core.LoadPersistData(company); err != nil {
+	for _, company := range srv.companyMap {
+		if err := LoadPersistData(company); err != nil {
 			log.Printf("Failed to load persist info for company ID %s: %v", company.GetId(), err)
 		}
 	}
@@ -91,14 +91,14 @@ func (srv *CompanyService) ReloadCompanyCacheMap() error {
 // UpdateCompanyCache は指定 id のキャッシュ情報を新しい会社情報で更新します
 // prevId: 更新対象の会社ID、存在しない場合は追加
 // newCompany: 更新後の会社情報
-func (srv *CompanyService) UpdateCompanyCache(prevId string, newCompany *models.Company) (*models.Company, error) {
+func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Company) (*models.Company, error) {
 
 	// Idから更新前の会社情報を取得
-	prevCompany, exist := srv.companyCacheMap[prevId]
+	prevCompany, exist := srv.companyMap[prevId]
 
 	// キャッシュから削除
 	if exist {
-		delete(srv.companyCacheMap, prevId)
+		delete(srv.companyMap, prevId)
 	}
 
 	// 新しい会社情報の管理フォルダー名を生成
@@ -117,7 +117,7 @@ func (srv *CompanyService) UpdateCompanyCache(prevId string, newCompany *models.
 	}
 
 	// 既存の情報を更新
-	srv.companyCacheMap[newCompany.GetId()] = newCompany
+	srv.companyMap[newCompany.GetId()] = newCompany
 
 	// persist情報の書き込み
 	if err := core.SavePersistData(newCompany); err != nil {
@@ -130,17 +130,22 @@ func (srv *CompanyService) UpdateCompanyCache(prevId string, newCompany *models.
 // GetCompanies は管理されている会社情報の一覧を取得します
 // gRPCサービスの実装です
 func (srv *CompanyService) GetCompanyMap(
-	ctx context.Context,
-	_ *grpcv1.GetCompanyMapRequest) (
-	res *grpcv1.GetCompanyMapResponse,
-	err error) {
+	ctx context.Context, req *grpcv1.GetCompanyMapRequest) (
+	*grpcv1.GetCompanyMapResponse, error) {
 
 	// レスポンスを初期化
-	res = grpcv1.GetCompanyMapResponse_builder{}.Build()
+	res := grpcv1.GetCompanyMapResponse_builder{}.Build()
+
+	// 必要に応じてキャッシュを更新
+	if req.GetRefresh() {
+		if err := srv.UpdateCompanyCacheMap(); err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+	}
 
 	// 会社データモデルを作成
-	grpcv1CompanyMap := make(map[string]*grpcv1.Company, len(srv.companyCacheMap))
-	for _, v := range srv.companyCacheMap {
+	grpcv1CompanyMap := make(map[string]*grpcv1.Company, len(srv.companyMap))
+	for _, v := range srv.companyMap {
 		grpcv1CompanyMap[v.Company.GetId()] = v.Company
 	}
 
@@ -164,7 +169,7 @@ func (srv *CompanyService) GetCompany(
 	id := req.GetId()
 
 	// 会社情報を取得
-	company, exist := srv.companyCacheMap[id]
+	company, exist := srv.companyMap[id]
 	if !exist {
 		err = connect.NewError(connect.CodeNotFound, errors.New("company not found"))
 		return
@@ -189,7 +194,7 @@ func (srv *CompanyService) UpdateCompany(
 	prevId := req.GetPrevId()
 	newCompany := &models.Company{Company: req.GetNewCompany()}
 
-	prevCompany, err := srv.UpdateCompanyCache(prevId, newCompany)
+	prevCompany, err := srv.UpdateNewCompany(prevId, newCompany)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("updated company is nil"))
 	}

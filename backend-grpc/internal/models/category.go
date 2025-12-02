@@ -2,28 +2,25 @@ package models
 
 import "errors"
 
-// CompanyCategoryIndex は業種を表すenum型（int）
-type CompanyCategoryIndex int32
-
 // 業種カテゴリーの定義
 const (
-	CompanyCategoryMin      CompanyCategoryIndex = 0
-	CompanyCategoryUnion    CompanyCategoryIndex = 0
-	CompanyCategoryAgency   CompanyCategoryIndex = 1
-	CompanyCategoryPeer     CompanyCategoryIndex = 2
-	CompanyCategoryPersonal CompanyCategoryIndex = 3
-	CompanyCategoryPrime    CompanyCategoryIndex = 4
-	CompanyCategoryLease    CompanyCategoryIndex = 5
-	CompanyCategorySales    CompanyCategoryIndex = 6
-	CompanyCategorySales2   CompanyCategoryIndex = 7
-	CompanyCategoryRecruit  CompanyCategoryIndex = 8
-	CompanyCategoryOther    CompanyCategoryIndex = 9
-	CompanyCategoryMax      CompanyCategoryIndex = 9
+	CompanyCategoryMin      int = 0
+	CompanyCategoryUnion    int = 0
+	CompanyCategoryAgency   int = 1
+	CompanyCategoryPeer     int = 2
+	CompanyCategoryPersonal int = 3
+	CompanyCategoryPrime    int = 4
+	CompanyCategoryLease    int = 5
+	CompanyCategorySales    int = 6
+	CompanyCategorySales2   int = 7
+	CompanyCategoryRecruit  int = 8
+	CompanyCategoryOther    int = 9
+	CompanyCategoryMax      int = 9
 )
 
 // CompanyCategoryMap 業種カテゴリーのラベルマップです
 // 将来的にはyamlファイルから読み込む予定
-var CompanyCategoryMap = map[CompanyCategoryIndex]string{
+var CompanyCategoryMap = map[int]string{
 	CompanyCategoryUnion:    "自社組合",
 	CompanyCategoryAgency:   "下請会社",
 	CompanyCategoryPeer:     "築炉会社",
@@ -37,7 +34,7 @@ var CompanyCategoryMap = map[CompanyCategoryIndex]string{
 }
 
 // CompanyCategoryReverseMap は業種カテゴリーの逆引きマップです
-var CompanyCategoryReverseMap = map[string]CompanyCategoryIndex{}
+var CompanyCategoryReverseMap = map[string]int{}
 
 // init はパッケージ初期化時に呼び出され、逆引きマップを初期化します
 func init() {
@@ -47,13 +44,9 @@ func init() {
 	}
 }
 
-func (h CompanyCategoryIndex) ToInt32() int32 {
-	return int32(h)
-}
-
-// IsValid は CompanyCategoryIndex が有効な範囲内かをチェックします
-func (h CompanyCategoryIndex) Error() error {
-	if CompanyCategoryMin <= h && h <= CompanyCategoryMax {
+// ErrorCompanyCategoryIndex 引数: idx が有効な範囲内かをチェックします
+func ErrorCompanyCategoryIndex(idx int) error {
+	if CompanyCategoryMin <= idx && idx <= CompanyCategoryMax {
 		return nil
 	}
 	return errors.New("invalid CompanyCategoryIndex")

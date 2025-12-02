@@ -19,35 +19,42 @@ type FileInfo struct {
 	*grpcv1.FileInfo
 }
 
-// NewFileInfo はファイルのフルパスから FileInfo を作成します。
-func NewFileInfo(targetPath string) (*FileInfo, error) {
+// NewFileInfo FieleInfo インスタンスを作成します。
+func NewFileInfo() *FileInfo {
+	return &FileInfo{
+		FileInfo: grpcv1.FileInfo_builder{}.Build(),
+	}
+}
+
+// ParseFromPath は指定されたフルパスからファイル情報を解析して設定します
+func (obj *FileInfo) ParseFromPath(fullpath string) error {
 	var err error
 
 	// 絶対パスのクリーン化
-	targetPath, err = core.NormalizeAbsPath(targetPath)
+	fullpath, err = core.NormalizeAbsPath(fullpath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// ファイル情報の取得
-	osFi, err := os.Stat(targetPath)
+	osFi, err := os.Stat(fullpath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// 最終更新時刻の取得
 	osModTime := osFi.ModTime()
 	if osModTime.IsZero() {
-		return nil, errors.New("ファイル最終更新日の取得に失敗しました: file modification time is zero")
+		return errors.New("ファイル最終更新日の取得に失敗しました: file modification time is zero")
 	}
+	modifiedTime := timestamppb.New(osModTime)
 
-	return &FileInfo{
-		FileInfo: grpcv1.FileInfo_builder{
-			Path:         targetPath,
-			IsDirectory:  osFi.IsDir(),
-			Size:         osFi.Size(),
-			ModifiedTime: timestamppb.New(osModTime),
-		}.Build()}, nil
+	// フィールドの設定
+	obj.SetPath(fullpath)
+	obj.SetIsDirectory(osFi.IsDir())
+	obj.SetSize(osFi.Size())
+	obj.SetModifiedTime(modifiedTime)
+	return nil
 }
 
 // GetPersistData は永続化対象のオブジェクトを取得します
@@ -67,7 +74,7 @@ func (obj *FileInfo) SetPersistData(persistData map[string]any) error {
 	}
 
 	// デフォルトのフィールド設定処理を呼び出し
-	return core.DefaultSetPersistData(persistData, setterMap)
+	return core.ModelSetPersistData(persistData, setterMap)
 }
 
 // MarshalJSON は JSON Serde を従来形式で行います。

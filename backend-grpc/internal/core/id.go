@@ -11,8 +11,8 @@ import (
 // 53^6 = 22,164,361,129 通り（約220億通り）
 const RadixTable = "123456789ABCDEFGHJKLMNPRSTUVWXYZabcdefghklmnpqrstwxyz"
 
-// GenerateIdFromBytes はバイト配列からハッシュ文字列IDを生成
-func GenerateIdFromBytes(data []byte) string {
+// ParseIdFromBytes はバイト配列からハッシュ文字列IDを生成
+func ParseIdFromBytes(data []byte) string {
 
 	// バイト配列からBLAKE2b-256ハッシュを計算し下位128ビットを取得
 	// BLAKE2b-256を使用（GoにはBLAKE3の標準実装がないため）
@@ -38,5 +38,5 @@ func GenerateIdFromBytes(data []byte) string {
 
 // GenerateIdFromString は文字列からハッシュ文字列IDを生成
 func GenerateIdFromString(str string) string {
-	return GenerateIdFromBytes([]byte(str))
+	return ParseIdFromBytes([]byte(str))
 }

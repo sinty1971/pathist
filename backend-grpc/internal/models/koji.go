@@ -14,28 +14,8 @@ type Koji struct {
 	// Koji メッセージ本体
 	*grpcv1.Koji
 
-	// persistFilename は永続化サービス用のファイル名
-	persistFilename string
-}
-
-// GetPersistPath は永続化ファイルのパスを取得します
-// Persistable インターフェースの実装
-func (k *Koji) GetPersistPath() string {
-	return filepath.Join(k.GetManagedFolder(), k.persistFilename)
-}
-
-// GetPersistInfo は永続化対象のオブジェクトを取得します
-// Persistable インターフェースの実装
-func (k *Koji) GetPersistInfo() any {
-	return k.Koji
-}
-
-// SetPersistInfo は永続化対象のオブジェクトを設定します
-// Persistable インターフェースの実装
-func (k *Koji) SetPersistInfo(obj any) {
-	if koji, ok := obj.(*grpcv1.Koji); ok {
-		k.Koji = koji
-	}
+	// PersistFilename は永続化サービス用のファイル名
+	PersistFilename string
 }
 
 // NewKoji FolderNameからKojiを作成します（高速化版）
@@ -147,7 +127,7 @@ func GenerateKoujiId(start *Timestamp, companyName, locationName string) string 
 	copy(bytes[offset:], locationBytes)
 
 	// バイト配列からハッシュ文字列IDを生成
-	return core.GenerateIdFromBytes(bytes)
+	return core.ParseIdFromBytes(bytes)
 }
 
 // GenerateKojiStatus はプロジェクトステータスを判定する
@@ -169,16 +149,16 @@ func GenerateKojiStatus(start *Timestamp, end *Timestamp) string {
 	}
 }
 
-func (k *Koji) Update(updatedKoji *Koji) (*Koji, error) {
-	if k == nil || updatedKoji == nil {
+func (obj *Koji) Update(updatedKoji *Koji) (*Koji, error) {
+	if obj == nil || updatedKoji == nil {
 		return nil, errors.New("koji or updatedKoji is nil")
 	}
 
 	// 管理フォルダーは変更しない
-	updatedKoji.SetManagedFolder(k.GetManagedFolder())
+	updatedKoji.SetManagedFolder(obj.GetManagedFolder())
 
 	// 永続化サービスの設定を引き継ぐ
-	updatedKoji.persistFilename = k.persistFilename
+	updatedKoji.PersistFilename = obj.PersistFilename
 
 	return updatedKoji, nil
 }
@@ -186,7 +166,7 @@ func (k *Koji) Update(updatedKoji *Koji) (*Koji, error) {
 // UpdateFolderPath は工事フォルダー名を更新します
 // ID 及び ManagedFolder の情報は無視されます
 // TODO: 不完全です、実際にはまだ更新処理していません
-func (k *Koji) UpdateFolderPath(src *Koji) bool {
+func (obj *Koji) UpdateFolderPath(src *Koji) bool {
 	if src == nil {
 		return false
 	}
@@ -219,13 +199,53 @@ func (k *Koji) UpdateFolderPath(src *Koji) bool {
 	builder.WriteByte(' ')
 	builder.WriteString(locationName)
 
-	dir := filepath.Dir(k.GetManagedFolder())
+	dir := filepath.Dir(obj.GetManagedFolder())
 	if dir == "." {
 		return false
 	}
-	prevManagedFolder := k.GetManagedFolder()
+	prevManagedFolder := obj.GetManagedFolder()
 	managedFolder := builder.String()
 	src.SetManagedFolder(filepath.Join(dir, managedFolder))
 
 	return prevManagedFolder != managedFolder
+}
+
+// Persistable インターフェースの実装
+//
+
+// GetPersistPath は永続化ファイルのパスを取得します
+func (obj *Koji) GetPersistPath() string {
+	return filepath.Join(obj.GetManagedFolder(), obj.PersistFilename)
+}
+
+// GetPersistInfo は永続化対象のオブジェクトを取得します
+// Persistable インターフェースの実装
+func (obj *Koji) GetPersistData() (map[string]any, error) {
+	return map[string]any{
+		"inside_ideal_path":     obj.GetInsideIdealPath(),
+		"inside_end":            obj.GetInsideEnd(),
+		"inside_description":    obj.GetInsideDescription(),
+		"inside_tags":           obj.GetInsideTags(),
+		"inside_required_files": obj.GetInsideRequiredFiles(),
+	}, nil
+}
+
+// SetPersistInfo は永続化対象のオブジェクトを設定します
+// Persistable インターフェースの実装
+func (k *Koji) SetPersistInfo(obj any) {
+	// 文字列フィールドのセッターのマップ
+	setterMap := map[string]func(string){
+		"inside_ideal_path":     obj.GetInsideIdealPath,
+		"inside_end":            obj.GetInsideEnd,
+		"inside_description":    obj.GetInsideDescription,
+		"inside_tags":           obj.GetInsideTags,
+		"inside_required_files": obj.GetInsideRequiredFiles,
+	}
+
+	// デフォルトの文字列フィールド設定処理を呼び出し
+	return core.DefaultSetPersistData(persistData, setterMap)
+
+	if koji, ok := obj.(*grpcv1.Koji); ok {
+		k.Koji = koji
+	}
 }

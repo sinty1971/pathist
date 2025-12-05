@@ -12,8 +12,8 @@ import (
 
 // Persist は永続化されるエンティティに必要な振る舞いを定義します。
 type Persist struct {
-	// PersistMap は永続化対象のオブジェクトを取得します。
-	//	PersistMap() map[string]PersistFunc
+	// PersistFilename は永続化用のファイル名を保持します。
+	PersistFilename string
 }
 
 type PersisInterface interface {
@@ -28,46 +28,6 @@ type PersisInterface interface {
 type PersistFunc struct {
 	Getter func() any
 	Setter func(any)
-}
-
-// PersistStringFunc は文字列型のゲッター・セッター関数を持つ PersistFunc を作成します。
-func PersistStringFunc(getter func() string, setter func(string)) PersistFunc {
-	return PersistFunc{
-		Getter: func() any {
-			return getter()
-		},
-		Setter: func(val any) {
-			if strVal, ok := val.(string); ok {
-				setter(strVal)
-			}
-		},
-	}
-}
-
-func PersistStringSliceFunc(getter func() []string, setter func([]string)) PersistFunc {
-	return PersistFunc{
-		Getter: func() any {
-			return getter()
-		},
-		Setter: func(val any) {
-			if stringSlice, ok := val.([]string); ok {
-				setter(stringSlice)
-			}
-		},
-	}
-}
-
-func PersistFileInfoSliceFunc(getter func() []*grpcv1.FileInfo, setter func([]*grpcv1.FileInfo)) PersistFunc {
-	return PersistFunc{
-		Getter: func() any {
-			return getter()
-		},
-		Setter: func(val any) {
-			if fileInfoSlice, ok := val.([]*grpcv1.FileInfo); ok {
-				setter(fileInfoSlice)
-			}
-		},
-	}
 }
 
 // LoadPersistData は永続化ファイルからデータを読み込みます。
@@ -110,17 +70,14 @@ func (h *Persist) LoadPersistData() error {
 // SavePersistData はデータを永続化ファイルに保存します。
 func (h *Persist) SavePersistData() error {
 
-	// Persistable に型変換
+	// Persistable オブジェクトの取得
 	obj, ok := any(h).(PersisInterface)
 	if !ok {
 		return fmt.Errorf("Persistable インターフェースを実装していません")
 	}
 
-	// 永続化ファイルパスの取得
-	persistPath := obj.PersistPath()
-
 	// データをYAMLにエンコード
-	in, err := MarshalJSON(obj)
+	in, err := json.Marshal(obj)
 	if err != nil {
 		return fmt.Errorf("永続化データの取得に失敗しました: %w", err)
 	}
@@ -132,21 +89,26 @@ func (h *Persist) SavePersistData() error {
 	}
 
 	// ファイルに書き込み
-	return os.WriteFile(persistPath, out, 0644)
+	return os.WriteFile(obj.PersistPath(), out, 0644)
 }
 
 // SetPersistData は永続化対象のオブジェクトを設定するデフォルト実装です。
-func (h *Persist) SetPersistData(persistData map[string]any) error {
+func (h *Persist) SetPersistData(persistData any) error {
 
-	// Persistable に型変換
+	// Persistable オブジェクトに型変換
 	obj, ok := any(h).(PersisInterface)
 	if !ok {
 		return fmt.Errorf("Persistable インターフェースを実装していません")
 	}
 
+	data, ok := persistData.(map[string]any)
+	if !ok {
+		return fmt.Errorf("persistData の型が不正です")
+	}
+
 	// 各フィールドの設定
 	for k, f := range obj.PersistMap() {
-		if val, exist := persistData[k]; exist {
+		if val, exist := data[k]; exist {
 			switch v := val.(type) {
 
 			// 文字列フィールドの処理
@@ -171,7 +133,12 @@ func (h *Persist) SetPersistData(persistData map[string]any) error {
 }
 
 // MarshalJSON シリアライズを行い、map[string]string{}を返します
-func MarshalJSON() (map[string]string, error) {
+func (h *Persist) MarshalJSON() (map[string]string, error) {
+
+	obj, ok := any(h).(PersisInterface)
+	if !ok {
+		return nil, fmt.Errorf("Persistable インターフェースを実装していません")
+	}
 
 	persistData := map[string]string{}
 	for k, f := range obj.PersistMap() {
@@ -245,4 +212,44 @@ func UnmarshalYAML(obj Persist, unmarshal func(any) error) error {
 	}
 
 	return nil
+}
+
+// PersistStringFunc は文字列型のゲッター・セッター関数を持つ PersistFunc を作成します。
+func PersistStringFunc(getter func() string, setter func(string)) PersistFunc {
+	return PersistFunc{
+		Getter: func() any {
+			return getter()
+		},
+		Setter: func(val any) {
+			if strVal, ok := val.(string); ok {
+				setter(strVal)
+			}
+		},
+	}
+}
+
+func PersistStringSliceFunc(getter func() []string, setter func([]string)) PersistFunc {
+	return PersistFunc{
+		Getter: func() any {
+			return getter()
+		},
+		Setter: func(val any) {
+			if stringSlice, ok := val.([]string); ok {
+				setter(stringSlice)
+			}
+		},
+	}
+}
+
+func PersistFileInfoSliceFunc(getter func() []*grpcv1.FileInfo, setter func([]*grpcv1.FileInfo)) PersistFunc {
+	return PersistFunc{
+		Getter: func() any {
+			return getter()
+		},
+		Setter: func(val any) {
+			if fileInfoSlice, ok := val.([]*grpcv1.FileInfo); ok {
+				setter(fileInfoSlice)
+			}
+		},
+	}
 }

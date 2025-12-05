@@ -16,8 +16,8 @@ type Company struct {
 	// Company メッセージ本体
 	*grpcv1.Company
 
-	// PersistFilename は永続化サービス用のファイル名
-	PersistFilename string
+	// Persist 永続化用フィールド
+	*Persist
 }
 
 // NewCompany インスタンス作成と初期化を行います
@@ -25,8 +25,7 @@ func NewCompany() *Company {
 
 	// インスタンス作成と初期化
 	return &Company{
-		Company:         grpcv1.Company_builder{}.Build(),
-		PersistFilename: core.ConfigMap["CompanyPersistFilename"],
+		Company: grpcv1.Company_builder{}.Build(),
 	}
 }
 

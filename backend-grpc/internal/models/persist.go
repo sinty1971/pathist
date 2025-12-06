@@ -1,12 +1,12 @@
 package models
 
 import (
-	grpcv1 "backend-grpc/gen/grpc/v1"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v2"
 )
 
@@ -16,7 +16,7 @@ type Persist struct {
 	PersistFilename string
 }
 
-type PersisInterface interface {
+type PersistInterface interface {
 	// GetPersistPath はファイルの永続化フルパスを取得します。
 	PersistPath() string
 
@@ -33,17 +33,14 @@ type PersistFunc struct {
 // LoadPersistData は永続化ファイルからデータを読み込みます。
 func (h *Persist) LoadPersistData() error {
 
-	// Persistable に型変換
-	obj, ok := any(h).(PersisInterface)
+	// PersistInterface オブジェクトの取得
+	obj, ok := any(h).(PersistInterface)
 	if !ok {
-		return fmt.Errorf("Persistable インターフェースを実装していません")
+		return fmt.Errorf("PersistInterface インターフェースを実装していません")
 	}
 
-	// 永続化ファイルのフルパスを取得
-	persistPath := obj.PersistPath()
-
 	// ファイルを読み込み
-	in, err := os.ReadFile(persistPath)
+	in, err := os.ReadFile(obj.PersistPath())
 	if err != nil {
 		// ファイルが存在しない場合は一度 Save を呼び出してファイルを作成する
 		if os.IsNotExist(err) {
@@ -51,65 +48,16 @@ func (h *Persist) LoadPersistData() error {
 		}
 	}
 
-	// YAMLをデコード
-	out, err := h.MarshalYAML()
-	if err != nil {
-		return fmt.Errorf("永続化データの取得に失敗しました: %w", err)
-	}
-
-	if err := yaml.Unmarshal(in, out); err != nil {
-		return fmt.Errorf("YAMLのデコードに失敗しました: %w", err)
-	}
-
-	// エンティティにデコード結果を設定（既に out に反映されているが念のため）
-	h.SetPersistData(out)
-
-	return nil
-}
-
-// SavePersistData はデータを永続化ファイルに保存します。
-func (h *Persist) SavePersistData() error {
-
-	// Persistable オブジェクトの取得
-	obj, ok := any(h).(PersisInterface)
-	if !ok {
-		return fmt.Errorf("Persistable インターフェースを実装していません")
-	}
-
-	// データをYAMLにエンコード
-	in, err := json.Marshal(obj)
-	if err != nil {
-		return fmt.Errorf("永続化データの取得に失敗しました: %w", err)
-	}
-
-	// YAMLエンコード
-	out, err := yaml.Marshal(in)
-	if err != nil {
-		return fmt.Errorf("データのエンコードに失敗しました: %w", err)
-	}
-
-	// ファイルに書き込み
-	return os.WriteFile(obj.PersistPath(), out, 0644)
-}
-
-// SetPersistData は永続化対象のオブジェクトを設定するデフォルト実装です。
-func (h *Persist) SetPersistData(persistData any) error {
-
-	// Persistable オブジェクトに型変換
-	obj, ok := any(h).(PersisInterface)
-	if !ok {
-		return fmt.Errorf("Persistable インターフェースを実装していません")
-	}
-
-	data, ok := persistData.(map[string]any)
-	if !ok {
-		return fmt.Errorf("persistData の型が不正です")
+	// YAMLデコード
+	var persistData map[string]any
+	if err := yaml.Unmarshal(in, &persistData); err != nil {
+		return fmt.Errorf("永続化データの読み込みに失敗しました: %w", err)
 	}
 
 	// 各フィールドの設定
 	for k, f := range obj.PersistMap() {
-		if val, exist := data[k]; exist {
-			switch v := val.(type) {
+		if anyVal, exist := persistData[k]; exist {
+			switch v := anyVal.(type) {
 
 			// 文字列フィールドの処理
 			case string:
@@ -132,23 +80,70 @@ func (h *Persist) SetPersistData(persistData any) error {
 	return nil
 }
 
-// MarshalJSON シリアライズを行い、map[string]string{}を返します
-func (h *Persist) MarshalJSON() (map[string]string, error) {
+// SavePersistData はデータを永続化ファイルに保存します。
+func (h *Persist) SavePersistData() error {
 
-	obj, ok := any(h).(PersisInterface)
+	// PersistInterface オブジェクトの取得
+	obj, ok := any(h).(PersistInterface)
+	if !ok {
+		return fmt.Errorf("PersistInterface インターフェースを実装していません")
+	}
+
+	// データをYAMLにエンコード
+	in, err := json.Marshal(obj)
+	if err != nil {
+		return fmt.Errorf("永続化データの取得に失敗しました: %w", err)
+	}
+
+	// YAMLエンコード
+	out, err := yaml.Marshal(in)
+	if err != nil {
+		return fmt.Errorf("データのエンコードに失敗しました: %w", err)
+	}
+
+	// ファイルに書き込み
+	return os.WriteFile(obj.PersistPath(), out, 0644)
+}
+
+// MarshalJSON シリアライズを行い、map[string]string{}を返します
+func (h *Persist) MarshalJSON() ([]byte, error) {
+
+	// Persistable オブジェクトに型変換
+	obj, ok := any(h).(PersistInterface)
 	if !ok {
 		return nil, fmt.Errorf("Persistable インターフェースを実装していません")
 	}
 
-	persistData := map[string]string{}
+	persistData := make(map[string]string, len(obj.PersistMap()))
 	for k, f := range obj.PersistMap() {
-		persistData[k] = f.Getter()
+		anyVal := f.Getter()
+		// 値を文字列に変換
+		switch v := anyVal.(type) {
+		case string:
+			persistData[k] = v
+		default:
+			data, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("Json変換ができませんでした: %v", anyVal)
+				continue
+			}
+			persistData[k] = string(data)
+		}
+
 	}
-	return persistData, nil
+	return json.Marshal(persistData)
 }
 
 // UnmarshalJSON は JSON からの復元を行うデフォルト実装です。
-func UnmarshalJSON(obj Persist, raw []byte) error {
+func (h *Persist) UnmarshalJSON(raw []byte) error {
+
+	// Persistable オブジェクトに型変換
+	obj, ok := any(h).(PersistInterface)
+	if !ok {
+		return fmt.Errorf("Persistable インターフェースを実装していません")
+	}
+
+	// 永続化データの取得
 	persistData := map[string]string{}
 	if err := json.Unmarshal(raw, &persistData); err != nil {
 		return err
@@ -164,12 +159,14 @@ func UnmarshalJSON(obj Persist, raw []byte) error {
 
 // MarshalYAML は YAML 用のシリアライズを行うデフォルト実装です。
 func (h *Persist) MarshalYAML() (any, error) {
-	obj, ok := any(h).(PersisInterface)
+
+	// Persistable オブジェクトに型変換
+	obj, ok := any(h).(PersistInterface)
 	if !ok {
 		return nil, fmt.Errorf("Persistable インターフェースを実装していません")
 	}
 
-	persistData := map[string]string{}
+	persistData := make(map[string]string, len(obj.PersistMap()))
 	for k, f := range obj.PersistMap() {
 		persistData[k] = f.Getter()
 	}
@@ -241,14 +238,17 @@ func PersistStringSliceFunc(getter func() []string, setter func([]string)) Persi
 	}
 }
 
-func PersistFileInfoSliceFunc(getter func() []*grpcv1.FileInfo, setter func([]*grpcv1.FileInfo)) PersistFunc {
+// PersistTimestampFunc はタイムスタンプ文字列型のゲッター・セッター関数を持つ PersistFunc を作成します。
+//
+//	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+func PersistTimestampFunc(getter func() *timestamppb.Timestamp, setter func(*timestamppb.Timestamp)) PersistFunc {
 	return PersistFunc{
 		Getter: func() any {
 			return getter()
 		},
-		Setter: func(val any) {
-			if fileInfoSlice, ok := val.([]*grpcv1.FileInfo); ok {
-				setter(fileInfoSlice)
+		Setter: func(valAny any) {
+			if valTimestamp, ok := valAny.(*timestamppb.Timestamp); ok {
+				setter(valTimestamp)
 			}
 		},
 	}

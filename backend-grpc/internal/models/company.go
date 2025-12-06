@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
 	"path/filepath"
 	"strconv"
@@ -146,28 +145,4 @@ func (obj *Company) PersistMap() map[string]PersistFunc {
 		"inside_tags":           PersistStringSliceFunc(obj.GetInsideTags, obj.SetInsideTags),
 		"inside_required_files": PersistFileInfoSliceFunc(obj.GetInsideRequiredFiles, obj.SetInsideRequiredFiles),
 	}
-}
-
-// MarshalJSON は Marshaler インターフェースの実装で、JSON 用のシリアライズを行います。
-func (obj *Company) MarshalJSON() ([]byte, error) {
-	val, err := Serialize(obj)
-	if err != nil {
-		return []byte{}, err
-	}
-	return json.Marshal(val)
-}
-
-// UnmarshalJSON は JSON からの復元を行います。
-func (obj *Company) UnmarshalJSON(raw []byte) error {
-	return core.UnmarshalJSON(obj, raw)
-}
-
-// MarshalYAML は YAML 用のシリアライズを行います。
-func (obj Company) MarshalYAML() (any, error) {
-	return core.MarshalYAML(&obj)
-}
-
-// UnmarshalYAML は YAML からの復元を行います。
-func (obj *Company) UnmarshalYAML(unmarshal func(any) error) error {
-	return core.UnmarshalYAML(obj, unmarshal)
 }

@@ -96,3 +96,17 @@ func (obj FileInfo) MarshalYAML() (any, error) {
 func (obj *FileInfo) UnmarshalYAML(unmarshal func(any) error) error {
 	return core.DefaultUnmarshalYAML(unmarshal, obj.SetPersistData)
 }
+
+// PersistFileInfoSliceFunc は []*grpcv1.FileInfo 型のフィールド用の PersistFunc を作成します
+func PersistFileInfoSliceFunc(getter func() []*grpcv1.FileInfo, setter func([]*grpcv1.FileInfo)) PersistFunc {
+	return PersistFunc{
+		Getter: func() any {
+			return getter()
+		},
+		Setter: func(val any) {
+			if fileInfoSlice, ok := val.([]*grpcv1.FileInfo); ok {
+				setter(fileInfoSlice)
+			}
+		},
+	}
+}

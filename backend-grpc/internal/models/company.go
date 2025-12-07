@@ -27,6 +27,7 @@ func NewCompany() *Company {
 	// インスタンス作成と初期化
 	return &Company{
 		Company: grpcv1.Company_builder{}.Build(),
+		Persist: &Persist{PersistFilename: core.ConfigMap["CompanyPersistFilename"]},
 	}
 }
 
@@ -80,19 +81,19 @@ func (obj *Company) ParseFromManagedFolder(managedFolders ...string) error {
 	}
 
 	// 会社フォルダー名の解析
-	companyParts := strings.Split(folderName[2:], " ")
-	if len(companyParts) == 0 || companyParts[0] == "" {
+	nameParts := strings.Split(folderName[2:], " ")
+	if len(nameParts) == 0 || nameParts[0] == "" {
 		return errors.New("会社名が取得できません")
 	}
 
 	// 会社名の解析（ハイフンで分割）
-	shortName := companyParts[0]
+	shortName := nameParts[0]
 	var relationTag string
-	if idx := strings.Index(shortName, "-"); idx > -1 {
+	if idx := strings.Index(nameParts[0], "-"); idx > -1 {
 		// ハイフン以前の文字列を会社名とする
-		shortName = shortName[:idx]
+		shortName = nameParts[0][:idx]
 		// ハイフン以降の文字列を関連文字列とする
-		relationTag = shortName[idx+1:]
+		relationTag = nameParts[0][idx+1:]
 	}
 
 	// ID,ManagedFolder,Category,ShortNameの設定
@@ -126,8 +127,7 @@ func (obj *Company) Update(updatedCompany *Company) (*Company, error) {
 	return updatedCompany, nil
 }
 
-// Persistable インターフェースの実装
-//
+// Persiser インターフェースの実装
 
 // GetPersistPath は永続化ファイルのパスを取得します
 func (obj *Company) GetPersistPath() string {
@@ -135,6 +135,15 @@ func (obj *Company) GetPersistPath() string {
 }
 
 // PersistMessage は永続化用のメッセージを取得します
-func (obj *Company) PersistMessage() proto.Message {
+func (obj *Company) GetPersistMessage() proto.Message {
 	return obj.Company
+}
+
+// SetPersistMessage は永続化用のメッセージを設定します
+func (obj *Company) SetPersistMessage(msg proto.Message) {
+	company, ok := msg.(*grpcv1.Company)
+	if !ok {
+		return
+	}
+	obj.Company = company
 }

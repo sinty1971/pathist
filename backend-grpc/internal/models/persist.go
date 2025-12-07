@@ -15,7 +15,7 @@ type Persist struct {
 
 type Persister interface {
 	// GetPersistPath はファイルの永続化フルパスを取得します。
-	PersistPath() string
+	GetPersistPath() string
 
 	// GetPersistMap は永続化対象のメッセージを取得します。
 	GetPersistMessage() proto.Message
@@ -27,14 +27,20 @@ type Persister interface {
 // LoadPersistData は永続化ファイルからデータを読み込みます。
 func (h *Persist) LoadPersistData() error {
 
-	// PersistInterface 実装オブジェクトの取得
+	// Company インスタンスの取得を試行
+	if company, ok := any(h).(*Company); ok {
+		// Company として処理
+		return company.LoadPersistData()
+	}
+
+	// 汎用 Persister インターフェース実装オブジェクトの取得
 	obj, ok := any(h).(Persister)
 	if !ok {
-		return fmt.Errorf("PersistInterface インターフェースを実装していません")
+		return fmt.Errorf("Persister インターフェースを実装していません")
 	}
 
 	// YAMLファイルからバイトデータを読み込む
-	b, err := os.ReadFile(obj.PersistPath())
+	b, err := os.ReadFile(obj.GetPersistPath())
 	if err != nil {
 		// ファイルが存在しない場合は一度 Save を呼び出してファイルを作成する
 		if os.IsNotExist(err) {
@@ -55,7 +61,7 @@ func (h *Persist) SavePersistData() error {
 	// PersistInterface オブジェクトの取得
 	obj, ok := any(h).(Persister)
 	if !ok {
-		return fmt.Errorf("PersistInterface インターフェースを実装していません")
+		return fmt.Errorf("Persister インターフェースを実装していません")
 	}
 
 	// データをYAMLにエンコード
@@ -65,5 +71,5 @@ func (h *Persist) SavePersistData() error {
 	}
 
 	// ファイルに書き込み
-	return os.WriteFile(obj.PersistPath(), b, 0644)
+	return os.WriteFile(obj.GetPersistPath(), b, 0644)
 }

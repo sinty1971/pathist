@@ -217,35 +217,3 @@ func (obj *Koji) UpdateFolderPath(src *Koji) bool {
 func (obj *Koji) GetPersistPath() string {
 	return filepath.Join(obj.GetManagedFolder(), obj.PersistFilename)
 }
-
-// GetPersistInfo は永続化対象のオブジェクトを取得します
-// Persistable インターフェースの実装
-func (obj *Koji) GetPersistData() (map[string]any, error) {
-	return map[string]any{
-		"inside_ideal_path":     obj.GetInsideIdealPath(),
-		"inside_end":            obj.GetInsideEnd(),
-		"inside_description":    obj.GetInsideDescription(),
-		"inside_tags":           obj.GetInsideTags(),
-		"inside_required_files": obj.GetInsideRequiredFiles(),
-	}, nil
-}
-
-// SetPersistInfo は永続化対象のオブジェクトを設定します
-// Persistable インターフェースの実装
-func (k *Koji) SetPersistInfo(obj any) {
-	// 文字列フィールドのセッターのマップ
-	setterMap := map[string]func(string){
-		"inside_ideal_path":     obj.GetInsideIdealPath,
-		"inside_end":            obj.GetInsideEnd,
-		"inside_description":    obj.GetInsideDescription,
-		"inside_tags":           obj.GetInsideTags,
-		"inside_required_files": obj.GetInsideRequiredFiles,
-	}
-
-	// デフォルトの文字列フィールド設定処理を呼び出し
-	return core.DefaultSetPersistData(persistData, setterMap)
-
-	if koji, ok := obj.(*grpcv1.Koji); ok {
-		k.Koji = koji
-	}
-}

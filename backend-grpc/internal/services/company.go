@@ -81,8 +81,8 @@ func (srv *CompanyService) UpdateCompanyCacheMap() error {
 
 	// 会社の内部情報の取得
 	for _, company := range srv.companyMap {
-		if err := LoadPersistData(company); err != nil {
-			log.Printf("Failed to load persist info for company ID %s: %v", company.GetId(), err)
+		if err := company.LoadPersistData(); err != nil {
+			log.Printf("Failed to load persist info for company ShortName %s: %v", company.GetShortName(), err)
 		}
 	}
 	return nil
@@ -120,8 +120,8 @@ func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Co
 	srv.companyMap[newCompany.GetId()] = newCompany
 
 	// persist情報の書き込み
-	if err := core.SavePersistData(newCompany); err != nil {
-		log.Printf("Failed to save persist info for company ID %s: %v", newCompany.GetId(), err)
+	if err := newCompany.SavePersistData(); err != nil {
+		log.Printf("Failed to save persist info for company ShortName %s: %v", newCompany.GetShortName(), err)
 	}
 
 	return prevCompany, nil

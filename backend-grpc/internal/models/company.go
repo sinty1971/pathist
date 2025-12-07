@@ -8,6 +8,8 @@ import (
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	"backend-grpc/internal/core"
+
+	"google.golang.org/protobuf/proto"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
@@ -132,17 +134,7 @@ func (obj *Company) GetPersistPath() string {
 	return filepath.Join(obj.GetManagedFolder(), obj.PersistFilename)
 }
 
-// PersistMap は永続化用のフィールドマップを返します
-func (obj *Company) PersistMap() map[string]PersistFunc {
-	return map[string]PersistFunc{
-		"inside_ideal_path":     PersistStringFunc(obj.GetInsideIdealPath, obj.SetInsideIdealPath),
-		"inside_legal_name":     PersistStringFunc(obj.GetInsideLegalName, obj.SetInsideLegalName),
-		"inside_postal_code":    PersistStringFunc(obj.GetInsidePostalCode, obj.SetInsidePostalCode),
-		"inside_address":        PersistStringFunc(obj.GetInsideAddress, obj.SetInsideAddress),
-		"inside_phone":          PersistStringFunc(obj.GetInsidePhone, obj.SetInsidePhone),
-		"inside_email":          PersistStringFunc(obj.GetInsideEmail, obj.SetInsideEmail),
-		"inside_website":        PersistStringFunc(obj.GetInsideWebsite, obj.SetInsideWebsite),
-		"inside_tags":           PersistStringSliceFunc(obj.GetInsideTags, obj.SetInsideTags),
-		"inside_required_files": PersistFileInfoSliceFunc(obj.GetInsideRequiredFiles, obj.SetInsideRequiredFiles),
-	}
+// PersistMessage は永続化用のメッセージを取得します
+func (obj *Company) PersistMessage() proto.Message {
+	return obj.Company
 }

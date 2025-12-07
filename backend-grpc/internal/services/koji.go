@@ -129,11 +129,7 @@ func (s *KojiService) UpdateKojies() error {
 	kojiesSize := len(entries)
 
 	// 並列処理用のワーカー数を決定
-	numWorkers := core.DecideNumWorkers(kojiesSize,
-		core.WithMinWorkers(2),
-		core.WithMaxWorkers(16),
-		core.WithCPUMultiplier(2),
-	)
+	numWorkers := core.DecideNumWorkers(kojiesSize)
 
 	// バッファ付きチャンネルで効率化
 	jobs := make(chan int, kojiesSize)

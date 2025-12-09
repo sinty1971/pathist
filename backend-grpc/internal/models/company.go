@@ -18,16 +18,17 @@ type Company struct {
 	*grpcv1.Company
 
 	// Persist 永続化用フィールド
-	*Persist
+	*core.Persister
 }
 
 // NewCompany インスタンス作成と初期化を行います
 func NewCompany() *Company {
 
 	// インスタンス作成と初期化
+	msgCompany := grpcv1.Company_builder{}.Build(),
 	return &Company{
-		Company: grpcv1.Company_builder{}.Build(),
-		Persist: &Persist{PersistFilename: core.ConfigMap["CompanyPersistFilename"]},
+		Company:   msgCompany,
+		Persister: core.NewPersister(core.ConfigMap["CompanyPersistFilename"], msgCompany),
 	}
 }
 

@@ -81,6 +81,7 @@ func (srv *CompanyService) UpdateCompanyCacheMap() error {
 
 	// 会社の内部情報の取得
 	for _, company := range srv.companyMap {
+
 		if err := company.LoadPersistData(); err != nil {
 			log.Printf("Failed to load persist info for company ShortName %s: %v", company.GetShortName(), err)
 		}

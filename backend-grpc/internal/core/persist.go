@@ -3,6 +3,7 @@ package core
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -19,7 +20,7 @@ type Persistable interface {
 	SetPersistBytes(b []byte) error
 
 	// ProtoReflect は対象メッセージのプロトリフレクションを取得します。
-	ProtoReflect() protoreflect.ProtoMessage
+	ProtoReflect() protoreflect.Message
 }
 
 // Persist は永続化されるエンティティに必要な振る舞いを定義します。
@@ -71,18 +72,20 @@ func (p *Persist) Save() error {
 // GetPersistValues は永続化用のフィールド値マップを取得します
 func (p *Persist) GetPersistValues() map[string]protoreflect.Value {
 	refMsg := p.target.ProtoReflect()
-	fields := refMsg.ProtoReflect().Descriptor().Fields()
+	fields := refMsg.Descriptor().Fields()
 
 	result := make(map[string]protoreflect.Value)
 	for i := 0; i < fields.Len(); i++ {
 		field := fields.Get(i)
-		result[string(field.Name())] = refMsg.Get(field)
+		fieldName := string(field.Name())
+		if strings.HasPrefix(fieldName, "persist_") {
+			result[fieldName] = refMsg.Get(field)
 	}
 	return result
 }
 
 // GetUnpersistValues は永続化対象外のフィールド値マップを取得します
-func (m *Company) GetUnpersistValues() map[string]protoreflect.Value {
+func (p *Persist) GetUnpersistValues() map[string]protoreflect.Value {
 	// 例: 永続化対象外フィールドがない場合は空マップを返す
 	return make(map[string]protoreflect.Value)
 }

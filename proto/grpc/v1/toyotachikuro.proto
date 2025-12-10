@@ -24,15 +24,13 @@ message Company {
   string managed_folder = 2;
   string short_name = 3;
   int32 category_index = 4;
-  string inside_ideal_path = 5;
-  string inside_legal_name = 6;
-  string inside_postal_code = 7;
-  string inside_address = 8;
-  string inside_phone = 9;
-  string inside_email = 10;
-  string inside_website = 11;
-  repeated string inside_tags = 12;
-  repeated FileInfo inside_required_files = 13;
+  string persist_long_name = 5;
+  string persist_postal_code = 6;
+  string persist_address = 7;
+  string persist_tel = 8;
+  string persist_fax = 9;
+  string persist_email = 10;
+  string persist_website = 11;
 }
 
 // CompanyCategory represents a company category with index and label
@@ -49,11 +47,8 @@ message Koji {
   google.protobuf.Timestamp start = 4;
   string company_name = 5;
   string location_name = 6;
-  string inside_ideal_path = 7;
-  google.protobuf.Timestamp inside_end = 8;
-  string inside_description = 9;
-  repeated string inside_tags = 10;
-  repeated FileInfo inside_required_files = 11;
+  google.protobuf.Timestamp persist_end = 7;
+  string persist_description = 8;
 }
 
 // FileService provides operations for file management

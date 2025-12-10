@@ -149,22 +149,20 @@ func (b0 FileInfo_builder) Build() *FileInfo {
 
 // Company represents a company entity with inside information
 type Company struct {
-	state                          protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id"`
-	xxx_hidden_ManagedFolder       string                 `protobuf:"bytes,2,opt,name=managed_folder,json=managedFolder"`
-	xxx_hidden_ShortName           string                 `protobuf:"bytes,3,opt,name=short_name,json=shortName"`
-	xxx_hidden_CategoryIndex       int32                  `protobuf:"varint,4,opt,name=category_index,json=categoryIndex"`
-	xxx_hidden_InsideIdealPath     string                 `protobuf:"bytes,5,opt,name=inside_ideal_path,json=insideIdealPath"`
-	xxx_hidden_InsideLegalName     string                 `protobuf:"bytes,6,opt,name=inside_legal_name,json=insideLegalName"`
-	xxx_hidden_InsidePostalCode    string                 `protobuf:"bytes,7,opt,name=inside_postal_code,json=insidePostalCode"`
-	xxx_hidden_InsideAddress       string                 `protobuf:"bytes,8,opt,name=inside_address,json=insideAddress"`
-	xxx_hidden_InsidePhone         string                 `protobuf:"bytes,9,opt,name=inside_phone,json=insidePhone"`
-	xxx_hidden_InsideEmail         string                 `protobuf:"bytes,10,opt,name=inside_email,json=insideEmail"`
-	xxx_hidden_InsideWebsite       string                 `protobuf:"bytes,11,opt,name=inside_website,json=insideWebsite"`
-	xxx_hidden_InsideTags          []string               `protobuf:"bytes,12,rep,name=inside_tags,json=insideTags"`
-	xxx_hidden_InsideRequiredFiles *[]*FileInfo           `protobuf:"bytes,13,rep,name=inside_required_files,json=insideRequiredFiles"`
-	unknownFields                  protoimpl.UnknownFields
-	sizeCache                      protoimpl.SizeCache
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id                string                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_ManagedFolder     string                 `protobuf:"bytes,2,opt,name=managed_folder,json=managedFolder"`
+	xxx_hidden_ShortName         string                 `protobuf:"bytes,3,opt,name=short_name,json=shortName"`
+	xxx_hidden_CategoryIndex     int32                  `protobuf:"varint,4,opt,name=category_index,json=categoryIndex"`
+	xxx_hidden_PersistLongName   string                 `protobuf:"bytes,5,opt,name=persist_long_name,json=persistLongName"`
+	xxx_hidden_PersistPostalCode string                 `protobuf:"bytes,6,opt,name=persist_postal_code,json=persistPostalCode"`
+	xxx_hidden_PersistAddress    string                 `protobuf:"bytes,7,opt,name=persist_address,json=persistAddress"`
+	xxx_hidden_PersistTel        string                 `protobuf:"bytes,8,opt,name=persist_tel,json=persistTel"`
+	xxx_hidden_PersistFax        string                 `protobuf:"bytes,9,opt,name=persist_fax,json=persistFax"`
+	xxx_hidden_PersistEmail      string                 `protobuf:"bytes,10,opt,name=persist_email,json=persistEmail"`
+	xxx_hidden_PersistWebsite    string                 `protobuf:"bytes,11,opt,name=persist_website,json=persistWebsite"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *Company) Reset() {
@@ -220,69 +218,53 @@ func (x *Company) GetCategoryIndex() int32 {
 	return 0
 }
 
-func (x *Company) GetInsideIdealPath() string {
+func (x *Company) GetPersistLongName() string {
 	if x != nil {
-		return x.xxx_hidden_InsideIdealPath
+		return x.xxx_hidden_PersistLongName
 	}
 	return ""
 }
 
-func (x *Company) GetInsideLegalName() string {
+func (x *Company) GetPersistPostalCode() string {
 	if x != nil {
-		return x.xxx_hidden_InsideLegalName
+		return x.xxx_hidden_PersistPostalCode
 	}
 	return ""
 }
 
-func (x *Company) GetInsidePostalCode() string {
+func (x *Company) GetPersistAddress() string {
 	if x != nil {
-		return x.xxx_hidden_InsidePostalCode
+		return x.xxx_hidden_PersistAddress
 	}
 	return ""
 }
 
-func (x *Company) GetInsideAddress() string {
+func (x *Company) GetPersistTel() string {
 	if x != nil {
-		return x.xxx_hidden_InsideAddress
+		return x.xxx_hidden_PersistTel
 	}
 	return ""
 }
 
-func (x *Company) GetInsidePhone() string {
+func (x *Company) GetPersistFax() string {
 	if x != nil {
-		return x.xxx_hidden_InsidePhone
+		return x.xxx_hidden_PersistFax
 	}
 	return ""
 }
 
-func (x *Company) GetInsideEmail() string {
+func (x *Company) GetPersistEmail() string {
 	if x != nil {
-		return x.xxx_hidden_InsideEmail
+		return x.xxx_hidden_PersistEmail
 	}
 	return ""
 }
 
-func (x *Company) GetInsideWebsite() string {
+func (x *Company) GetPersistWebsite() string {
 	if x != nil {
-		return x.xxx_hidden_InsideWebsite
+		return x.xxx_hidden_PersistWebsite
 	}
 	return ""
-}
-
-func (x *Company) GetInsideTags() []string {
-	if x != nil {
-		return x.xxx_hidden_InsideTags
-	}
-	return nil
-}
-
-func (x *Company) GetInsideRequiredFiles() []*FileInfo {
-	if x != nil {
-		if x.xxx_hidden_InsideRequiredFiles != nil {
-			return *x.xxx_hidden_InsideRequiredFiles
-		}
-	}
-	return nil
 }
 
 func (x *Company) SetId(v string) {
@@ -301,58 +283,48 @@ func (x *Company) SetCategoryIndex(v int32) {
 	x.xxx_hidden_CategoryIndex = v
 }
 
-func (x *Company) SetInsideIdealPath(v string) {
-	x.xxx_hidden_InsideIdealPath = v
+func (x *Company) SetPersistLongName(v string) {
+	x.xxx_hidden_PersistLongName = v
 }
 
-func (x *Company) SetInsideLegalName(v string) {
-	x.xxx_hidden_InsideLegalName = v
+func (x *Company) SetPersistPostalCode(v string) {
+	x.xxx_hidden_PersistPostalCode = v
 }
 
-func (x *Company) SetInsidePostalCode(v string) {
-	x.xxx_hidden_InsidePostalCode = v
+func (x *Company) SetPersistAddress(v string) {
+	x.xxx_hidden_PersistAddress = v
 }
 
-func (x *Company) SetInsideAddress(v string) {
-	x.xxx_hidden_InsideAddress = v
+func (x *Company) SetPersistTel(v string) {
+	x.xxx_hidden_PersistTel = v
 }
 
-func (x *Company) SetInsidePhone(v string) {
-	x.xxx_hidden_InsidePhone = v
+func (x *Company) SetPersistFax(v string) {
+	x.xxx_hidden_PersistFax = v
 }
 
-func (x *Company) SetInsideEmail(v string) {
-	x.xxx_hidden_InsideEmail = v
+func (x *Company) SetPersistEmail(v string) {
+	x.xxx_hidden_PersistEmail = v
 }
 
-func (x *Company) SetInsideWebsite(v string) {
-	x.xxx_hidden_InsideWebsite = v
-}
-
-func (x *Company) SetInsideTags(v []string) {
-	x.xxx_hidden_InsideTags = v
-}
-
-func (x *Company) SetInsideRequiredFiles(v []*FileInfo) {
-	x.xxx_hidden_InsideRequiredFiles = &v
+func (x *Company) SetPersistWebsite(v string) {
+	x.xxx_hidden_PersistWebsite = v
 }
 
 type Company_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Id                  string
-	ManagedFolder       string
-	ShortName           string
-	CategoryIndex       int32
-	InsideIdealPath     string
-	InsideLegalName     string
-	InsidePostalCode    string
-	InsideAddress       string
-	InsidePhone         string
-	InsideEmail         string
-	InsideWebsite       string
-	InsideTags          []string
-	InsideRequiredFiles []*FileInfo
+	Id                string
+	ManagedFolder     string
+	ShortName         string
+	CategoryIndex     int32
+	PersistLongName   string
+	PersistPostalCode string
+	PersistAddress    string
+	PersistTel        string
+	PersistFax        string
+	PersistEmail      string
+	PersistWebsite    string
 }
 
 func (b0 Company_builder) Build() *Company {
@@ -363,15 +335,13 @@ func (b0 Company_builder) Build() *Company {
 	x.xxx_hidden_ManagedFolder = b.ManagedFolder
 	x.xxx_hidden_ShortName = b.ShortName
 	x.xxx_hidden_CategoryIndex = b.CategoryIndex
-	x.xxx_hidden_InsideIdealPath = b.InsideIdealPath
-	x.xxx_hidden_InsideLegalName = b.InsideLegalName
-	x.xxx_hidden_InsidePostalCode = b.InsidePostalCode
-	x.xxx_hidden_InsideAddress = b.InsideAddress
-	x.xxx_hidden_InsidePhone = b.InsidePhone
-	x.xxx_hidden_InsideEmail = b.InsideEmail
-	x.xxx_hidden_InsideWebsite = b.InsideWebsite
-	x.xxx_hidden_InsideTags = b.InsideTags
-	x.xxx_hidden_InsideRequiredFiles = &b.InsideRequiredFiles
+	x.xxx_hidden_PersistLongName = b.PersistLongName
+	x.xxx_hidden_PersistPostalCode = b.PersistPostalCode
+	x.xxx_hidden_PersistAddress = b.PersistAddress
+	x.xxx_hidden_PersistTel = b.PersistTel
+	x.xxx_hidden_PersistFax = b.PersistFax
+	x.xxx_hidden_PersistEmail = b.PersistEmail
+	x.xxx_hidden_PersistWebsite = b.PersistWebsite
 	return m0
 }
 
@@ -449,20 +419,17 @@ func (b0 CompanyCategory_builder) Build() *CompanyCategory {
 
 // Koji represents a construction project with inside information
 type Koji struct {
-	state                          protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id"`
-	xxx_hidden_Status              string                 `protobuf:"bytes,2,opt,name=status"`
-	xxx_hidden_ManagedFolder       string                 `protobuf:"bytes,3,opt,name=managed_folder,json=managedFolder"`
-	xxx_hidden_Start               *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start"`
-	xxx_hidden_CompanyName         string                 `protobuf:"bytes,5,opt,name=company_name,json=companyName"`
-	xxx_hidden_LocationName        string                 `protobuf:"bytes,6,opt,name=location_name,json=locationName"`
-	xxx_hidden_InsideIdealPath     string                 `protobuf:"bytes,7,opt,name=inside_ideal_path,json=insideIdealPath"`
-	xxx_hidden_InsideEnd           *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=inside_end,json=insideEnd"`
-	xxx_hidden_InsideDescription   string                 `protobuf:"bytes,9,opt,name=inside_description,json=insideDescription"`
-	xxx_hidden_InsideTags          []string               `protobuf:"bytes,10,rep,name=inside_tags,json=insideTags"`
-	xxx_hidden_InsideRequiredFiles *[]*FileInfo           `protobuf:"bytes,11,rep,name=inside_required_files,json=insideRequiredFiles"`
-	unknownFields                  protoimpl.UnknownFields
-	sizeCache                      protoimpl.SizeCache
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id                 string                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Status             string                 `protobuf:"bytes,2,opt,name=status"`
+	xxx_hidden_ManagedFolder      string                 `protobuf:"bytes,3,opt,name=managed_folder,json=managedFolder"`
+	xxx_hidden_Start              *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start"`
+	xxx_hidden_CompanyName        string                 `protobuf:"bytes,5,opt,name=company_name,json=companyName"`
+	xxx_hidden_LocationName       string                 `protobuf:"bytes,6,opt,name=location_name,json=locationName"`
+	xxx_hidden_PersistEnd         *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=persist_end,json=persistEnd"`
+	xxx_hidden_PersistDescription string                 `protobuf:"bytes,8,opt,name=persist_description,json=persistDescription"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *Koji) Reset() {
@@ -532,41 +499,18 @@ func (x *Koji) GetLocationName() string {
 	return ""
 }
 
-func (x *Koji) GetInsideIdealPath() string {
+func (x *Koji) GetPersistEnd() *timestamppb.Timestamp {
 	if x != nil {
-		return x.xxx_hidden_InsideIdealPath
+		return x.xxx_hidden_PersistEnd
+	}
+	return nil
+}
+
+func (x *Koji) GetPersistDescription() string {
+	if x != nil {
+		return x.xxx_hidden_PersistDescription
 	}
 	return ""
-}
-
-func (x *Koji) GetInsideEnd() *timestamppb.Timestamp {
-	if x != nil {
-		return x.xxx_hidden_InsideEnd
-	}
-	return nil
-}
-
-func (x *Koji) GetInsideDescription() string {
-	if x != nil {
-		return x.xxx_hidden_InsideDescription
-	}
-	return ""
-}
-
-func (x *Koji) GetInsideTags() []string {
-	if x != nil {
-		return x.xxx_hidden_InsideTags
-	}
-	return nil
-}
-
-func (x *Koji) GetInsideRequiredFiles() []*FileInfo {
-	if x != nil {
-		if x.xxx_hidden_InsideRequiredFiles != nil {
-			return *x.xxx_hidden_InsideRequiredFiles
-		}
-	}
-	return nil
 }
 
 func (x *Koji) SetId(v string) {
@@ -593,24 +537,12 @@ func (x *Koji) SetLocationName(v string) {
 	x.xxx_hidden_LocationName = v
 }
 
-func (x *Koji) SetInsideIdealPath(v string) {
-	x.xxx_hidden_InsideIdealPath = v
+func (x *Koji) SetPersistEnd(v *timestamppb.Timestamp) {
+	x.xxx_hidden_PersistEnd = v
 }
 
-func (x *Koji) SetInsideEnd(v *timestamppb.Timestamp) {
-	x.xxx_hidden_InsideEnd = v
-}
-
-func (x *Koji) SetInsideDescription(v string) {
-	x.xxx_hidden_InsideDescription = v
-}
-
-func (x *Koji) SetInsideTags(v []string) {
-	x.xxx_hidden_InsideTags = v
-}
-
-func (x *Koji) SetInsideRequiredFiles(v []*FileInfo) {
-	x.xxx_hidden_InsideRequiredFiles = &v
+func (x *Koji) SetPersistDescription(v string) {
+	x.xxx_hidden_PersistDescription = v
 }
 
 func (x *Koji) HasStart() bool {
@@ -620,35 +552,32 @@ func (x *Koji) HasStart() bool {
 	return x.xxx_hidden_Start != nil
 }
 
-func (x *Koji) HasInsideEnd() bool {
+func (x *Koji) HasPersistEnd() bool {
 	if x == nil {
 		return false
 	}
-	return x.xxx_hidden_InsideEnd != nil
+	return x.xxx_hidden_PersistEnd != nil
 }
 
 func (x *Koji) ClearStart() {
 	x.xxx_hidden_Start = nil
 }
 
-func (x *Koji) ClearInsideEnd() {
-	x.xxx_hidden_InsideEnd = nil
+func (x *Koji) ClearPersistEnd() {
+	x.xxx_hidden_PersistEnd = nil
 }
 
 type Koji_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Id                  string
-	Status              string
-	ManagedFolder       string
-	Start               *timestamppb.Timestamp
-	CompanyName         string
-	LocationName        string
-	InsideIdealPath     string
-	InsideEnd           *timestamppb.Timestamp
-	InsideDescription   string
-	InsideTags          []string
-	InsideRequiredFiles []*FileInfo
+	Id                 string
+	Status             string
+	ManagedFolder      string
+	Start              *timestamppb.Timestamp
+	CompanyName        string
+	LocationName       string
+	PersistEnd         *timestamppb.Timestamp
+	PersistDescription string
 }
 
 func (b0 Koji_builder) Build() *Koji {
@@ -661,11 +590,8 @@ func (b0 Koji_builder) Build() *Koji {
 	x.xxx_hidden_Start = b.Start
 	x.xxx_hidden_CompanyName = b.CompanyName
 	x.xxx_hidden_LocationName = b.LocationName
-	x.xxx_hidden_InsideIdealPath = b.InsideIdealPath
-	x.xxx_hidden_InsideEnd = b.InsideEnd
-	x.xxx_hidden_InsideDescription = b.InsideDescription
-	x.xxx_hidden_InsideTags = b.InsideTags
-	x.xxx_hidden_InsideRequiredFiles = &b.InsideRequiredFiles
+	x.xxx_hidden_PersistEnd = b.PersistEnd
+	x.xxx_hidden_PersistDescription = b.PersistDescription
 	return m0
 }
 
@@ -1750,42 +1676,36 @@ const file_grpc_v1_toyotachikuro_proto_rawDesc = "" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12!\n" +
 	"\fis_directory\x18\x03 \x01(\bR\visDirectory\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12?\n" +
-	"\rmodified_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\"\x88\x04\n" +
+	"\rmodified_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fmodifiedTime\"\x9b\x03\n" +
 	"\aCompany\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0emanaged_folder\x18\x02 \x01(\tR\rmanagedFolder\x12\x1d\n" +
 	"\n" +
 	"short_name\x18\x03 \x01(\tR\tshortName\x12%\n" +
 	"\x0ecategory_index\x18\x04 \x01(\x05R\rcategoryIndex\x12*\n" +
-	"\x11inside_ideal_path\x18\x05 \x01(\tR\x0finsideIdealPath\x12*\n" +
-	"\x11inside_legal_name\x18\x06 \x01(\tR\x0finsideLegalName\x12,\n" +
-	"\x12inside_postal_code\x18\a \x01(\tR\x10insidePostalCode\x12%\n" +
-	"\x0einside_address\x18\b \x01(\tR\rinsideAddress\x12!\n" +
-	"\finside_phone\x18\t \x01(\tR\vinsidePhone\x12!\n" +
-	"\finside_email\x18\n" +
-	" \x01(\tR\vinsideEmail\x12%\n" +
-	"\x0einside_website\x18\v \x01(\tR\rinsideWebsite\x12\x1f\n" +
-	"\vinside_tags\x18\f \x03(\tR\n" +
-	"insideTags\x12E\n" +
-	"\x15inside_required_files\x18\r \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\"=\n" +
+	"\x11persist_long_name\x18\x05 \x01(\tR\x0fpersistLongName\x12.\n" +
+	"\x13persist_postal_code\x18\x06 \x01(\tR\x11persistPostalCode\x12'\n" +
+	"\x0fpersist_address\x18\a \x01(\tR\x0epersistAddress\x12\x1f\n" +
+	"\vpersist_tel\x18\b \x01(\tR\n" +
+	"persistTel\x12\x1f\n" +
+	"\vpersist_fax\x18\t \x01(\tR\n" +
+	"persistFax\x12#\n" +
+	"\rpersist_email\x18\n" +
+	" \x01(\tR\fpersistEmail\x12'\n" +
+	"\x0fpersist_website\x18\v \x01(\tR\x0epersistWebsite\"=\n" +
 	"\x0fCompanyCategory\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\x05R\x05index\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"\xcd\x03\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"\xbd\x02\n" +
 	"\x04Koji\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12%\n" +
 	"\x0emanaged_folder\x18\x03 \x01(\tR\rmanagedFolder\x120\n" +
 	"\x05start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12!\n" +
 	"\fcompany_name\x18\x05 \x01(\tR\vcompanyName\x12#\n" +
-	"\rlocation_name\x18\x06 \x01(\tR\flocationName\x12*\n" +
-	"\x11inside_ideal_path\x18\a \x01(\tR\x0finsideIdealPath\x129\n" +
-	"\n" +
-	"inside_end\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tinsideEnd\x12-\n" +
-	"\x12inside_description\x18\t \x01(\tR\x11insideDescription\x12\x1f\n" +
-	"\vinside_tags\x18\n" +
-	" \x03(\tR\n" +
-	"insideTags\x12E\n" +
-	"\x15inside_required_files\x18\v \x03(\v2\x11.grpc.v1.FileInfoR\x13insideRequiredFiles\")\n" +
+	"\rlocation_name\x18\x06 \x01(\tR\flocationName\x12;\n" +
+	"\vpersist_end\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"persistEnd\x12/\n" +
+	"\x13persist_description\x18\b \x01(\tR\x12persistDescription\")\n" +
 	"\x13GetFileInfosRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"H\n" +
 	"\x14GetFileInfosResponse\x120\n" +
@@ -1878,45 +1798,43 @@ var file_grpc_v1_toyotachikuro_proto_goTypes = []any{
 }
 var file_grpc_v1_toyotachikuro_proto_depIdxs = []int32{
 	24, // 0: grpc.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
-	0,  // 1: grpc.v1.Company.inside_required_files:type_name -> grpc.v1.FileInfo
-	24, // 2: grpc.v1.Koji.start:type_name -> google.protobuf.Timestamp
-	24, // 3: grpc.v1.Koji.inside_end:type_name -> google.protobuf.Timestamp
-	0,  // 4: grpc.v1.Koji.inside_required_files:type_name -> grpc.v1.FileInfo
-	0,  // 5: grpc.v1.GetFileInfosResponse.file_infos:type_name -> grpc.v1.FileInfo
-	22, // 6: grpc.v1.GetCompanyMapResponse.company_map:type_name -> grpc.v1.GetCompanyMapResponse.CompanyMapEntry
-	1,  // 7: grpc.v1.GetCompanyResponse.company:type_name -> grpc.v1.Company
-	1,  // 8: grpc.v1.UpdateCompanyRequest.new_company:type_name -> grpc.v1.Company
-	1,  // 9: grpc.v1.UpdateCompanyResponse.prev_company:type_name -> grpc.v1.Company
-	2,  // 10: grpc.v1.GetCompanyCategoriesResponse.categories:type_name -> grpc.v1.CompanyCategory
-	23, // 11: grpc.v1.GetKojiMapResponse.koji_map:type_name -> grpc.v1.GetKojiMapResponse.KojiMapEntry
-	3,  // 12: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
-	3,  // 13: grpc.v1.UpdateKojiRequest.new_koji:type_name -> grpc.v1.Koji
-	3,  // 14: grpc.v1.UpdateKojiResponse.prev_koji:type_name -> grpc.v1.Koji
-	1,  // 15: grpc.v1.GetCompanyMapResponse.CompanyMapEntry.value:type_name -> grpc.v1.Company
-	3,  // 16: grpc.v1.GetKojiMapResponse.KojiMapEntry.value:type_name -> grpc.v1.Koji
-	4,  // 17: grpc.v1.FileService.GetFileInfos:input_type -> grpc.v1.GetFileInfosRequest
-	6,  // 18: grpc.v1.FileService.GetFileManagedFolder:input_type -> grpc.v1.GetFileManagedFolderRequest
-	8,  // 19: grpc.v1.CompanyService.GetCompanyMap:input_type -> grpc.v1.GetCompanyMapRequest
-	10, // 20: grpc.v1.CompanyService.GetCompany:input_type -> grpc.v1.GetCompanyRequest
-	12, // 21: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
-	14, // 22: grpc.v1.CompanyService.GetCompanyCategories:input_type -> grpc.v1.GetCompanyCategoriesRequest
-	18, // 23: grpc.v1.KojiService.GetKoji:input_type -> grpc.v1.GetKojiRequest
-	16, // 24: grpc.v1.KojiService.GetKojiMap:input_type -> grpc.v1.GetKojiMapRequest
-	20, // 25: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
-	5,  // 26: grpc.v1.FileService.GetFileInfos:output_type -> grpc.v1.GetFileInfosResponse
-	7,  // 27: grpc.v1.FileService.GetFileManagedFolder:output_type -> grpc.v1.GetFileManagedFolderResponse
-	9,  // 28: grpc.v1.CompanyService.GetCompanyMap:output_type -> grpc.v1.GetCompanyMapResponse
-	11, // 29: grpc.v1.CompanyService.GetCompany:output_type -> grpc.v1.GetCompanyResponse
-	13, // 30: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
-	15, // 31: grpc.v1.CompanyService.GetCompanyCategories:output_type -> grpc.v1.GetCompanyCategoriesResponse
-	19, // 32: grpc.v1.KojiService.GetKoji:output_type -> grpc.v1.GetKojiResponse
-	17, // 33: grpc.v1.KojiService.GetKojiMap:output_type -> grpc.v1.GetKojiMapResponse
-	21, // 34: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
-	26, // [26:35] is the sub-list for method output_type
-	17, // [17:26] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	24, // 1: grpc.v1.Koji.start:type_name -> google.protobuf.Timestamp
+	24, // 2: grpc.v1.Koji.persist_end:type_name -> google.protobuf.Timestamp
+	0,  // 3: grpc.v1.GetFileInfosResponse.file_infos:type_name -> grpc.v1.FileInfo
+	22, // 4: grpc.v1.GetCompanyMapResponse.company_map:type_name -> grpc.v1.GetCompanyMapResponse.CompanyMapEntry
+	1,  // 5: grpc.v1.GetCompanyResponse.company:type_name -> grpc.v1.Company
+	1,  // 6: grpc.v1.UpdateCompanyRequest.new_company:type_name -> grpc.v1.Company
+	1,  // 7: grpc.v1.UpdateCompanyResponse.prev_company:type_name -> grpc.v1.Company
+	2,  // 8: grpc.v1.GetCompanyCategoriesResponse.categories:type_name -> grpc.v1.CompanyCategory
+	23, // 9: grpc.v1.GetKojiMapResponse.koji_map:type_name -> grpc.v1.GetKojiMapResponse.KojiMapEntry
+	3,  // 10: grpc.v1.GetKojiResponse.koji:type_name -> grpc.v1.Koji
+	3,  // 11: grpc.v1.UpdateKojiRequest.new_koji:type_name -> grpc.v1.Koji
+	3,  // 12: grpc.v1.UpdateKojiResponse.prev_koji:type_name -> grpc.v1.Koji
+	1,  // 13: grpc.v1.GetCompanyMapResponse.CompanyMapEntry.value:type_name -> grpc.v1.Company
+	3,  // 14: grpc.v1.GetKojiMapResponse.KojiMapEntry.value:type_name -> grpc.v1.Koji
+	4,  // 15: grpc.v1.FileService.GetFileInfos:input_type -> grpc.v1.GetFileInfosRequest
+	6,  // 16: grpc.v1.FileService.GetFileManagedFolder:input_type -> grpc.v1.GetFileManagedFolderRequest
+	8,  // 17: grpc.v1.CompanyService.GetCompanyMap:input_type -> grpc.v1.GetCompanyMapRequest
+	10, // 18: grpc.v1.CompanyService.GetCompany:input_type -> grpc.v1.GetCompanyRequest
+	12, // 19: grpc.v1.CompanyService.UpdateCompany:input_type -> grpc.v1.UpdateCompanyRequest
+	14, // 20: grpc.v1.CompanyService.GetCompanyCategories:input_type -> grpc.v1.GetCompanyCategoriesRequest
+	18, // 21: grpc.v1.KojiService.GetKoji:input_type -> grpc.v1.GetKojiRequest
+	16, // 22: grpc.v1.KojiService.GetKojiMap:input_type -> grpc.v1.GetKojiMapRequest
+	20, // 23: grpc.v1.KojiService.UpdateKoji:input_type -> grpc.v1.UpdateKojiRequest
+	5,  // 24: grpc.v1.FileService.GetFileInfos:output_type -> grpc.v1.GetFileInfosResponse
+	7,  // 25: grpc.v1.FileService.GetFileManagedFolder:output_type -> grpc.v1.GetFileManagedFolderResponse
+	9,  // 26: grpc.v1.CompanyService.GetCompanyMap:output_type -> grpc.v1.GetCompanyMapResponse
+	11, // 27: grpc.v1.CompanyService.GetCompany:output_type -> grpc.v1.GetCompanyResponse
+	13, // 28: grpc.v1.CompanyService.UpdateCompany:output_type -> grpc.v1.UpdateCompanyResponse
+	15, // 29: grpc.v1.CompanyService.GetCompanyCategories:output_type -> grpc.v1.GetCompanyCategoriesResponse
+	19, // 30: grpc.v1.KojiService.GetKoji:output_type -> grpc.v1.GetKojiResponse
+	17, // 31: grpc.v1.KojiService.GetKojiMap:output_type -> grpc.v1.GetKojiMapResponse
+	21, // 32: grpc.v1.KojiService.UpdateKoji:output_type -> grpc.v1.UpdateKojiResponse
+	24, // [24:33] is the sub-list for method output_type
+	15, // [15:24] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_grpc_v1_toyotachikuro_proto_init() }

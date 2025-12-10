@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"backend-grpc/internal/core"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
@@ -18,44 +20,24 @@ type Company struct {
 	*grpcv1.Company
 
 	// Persist 永続化用フィールド
-	*core.Persister
+	*core.Persist
 }
 
 // NewCompany インスタンス作成と初期化を行います
 func NewCompany() *Company {
 
 	// インスタンス作成と初期化
-	msgCompany := grpcv1.Company_builder{}.Build(),
-	return &Company{
-		Company:   msgCompany,
-		Persister: core.NewPersister(core.ConfigMap["CompanyPersistFilename"], msgCompany),
-	}
-}
+	company := &Company{}
+	company.Company = grpcv1.Company_builder{}.Build()
+	company.Persist = core.NewPersister(company, core.ConfigMap["CompanyPersistFilename"])
 
-// GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
-func GenerateCompanyId(shortName string) string {
-	return core.GenerateIdFromString(shortName)
-}
-
-// NeedsRenameManagedFolder ファイル名変更の必要があるかチェック
-func (obj *Company) NeedsRenameManagedFolder(newCompany *Company) bool {
-	return (obj.GetShortName() != newCompany.GetShortName()) ||
-		(obj.GetManagedFolder() != newCompany.GetManagedFolder()) ||
-		(obj.GetCategoryIndex() != newCompany.GetCategoryIndex())
-}
-
-// CreateManagedFolder は会社の管理フォルダー名をパラメーターから生成します
-func (obj *Company) CreateManagedFolder() string {
-	base := filepath.Dir(obj.GetManagedFolder())
-	categoryIndex := strconv.Itoa(int(obj.GetCategoryIndex()))
-	folderName := categoryIndex + " " + obj.GetShortName()
-	return filepath.Join(base, folderName)
+	return company
 }
 
 // ParseFromManagedFolder は"[0-9] [会社名]"形式のファイル名となっているパスを解析します
 // 会社名内のハイフン（含まれる場合）以前の文字列を会社名、ハイフン以降の文字列を関連名として扱います
 // 戻り値Companyは: Id, ManagedFolder, Cateory, ShortName, Tags のみ設定されます
-func (obj *Company) ParseFromManagedFolder(managedFolders ...string) error {
+func (m *Company) ParseFromManagedFolder(managedFolders ...string) error {
 
 	// パスを結合
 	managedFolder := filepath.Join(managedFolders...)
@@ -89,62 +71,114 @@ func (obj *Company) ParseFromManagedFolder(managedFolders ...string) error {
 
 	// 会社名の解析（ハイフンで分割）
 	shortName := nameParts[0]
-	var relationTag string
 	if idx := strings.Index(nameParts[0], "-"); idx > -1 {
 		// ハイフン以前の文字列を会社名とする
 		shortName = nameParts[0][:idx]
 		// ハイフン以降の文字列を関連文字列とする
-		relationTag = nameParts[0][idx+1:]
 	}
 
 	// ID,ManagedFolder,Category,ShortNameの設定
-	obj.SetId(GenerateCompanyId(shortName))
-	obj.SetManagedFolder(managedFolder)
-	obj.SetCategoryIndex(int32(catIndex))
-	obj.SetShortName(shortName)
-
-	// タグの設定
-	AddInsideTags(obj, []string{
-		shortName,
-		CompanyCategoryMap[catIndex],
-		relationTag}...,
-	)
+	m.SetId(GenerateCompanyId(shortName))
+	m.SetManagedFolder(managedFolder)
+	m.SetCategoryIndex(int32(catIndex))
+	m.SetShortName(shortName)
 
 	return nil
 }
 
 // Update は会社情報を更新します
-func (obj *Company) Update(updatedCompany *Company) (*Company, error) {
+// 必要に応じて管理フォルダー名の変更も行います
+func (m *Company) Update(updatedCompany *Company) error {
+
+	// 引数チェック
 	if updatedCompany == nil {
-		return nil, errors.New("updatedCompany is nil")
+		return errors.New("updatedCompany is nil")
 	}
 
-	// 管理フォルダーは変更しない
-	updatedCompany.SetManagedFolder(obj.GetManagedFolder())
+	// ファイル名変更の必要がある場合は管理フォルダー名を更新
+	updatedCompany.UpdateManagedFolderWithParams()
+	if m.GetManagedFolder() != updatedCompany.GetManagedFolder() {
 
-	// 永続化サービスの設定を引き継ぐ
-	updatedCompany.PersistFilename = obj.PersistFilename
+		// フォルダー名変更
+		if err := os.Rename(m.GetManagedFolder(), updatedCompany.GetManagedFolder()); err != nil {
+			return err
+		}
+	}
 
-	return updatedCompany, nil
+	// Inside情報の更新
+	m.UpdateInsideParams(updatedCompany)
+
+	return nil
+}
+
+// CreateManagedFolder はパラメータをもとに管理フォルダー名変更します
+func (m *Company) UpdateManagedFolderWithParams() {
+	base := filepath.Dir(m.GetManagedFolder())
+	categoryIndex := strconv.Itoa(int(m.GetCategoryIndex()))
+	folderName := categoryIndex + " " + m.GetShortName()
+	managedFolder := filepath.Join(base, folderName)
+	m.SetManagedFolder(managedFolder)
+}
+
+func (m *Company) UpdateInsideParams(updatedCompany *Company) {
+	// Inside情報の更新
+	m.SetInsideAddress(updatedCompany.GetInsideAddress())
+	m.SetInsideWebsite(updatedCompany.GetInsideWebsite())
+	m.SetInsideEmail(updatedCompany.GetInsideEmail())
+	m.SetInsideTel(updatedCompany.GetInsideTel())
+	m.SetInsideLegalName(updatedCompany.GetInsideLegalName())
+
+	m.SetShortName(updatedCompany.GetShortName())
 }
 
 // Persiser インターフェースの実装
 
-// GetPersistPath は永続化ファイルのパスを取得します
-func (obj *Company) GetPersistPath() string {
-	return filepath.Join(obj.GetManagedFolder(), obj.PersistFilename)
+// PersistBytes は永続化用のメッセージを取得します
+func (m *Company) GetPersistBytes() ([]byte, error) {
+	return proto.Marshal(m.Company)
 }
 
-// PersistMessage は永続化用のメッセージを取得します
-func (obj *Company) GetPersistMessage() proto.Message {
-	return obj.Company
-}
-
-// SetPersistMessage は永続化用のメッセージを設定します
-func (obj *Company) SetPersistMessage(msg proto.Message) {
-	company, ok := msg.(*grpcv1.Company)
-	if !ok {
-		return
+// SetPersistBytes は永続化用のバイトデータを設定します
+func (m *Company) SetPersistBytes(b []byte) error {
+	company := &grpcv1.Company{}
+	if err := proto.Unmarshal(b, company); err != nil {
+		return err
 	}
-	obj.Company = company
+
+	// protobuf リフレクションを使ってフィールドにアクセス
+	msg := company.ProtoReflect()
+	fields := msg.Descriptor().Fields()
+
+	for i := 0; i < fields.Len(); i++ {
+		field := fields.Get(i)
+		fieldName := field.Name() // フィールド名（例: "id", "short_name"）
+
+		// Getter: 値を取得
+		value := msg.Get(field)
+
+		// フィールドの型に応じて処理
+		switch field.Kind() {
+		case protoreflect.StringKind:
+			strValue := value.String()
+			_ = strValue // 使用例
+		case protoreflect.Int32Kind:
+			int32Value := int32(value.Int())
+			_ = int32Value // 使用例
+			// 必要に応じて他の型も処理
+
+		}
+
+		// Setter: 値を設定（例）
+		// msg.Set(field, protoreflect.ValueOfString("new value"))
+
+		_ = fieldName // 使用例
+	}
+
+	m.Company = company
+	return nil
+}
+
+// GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
+func GenerateCompanyId(shortName string) string {
+	return core.GenerateIdFromString(shortName)
 }

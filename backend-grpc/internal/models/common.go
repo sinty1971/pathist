@@ -8,6 +8,14 @@ type CommonModel interface {
 	SetInsideTags([]string)
 }
 
+// ParamFunc はゲッター・セッター関数のペアを保持します。
+type ParamFunc struct {
+	Setter func(any)
+	Getter func() any
+}
+
+type ParamFuncMap map[string]ParamFunc
+
 // AddInsideTags はゲッター・セッターを使用してタグを追加します（重複・空文字はスキップ）
 // 想定タグ数: 10個程度
 func AddInsideTags(obj CommonModel, newTags ...string) {

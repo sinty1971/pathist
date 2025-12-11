@@ -13,7 +13,6 @@ const RadixTable = "123456789ABCDEFGHJKLMNPRSTUVWXYZabcdefghklmnpqrstwxyz"
 
 // ParseIdFromBytes はバイト配列からハッシュ文字列IDを生成
 func ParseIdFromBytes(data []byte) string {
-
 	// バイト配列からBLAKE2b-256ハッシュを計算し下位128ビットを取得
 	// BLAKE2b-256を使用（GoにはBLAKE3の標準実装がないため）
 	hash := blake2b.Sum256(data)

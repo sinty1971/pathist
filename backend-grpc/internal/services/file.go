@@ -142,7 +142,6 @@ func (s *FileService) GetFileInfos(
 
 // GetAbsPathFrom BasePathに引数の相対パスを追加した絶対パスを返す
 func (s *FileService) GetAbsPathFrom(relPath string) (res string, err error) {
-
 	// 絶対パスがある場合はエラーを返す
 	if strings.HasPrefix(relPath, "~/") || filepath.IsAbs(relPath) {
 		return "", errors.New("絶対パスは使用できません")

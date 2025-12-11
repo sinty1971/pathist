@@ -15,7 +15,6 @@ type Services struct {
 
 // NewServices は与えられたオプションでサービス群を初期化します。
 func NewServices() *Services {
-
 	// 変数宣言
 	services := &Services{}
 	services.ServiceMap = make(map[string]*Sevice)

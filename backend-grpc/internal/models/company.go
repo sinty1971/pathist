@@ -88,58 +88,59 @@ func (m *Company) ParseFromManagedFolder(managedFolders ...string) error {
 
 // Update は会社情報を更新します
 // 必要に応じて管理フォルダー名の変更も行います
-func (m *Company) Update(updatedCompany *Company) error {
+func (m *Company) Update(newCompany *Company) error {
 
 	// 引数チェック
-	if updatedCompany == nil {
+	if newCompany == nil {
 		return errors.New("updatedCompany is nil")
 	}
 
+	// 新しいパラメータを元に管理フォルダーパスを生成
+	newManagedFolder := newCompany.CreateNewManagedFolder(
+		filepath.Dir(m.GetManagedFolder()),
+		newCompany.GetCategoryIndex(),
+		newCompany.GetShortName(),
+	)
+
 	// ファイル名変更の必要がある場合は管理フォルダー名を更新
-	updatedCompany.UpdateManagedFolderWithParams()
-	if m.GetManagedFolder() != updatedCompany.GetManagedFolder() {
+	if newManagedFolder != m.GetManagedFolder() {
 
 		// フォルダー名変更
-		if err := os.Rename(m.GetManagedFolder(), updatedCompany.GetManagedFolder()); err != nil {
+		if err := os.Rename(m.GetManagedFolder(), newManagedFolder); err != nil {
 			return err
 		}
 	}
 
-	// Inside情報の更新
-	m.UpdateInsideParams(updatedCompany)
+	// Persist情報の更新
+	m.UpdatePersists(newCompany.Persist)
 
 	return nil
 }
 
-// CreateManagedFolder はパラメータをもとに管理フォルダー名変更します
-func (m *Company) UpdateManagedFolderWithParams() {
-	base := filepath.Dir(m.GetManagedFolder())
-	categoryIndex := strconv.Itoa(int(m.GetCategoryIndex()))
-	folderName := categoryIndex + " " + m.GetShortName()
-	managedFolder := filepath.Join(base, folderName)
-	m.SetManagedFolder(managedFolder)
-}
-
-func (m *Company) UpdateInsideParams(updatedCompany *Company) {
-	// Inside情報の更新
-	m.SetInsideAddress(updatedCompany.GetInsideAddress())
-	m.SetInsideWebsite(updatedCompany.GetInsideWebsite())
-	m.SetInsideEmail(updatedCompany.GetInsideEmail())
-	m.SetInsideTel(updatedCompany.GetInsideTel())
-	m.SetInsideLegalName(updatedCompany.GetInsideLegalName())
-
-	m.SetShortName(updatedCompany.GetShortName())
+// CreateNewManagedFolder はパラメータをもとに管理フォルダー名変更します
+func (m *Company) CreateNewManagedFolder(
+	managedBaseFolder string,
+	categoryIndex int32,
+	shortName string,
+) string {
+	folderName := strconv.Itoa(int(categoryIndex)) + " " + shortName
+	return filepath.Join(managedBaseFolder, folderName)
 }
 
 // Persiser インターフェースの実装
 
+// GetPersistFolder は永続化フォルダーのパスを取得します
+func (m *Company) GetPersistFolder() string {
+	return m.Company.GetManagedFolder()
+}
+
 // PersistBytes は永続化用のメッセージを取得します
-func (m *Company) GetPersistBytes() ([]byte, error) {
+func (m *Company) GetPersists() ([]byte, error) {
 	return proto.Marshal(m.Company)
 }
 
-// SetPersistBytes は永続化用のバイトデータを設定します
-func (m *Company) SetPersistBytes(b []byte) error {
+// SetPersists は永続化用のバイトデータを設定します
+func (m *Company) SetPersists(b []byte) error {
 	company := &grpcv1.Company{}
 	if err := proto.Unmarshal(b, company); err != nil {
 		return err
@@ -165,7 +166,6 @@ func (m *Company) SetPersistBytes(b []byte) error {
 			int32Value := int32(value.Int())
 			_ = int32Value // 使用例
 			// 必要に応じて他の型も処理
-
 		}
 
 		// Setter: 値を設定（例）

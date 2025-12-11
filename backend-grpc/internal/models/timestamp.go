@@ -172,7 +172,6 @@ func findTimeString(re *regexp.Regexp, in string, out *string) (string, error) {
 // ParseTimestamp 文字列から日時をパースし、Timestamp型と残りの文字列を返します
 // 例: "2025-0618 豊田築炉 名和工場" → Timestamp(2025-06-18), "豊田築炉 名和工場"
 func ParseTimestamp(in string, out *string) (*Timestamp, error) {
-
 	// 空文字列の場合はゼロ値を設定
 	in = strings.TrimSpace(in)
 	if in == "" {

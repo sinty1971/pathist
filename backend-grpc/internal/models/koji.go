@@ -30,16 +30,14 @@ func NewKoji(managedFolder string) (*Koji, error) {
 	// Kojiインスタンスを作成（構造体リテラルで一度に初期化）
 	koji := &Koji{
 		Koji: grpcv1.Koji_builder{
-			Id:                  GenerateKoujiId(start, companyName, locationName),
-			ManagedFolder:       managedFolder,
-			Start:               start.Timestamp,
-			CompanyName:         companyName,
-			LocationName:        locationName,
-			Status:              GenerateKojiStatus(start, start),
-			InsideEnd:           start.Timestamp,
-			InsideDescription:   generateDescription(companyName, locationName),
-			InsideTags:          generateTags(companyName, locationName, start),
-			InsideRequiredFiles: []*grpcv1.FileInfo{},
+			Id:                 GenerateKoujiId(start, companyName, locationName),
+			ManagedFolder:      managedFolder,
+			Start:              start.Timestamp,
+			CompanyName:        companyName,
+			LocationName:       locationName,
+			Status:             GenerateKojiStatus(start, start),
+			PersistEnd:         start.Timestamp,
+			PersistDescription: generateDescription(companyName, locationName),
 		}.Build(),
 	}
 

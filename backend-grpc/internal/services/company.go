@@ -60,7 +60,6 @@ func (srv *CompanyService) Cleanup() {
 
 // UpdateCompanyCacheMap 会社のキャッシュデータを更新します
 func (srv *CompanyService) UpdateCompanyCacheMap() error {
-
 	// ファイルシステムから会社フォルダー一覧を取得
 	entries, err := os.ReadDir(srv.managedFolder)
 	if err != nil {
@@ -82,7 +81,7 @@ func (srv *CompanyService) UpdateCompanyCacheMap() error {
 	// 会社の内部情報の取得
 	for _, company := range srv.companyMap {
 
-		if err := company.LoadPersistData(); err != nil {
+		if err := company.Load(); err != nil {
 			log.Printf("Failed to load persist info for company ShortName %s: %v", company.GetShortName(), err)
 		}
 	}
@@ -93,7 +92,6 @@ func (srv *CompanyService) UpdateCompanyCacheMap() error {
 // prevId: 更新対象の会社ID、存在しない場合は追加
 // newCompany: 更新後の会社情報
 func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Company) (*models.Company, error) {
-
 	// Idから更新前の会社情報を取得
 	prevCompany, exist := srv.companyMap[prevId]
 
@@ -103,10 +101,7 @@ func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Co
 	}
 
 	// 新しい会社情報の管理フォルダー名を生成
-	newManagedFolder := newCompany.CreateManagedFolder()
-	if err := newCompany.ParseFromManagedFolder(newManagedFolder); err != nil {
-		return nil, err
-	}
+	newCompany.UpdateManagedFolderWithParams()
 
 	// 管理フォルダーの変更がある場合はフォルダー移動を実施
 	if exist && prevCompany.GetManagedFolder() != newCompany.GetManagedFolder() {

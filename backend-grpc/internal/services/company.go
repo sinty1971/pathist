@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"path/filepath"
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	grpcv1connect "backend-grpc/gen/grpc/v1/grpcv1connect"
@@ -101,7 +102,8 @@ func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Co
 	}
 
 	// 新しい会社情報の管理フォルダー名を生成
-	newCompany.UpdateManagedFolderWithParams()
+	newManageBaseFolder := filepath.Dir(newCompany.GetManagedFolder())
+	newManagedFolder := newCompany.CreateNewManagedFolder(newManageBaseFolder, newCompany.GetCategoryIndex(), newCompany.GetShortName())
 
 	// 管理フォルダーの変更がある場合はフォルダー移動を実施
 	if exist && prevCompany.GetManagedFolder() != newCompany.GetManagedFolder() {
@@ -116,7 +118,7 @@ func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Co
 	srv.companyMap[newCompany.GetId()] = newCompany
 
 	// persist情報の書き込み
-	if err := newCompany.SavePersistData(); err != nil {
+	if err := newCompany.Save(); err != nil {
 		log.Printf("Failed to save persist info for company ShortName %s: %v", newCompany.GetShortName(), err)
 	}
 

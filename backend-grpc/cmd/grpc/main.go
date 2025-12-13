@@ -60,18 +60,18 @@ func main() {
 	}
 	defer srvCollection.CleanupAll()
 
-	// gRPC ハンドラの設定
-	filePath, fileConnectHandler := grpcv1connect.NewFileServiceHandler(fileService)
-	companyPath, companyConnectHandler := grpcv1connect.NewCompanyServiceHandler(companyService)
-	kojiPath, kojiConnectHandler := grpcv1connect.NewKojiServiceHandler(kojiService)
-
-	// http ハンドラの設定
+	// gRPC, HTTP ハンドラの設定
 	mux := http.NewServeMux()
+	filePath, fileConnectHandler := grpcv1connect.NewFileServiceHandler(fileService)
+	mux.Handle(filePath, fileConnectHandler)
+
+	companyPath, companyConnectHandler := grpcv1connect.NewCompanyServiceHandler(companyService)
+	mux.Handle(companyPath, companyConnectHandler)
+
+	kojiPath, kojiConnectHandler := grpcv1connect.NewKojiServiceHandler(kojiService)
+	mux.Handle(kojiPath, kojiConnectHandler)
 
 	// gRPC ハンドラの登録
-	mux.Handle(filePath, fileConnectHandler)
-	mux.Handle(companyPath, companyConnectHandler)
-	mux.Handle(kojiPath, kojiConnectHandler)
 
 	reflector := grpcreflect.NewStaticReflector(
 		grpcv1connect.FileServiceName,

@@ -10,8 +10,7 @@ import (
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	"backend-grpc/internal/core"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
@@ -78,10 +77,13 @@ func (m *Company) ParseFromManagedFolder(managedFolders ...string) error {
 	}
 
 	// ID,ManagedFolder,Category,ShortNameの設定
-	m.SetId(GenerateCompanyId(shortName))
 	m.SetManagedFolder(managedFolder)
 	m.SetCategoryIndex(int32(catIndex))
 	m.SetShortName(shortName)
+
+	// 会社IDの生成と設定
+	id := m.GenerateId(shortName)
+	m.SetId(id)
 
 	return nil
 }
@@ -96,7 +98,7 @@ func (m *Company) Update(newCompany *Company) error {
 	}
 
 	// 新しいパラメータを元に管理フォルダーパスを生成
-	newManagedFolder := newCompany.CreateNewManagedFolder(
+	newManagedFolder := newCompany.GenerateManagedFolder(
 		filepath.Dir(m.GetManagedFolder()),
 		newCompany.GetCategoryIndex(),
 		newCompany.GetShortName(),
@@ -117,68 +119,41 @@ func (m *Company) Update(newCompany *Company) error {
 	return nil
 }
 
-// CreateNewManagedFolder はパラメータをもとに管理フォルダー名変更します
-func (m *Company) CreateNewManagedFolder(
-	managedBaseFolder string,
-	categoryIndex int32,
-	shortName string,
-) string {
-	folderName := strconv.Itoa(int(categoryIndex)) + " " + shortName
-	return filepath.Join(managedBaseFolder, folderName)
+// GenerateId は会社の短縮名から一意の会社IDを生成します
+func (m *Company) GenerateId(shortName string) string {
+	return core.GenerateIdFromString(shortName)
+}
+
+// GenerateManagedFolder はパラメータをもとに管理フォルダー名変更します
+// base: 基本パス(原則として　O:/.../1 会社 などの親フォルダー)
+// idx: カテゴリーインデックス
+// name: 省略会社名
+func (m *Company) GenerateManagedFolder(base string, idx int32, name string) string {
+	folderName := strconv.Itoa(int(idx)) + " " + name
+	return filepath.Join(base, folderName)
 }
 
 // Persiser インターフェースの実装
-
 // GetPersistFolder は永続化フォルダーのパスを取得します
 func (m *Company) GetPersistFolder() string {
 	return m.Company.GetManagedFolder()
 }
 
-// PersistBytes は永続化用のメッセージを取得します
-func (m *Company) GetPersists() ([]byte, error) {
-	return proto.Marshal(m.Company)
+// MarshalJSON()  は永続化用のメッセージのJSONを取得します
+// JSON Marshaler インターフェースの実装
+func (m *Company) MarshalJSON() ([]byte, error) {
+	opts := protojson.MarshalOptions{
+		Multiline: true,
+		Indent:    "  ",
+	}
+	return opts.Marshal(m.Company)
 }
 
-// SetPersists は永続化用のバイトデータを設定します
-func (m *Company) SetPersists(b []byte) error {
-	company := &grpcv1.Company{}
-	if err := proto.Unmarshal(b, company); err != nil {
-		return err
+// UnmarshalJSON() は永続化用のメッセージのJSONを設定します
+// JSON Unmarshaler インターフェースの実装
+func (m *Company) UnmarshalJSON(b []byte) error {
+	opts := protojson.UnmarshalOptions{
+		DiscardUnknown: true,
 	}
-
-	// protobuf リフレクションを使ってフィールドにアクセス
-	msg := company.ProtoReflect()
-	fields := msg.Descriptor().Fields()
-
-	for i := 0; i < fields.Len(); i++ {
-		field := fields.Get(i)
-		fieldName := field.Name() // フィールド名（例: "id", "short_name"）
-
-		// Getter: 値を取得
-		value := msg.Get(field)
-
-		// フィールドの型に応じて処理
-		switch field.Kind() {
-		case protoreflect.StringKind:
-			strValue := value.String()
-			_ = strValue // 使用例
-		case protoreflect.Int32Kind:
-			int32Value := int32(value.Int())
-			_ = int32Value // 使用例
-			// 必要に応じて他の型も処理
-		}
-
-		// Setter: 値を設定（例）
-		// msg.Set(field, protoreflect.ValueOfString("new value"))
-
-		_ = fieldName // 使用例
-	}
-
-	m.Company = company
-	return nil
-}
-
-// GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
-func GenerateCompanyId(shortName string) string {
-	return core.GenerateIdFromString(shortName)
+	return opts.Unmarshal(b, m.Company)
 }

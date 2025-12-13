@@ -5,19 +5,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 // Persistable は永続化インターフェースを定義します。
 type Persistable interface {
 	// GetPersistFolder は永続化ファイルを保存するフルパスを取得します。
 	GetPersistFolder() string
-
-	// GetPersists は永続化対象のメッセージを取得します。
-	GetPersists() ([]byte, error)
-
-	// SetPersists は永続化対象のメッセージを設定します。
-	SetPersists(b []byte) error
 
 	// ProtoReflect は対象メッセージのプロトリフレクションを取得します。
 	ProtoReflect() protoreflect.Message
@@ -54,14 +50,14 @@ func (p *Persist) getPersistPath() string {
 }
 
 // Load は永続化ファイルからデータを読み込みます。
-func (p *Persist) Load() error {
+func (p *Persist) LoadPersists() error {
 
 	// YAMLファイルからバイトデータを読み込む
 	b, err := os.ReadFile(p.getPersistPath())
 	if err != nil {
 		// ファイルが存在しない場合は一度 Save を呼び出してファイルを作成する
 		if os.IsNotExist(err) {
-			return p.Save()
+			return p.SavePersists()
 		}
 	}
 
@@ -69,7 +65,7 @@ func (p *Persist) Load() error {
 }
 
 // Save はデータを永続化ファイルに保存します。
-func (p *Persist) Save() error {
+func (p *Persist) SavePersists() {
 
 	// Persist 永続化バイトデータの取得
 	b, err := p.target.GetPersists()
@@ -103,19 +99,21 @@ func (p *Persist) UpdatePersists(newPersist *Persist) error {
 }
 
 // GetPersistValues は永続化用のフィールド値マップを取得します
-func (p *Persist) GetPersistValues() map[string]protoreflect.Value {
-	refMsg := p.target.ProtoReflect()
-	fields := refMsg.Descriptor().Fields()
+func (p *Persist) MarshalPersistJSON() ([]byte, error) {
+	ref := p.target.ProtoReflect()
+	desc := ref.Descriptor()
 
-	result := make(map[string]protoreflect.Value)
+	filtered := dynamicpb.NewMessage(desc)
+	fields := desc.Fields()
 	for i := 0; i < fields.Len(); i++ {
-		field := fields.Get(i)
-		fieldName := string(field.Name())
-		if strings.HasPrefix(fieldName, "persist_") {
-			result[fieldName] = refMsg.Get(field)
+		f := fields.Get(i)
+		if strings.HasPrefix(string(f.Name()), "persist_") {
+			filtered.Set(f, ref.Get(f))
 		}
 	}
-	return result
+
+	opts := protojson.MarshalOptions{Multiline: true, Indent: "  "}
+	return opts.Marshal(filtered)
 }
 
 func (p *Persist) SetPersistValues(values map[string]protoreflect.Value) error {

@@ -3,7 +3,7 @@ package core
 // DefaultStringMap はサービスのデフォルト設定を定義します。
 // これらの値は、環境変数が設定されていない場合に使用されます。
 var ConfigMap = map[string]string{
-	"FileServiceFolder":          "C:/SyncFolder/SynologyDrive/豊田築炉",
+	"FileServiceTarget":          "C:/SyncFolder/SynologyDrive/豊田築炉",
 	"CompanyServiceTarget":       "C:/SyncFolder/SynologyDrive/豊田築炉/1 会社",
 	"CompanyPersistFilename":     "@company.yaml",
 	"CompanyPollIntervalMillSec": "3000",

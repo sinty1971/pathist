@@ -25,6 +25,10 @@ backend-tls:
 frontend:
     cd ./frontend ; npm run dev
 
+# Start the fe-bun development server (React Router v7 on Bun)
+fe-bun:
+    cd ./fe-bun ; npm run dev
+
 # Install backend dependencies
 backend-deps:
     cd ./backend-grpc ; go mod tidy

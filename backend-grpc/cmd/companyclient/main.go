@@ -99,13 +99,13 @@ func showCompany(ctx context.Context, client grpcv1connect.CompanyServiceClient,
 	fmt.Printf("Company Information (ID: %s)\n", companyID)
 	fmt.Println(strings.Repeat("=", 50))
 	fmt.Printf("ID: %s\n", company.GetId())
+	fmt.Printf("Target: %s\n", company.GetTarget())
 	fmt.Printf("Short Name: %s\n", company.GetShortName())
 	fmt.Printf("Long Name: %s\n", company.GetPersistLongName())
 	fmt.Printf("Category Index: %d\n", company.GetCategoryIndex())
-	fmt.Printf("Managed Folder: %s\n", company.GetManagedFolder())
 	fmt.Printf("Postal Code: %s\n", company.GetPersistPostalCode())
 	fmt.Printf("Address: %s\n", company.GetPersistAddress())
-	fmt.Printf("Phone: %s\n", company.GetPersistTel())
+	fmt.Printf("Tel: %s\n", company.GetPersistTel())
 	fmt.Printf("Fax: %s\n", company.GetPersistFax())
 	fmt.Printf("Email: %s\n", company.GetPersistEmail())
 	fmt.Printf("Website: %s\n", company.GetPersistWebsite())
@@ -114,14 +114,14 @@ func showCompany(ctx context.Context, client grpcv1connect.CompanyServiceClient,
 
 // showAllCompanies は全会社の一覧を表示します
 func showAllCompanies(ctx context.Context, client grpcv1connect.CompanyServiceClient, jsonOut bool) {
-	req := grpcv1.GetCompanyMapRequest_builder{}.Build()
+	req := grpcv1.GetCompaniesRequest_builder{}.Build()
 
-	res, err := client.GetCompanyMap(ctx, req)
+	res, err := client.GetCompanies(ctx, req)
 	if err != nil {
-		log.Fatalf("GetCompanyMap の呼び出しに失敗しました: %v", err)
+		log.Fatalf("GetCompanies の呼び出しに失敗しました: %v", err)
 	}
 
-	companyMap := res.GetCompanyMap()
+	companyMap := res.GetCompanies()
 
 	if jsonOut {
 		data, err := json.MarshalIndent(companyMap, "", "  ")

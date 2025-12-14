@@ -31,22 +31,22 @@ func NewCompany() *Company {
 	return company
 }
 
-// ParseFromManagedFolder は"[0-9] [会社名]"形式のファイル名となっているパスを解析します
+// ParseFromTarget は"[0-9] [会社名]"形式のファイル名となっているパスを解析します
 // 会社名内のハイフン（含まれる場合）以前の文字列を会社名、ハイフン以降の文字列を関連名として扱います
-// 戻り値Companyは: Id, ManagedFolder, Cateory, ShortName, Tags のみ設定されます
-func (m *Company) ParseFromManagedFolder(managedFolders ...string) error {
+// 戻り値Companyは: Id, Target, Cateory, ShortName, Tags のみ設定されます
+func (m *Company) ParseFromTarget(targets ...string) error {
 
 	// パスを結合
-	managedFolder := filepath.Join(managedFolders...)
+	target := filepath.Join(targets...)
 
-	// 引数 managedFolder からフォルダー名取得とチェック
+	// 引数 target からフォルダー名取得とチェック
 	// "[0-9] [会社名]"の解析
-	folderName := filepath.Base(managedFolder)
+	folderName := filepath.Base(target)
 	if len(folderName) < 3 {
-		return errors.New("managedFolderのファイル名形式が無効です（長さが短い）")
+		return errors.New("targetのファイル名形式が無効です（長さが短い）")
 	} else if folderName[1] != ' ' {
 		// 2番目の文字がスペースかチェック
-		return errors.New("managedFolderのファイル名形式が無効です")
+		return errors.New("targetaのファイル名形式が無効です")
 	}
 
 	// カテゴリー情報の取得
@@ -74,14 +74,11 @@ func (m *Company) ParseFromManagedFolder(managedFolders ...string) error {
 		// ハイフン以降の文字列を関連文字列とする
 	}
 
-	// ID,ManagedFolder,Category,ShortNameの設定
-	m.SetManagedFolder(managedFolder)
+	// ID,Target,Category,ShortNameの設定
+	m.SetId(GenerateCompanyId(shortName))
+	m.SetTarget(target)
 	m.SetCategoryIndex(int32(catIndex))
 	m.SetShortName(shortName)
-
-	// 会社IDの生成と設定
-	id := m.GenerateId(shortName)
-	m.SetId(id)
 
 	return nil
 }
@@ -96,17 +93,17 @@ func (m *Company) Update(newCompany *Company) error {
 	}
 
 	// 新しいパラメータを元に管理フォルダーパスを生成
-	newManagedFolder := newCompany.GenerateManagedFolder(
-		filepath.Dir(m.GetManagedFolder()),
+	newTarget := GenerateCompanyTarget(
+		filepath.Dir(m.GetTarget()),
 		newCompany.GetCategoryIndex(),
 		newCompany.GetShortName(),
 	)
 
 	// ファイル名変更の必要がある場合は管理フォルダー名を更新
-	if newManagedFolder != m.GetManagedFolder() {
+	if newTarget != m.GetTarget() {
 
 		// フォルダー名変更
-		if err := os.Rename(m.GetManagedFolder(), newManagedFolder); err != nil {
+		if err := os.Rename(m.GetTarget(), newTarget); err != nil {
 			return err
 		}
 	}
@@ -117,16 +114,16 @@ func (m *Company) Update(newCompany *Company) error {
 	return nil
 }
 
-// GenerateId は会社の短縮名から一意の会社IDを生成します
-func (m *Company) GenerateId(shortName string) string {
+// GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
+func GenerateCompanyId(shortName string) string {
 	return core.GenerateIdFromString(shortName)
 }
 
-// GenerateManagedFolder はパラメータをもとに管理フォルダー名変更します
+// GenerateCompanyTarget はパラメータをもとに管理フォルダー名変更します
 // base: 基本パス(原則として　O:/.../1 会社 などの親フォルダー)
 // idx: カテゴリーインデックス
 // name: 省略会社名
-func (m *Company) GenerateManagedFolder(base string, idx int32, name string) string {
+func GenerateCompanyTarget(base string, idx int32, name string) string {
 	folderName := strconv.Itoa(int(idx)) + " " + name
 	return filepath.Join(base, folderName)
 }
@@ -134,5 +131,5 @@ func (m *Company) GenerateManagedFolder(base string, idx int32, name string) str
 // Persiser インターフェースの実装
 // GetPersistDir は永続化フォルダーのパスを取得します
 func (m *Company) GetPersistDir() string {
-	return m.Company.GetManagedFolder()
+	return m.Company.GetTarget()
 }

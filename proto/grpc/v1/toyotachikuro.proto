@@ -9,19 +9,18 @@ option features.(pb.go).api_level = API_OPAQUE;
 option features.field_presence = IMPLICIT;
 option go_package = "backend-grpc/gen/grpc/v1;grpcv1";
 
-// FileInfo represents information about a file or directory
-message FileInfo {
+// File represents information about a file or directory
+message File {
   string id = 1;
-  string path = 2;
-  bool is_directory = 3;
-  int64 size = 4;
-  google.protobuf.Timestamp modified_time = 5;
+  string target = 2;
+  int64 size = 3;
+  google.protobuf.Timestamp modified_time = 4;
 }
 
 // Company represents a company entity with inside information
 message Company {
   string id = 1;
-  string managed_folder = 2;
+  string target = 2;
   string short_name = 3;
   int32 category_index = 4;
   string persist_long_name = 5;
@@ -43,7 +42,7 @@ message CompanyCategory {
 message Koji {
   string id = 1;
   string status = 2;
-  string managed_folder = 3;
+  string target = 3;
   google.protobuf.Timestamp start = 4;
   string company_name = 5;
   string location_name = 6;
@@ -53,13 +52,13 @@ message Koji {
 
 // FileService provides operations for file management
 service FileService {
-  rpc GetFileInfos(GetFileInfosRequest) returns (GetFileInfosResponse);
-  rpc GetFileManagedFolder(GetFileManagedFolderRequest) returns (GetFileManagedFolderResponse);
+  rpc GetFiles(GetFilesRequest) returns (GetFilesResponse);
+  rpc GetFileTarget(GetFileTargetRequest) returns (GetFileTargetResponse);
 }
 
 // CompanyService provides operations for managing companies
 service CompanyService {
-  rpc GetCompanyMap(GetCompanyMapRequest) returns (GetCompanyMapResponse);
+  rpc GetCompanies(GetCompaniesRequest) returns (GetCompaniesResponse);
   rpc GetCompany(GetCompanyRequest) returns (GetCompanyResponse);
   rpc UpdateCompany(UpdateCompanyRequest) returns (UpdateCompanyResponse);
   rpc GetCompanyCategories(GetCompanyCategoriesRequest) returns (GetCompanyCategoriesResponse);
@@ -68,32 +67,32 @@ service CompanyService {
 // KojiService provides operations for managing construction projects
 service KojiService {
   rpc GetKoji(GetKojiRequest) returns (GetKojiResponse);
-  rpc GetKojiMap(GetKojiMapRequest) returns (GetKojiMapResponse);
+  rpc GetKojies(GetKojiesRequest) returns (GetKojiesResponse);
   rpc UpdateKoji(UpdateKojiRequest) returns (UpdateKojiResponse);
 }
 
 // FileService messages
-message GetFileInfosRequest {
-  string path = 1;
+message GetFilesRequest {
+  string target = 1;
 }
 
-message GetFileInfosResponse {
-  repeated FileInfo file_infos = 1;
+message GetFilesResponse {
+  repeated File files = 1;
 }
 
-message GetFileManagedFolderRequest {}
+message GetFileTargetRequest {}
 
-message GetFileManagedFolderResponse {
-  string managed_folder = 1;
+message GetFileTargetResponse {
+  string target = 1;
 }
 
 // CompanyService messages
-message GetCompanyMapRequest {
+message GetCompaniesRequest {
   bool refresh = 1;
 }
 
-message GetCompanyMapResponse {
-  map<string, Company> company_map = 1;
+message GetCompaniesResponse {
+  map<string, Company> companies = 1;
 }
 
 message GetCompanyRequest {
@@ -120,10 +119,10 @@ message GetCompanyCategoriesResponse {
 }
 
 // KojiService messages
-message GetKojiMapRequest {}
+message GetKojiesRequest {}
 
-message GetKojiMapResponse {
-  map<string, Koji> koji_map = 1;
+message GetKojiesResponse {
+  map<string, Koji> kojies = 1;
 }
 
 message GetKojiRequest {

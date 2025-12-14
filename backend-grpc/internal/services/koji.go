@@ -26,40 +26,40 @@ type KojiService struct {
 	// services は任意のgrpcサービスハンドラーへの参照
 	services *Services
 
-	// managedFolder はこのサービスが管理する工事データのルートフォルダー
-	managedFolder string
+	// target はこのサービスが管理する工事データのルートフォルダー
+	target string
 
-	// managedFolderWatcher は managedFolder のファイルシステム監視オブジェクト
-	managedFolderWatcher *fsnotify.Watcher
+	// targetWatcher は target のファイルシステム監視オブジェクト
+	targetWatcher *fsnotify.Watcher
 
-	// kojiMap は管理されている工事データのインデックスがIdのキャッシュマップ
-	kojiMap map[string]*models.Koji
+	// kojies は管理されている工事データのインデックスがIdのキャッシュマップ
+	kojies map[string]*models.Koji
 }
 
 func (s *KojiService) Start(services *Services, options *map[string]string) error {
 	// オプションの取得
-	optManagedFolder, exists := (*options)["KojiServiceManagedFolder"]
+	optTarget, exists := (*options)["KojiServiceTarget"]
 	if !exists {
-		return errors.New("KojiServiceManagedFolder option is required")
+		return errors.New("KojiServiceTarget option is required")
 	}
 	// パスを正規化
-	managedFolder, err := core.NormalizeAbsPath(optManagedFolder)
+	target, err := core.NormalizeAbsPath(optTarget)
 	if err != nil {
 		return err
 	}
 
 	// 情報の初期化
 	s.services = services
-	s.managedFolder = managedFolder
-	s.kojiMap = make(map[string]*models.Koji, 1000)
+	s.target = target
+	s.kojies = make(map[string]*models.Koji, 1000)
 
 	// kojiesByIdの情報を取得
 	if err = s.UpdateKojies(); err != nil {
 		return err
 	}
 
-	// managedFolderの監視を開始
-	if err = s.watchManagedFolder(); err != nil {
+	// targetの監視を開始
+	if err = s.watchTarget(); err != nil {
 		return err
 	}
 
@@ -70,57 +70,56 @@ func (s *KojiService) Cleanup() {
 	// 現在はクリーンアップ処理は不要
 }
 
-// watchManagedFolder starts watching the provided managedFolder for changes.
+// watchTarget starts watching the provided target for changes.
 // Add callbacks or channels as needed to propagate events to your services.
-func (s *KojiService) watchManagedFolder() error {
-	absPath, err := filepath.Abs(s.managedFolder)
+func (s *KojiService) watchTarget() error {
+	absPath, err := filepath.Abs(s.target)
 	if err != nil {
 		return err
 	}
 
-	s.managedFolderWatcher, err = fsnotify.NewWatcher()
+	s.targetWatcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		return err
 	}
 	// 監視終了時に閉じる
 	go func() {
-		<-s.managedFolderWatcher.Errors
-		s.managedFolderWatcher.Close()
+		<-s.targetWatcher.Errors
+		s.targetWatcher.Close()
 	}()
 
 	// イベントループ
 	go func() {
 		for {
 			select {
-			case event, ok := <-s.managedFolderWatcher.Events:
+			case event, ok := <-s.targetWatcher.Events:
 				if !ok {
 					return
 				}
-				log.Printf("[managed-folder] event=%s path=%s", event.Op, event.Name)
-
+				log.Printf("[target] event=%s path=%s", event.Op, event.Name)
 				if event.Op&(fsnotify.Create|fsnotify.Remove|fsnotify.Rename|fsnotify.Write) != 0 {
 					// 必要に応じてサービスへ通知する
 					// 例: reload metadata, update cache, etc.
 				}
 
-			case err := <-s.managedFolderWatcher.Errors:
-				log.Printf("[managed-folder] watcher error: %v", err)
+			case err := <-s.targetWatcher.Errors:
+				log.Printf("[target] watcher error: %v", err)
 			}
 		}
 	}()
 
 	// フォルダを監視対象に追加
-	if err := s.managedFolderWatcher.Add(absPath); err != nil {
+	if err := s.targetWatcher.Add(absPath); err != nil {
 		return err
 	}
 
-	log.Printf("watching managed folder: %s", absPath)
+	log.Printf("watching target: %s", absPath)
 	return nil
 }
 
 func (s *KojiService) UpdateKojies() error {
 	// ファイルシステムから工事フォルダー一覧を取得
-	entries, err := os.ReadDir(s.managedFolder)
+	entries, err := os.ReadDir(s.target)
 	if err != nil {
 		return err
 	}
@@ -142,7 +141,7 @@ func (s *KojiService) UpdateKojies() error {
 		go func() {
 			defer wg.Done()
 			for idx := range jobs {
-				kojiPath := path.Join(s.managedFolder, entries[idx].Name())
+				kojiPath := path.Join(s.target, entries[idx].Name())
 				if koji, err := models.NewKoji(kojiPath); err == nil {
 					results <- koji
 				} else {
@@ -169,7 +168,7 @@ func (s *KojiService) UpdateKojies() error {
 	// 結果を収集（最大サイズで確保し、後でスライス）
 	for result := range results {
 		if result != nil {
-			s.kojiMap[result.GetId()] = result
+			s.kojies[result.GetId()] = result
 		}
 	}
 
@@ -177,19 +176,19 @@ func (s *KojiService) UpdateKojies() error {
 }
 
 // GetKojies は管理されている工事データ一覧を返す
-func (s *KojiService) GetKojiMap(
+func (s *KojiService) GetKojies(
 	ctx context.Context,
-	req *grpcv1.GetKojiMapRequest) (
-	res *grpcv1.GetKojiMapResponse,
+	req *grpcv1.GetKojiesRequest) (
+	res *grpcv1.GetKojiesResponse,
 	err error) {
 	_ = req // 現状フィルター未対応
 
-	grpcKojiMap := make(map[string]*grpcv1.Koji, len(s.kojiMap))
-	for _, v := range s.kojiMap {
-		grpcKojiMap[v.GetId()] = v.Koji
+	grpcKojies := make(map[string]*grpcv1.Koji, len(s.kojies))
+	for _, v := range s.kojies {
+		grpcKojies[v.GetId()] = v.Koji
 	}
 
-	res.SetKojiMap(grpcKojiMap)
+	res.SetKojies(grpcKojies)
 
 	return
 }
@@ -205,7 +204,7 @@ func (s *KojiService) GetKojiById(
 	id := req.GetId()
 
 	// 工事情報を取得
-	koji, exist := s.kojiMap[id]
+	koji, exist := s.kojies[id]
 	if !exist {
 		err = connect.NewError(connect.CodeNotFound, errors.New("koji not found"))
 		return
@@ -223,7 +222,7 @@ func (s *KojiService) UpdateKoji(
 
 	// 既存の工事情報を取得
 	grpcNewKoji := req.GetNewKoji()
-	prevKoji, exist := s.kojiMap[grpcNewKoji.GetId()]
+	prevKoji, exist := s.kojies[grpcNewKoji.GetId()]
 	if !exist {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("koji not found"))
 	}
@@ -237,17 +236,17 @@ func (s *KojiService) UpdateKoji(
 	}
 
 	// 工事情報のインデックスを更新
-	if _, exist := s.kojiMap[prevKoji.GetId()]; exist {
-		delete(s.kojiMap, prevKoji.GetId())
+	if _, exist := s.kojies[prevKoji.GetId()]; exist {
+		delete(s.kojies, prevKoji.GetId())
 		// 新しいIDで再登録
-		s.kojiMap[newKoji.GetId()] = newKoji
+		s.kojies[newKoji.GetId()] = newKoji
 	}
 
 	// Responseの作成
 	res := grpcv1.UpdateKojiResponse_builder{}.Build()
 
-	grpcv1KojiMapById := make(map[string]*grpcv1.Koji, len(s.kojiMap))
-	for _, v := range s.kojiMap {
+	grpcv1KojiMapById := make(map[string]*grpcv1.Koji, len(s.kojies))
+	for _, v := range s.kojies {
 		grpcv1KojiMapById[v.GetId()] = v.Koji
 	}
 	res.SetPrevKoji(prevKoji.Koji)

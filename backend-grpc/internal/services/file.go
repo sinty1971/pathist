@@ -25,25 +25,25 @@ type FileService struct {
 	// services は任意のgrpcサービスハンドラーへの参照
 	services *Services
 
-	// ManagedFolder はファイルサービスの絶対パスフォルダー
-	ManagedFolder string `json:"managedFolder" yaml:"managed_folder" example:"/penguin/豊田築炉"`
+	// Target はファイルサービスの絶対パスフォルダー
+	Target string `json:"target" yaml:"target" example:"/penguin/豊田築炉"`
 }
 
 func (srv *FileService) Start(services *Services, options *map[string]string) error {
 	// オプションの取得
-	optManagedFolder, exists := (*options)["FileServiceFolder"]
+	optTarget, exists := (*options)["FileServiceTarget"]
 	if !exists {
-		return errors.New("FileServiceFolder option is required")
+		return errors.New("FileServiceTarget option is required")
 	}
 
 	// パスを正規化
-	managedFolder, err := core.NormalizeAbsPath(optManagedFolder)
+	target, err := core.NormalizeAbsPath(optTarget)
 	if err != nil {
 		return err
 	}
 
 	srv.services = services
-	srv.ManagedFolder = managedFolder
+	srv.Target = target
 
 	return nil
 }
@@ -53,30 +53,30 @@ func (s *FileService) Cleanup() {
 }
 
 func (s *FileService) GetFileBasePath(
-	ctx context.Context, req *grpc.GetFileManagedFolderRequest) (
-	*grpc.GetFileManagedFolderResponse, error) {
+	ctx context.Context, req *grpc.GetFileTargetRequest) (
+	*grpc.GetFileTargetResponse, error) {
 	// コンテキストを無視
 	_ = ctx
 	_ = req
 
-	res := grpc.GetFileManagedFolderResponse_builder{}.Build()
-	res.SetManagedFolder(s.ManagedFolder)
+	res := grpc.GetFileTargetResponse_builder{}.Build()
+	res.SetTarget(s.Target)
 	return res, nil
 }
 
-// GetFileInfos は指定されたパスのファイル情報一覧を返す
-func (s *FileService) GetFileInfos(
-	ctx context.Context, req *grpc.GetFileInfosRequest) (
-	*grpc.GetFileInfosResponse, error) {
+// GetFiles は指定されたパスのファイル情報一覧を返す
+func (s *FileService) GetFiles(
+	ctx context.Context, req *grpc.GetFilesRequest) (
+	*grpc.GetFilesResponse, error) {
 
 	// 無視する引数
 	_ = ctx
 
 	// リクエスト情報の取得
-	relPath := req.GetPath()
+	reqTarget := req.GetTarget()
 
 	// 絶対パスを取得
-	absPath, err := s.GetAbsPathFrom(relPath)
+	absPath, err := s.GetAbsPathFrom(reqTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -88,11 +88,11 @@ func (s *FileService) GetFileInfos(
 	}
 
 	// ファイルエントリが0の場合は空配列を返す
-	res := grpc.GetFileInfosResponse_builder{}.Build()
-	fis := make([]*grpc.FileInfo, 0)
+	res := grpc.GetFilesResponse_builder{}.Build()
+	files := make([]*grpc.File, 0)
 	dirsNum := len(dirs)
 	if dirsNum == 0 {
-		res.SetFileInfos(fis)
+		res.SetFiles(files)
 		return res, nil
 	}
 
@@ -100,7 +100,7 @@ func (s *FileService) GetFileInfos(
 	workerNum := core.DecideNumWorkers(dirsNum)
 	var wg sync.WaitGroup
 	channelIn := make(chan int, dirsNum)
-	channelOut := make(chan *grpc.FileInfo, dirsNum)
+	channelOut := make(chan *grpc.File, dirsNum)
 
 	// ワーカーを起動
 	for range workerNum {
@@ -109,9 +109,9 @@ func (s *FileService) GetFileInfos(
 				dir := dirs[idx]
 				fullpath := filepath.Join(absPath, dir.Name())
 
-				fi := models.NewFileInfo()
+				fi := models.NewFile()
 				if err := fi.ParseFromPath(fullpath); err == nil {
-					channelOut <- fi.FileInfo
+					channelOut <- fi.File
 				}
 			}
 		})
@@ -130,13 +130,13 @@ func (s *FileService) GetFileInfos(
 	}()
 
 	// 結果を収集
-	fis = make([]*grpc.FileInfo, 0, len(dirs))
+	files = make([]*grpc.File, 0, len(dirs))
 	for fi := range channelOut {
-		fis = append(fis, fi)
+		files = append(files, fi)
 	}
 
 	// レスポンスを更新して返す
-	res.SetFileInfos(fis)
+	res.SetFiles(files)
 	return res, nil
 }
 
@@ -147,7 +147,7 @@ func (s *FileService) GetAbsPathFrom(relPath string) (res string, err error) {
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	res = filepath.Join(s.ManagedFolder, relPath)
+	res = filepath.Join(s.Target, relPath)
 
 	return // naked return
 }

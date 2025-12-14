@@ -19,6 +19,13 @@ plugins:
     opt:
       - paths=source_relative
       - simple
+  
+  # fe-bun (React Router v7) 向け Connect-ES クライアント生成
+  # Editions 2023 対応版 (codegenv2)
+  - remote: buf.build/bufbuild/es:v2.9.0
+    out: fe-bun/app/gen
+    opt:
+      - target=ts
 
 inputs:
   - directory: proto

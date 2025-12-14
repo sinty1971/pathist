@@ -3,13 +3,13 @@ package core
 // DefaultStringMap はサービスのデフォルト設定を定義します。
 // これらの値は、環境変数が設定されていない場合に使用されます。
 var ConfigMap = map[string]string{
-	"FileServiceFolder":           "C:/SyncFolder/SynologyDrive/豊田築炉",
-	"CompanyServiceManagedFolder": "C:/SyncFolder/SynologyDrive/豊田築炉/1 会社",
-	"CompanyPersistFilename":      "@company.yaml",
-	"CompanyPollIntervalMillSec":  "3000",
-	"KojiServiceManagedFolder":    "C:/SyncFolder/SynologyDrive/豊田築炉/2 工事",
-	"KojiPersistFilename":         "@koji.yaml",
-	"MemberPersistFilename":       "@member.yaml",
+	"FileServiceFolder":          "C:/SyncFolder/SynologyDrive/豊田築炉",
+	"CompanyServiceTarget":       "C:/SyncFolder/SynologyDrive/豊田築炉/1 会社",
+	"CompanyPersistFilename":     "@company.yaml",
+	"CompanyPollIntervalMillSec": "3000",
+	"KojiServiceTarget":          "C:/SyncFolder/SynologyDrive/豊田築炉/2 工事",
+	"KojiPersistFilename":        "@koji.yaml",
+	"MemberPersistFilename":      "@member.yaml",
 }
 
 var WorkerConfigMap = map[string]int{

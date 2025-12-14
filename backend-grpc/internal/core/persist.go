@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -53,21 +55,21 @@ func (p *Persist) LoadPersists() error {
 	// 永続化ファイルのフルパスを取得
 	persistPath := filepath.Join(p.target.GetPersistDir(), p.persistFilename)
 
-	// YAMLファイルからバイトデータを読み込む
-	yamlBytes, err := os.ReadFile(persistPath)
+	// YAMLファイルからテキストデータを読み込む
+	yamltext, err := os.ReadFile(persistPath)
 	if err != nil {
 		// ファイルが存在しない場合は新規作成
 		return p.SavePersists()
 	}
 
-	// YAMLデータをJSONデータに変換
-	jsonBytes, err := YAMLToJSON(yamlBytes)
-	if err != nil {
+	// YAMLファイルデータをJSONマップデータに変換
+	jsonmap := &map[string]any{}
+	if err = yaml.Unmarshal(yamltext, jsonmap); err != nil {
 		return p.SavePersists()
 	}
 
 	// バイトデータをアンマーシャル
-	err = p.UnmarshalPersistJSON(jsonBytes)
+	err = p.FromPersistJsonmap(jsonmap)
 	if err != nil {
 		return p.SavePersists()
 	}
@@ -78,13 +80,13 @@ func (p *Persist) LoadPersists() error {
 // ファイル形式は YAML です。
 func (p *Persist) SavePersists() error {
 	// Persist 永続化バイトデータの取得
-	jsonBytes, err := p.MarshalPersistJSON()
+	jsonmap, err := p.ToPersistJsonmap()
 	if err != nil {
 		return err
 	}
 
-	// JSONデータをYAMLデータに変換
-	yamlBytes, err := JSONToYAML(jsonBytes)
+	// JSONマップをYAMLデータに変換
+	yamlBytes, err := yaml.Marshal(jsonmap)
 	if err != nil {
 		return err
 	}
@@ -116,93 +118,62 @@ func (p *Persist) UpdatePersists(newPersist *Persist) error {
 	return nil
 }
 
-// MarshalPersistJSON は永続化用のフィールド値をJSONデータに変換します
-func (p *Persist) MarshalPersistJSON() ([]byte, error) {
+// ToPersistJsonmap は永続化用のフィールド値をJSONマップに変換します
+func (p *Persist) ToPersistJsonmap() (*map[string]any, error) {
 	targetMsg := p.target.ProtoReflect()
-	targetDsc := targetMsg.Descriptor()
 
-	// 永続化対象フィールドのみを抽出した新しいメッセージを作成
-	filtered := dynamicpb.NewMessage(targetDsc)
-	fields := targetDsc.Fields()
-	for i := 0; i < fields.Len(); i++ {
-		f := fields.Get(i)
-		if !strings.HasPrefix(string(f.Name()), "persist_") {
-			continue
-		}
-		filtered.Set(f, targetMsg.Get(f))
+	// camelCase キーで JSON にマーシャル
+	opts := protojson.MarshalOptions{
+		UseProtoNames:     true,
+		EmitUnpopulated:   false,
+		EmitDefaultValues: true,
+	}
+	jsonbytes, err := opts.Marshal(targetMsg.Interface())
+	if err != nil {
+		return nil, err
 	}
 
-	// JSON にシリアライズ
-	opts := protojson.MarshalOptions{Multiline: true, Indent: "  ", AllowPartial: false, EmitDefaultValues: true}
-	return opts.Marshal(filtered)
+	jsonmap := &map[string]any{}
+	json.Unmarshal(jsonbytes, jsonmap)
+	for k := range *jsonmap {
+		if !strings.HasPrefix(k, "persist") {
+			delete(*jsonmap, k)
+		}
+	}
+
+	return jsonmap, nil
 }
 
-// UnmarshalPersistJSON はJSONデータを永続化用のフィールドに設定します
-func (p *Persist) UnmarshalPersistJSON(b []byte) error {
-	targetMsg := p.target.ProtoReflect()
-	targetDsc := targetMsg.Descriptor()
+// FromPersistJsonmap はJSONマップを永続化用のフィールドに設定します
+func (p *Persist) FromPersistJsonmap(jsonmap *map[string]any) error {
 
-	// 一時的なメッセージを作成してJSONをアンマーシャル
-	jsonMsg := dynamicpb.NewMessage(targetDsc)
-	opts := protojson.UnmarshalOptions{AllowPartial: false}
-	if err := opts.Unmarshal(b, jsonMsg); err != nil {
+	// persist_フィールドのみを抽出したマップを作成
+	jsonbytes, err := json.Marshal(*jsonmap)
+	if err != nil {
 		return err
 	}
 
-	// persist_フィールドのみを元のメッセージにコピー
-	fields := targetDsc.Fields()
-	for i := 0; i < fields.Len(); i++ {
-		f := fields.Get(i)
-		if !strings.HasPrefix(string(f.Name()), "persist_") {
-			continue
-		}
-		targetMsg.Set(f, jsonMsg.Get(f))
-	}
-	return nil
-}
-
-func (p *Persist) UnmarshalPersistYAML(b []byte) error {
+	// 永続化用フィールドのみをアンマーシャル
 	targetMsg := p.target.ProtoReflect()
 	targetDsc := targetMsg.Descriptor()
+	targetFields := targetDsc.Fields()
 
-	// 一時的なメッセージを作成してJSONとしてアンマーシャル（YAML形式のJSONとして扱う）
-	yamlMsg := dynamicpb.NewMessage(targetDsc)
+	// 一時的なメッセージを作成してJSONデータをアンマーシャル
+	tempMsg := dynamicpb.NewMessage(targetDsc)
 	opts := protojson.UnmarshalOptions{AllowPartial: true}
-	if err := opts.Unmarshal(b, yamlMsg); err != nil {
+	if err := opts.Unmarshal(jsonbytes, tempMsg); err != nil {
+		log.Printf("Failed to unmarshal persist jsonmap: %v", err)
 		return err
 	}
 
 	// persist_フィールドのみを元のメッセージにコピー
-	fields := targetDsc.Fields()
-	for i := 0; i < fields.Len(); i++ {
-		f := fields.Get(i)
-		if strings.HasPrefix(string(f.Name()), "persist_") {
-			targetMsg.Set(f, yamlMsg.Get(f))
+	for i := 0; i < targetFields.Len(); i++ {
+		f := targetFields.Get(i)
+		log.Printf("Field Name: %s", f.Name())
+		if !strings.HasPrefix(string(f.Name()), "persist") {
+			continue
 		}
+		targetMsg.Set(f, tempMsg.Get(f))
 	}
 	return nil
-}
-
-// JSONToYAML はJSONバイト配列をYAMLバイト配列に変換します
-func JSONToYAML(jsonData []byte) ([]byte, error) {
-	// JSONをmapにアンマーシャル
-	var data interface{}
-	if err := yaml.Unmarshal(jsonData, &data); err != nil {
-		return nil, err
-	}
-
-	// mapをYAMLにマーシャル
-	return yaml.Marshal(data)
-}
-
-// YAMLToJSON はYAMLバイト配列をJSONバイト配列に変換します
-func YAMLToJSON(yamlData []byte) ([]byte, error) {
-	// YAMLをmapにアンマーシャル
-	var data interface{}
-	if err := yaml.Unmarshal(yamlData, &data); err != nil {
-		return nil, err
-	}
-
-	// mapをJSONにマーシャル（encoding/jsonを使用）
-	return yaml.Marshal(data)
 }

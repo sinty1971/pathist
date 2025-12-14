@@ -19,10 +19,10 @@ type Koji struct {
 }
 
 // NewKoji FolderNameからKojiを作成します（高速化版）
-func NewKoji(managedFolder string) (*Koji, error) {
+func NewKoji(target string) (*Koji, error) {
 
 	// withoutDate の解析を最適化
-	start, companyName, locationName, err := parseKojiManagedFolder(managedFolder)
+	start, companyName, locationName, err := parseKojiTarget(target)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func NewKoji(managedFolder string) (*Koji, error) {
 	koji := &Koji{
 		Koji: grpcv1.Koji_builder{
 			Id:                 GenerateKoujiId(start, companyName, locationName),
-			ManagedFolder:      managedFolder,
+			Target:             target,
 			Start:              start.Timestamp,
 			CompanyName:        companyName,
 			LocationName:       locationName,
@@ -44,8 +44,8 @@ func NewKoji(managedFolder string) (*Koji, error) {
 	return koji, nil
 }
 
-// parseKojiManagedFolder は managedFolder から工事開始日・会社名・現場名を取得
-func parseKojiManagedFolder(managedFolder string) (*Timestamp, string, string, error) {
+// parseKojiTarget は target から工事開始日・会社名・現場名を取得
+func parseKojiTarget(target string) (*Timestamp, string, string, error) {
 
 	var (
 		start        *Timestamp
@@ -55,7 +55,7 @@ func parseKojiManagedFolder(managedFolder string) (*Timestamp, string, string, e
 	)
 
 	// フォルダー名を取得
-	foldername := core.GetBaseName(managedFolder)
+	foldername := core.GetBaseName(target)
 
 	// ファイル名から工事開始日の取得と日付除外文字列の取得
 	var withoutDate string
@@ -153,7 +153,7 @@ func (obj *Koji) Update(updatedKoji *Koji) (*Koji, error) {
 	}
 
 	// 管理フォルダーは変更しない
-	updatedKoji.SetManagedFolder(obj.GetManagedFolder())
+	updatedKoji.SetTarget(obj.GetTarget())
 
 	// 永続化サービスの設定を引き継ぐ
 	updatedKoji.PersistFilename = obj.PersistFilename
@@ -162,7 +162,7 @@ func (obj *Koji) Update(updatedKoji *Koji) (*Koji, error) {
 }
 
 // UpdateFolderPath は工事フォルダー名を更新します
-// ID 及び ManagedFolder の情報は無視されます
+// ID 及び Target の情報は無視されます
 // TODO: 不完全です、実際にはまだ更新処理していません
 func (obj *Koji) UpdateFolderPath(src *Koji) bool {
 	if src == nil {
@@ -197,15 +197,15 @@ func (obj *Koji) UpdateFolderPath(src *Koji) bool {
 	builder.WriteByte(' ')
 	builder.WriteString(locationName)
 
-	dir := filepath.Dir(obj.GetManagedFolder())
+	dir := filepath.Dir(obj.GetTarget())
 	if dir == "." {
 		return false
 	}
-	prevManagedFolder := obj.GetManagedFolder()
-	managedFolder := builder.String()
-	src.SetManagedFolder(filepath.Join(dir, managedFolder))
+	prevTarget := obj.GetTarget()
+	target := builder.String()
+	src.SetTarget(filepath.Join(dir, target))
 
-	return prevManagedFolder != managedFolder
+	return prevTarget != target
 }
 
 // Persistable インターフェースの実装
@@ -213,5 +213,5 @@ func (obj *Koji) UpdateFolderPath(src *Koji) bool {
 
 // GetPersistPath は永続化ファイルのパスを取得します
 func (obj *Koji) GetPersistPath() string {
-	return filepath.Join(obj.GetManagedFolder(), obj.PersistFilename)
+	return filepath.Join(obj.GetTarget(), obj.PersistFilename)
 }

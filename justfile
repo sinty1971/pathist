@@ -1,7 +1,7 @@
 set shell := ["powershell", "-NoLogo", "-Command"]
 
 # buf コマンドのパス設定
-buf := `"$env:USERPROFILE/dev/bin/buf-windows-x86_64.exe"`
+buf := `"$env:USERPROFILE/prj/bin/buf-windows-x86_64.exe"`
 
 # Grpc Backend & Frontend Commands
 
@@ -48,6 +48,10 @@ generate-grpc:
 frontend-generate-grpc: generate-grpc
     @echo "Connect-Web stubs generated at frontend/src/gen/"
 
+# Generate Connect-Web stubs for fe-bun (React Router v7)
+fe-bun-generate: generate-grpc
+    @echo "Connect-Web stubs generated at fe-bun/app/gen/"
+
 # Install frontend dependencies  
 frontend-deps:
     cd ./frontend && npm install
@@ -91,7 +95,7 @@ dev:
     @echo "Run 'just backend' in one terminal and 'just frontend' in another"
 
 # Generate both backend and frontend gRPC stubs
-generate-all: generate-grpc generate-types
+generate-all: generate-grpc generate-types fe-bun-generate
 
 # Update all dependencies (Go and npm)
 update-all: backend-update frontend-update

@@ -1,29 +1,34 @@
 package models
 
-import "slices"
+import (
+	"backend-grpc/internal/core"
+	"path/filepath"
+)
 
 // CommonModel は共通フィールドを持つモデルのインターフェースを定義します。
 type CommonModel interface {
-	GetInsideTags() []string
-	SetInsideTags([]string)
+	// GetTarget は永続化ファイルを保存するフルパスを取得します。
+	// protobuf メッセージ内の target フィールドを返す実装が一般的です。
+	GetTarget() string
+	SetId(id string)
 }
 
 // ParamFunc はゲッター・セッター関数のペアを保持します。
-type ParamFunc struct {
-	Setter func(any)
-	Getter func() any
+type Common struct {
+	target     CommonModel
+	modeleName string
 }
 
-type ParamFuncMap map[string]ParamFunc
-
-// AddInsideTags はゲッター・セッターを使用してタグを追加します（重複・空文字はスキップ）
-// 想定タグ数: 10個程度
-func AddInsideTags(obj CommonModel, newTags ...string) {
-	existingTags := obj.GetInsideTags()
-	for _, tag := range newTags {
-		if tag != "" && !slices.Contains(existingTags, tag) {
-			existingTags = append(existingTags, tag)
-		}
+// NewCommon は Common インスタンスを作成します。
+func NewCommon(target CommonModel, modeleName string) *Common {
+	return &Common{
+		target:     target,
+		modeleName: modeleName,
 	}
-	obj.SetInsideTags(existingTags)
+}
+
+func (p *Common) SetDefaultId() {
+	idText := p.modeleName + filepath.Base(p.target.GetTarget())
+	id := core.GenerateIdFromString(idText)
+	p.target.SetId(id)
 }

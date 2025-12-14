@@ -17,8 +17,9 @@ import (
 // Persistable は永続化インターフェースを定義します。
 // protoreflect.Message を返す必要があるため、protobuf メッセージをラップする構造体で実装する必要があります。
 type Persistable interface {
-	// GetPersistDir は永続化ファイルを保存するフルパスを取得します。
-	GetPersistDir() string
+	// GetTarget は永続化ファイルを保存するフルパスを取得します。
+	// protobuf メッセージ内の target フィールドを返す実装が一般的です。
+	GetTarget() string
 
 	// ProtoReflect は対象メッセージの protoreflect.Message を取得します。
 	ProtoReflect() protoreflect.Message
@@ -53,7 +54,7 @@ func NewPersister(target Persistable, persistFilename string) *Persist {
 // ファイル形式は YAML です。
 func (p *Persist) LoadPersists() error {
 	// 永続化ファイルのフルパスを取得
-	persistPath := filepath.Join(p.target.GetPersistDir(), p.persistFilename)
+	persistPath := filepath.Join(p.target.GetTarget(), p.persistFilename)
 
 	// YAMLファイルからテキストデータを読み込む
 	yamltext, err := os.ReadFile(persistPath)
@@ -92,7 +93,7 @@ func (p *Persist) SavePersists() error {
 	}
 
 	// 永続化ファイルのフルパスを取得
-	persistPath := filepath.Join(p.target.GetPersistDir(), p.persistFilename)
+	persistPath := filepath.Join(p.target.GetTarget(), p.persistFilename)
 
 	// ファイルに書き込み
 	return os.WriteFile(persistPath, yamlBytes, 0644)

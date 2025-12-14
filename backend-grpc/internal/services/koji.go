@@ -142,7 +142,8 @@ func (s *KojiService) UpdateKojies() error {
 			defer wg.Done()
 			for idx := range jobs {
 				kojiPath := path.Join(s.target, entries[idx].Name())
-				if koji, err := models.NewKoji(kojiPath); err == nil {
+				koji := models.NewKoji()
+				if err := koji.ParseKojiTarget(kojiPath); err == nil {
 					results <- koji
 				} else {
 					results <- nil // エラーの場合はnilを返す

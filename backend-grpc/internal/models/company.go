@@ -16,6 +16,9 @@ type Company struct {
 	// Company メッセージ本体
 	*grpcv1.Company
 
+	// Common 共通モデルフィールド
+	*Common
+
 	// Persist 永続化用フィールド
 	*core.Persist
 }
@@ -26,6 +29,7 @@ func NewCompany() *Company {
 	// インスタンス作成と初期化
 	company := &Company{}
 	company.Company = grpcv1.Company_builder{}.Build()
+	company.Common = NewCommon(company, "Company")
 	company.Persist = core.NewPersister(company, core.ConfigMap["CompanyPersistFilename"])
 
 	return company
@@ -74,11 +78,13 @@ func (m *Company) ParseFromTarget(targets ...string) error {
 		// ハイフン以降の文字列を関連文字列とする
 	}
 
-	// ID,Target,Category,ShortNameの設定
-	m.SetId(GenerateCompanyId(shortName))
+	// Target,Category,ShortNameの設定
 	m.SetTarget(target)
 	m.SetCategoryIndex(int32(catIndex))
 	m.SetShortName(shortName)
+
+	// IDの設定、targetの設定が終了した後に実行
+	m.SetDefaultId()
 
 	return nil
 }
@@ -114,11 +120,6 @@ func (m *Company) Update(newCompany *Company) error {
 	return nil
 }
 
-// GenerateCompanyId は会社の短縮名から一意の会社IDを生成します
-func GenerateCompanyId(shortName string) string {
-	return core.GenerateIdFromString(shortName)
-}
-
 // GenerateCompanyTarget はパラメータをもとに管理フォルダー名変更します
 // base: 基本パス(原則として　O:/.../1 会社 などの親フォルダー)
 // idx: カテゴリーインデックス
@@ -126,10 +127,4 @@ func GenerateCompanyId(shortName string) string {
 func GenerateCompanyTarget(base string, idx int32, name string) string {
 	folderName := strconv.Itoa(int(idx)) + " " + name
 	return filepath.Join(base, folderName)
-}
-
-// Persiser インターフェースの実装
-// GetPersistDir は永続化フォルダーのパスを取得します
-func (m *Company) GetPersistDir() string {
-	return m.Company.GetTarget()
 }

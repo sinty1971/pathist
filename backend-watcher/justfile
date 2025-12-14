@@ -1,0 +1,9 @@
+set shell := ["powershell.exe", "-Command"]
+
+# Helpers for backend-watcher
+test-watcher-on-windows:
+	go test ./core -run TestWatcherOnWindows -count=1 -v
+
+# Windowsの監視CLIを指定ディレクトリで起動
+watch-synology:
+	go run ./cmd/watcher -dir "C:\SyncFolder\SynologyDrive\豊田築炉"

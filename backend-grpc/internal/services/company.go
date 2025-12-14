@@ -52,6 +52,8 @@ func (srv *CompanyService) Start(services *Services, options *map[string]string)
 		return err
 	}
 
+	// watcherの開始
+
 	return nil
 }
 
@@ -82,7 +84,7 @@ func (srv *CompanyService) UpdateCompanyCacheMap() error {
 	// 会社の内部情報の取得
 	for _, company := range srv.companyMap {
 
-		if err := company.Load(); err != nil {
+		if err := company.LoadPersists(); err != nil {
 			log.Printf("Failed to load persist info for company ShortName %s: %v", company.GetShortName(), err)
 		}
 	}
@@ -102,8 +104,11 @@ func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Co
 	}
 
 	// 新しい会社情報の管理フォルダー名を生成
-	newManageBaseFolder := filepath.Dir(newCompany.GetManagedFolder())
-	newManagedFolder := newCompany.CreateNewManagedFolder(newManageBaseFolder, newCompany.GetCategoryIndex(), newCompany.GetShortName())
+	newBase := filepath.Dir(newCompany.GetManagedFolder())
+	newManagedFolder := newCompany.GenerateManagedFolder(
+		newBase,
+		newCompany.GetCategoryIndex(),
+		newCompany.GetShortName())
 
 	// 管理フォルダーの変更がある場合はフォルダー移動を実施
 	if exist && prevCompany.GetManagedFolder() != newCompany.GetManagedFolder() {
@@ -118,7 +123,7 @@ func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Co
 	srv.companyMap[newCompany.GetId()] = newCompany
 
 	// persist情報の書き込み
-	if err := newCompany.Save(); err != nil {
+	if err := newCompany.SavePersists(); err != nil {
 		log.Printf("Failed to save persist info for company ShortName %s: %v", newCompany.GetShortName(), err)
 	}
 

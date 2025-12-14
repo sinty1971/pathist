@@ -1,43 +1,48 @@
+set shell := ["powershell", "-NoLogo", "-Command"]
+
+# buf コマンドのパス設定
+buf := `"$env:USERPROFILE/dev/bin/buf-windows-x86_64.exe"`
+
 # Grpc Backend & Frontend Commands
 
 # Start the backend gRPC server (HTTP/2 over h2c)
 backend:
-    cd ./backend-grpc && go run cmd/grpc/main.go
+    cd ./backend-grpc ; go run cmd/grpc/main.go
 
 # Test file service client
 fileclient *ARGS:
-    cd ./backend-grpc && go run cmd/fileclient/main.go {{ARGS}}
+    cd ./backend-grpc ; go run cmd/fileclient/main.go {{ARGS}}
 
 # Test company service client
 companyclient *ARGS:
-    cd ./backend-grpc && go run cmd/companyclient/main.go {{ARGS}}
+    cd ./backend-grpc ; go run cmd/companyclient/main.go {{ARGS}}
 
 # Start the backend gRPC server with TLS enabled
 backend-tls:
-    cd ./backend && go run cmd/grpc/main.go -enable-tls
+    cd ./backend ; go run cmd/grpc/main.go -enable-tls
 
 # Start the frontend development server (React Router v7)
 frontend:
-    cd ./frontend && npm run dev
+    cd ./frontend ; npm run dev
 
 # Install backend dependencies
 backend-deps:
-    cd ./backend-grpc && go mod tidy
+    cd ./backend-grpc ; go mod tidy
 
 # Generate SSL certificate for HTTP/2
 generate-cert:
-    cd ./backend-grpc && ./generate-cert.sh
+    cd ./backend-grpc ; ./generate-cert.sh
 
 # Update all Go packages to latest versions
 # ただしメジャーなバージョンは更新しない
 backend-update:
-    cd ./backend-grpc && go get -u ./...
-    cd ./backend-grpc && go mod tidy
+    cd ./backend-grpc ; go get -u ./...
+    cd ./backend-grpc ; go mod tidy
 
 # Generate gRPC stubs for all services
 generate-grpc:
     @echo "Generating gRPC stubs..."
-    @buf generate
+    @ {{buf}} generate
     
 # Generate Connect-Web stubs for the frontend
 frontend-generate-grpc: generate-grpc
@@ -71,6 +76,14 @@ frontend-preview:
 # Run frontend linting
 frontend-lint:
     cd ./frontend && npm run lint
+
+# Windows 専用のファイル監視テストを実行
+test-watcher-on-windows:
+    # shell := windows-shell
+    Write-Host "Windows 環境でのみ実行してください"
+    Push-Location ./backend-watcher
+    go test ./... -run TestWatcherOnWindows -v
+    Pop-Location
 
 # Start both backend and frontend (requires tmux or run in separate terminals)
 dev:

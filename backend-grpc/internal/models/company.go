@@ -9,8 +9,6 @@ import (
 
 	grpcv1 "backend-grpc/gen/grpc/v1"
 	"backend-grpc/internal/core"
-
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
@@ -134,26 +132,7 @@ func (m *Company) GenerateManagedFolder(base string, idx int32, name string) str
 }
 
 // Persiser インターフェースの実装
-// GetPersistFolder は永続化フォルダーのパスを取得します
-func (m *Company) GetPersistFolder() string {
+// GetPersistDir は永続化フォルダーのパスを取得します
+func (m *Company) GetPersistDir() string {
 	return m.Company.GetManagedFolder()
-}
-
-// MarshalJSON()  は永続化用のメッセージのJSONを取得します
-// JSON Marshaler インターフェースの実装
-func (m *Company) MarshalJSON() ([]byte, error) {
-	opts := protojson.MarshalOptions{
-		Multiline: true,
-		Indent:    "  ",
-	}
-	return opts.Marshal(m.Company)
-}
-
-// UnmarshalJSON() は永続化用のメッセージのJSONを設定します
-// JSON Unmarshaler インターフェースの実装
-func (m *Company) UnmarshalJSON(b []byte) error {
-	opts := protojson.UnmarshalOptions{
-		DiscardUnknown: true,
-	}
-	return opts.Unmarshal(b, m.Company)
 }

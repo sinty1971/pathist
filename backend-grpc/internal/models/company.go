@@ -13,14 +13,11 @@ import (
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
 type Company struct {
+	// Model 共通モデルフィールド
+	*core.PathistModel
+
 	// Company メッセージ本体
 	*grpcv1.Company
-
-	// Common 共通モデルフィールド
-	*Common
-
-	// Persist 永続化用フィールド
-	*core.Persist
 }
 
 // NewCompany インスタンス作成と初期化を行います
@@ -29,10 +26,13 @@ func NewCompany() *Company {
 	// インスタンス作成と初期化
 	company := &Company{}
 	company.Company = grpcv1.Company_builder{}.Build()
-	company.Common = NewCommon(company, "Company")
-	company.Persist = core.NewPersister(company, core.ConfigMap["CompanyPersistFilename"])
+	company.PathistModel = core.NewPathistModel(core.ConfigMap["CompanyPersistFilename"])
 
 	return company
+}
+
+func (m *Company) GetModelName() string {
+	return "Company"
 }
 
 // ParseFromTarget は"[0-9] [会社名]"形式のファイル名となっているパスを解析します
@@ -84,7 +84,7 @@ func (m *Company) ParseFromTarget(targets ...string) error {
 	m.SetShortName(shortName)
 
 	// IDの設定、targetの設定が終了した後に実行
-	m.SetDefaultId()
+	m.SetMessageId()
 
 	return nil
 }
@@ -115,9 +115,7 @@ func (m *Company) Update(newCompany *Company) error {
 	}
 
 	// Persist情報の更新
-	m.UpdatePersists(newCompany.Persist)
-
-	return nil
+	return m.UpdatePersists(newCompany)
 }
 
 // GenerateCompanyTarget はパラメータをもとに管理フォルダー名変更します

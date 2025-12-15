@@ -14,10 +14,7 @@ type Koji struct {
 	*grpcv1.Koji
 
 	// Common 共通モデルフィールド
-	*Common
-
-	// Persist 永続化用フィールド
-	*core.Persist
+	*core.PathistModel
 }
 
 // NewKoji FolderNameからKojiを作成します（高速化版）
@@ -25,8 +22,7 @@ func NewKoji() *Koji {
 
 	koji := &Koji{}
 	koji.Koji = grpcv1.Koji_builder{}.Build()
-	koji.Common = NewCommon(koji, "Koji")
-	koji.Persist = core.NewPersister(koji, core.ConfigMap["KojiPersistFilename"])
+	koji.PathistModel = core.NewPathistModel(core.ConfigMap["KojiPersistFilename"])
 
 	return koji
 }
@@ -72,7 +68,7 @@ func (m *Koji) ParseKojiTarget(target string) error {
 	m.SetPersistDescription(companyName + " " + locationName)
 
 	// IDの設定
-	m.SetDefaultId()
+	m.SetMessageId()
 
 	return nil
 }

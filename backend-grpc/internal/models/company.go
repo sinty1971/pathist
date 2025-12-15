@@ -84,9 +84,7 @@ func (m *Company) ParseFromTarget(targets ...string) error {
 	m.SetShortName(shortName)
 
 	// IDの設定、targetの設定が終了した後に実行
-	m.SetMessageId()
-
-	return nil
+	return m.SetMessageId()
 }
 
 // Update は会社情報を更新します

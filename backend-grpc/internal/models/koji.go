@@ -68,20 +68,7 @@ func (m *Koji) ParseKojiTarget(target string) error {
 	m.SetPersistDescription(companyName + " " + locationName)
 
 	// IDの設定
-	m.SetMessageId()
-
-	return nil
-}
-
-// generateDescription は説明文を効率的に構築
-func generateDescription(companyName, locationName string) string {
-	if companyName == "" {
-		return "工事情報"
-	}
-	if locationName == "" {
-		return companyName + "の工事情報"
-	}
-	return companyName + "の" + locationName + "における工事情報"
+	return m.SetMessageId()
 }
 
 // GenerateKojiStatus はプロジェクトステータスを判定する
@@ -118,7 +105,9 @@ func (obj *Koji) Update(updatedKoji *Koji) (*Koji, error) {
 }
 
 // UpdateFolderPath は工事フォルダー名を更新します
-// ID 及び Target の情報は無視されます
+//
+// # Id 及び Target の情報は無視されます
+//
 // TODO: 不完全です、実際にはまだ更新処理していません
 func (obj *Koji) UpdateFolderPath(src *Koji) bool {
 	if src == nil {
@@ -127,7 +116,7 @@ func (obj *Koji) UpdateFolderPath(src *Koji) bool {
 
 	// 開始日が無効な場合の早期リターン
 	start := &Timestamp{Timestamp: src.GetStart()}
-	if start.IsValid() == false {
+	if !start.IsValid() {
 		return false
 	}
 

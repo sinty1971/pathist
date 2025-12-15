@@ -15,7 +15,14 @@ import (
 )
 
 // PathistInterface は共通フィールドを持つモデルのインターフェースを定義します。
-// １．永続化のために使用されます。
+//
+// 注意事項：protobuf メッセージを持っていることが前提となります。
+// 以下のメソッドを実装する必要があります。
+//
+//   - GetMessage() protoreflect.Message
+//   - GetModelName() string
+//   - SetId(id string)
+//   - GetTarget() string
 type PathistInterface interface {
 	// GetMessage はモデルの protobuf メッセージを取得します。
 	GetMessage() protoreflect.Message
@@ -56,11 +63,19 @@ func NewPathistModel(persistFilename string) *PathistModel {
 }
 
 // SetMessageId はメッセージのIdを設定します。
+//
 // インスタンスの Targetフィールドが事前に設定されている必要があります。
-func (m *PathistModel) SetMessageId() {
+func (m *PathistModel) SetMessageId() error {
+	//
+	if m.GetTarget() == "" {
+		return errors.New("target is not set")
+	}
+
+	// ID 生成用テキストを作成してIDを生成
 	text := m.GetModelName() + filepath.Base(m.GetTarget())
 	id := GenerateIdFromString(text)
 	m.SetId(id)
+	return nil
 }
 
 // LoadPersists は永続化ファイルから永続化データのみを読み込みます。

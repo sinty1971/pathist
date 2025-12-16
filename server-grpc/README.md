@@ -39,7 +39,7 @@ go run cmd/fileclient/main.go \
 
 ## ディレクトリ構成
 
-``` terminal
+```terminal
 server-grpc/
 ├── cmd/
 │   ├── companyclient/ # 会社 API を叩く CLI

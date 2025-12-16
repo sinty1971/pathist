@@ -79,7 +79,7 @@ const {
 
 #### 1. ID同期API エンドポイント
 
-``` bash
+```terminal
 POST /api/id-sync/generate-koji    # 工事ID生成
 POST /api/id-sync/generate-path    # パスID生成
 POST /api/id-sync/validate         # ID検証

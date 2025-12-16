@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/core"
+	grpcv1 "server-grpc/gen/grpc/v1"
+	"server-grpc/internal/core"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。

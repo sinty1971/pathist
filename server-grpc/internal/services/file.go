@@ -9,10 +9,10 @@ import (
 	"strings"
 	"sync"
 
-	grpc "backend-grpc/gen/grpc/v1"
-	grpcConnect "backend-grpc/gen/grpc/v1/grpcv1connect"
-	"backend-grpc/internal/core"
-	"backend-grpc/internal/models"
+	grpc "server-grpc/gen/grpc/v1"
+	grpcConnect "server-grpc/gen/grpc/v1/grpcv1connect"
+	"server-grpc/internal/core"
+	"server-grpc/internal/models"
 )
 
 // FileService の実装

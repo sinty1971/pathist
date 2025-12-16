@@ -1,18 +1,18 @@
 package services
 
 import (
-	"backend-grpc/internal/core"
 	"context"
 	"errors"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
+	"server-grpc/internal/core"
 	"sync"
 
-	grpcv1 "backend-grpc/gen/grpc/v1"
-	grpcv1connect "backend-grpc/gen/grpc/v1/grpcv1connect"
-	"backend-grpc/internal/models"
+	grpcv1 "server-grpc/gen/grpc/v1"
+	grpcv1connect "server-grpc/gen/grpc/v1/grpcv1connect"
+	"server-grpc/internal/models"
 
 	"connectrpc.com/connect"
 	"github.com/fsnotify/fsnotify"

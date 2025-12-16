@@ -1,8 +1,8 @@
 package services
 
 // import (
-// 	"backend-grpc/internal/models"
-// 	"backend-grpc/internal/utils"
+// 	"server-grpc/internal/models"
+// 	"server-grpc/internal/utils"
 // 	"errors"
 // 	"fmt"
 // 	"os"

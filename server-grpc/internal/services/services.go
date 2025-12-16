@@ -1,6 +1,6 @@
 package services
 
-import "backend-grpc/internal/core"
+import "server-grpc/internal/core"
 
 // Sevice は各サービスが実装すべきインターフェースを定義します。
 type Sevice interface {

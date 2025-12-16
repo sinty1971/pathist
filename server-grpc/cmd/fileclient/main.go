@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/gen/grpc/v1/grpcv1connect"
+	grpcv1 "server-grpc/gen/grpc/v1"
+	"server-grpc/gen/grpc/v1/grpcv1connect"
 )
 
 func main() {

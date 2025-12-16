@@ -1,7 +1,6 @@
 package main
 
 import (
-	"backend-grpc/gen/grpc/v1/grpcv1connect"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -17,10 +16,11 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"server-grpc/gen/grpc/v1/grpcv1connect"
 	"syscall"
 	"time"
 
-	"backend-grpc/internal/services"
+	"server-grpc/internal/services"
 
 	"connectrpc.com/grpcreflect"
 	"golang.org/x/net/http2"
@@ -164,8 +164,8 @@ func ensureCertificate(certFile, keyFile string) error {
 	tmpl := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
 		Subject: pkix.Name{
-			CommonName:   "Penguin Backend gRPC",
-			Organization: []string{"Penguin Backend"},
+			CommonName:   "Pathist gRPC Server",
+			Organization: []string{"Pathist gRPC Server"},
 		},
 		NotBefore:             time.Now().Add(-1 * time.Hour),
 		NotAfter:              time.Now().Add(365 * 24 * time.Hour),

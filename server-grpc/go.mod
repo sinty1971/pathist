@@ -1,4 +1,4 @@
-module backend-grpc
+module server-grpc
 
 go 1.25.0
 
@@ -9,7 +9,6 @@ require (
 	golang.org/x/crypto v0.45.0
 	golang.org/x/net v0.47.0
 	google.golang.org/protobuf v1.36.10
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

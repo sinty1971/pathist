@@ -4,8 +4,8 @@ import (
 	"errors"
 	"os"
 
-	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/core"
+	grpcv1 "server-grpc/gen/grpc/v1"
+	"server-grpc/internal/core"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

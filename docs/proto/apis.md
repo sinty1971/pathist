@@ -8,7 +8,7 @@ Protocol Buffers Editions 2023を使用したgRPC/Connect API仕様書
 
 - **Package**: `grpc.v1`
 - **Edition**: Protocol Buffers Editions 2023
-- **Go Package**: `backend-grpc/gen/grpc/v1;grpcv1`
+- **Go Package**: `server-grpc/gen/grpc/v1;grpcv1`
 
 ## データ型
 

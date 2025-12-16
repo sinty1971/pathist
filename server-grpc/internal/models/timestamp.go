@@ -1,12 +1,12 @@
 package models
 
 import (
-	"backend-grpc/internal/core"
 	"errors"
 	"fmt"
 	"maps"
 	"math/big"
 	"regexp"
+	"server-grpc/internal/core"
 	"slices"
 	"strconv"
 	"strings"

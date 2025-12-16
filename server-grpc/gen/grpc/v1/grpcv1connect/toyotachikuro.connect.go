@@ -5,11 +5,11 @@
 package grpcv1connect
 
 import (
-	v1 "backend-grpc/gen/grpc/v1"
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
 	http "net/http"
+	v1 "server-grpc/gen/grpc/v1"
 	strings "strings"
 )
 

@@ -1,10 +1,10 @@
 package models
 
 import (
-	grpcv1 "backend-grpc/gen/grpc/v1"
-	"backend-grpc/internal/core"
 	"errors"
 	"path/filepath"
+	grpcv1 "server-grpc/gen/grpc/v1"
+	"server-grpc/internal/core"
 	"strings"
 	"time"
 )

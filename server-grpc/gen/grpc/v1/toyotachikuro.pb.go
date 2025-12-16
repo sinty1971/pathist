@@ -1747,8 +1747,8 @@ const file_grpc_v1_toyotachikuro_proto_rawDesc = "" +
 	"\aGetKoji\x12\x17.grpc.v1.GetKojiRequest\x1a\x18.grpc.v1.GetKojiResponse\x12B\n" +
 	"\tGetKojies\x12\x19.grpc.v1.GetKojiesRequest\x1a\x1a.grpc.v1.GetKojiesResponse\x12E\n" +
 	"\n" +
-	"UpdateKoji\x12\x1a.grpc.v1.UpdateKojiRequest\x1a\x1b.grpc.v1.UpdateKojiResponseB\x89\x01\n" +
-	"\vcom.grpc.v1B\x12ToyotachikuroProtoP\x01Z\x1fbackend-grpc/gen/grpc/v1;grpcv1\xa2\x02\x03GXX\xaa\x02\aGrpc.V1\xca\x02\aGrpc\\V1\xe2\x02\x13Grpc\\V1\\GPBMetadata\xea\x02\bGrpc::V1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
+	"UpdateKoji\x12\x1a.grpc.v1.UpdateKojiRequest\x1a\x1b.grpc.v1.UpdateKojiResponseB\x88\x01\n" +
+	"\vcom.grpc.v1B\x12ToyotachikuroProtoP\x01Z\x1eserver-grpc/gen/grpc/v1;grpcv1\xa2\x02\x03GXX\xaa\x02\aGrpc.V1\xca\x02\aGrpc\\V1\xe2\x02\x13Grpc\\V1\\GPBMetadata\xea\x02\bGrpc::V1\x92\x03\a\xd2>\x02\x10\x03\b\x02b\beditionsp\xe8\a"
 
 var file_grpc_v1_toyotachikuro_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_grpc_v1_toyotachikuro_proto_goTypes = []any{

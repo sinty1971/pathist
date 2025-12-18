@@ -7,6 +7,8 @@ import (
 	"server-grpc/internal/core"
 	"strings"
 	"time"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type Koji struct {
@@ -14,7 +16,7 @@ type Koji struct {
 	*grpcv1.Koji
 
 	// Common 共通モデルフィールド
-	*core.PathistModel
+	Pathist *core.Pathist
 }
 
 // NewKoji FolderNameからKojiを作成します（高速化版）
@@ -22,53 +24,62 @@ func NewKoji() *Koji {
 
 	koji := &Koji{}
 	koji.Koji = grpcv1.Koji_builder{}.Build()
-	koji.PathistModel = core.NewPathistModel(core.ConfigMap["KojiPersistFilename"])
+	koji.Pathist = core.NewPathist(koji, core.ConfigMap["KojiPersistFilename"])
 
 	return koji
 }
 
-// ParseKojiTarget は target から工事開始日・会社名・現場名を取得
-func (m *Koji) ParseKojiTarget(target string) error {
+func (m *Koji) GetProtoMessage() proto.Message {
+	if m == nil {
+		return nil
+	}
+	return m.Koji
+}
+
+// ParseFrom は target から工事開始日・会社名・現場名を取得
+func (m *Koji) ParseFrom(pathistFolder string) error {
 
 	var (
-		start        *Timestamp
+		start        = new(Timestamp)
 		companyName  string
 		locationName string
-		err          error
 	)
 
 	// フォルダー名を取得
-	foldername := core.GetBaseName(target)
+	foldername := core.GetBaseName(pathistFolder)
 
 	// ファイル名から工事開始日の取得と日付除外文字列の取得
-	var withoutDate string
-	start, err = ParseTimestamp(foldername, &withoutDate)
+	dateRemoved, err := ParseTimestamp(foldername, start)
 	if err != nil {
 		return err
 	}
 
-	if withoutDate == "" {
+	if dateRemoved == "" {
 		return errors.New("フォルダー名が工事フォルダーの書式に合致していません")
 	}
 
 	// 最初のスペースで分割（最適化）
-	if spaceIndex := strings.Index(withoutDate, " "); spaceIndex > 0 {
-		companyName = withoutDate[:spaceIndex]
-		if spaceIndex+1 < len(withoutDate) {
-			locationName = withoutDate[spaceIndex+1:]
+	if idx := strings.Index(dateRemoved, " "); idx > 0 {
+		companyName = dateRemoved[:idx]
+		if idx+1 < len(dateRemoved) {
+			locationName = dateRemoved[idx+1:]
 		}
 	} else {
-		companyName = withoutDate
+		companyName = dateRemoved
 	}
 
-	m.SetTarget(target)
+	m.SetPathistFolder(pathistFolder)
 	m.SetStart(start.Timestamp)
 	m.SetCompanyName(companyName)
 	m.SetLocationName(locationName)
-	m.SetPersistDescription(companyName + " " + locationName)
 
 	// IDの設定
-	return m.SetMessageId()
+	id, err := m.Pathist.GenerateId()
+	if err != nil {
+		return err
+	}
+	m.SetId(id)
+	return nil
 }
 
 // GenerateKojiStatus はプロジェクトステータスを判定する
@@ -90,18 +101,18 @@ func GenerateKojiStatus(start *Timestamp, end *Timestamp) string {
 	}
 }
 
-func (obj *Koji) Update(updatedKoji *Koji) (*Koji, error) {
-	if obj == nil || updatedKoji == nil {
+func (m *Koji) ImportFrom(src *Koji) (*Koji, error) {
+	if m == nil || src == nil {
 		return nil, errors.New("koji or updatedKoji is nil")
 	}
 
 	// 管理フォルダーは変更しない
-	updatedKoji.SetTarget(obj.GetTarget())
+	src.SetPathistFolder(m.GetPathistFolder())
 
 	// 永続化サービスの設定を引き継ぐ
 	// updatedKoji.PersistFilename = obj.PersistFilename
 
-	return updatedKoji, nil
+	return src, nil
 }
 
 // UpdateFolderPath は工事フォルダー名を更新します
@@ -109,7 +120,7 @@ func (obj *Koji) Update(updatedKoji *Koji) (*Koji, error) {
 // # Id 及び Target の情報は無視されます
 //
 // TODO: 不完全です、実際にはまだ更新処理していません
-func (obj *Koji) UpdateFolderPath(src *Koji) bool {
+func (m *Koji) UpdateFolderPath(src *Koji) bool {
 	if src == nil {
 		return false
 	}
@@ -142,13 +153,13 @@ func (obj *Koji) UpdateFolderPath(src *Koji) bool {
 	builder.WriteByte(' ')
 	builder.WriteString(locationName)
 
-	dir := filepath.Dir(obj.GetTarget())
+	dir := filepath.Dir(m.GetPathistFolder())
 	if dir == "." {
 		return false
 	}
-	prevTarget := obj.GetTarget()
+	prevTarget := m.GetPathistFolder()
 	target := builder.String()
-	src.SetTarget(filepath.Join(dir, target))
+	src.SetPathistFolder(filepath.Join(dir, target))
 
 	return prevTarget != target
 }

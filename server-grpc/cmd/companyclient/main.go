@@ -99,7 +99,7 @@ func showCompany(ctx context.Context, client grpcv1connect.CompanyServiceClient,
 	fmt.Printf("Company Information (ID: %s)\n", companyID)
 	fmt.Println(strings.Repeat("=", 50))
 	fmt.Printf("ID: %s\n", company.GetId())
-	fmt.Printf("Target: %s\n", company.GetTarget())
+	fmt.Printf("Pathist Folder: %s\n", company.GetPathistFolder())
 	fmt.Printf("Short Name: %s\n", company.GetShortName())
 	fmt.Printf("Long Name: %s\n", company.GetPersistLongName())
 	fmt.Printf("Category Index: %d\n", company.GetCategoryIndex())

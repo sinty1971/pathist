@@ -7,17 +7,19 @@ import (
 	"strconv"
 	"strings"
 
+	"google.golang.org/protobuf/proto"
+
 	grpcv1 "server-grpc/gen/grpc/v1"
 	"server-grpc/internal/core"
 )
 
 // Company は gRPC grpc.v1.Company メッセージの拡張版です。
 type Company struct {
-	// Model 共通モデルフィールド
-	*core.PathistModel
-
 	// Company メッセージ本体
 	*grpcv1.Company
+
+	// Model Pathist 共通モデル
+	Pathist *core.Pathist
 }
 
 // NewCompany インスタンス作成と初期化を行います
@@ -26,26 +28,29 @@ func NewCompany() *Company {
 	// インスタンス作成と初期化
 	company := &Company{}
 	company.Company = grpcv1.Company_builder{}.Build()
-	company.PathistModel = core.NewPathistModel(core.ConfigMap["CompanyPersistFilename"])
+	company.Pathist = core.NewPathist(company, core.ConfigMap["CompanyPersistFilename"])
 
 	return company
 }
 
-func (m *Company) GetModelName() string {
-	return "Company"
+func (m *Company) GetProtoMessage() proto.Message {
+	if m == nil {
+		return nil
+	}
+	return m.Company
 }
 
 // ParseFromTarget は"[0-9] [会社名]"形式のファイル名となっているパスを解析します
 // 会社名内のハイフン（含まれる場合）以前の文字列を会社名、ハイフン以降の文字列を関連名として扱います
 // 戻り値Companyは: Id, Target, Cateory, ShortName, Tags のみ設定されます
-func (m *Company) ParseFromTarget(targets ...string) error {
+func (m *Company) ParseFrom(pathistFolder ...string) error {
 
 	// パスを結合
-	target := filepath.Join(targets...)
+	folder := filepath.Join(pathistFolder...)
 
 	// 引数 target からフォルダー名取得とチェック
 	// "[0-9] [会社名]"の解析
-	folderName := filepath.Base(target)
+	folderName := filepath.Base(folder)
 	if len(folderName) < 3 {
 		return errors.New("targetのファイル名形式が無効です（長さが短い）")
 	} else if folderName[1] != ' ' {
@@ -79,48 +84,53 @@ func (m *Company) ParseFromTarget(targets ...string) error {
 	}
 
 	// Target,Category,ShortNameの設定
-	m.SetTarget(target)
+	m.SetPathistFolder(folder)
 	m.SetCategoryIndex(int32(catIndex))
 	m.SetShortName(shortName)
 
 	// IDの設定、targetの設定が終了した後に実行
-	return m.SetMessageId()
+	id, err := m.Pathist.GenerateId()
+	if err != nil {
+		return err
+	}
+	m.SetId(id)
+	return nil
 }
 
-// Update は会社情報を更新します
+// ImportFrom は会社情報を更新します
 // 必要に応じて管理フォルダー名の変更も行います
-func (m *Company) Update(newCompany *Company) error {
+func (m *Company) ImportFrom(src *Company) error {
 
 	// 引数チェック
-	if newCompany == nil {
-		return errors.New("updatedCompany is nil")
+	if src == nil {
+		return errors.New("src Company is nil")
 	}
 
 	// 新しいパラメータを元に管理フォルダーパスを生成
-	newTarget := GenerateCompanyTarget(
-		filepath.Dir(m.GetTarget()),
-		newCompany.GetCategoryIndex(),
-		newCompany.GetShortName(),
+	newPathistFolder := GenerateCompanyPathistFolder(
+		filepath.Dir(m.GetPathistFolder()),
+		src.GetCategoryIndex(),
+		src.GetShortName(),
 	)
 
 	// ファイル名変更の必要がある場合は管理フォルダー名を更新
-	if newTarget != m.GetTarget() {
+	if newPathistFolder != m.GetPathistFolder() {
 
 		// フォルダー名変更
-		if err := os.Rename(m.GetTarget(), newTarget); err != nil {
+		if err := os.Rename(m.GetPathistFolder(), newPathistFolder); err != nil {
 			return err
 		}
 	}
 
 	// Persist情報の更新
-	return m.UpdatePersists(newCompany)
+	return m.Pathist.ImportPersists(src.Pathist)
 }
 
 // GenerateCompanyTarget はパラメータをもとに管理フォルダー名変更します
 // base: 基本パス(原則として　O:/.../1 会社 などの親フォルダー)
 // idx: カテゴリーインデックス
 // name: 省略会社名
-func GenerateCompanyTarget(base string, idx int32, name string) string {
+func GenerateCompanyPathistFolder(base string, idx int32, name string) string {
 	folderName := strconv.Itoa(int(idx)) + " " + name
 	return filepath.Join(base, folderName)
 }

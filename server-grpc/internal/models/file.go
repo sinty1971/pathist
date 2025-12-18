@@ -27,11 +27,11 @@ func NewFile() *File {
 }
 
 // ParseFromPath は指定されたフルパスからファイル情報を解析して設定します
-func (obj *File) ParseFromPath(target string) error {
+func (m *File) ParseFrom(pathistFolder string) error {
 	var err error
 
 	// 絶対パスの正規化
-	normalized, err := core.NormalizeAbsPath(target)
+	normalized, err := core.NormalizeAbsPath(pathistFolder)
 	if err != nil {
 		return err
 	}
@@ -50,16 +50,16 @@ func (obj *File) ParseFromPath(target string) error {
 	modifiedTime := timestamppb.New(osModTime)
 
 	// フィールドの設定
-	obj.SetTarget(normalized)
-	obj.SetSize(osFi.Size())
-	obj.SetModifiedTime(modifiedTime)
+	m.SetPathistFolder(normalized)
+	m.SetSize(osFi.Size())
+	m.SetModifiedTime(modifiedTime)
 	return nil
 }
 
 // GetPersistData は永続化対象のオブジェクトを取得します
 // Persistable インターフェースの実装
-func (obj *File) GetPersistData() (map[string]any, error) {
+func (m *File) GetPersistJsonMap() (map[string]any, error) {
 	return map[string]any{
-		"target": obj.GetTarget(),
+		"pathistFolder": m.GetPathistFolder(),
 	}, nil
 }

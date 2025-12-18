@@ -25,8 +25,8 @@ type FileService struct {
 	// services は任意のgrpcサービスハンドラーへの参照
 	services *Services
 
-	// Target はファイルサービスの絶対パスフォルダー
-	Target string `json:"target" yaml:"target" example:"/penguin/豊田築炉"`
+	// PathistFolder はファイルサービスの絶対パスフォルダー
+	PathistFolder string `json:"pathistFolder" yaml:"pathist_folder" example:"/penguin/豊田築炉"`
 }
 
 func (srv *FileService) Start(services *Services, options *map[string]string) error {
@@ -43,7 +43,7 @@ func (srv *FileService) Start(services *Services, options *map[string]string) er
 	}
 
 	srv.services = services
-	srv.Target = target
+	srv.PathistFolder = target
 
 	return nil
 }
@@ -53,14 +53,14 @@ func (s *FileService) Cleanup() {
 }
 
 func (s *FileService) GetFileBasePath(
-	ctx context.Context, req *grpc.GetFileTargetRequest) (
-	*grpc.GetFileTargetResponse, error) {
+	ctx context.Context, req *grpc.GetFilePathistFolderRequest) (
+	*grpc.GetFilePathistFolderResponse, error) {
 	// コンテキストを無視
 	_ = ctx
 	_ = req
 
-	res := grpc.GetFileTargetResponse_builder{}.Build()
-	res.SetTarget(s.Target)
+	res := grpc.GetFilePathistFolderResponse_builder{}.Build()
+	res.SetPathistFolder(s.PathistFolder)
 	return res, nil
 }
 
@@ -73,7 +73,7 @@ func (s *FileService) GetFiles(
 	_ = ctx
 
 	// リクエスト情報の取得
-	reqTarget := req.GetTarget()
+	reqTarget := req.GetPathistFolder()
 
 	// 絶対パスを取得
 	absPath, err := s.GetAbsPathFrom(reqTarget)
@@ -110,7 +110,7 @@ func (s *FileService) GetFiles(
 				fullpath := filepath.Join(absPath, dir.Name())
 
 				fi := models.NewFile()
-				if err := fi.ParseFromPath(fullpath); err == nil {
+				if err := fi.ParseFrom(fullpath); err == nil {
 					channelOut <- fi.File
 				}
 			}
@@ -147,7 +147,7 @@ func (s *FileService) GetAbsPathFrom(relPath string) (res string, err error) {
 		return "", errors.New("絶対パスは使用できません")
 	}
 
-	res = filepath.Join(s.Target, relPath)
+	res = filepath.Join(s.PathistFolder, relPath)
 
 	return // naked return
 }

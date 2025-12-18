@@ -39,9 +39,9 @@ const (
 const (
 	// FileServiceGetFilesProcedure is the fully-qualified name of the FileService's GetFiles RPC.
 	FileServiceGetFilesProcedure = "/grpc.v1.FileService/GetFiles"
-	// FileServiceGetFileTargetProcedure is the fully-qualified name of the FileService's GetFileTarget
-	// RPC.
-	FileServiceGetFileTargetProcedure = "/grpc.v1.FileService/GetFileTarget"
+	// FileServiceGetFilePathistFolderProcedure is the fully-qualified name of the FileService's
+	// GetFilePathistFolder RPC.
+	FileServiceGetFilePathistFolderProcedure = "/grpc.v1.FileService/GetFilePathistFolder"
 	// CompanyServiceGetCompaniesProcedure is the fully-qualified name of the CompanyService's
 	// GetCompanies RPC.
 	CompanyServiceGetCompaniesProcedure = "/grpc.v1.CompanyService/GetCompanies"
@@ -65,7 +65,7 @@ const (
 // FileServiceClient is a client for the grpc.v1.FileService service.
 type FileServiceClient interface {
 	GetFiles(context.Context, *v1.GetFilesRequest) (*v1.GetFilesResponse, error)
-	GetFileTarget(context.Context, *v1.GetFileTargetRequest) (*v1.GetFileTargetResponse, error)
+	GetFilePathistFolder(context.Context, *v1.GetFilePathistFolderRequest) (*v1.GetFilePathistFolderResponse, error)
 }
 
 // NewFileServiceClient constructs a client for the grpc.v1.FileService service. By default, it uses
@@ -85,10 +85,10 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(fileServiceMethods.ByName("GetFiles")),
 			connect.WithClientOptions(opts...),
 		),
-		getFileTarget: connect.NewClient[v1.GetFileTargetRequest, v1.GetFileTargetResponse](
+		getFilePathistFolder: connect.NewClient[v1.GetFilePathistFolderRequest, v1.GetFilePathistFolderResponse](
 			httpClient,
-			baseURL+FileServiceGetFileTargetProcedure,
-			connect.WithSchema(fileServiceMethods.ByName("GetFileTarget")),
+			baseURL+FileServiceGetFilePathistFolderProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("GetFilePathistFolder")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -96,8 +96,8 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // fileServiceClient implements FileServiceClient.
 type fileServiceClient struct {
-	getFiles      *connect.Client[v1.GetFilesRequest, v1.GetFilesResponse]
-	getFileTarget *connect.Client[v1.GetFileTargetRequest, v1.GetFileTargetResponse]
+	getFiles             *connect.Client[v1.GetFilesRequest, v1.GetFilesResponse]
+	getFilePathistFolder *connect.Client[v1.GetFilePathistFolderRequest, v1.GetFilePathistFolderResponse]
 }
 
 // GetFiles calls grpc.v1.FileService.GetFiles.
@@ -109,9 +109,9 @@ func (c *fileServiceClient) GetFiles(ctx context.Context, req *v1.GetFilesReques
 	return nil, err
 }
 
-// GetFileTarget calls grpc.v1.FileService.GetFileTarget.
-func (c *fileServiceClient) GetFileTarget(ctx context.Context, req *v1.GetFileTargetRequest) (*v1.GetFileTargetResponse, error) {
-	response, err := c.getFileTarget.CallUnary(ctx, connect.NewRequest(req))
+// GetFilePathistFolder calls grpc.v1.FileService.GetFilePathistFolder.
+func (c *fileServiceClient) GetFilePathistFolder(ctx context.Context, req *v1.GetFilePathistFolderRequest) (*v1.GetFilePathistFolderResponse, error) {
+	response, err := c.getFilePathistFolder.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -121,7 +121,7 @@ func (c *fileServiceClient) GetFileTarget(ctx context.Context, req *v1.GetFileTa
 // FileServiceHandler is an implementation of the grpc.v1.FileService service.
 type FileServiceHandler interface {
 	GetFiles(context.Context, *v1.GetFilesRequest) (*v1.GetFilesResponse, error)
-	GetFileTarget(context.Context, *v1.GetFileTargetRequest) (*v1.GetFileTargetResponse, error)
+	GetFilePathistFolder(context.Context, *v1.GetFilePathistFolderRequest) (*v1.GetFilePathistFolderResponse, error)
 }
 
 // NewFileServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -137,18 +137,18 @@ func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(fileServiceMethods.ByName("GetFiles")),
 		connect.WithHandlerOptions(opts...),
 	)
-	fileServiceGetFileTargetHandler := connect.NewUnaryHandlerSimple(
-		FileServiceGetFileTargetProcedure,
-		svc.GetFileTarget,
-		connect.WithSchema(fileServiceMethods.ByName("GetFileTarget")),
+	fileServiceGetFilePathistFolderHandler := connect.NewUnaryHandlerSimple(
+		FileServiceGetFilePathistFolderProcedure,
+		svc.GetFilePathistFolder,
+		connect.WithSchema(fileServiceMethods.ByName("GetFilePathistFolder")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/grpc.v1.FileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case FileServiceGetFilesProcedure:
 			fileServiceGetFilesHandler.ServeHTTP(w, r)
-		case FileServiceGetFileTargetProcedure:
-			fileServiceGetFileTargetHandler.ServeHTTP(w, r)
+		case FileServiceGetFilePathistFolderProcedure:
+			fileServiceGetFilePathistFolderHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -162,8 +162,8 @@ func (UnimplementedFileServiceHandler) GetFiles(context.Context, *v1.GetFilesReq
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFiles is not implemented"))
 }
 
-func (UnimplementedFileServiceHandler) GetFileTarget(context.Context, *v1.GetFileTargetRequest) (*v1.GetFileTargetResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFileTarget is not implemented"))
+func (UnimplementedFileServiceHandler) GetFilePathistFolder(context.Context, *v1.GetFilePathistFolderRequest) (*v1.GetFilePathistFolderResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("grpc.v1.FileService.GetFilePathistFolder is not implemented"))
 }
 
 // CompanyServiceClient is a client for the grpc.v1.CompanyService service.

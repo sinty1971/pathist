@@ -27,16 +27,16 @@ func main() {
 
 	client := grpcv1connect.NewFileServiceClient(http.DefaultClient, *baseURL)
 
-	resFileBasePath, err := client.GetFileTarget(
+	resFileBasePath, err := client.GetFilePathistFolder(
 		ctx,
-		grpcv1.GetFileTargetRequest_builder{}.Build(),
+		grpcv1.GetFilePathistFolderRequest_builder{}.Build(),
 	)
 	if err != nil {
-		log.Fatalf("GetFileTarget の呼び出しに失敗しました: %v", err)
+		log.Fatalf("GetFilePathistFolder の呼び出しに失敗しました: %v", err)
 	}
 
 	req := grpcv1.GetFilesRequest_builder{
-		Target: *target,
+		PathistFolder: *target,
 	}.Build()
 
 	resFiles, err := client.GetFiles(ctx, req)
@@ -50,8 +50,8 @@ func main() {
 			Target        string         `json:"target"`
 			Files         []*grpcv1.File `json:"files"`
 		}{
-			ManagedFolder: resFileBasePath.GetTarget(),
-			Target:        req.GetTarget(),
+			ManagedFolder: resFileBasePath.GetPathistFolder(),
+			Target:        req.GetPathistFolder(),
 			Files:         resFiles.GetFiles(),
 		}
 
@@ -64,14 +64,14 @@ func main() {
 	}
 
 	// ターミナルで読みやすいように簡易フォーマットで出力する。
-	fmt.Printf("ManagedFolder: %s\n", resFileBasePath.GetTarget())
-	fmt.Printf("Target: %s\n", req.GetTarget())
-	fmt.Println("IsDir\tSize\tModified\tTargetPath\tIdealPath")
+	fmt.Printf("ManagedFolder: %s\n", resFileBasePath.GetPathistFolder())
+	fmt.Printf("PathistFolder: %s\n", req.GetPathistFolder())
+	fmt.Println("IsDir\tSize\tModified\tPathistFolder\tIdealPath")
 	for _, file := range resFiles.GetFiles() {
 		fmt.Printf("%d\t%s\t%s\t\n",
 			file.GetSize(),
 			file.GetModifiedTime().AsTime().Format(time.RFC3339Nano),
-			file.GetTarget(),
+			file.GetPathistFolder(),
 		)
 	}
 }

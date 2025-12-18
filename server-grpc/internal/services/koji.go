@@ -141,9 +141,9 @@ func (s *KojiService) UpdateKojies() error {
 		go func() {
 			defer wg.Done()
 			for idx := range jobs {
-				kojiPath := path.Join(s.target, entries[idx].Name())
+				folder := path.Join(s.target, entries[idx].Name())
 				koji := models.NewKoji()
-				if err := koji.ParseKojiTarget(kojiPath); err == nil {
+				if err := koji.ParseFrom(folder); err == nil {
 					results <- koji
 				} else {
 					results <- nil // エラーの場合はnilを返す
@@ -231,7 +231,7 @@ func (s *KojiService) UpdateKoji(
 	newKoji := &models.Koji{Koji: grpcNewKoji}
 
 	// 工事情報を更新
-	newKoji, err := prevKoji.Update(newKoji)
+	newKoji, err := prevKoji.ImportFrom(newKoji)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

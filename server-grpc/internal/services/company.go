@@ -255,7 +255,7 @@ func (srv *CompanyService) UpdateCompanies() error {
 	for _, entry := range entries {
 		// Companyインスタンスの作成と初期化
 		company := models.NewCompany()
-		if err := company.ParseFromTarget(srv.target, entry.Name()); err == nil {
+		if err := company.ParseFrom(srv.target, entry.Name()); err == nil {
 			srv.companies[company.GetId()] = company
 		}
 	}
@@ -263,7 +263,7 @@ func (srv *CompanyService) UpdateCompanies() error {
 	// 会社の内部情報の取得
 	for _, company := range srv.companies {
 		// persist情報の読み込み
-		if err := company.LoadPersists(); err != nil {
+		if err := company.Pathist.LoadPersists(); err != nil {
 			log.Printf("Failed to load persist info for company ShortName %s: %v", company.GetShortName(), err)
 		}
 	}
@@ -283,15 +283,15 @@ func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Co
 	}
 
 	// 新しい会社情報の管理フォルダー名を生成
-	newTarget := models.GenerateCompanyTarget(
-		filepath.Dir(newCompany.GetTarget()),
+	newTarget := models.GenerateCompanyPathistFolder(
+		filepath.Dir(newCompany.GetPathistFolder()),
 		newCompany.GetCategoryIndex(),
 		newCompany.GetShortName())
 
 	// 管理フォルダーの変更がある場合はフォルダー移動を実施
-	if exist && prevCompany.GetTarget() != newCompany.GetTarget() {
+	if exist && prevCompany.GetPathistFolder() != newCompany.GetPathistFolder() {
 		// 管理フォルダーの変更がある場合はフォルダー移動を実施
-		prevTarget := prevCompany.GetTarget()
+		prevTarget := prevCompany.GetPathistFolder()
 		if err := os.Rename(prevTarget, newTarget); err != nil {
 			return nil, err
 		}
@@ -301,7 +301,7 @@ func (srv *CompanyService) UpdateNewCompany(prevId string, newCompany *models.Co
 	srv.companies[newCompany.GetId()] = newCompany
 
 	// persist情報の書き込み
-	if err := newCompany.SavePersists(); err != nil {
+	if err := newCompany.Pathist.SavePersists(); err != nil {
 		log.Printf("Failed to save persist info for company ShortName %s: %v", newCompany.GetShortName(), err)
 	}
 

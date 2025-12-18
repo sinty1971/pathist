@@ -12,7 +12,7 @@ option go_package = "server-grpc/gen/grpc/v1;grpcv1";
 // File represents information about a file or directory
 message File {
   string id = 1;
-  string target = 2;
+  string pathist_folder = 2;
   int64 size = 3;
   google.protobuf.Timestamp modified_time = 4;
 }
@@ -20,7 +20,7 @@ message File {
 // Company represents a company entity with inside information
 message Company {
   string id = 1;
-  string target = 2;
+  string pathist_folder = 2;
   string short_name = 3;
   int32 category_index = 4;
   string persist_long_name = 5;
@@ -42,18 +42,17 @@ message CompanyCategory {
 message Koji {
   string id = 1;
   string status = 2;
-  string target = 3;
+  string pathist_folder = 3;
   google.protobuf.Timestamp start = 4;
   string company_name = 5;
   string location_name = 6;
   google.protobuf.Timestamp persist_end = 7;
-  string persist_description = 8;
 }
 
 // FileService provides operations for file management
 service FileService {
   rpc GetFiles(GetFilesRequest) returns (GetFilesResponse);
-  rpc GetFileTarget(GetFileTargetRequest) returns (GetFileTargetResponse);
+  rpc GetFilePathistFolder(GetFilePathistFolderRequest) returns (GetFilePathistFolderResponse);
 }
 
 // CompanyService provides operations for managing companies
@@ -73,17 +72,17 @@ service KojiService {
 
 // FileService messages
 message GetFilesRequest {
-  string target = 1;
+  string pathist_folder = 1;
 }
 
 message GetFilesResponse {
   repeated File files = 1;
 }
 
-message GetFileTargetRequest {}
+message GetFilePathistFolderRequest {}
 
-message GetFileTargetResponse {
-  string target = 1;
+message GetFilePathistFolderResponse {
+  string pathist_folder = 1;
 }
 
 // CompanyService messages

@@ -28,11 +28,11 @@ type CompanyService struct {
 	// companies は会社データのキャッシュマップ
 	companies map[string]*models.Company
 
-	// target はこのサービスが管理する会社データのルートフォルダー
-	target string
+	// pathistServiceFolder はこのサービスが管理する会社データのルートフォルダー
+	pathistServiceFolder string
 
-	// targetWatcher は target のファイルシステム監視オブジェクト
-	targetWatcher *fsnotify.Watcher
+	// watcher は target のファイルシステム監視オブジェクト
+	watcher *fsnotify.Watcher
 
 	// watchedDirs は監視登録済みディレクトリの集合
 	watchedDirs map[string]struct{}
@@ -54,7 +54,7 @@ func (srv *CompanyService) Start(services *Services, options *map[string]string)
 
 	// 既存インスタンスに値をセット（再代入しないこと）
 	srv.services = services
-	srv.target = target
+	srv.pathistServiceFolder = target
 	srv.companies = map[string]*models.Company{}
 	srv.watchedDirs = make(map[string]struct{})
 
@@ -83,10 +83,10 @@ func (srv *CompanyService) watchTarget() error {
 	if err != nil {
 		return err
 	}
-	srv.targetWatcher = watcher
+	srv.watcher = watcher
 
 	// target配下2階層までを監視対象に追加
-	if err := srv.addWatchersRecursively(srv.target, 0); err != nil {
+	if err := srv.addWatchersRecursively(srv.pathistServiceFolder, 0); err != nil {
 		return err
 	}
 
@@ -100,7 +100,7 @@ func (srv *CompanyService) watchTarget() error {
 func (srv *CompanyService) consumeWatcherEvents() {
 	for {
 		select {
-		case event, ok := <-srv.targetWatcher.Events:
+		case event, ok := <-srv.watcher.Events:
 			if !ok {
 				return
 			}
@@ -112,7 +112,7 @@ func (srv *CompanyService) consumeWatcherEvents() {
 				log.Printf("CompanyService: Failed to update company cache map: %v", err)
 			}
 
-		case err, ok := <-srv.targetWatcher.Errors:
+		case err, ok := <-srv.watcher.Errors:
 			if !ok {
 				return
 			}
@@ -191,7 +191,7 @@ func (srv *CompanyService) registerWatcher(target string) error {
 		return nil
 	}
 
-	if err := srv.targetWatcher.Add(target); err != nil {
+	if err := srv.watcher.Add(target); err != nil {
 		return err
 	}
 	srv.watchedDirs[target] = struct{}{}
@@ -214,7 +214,7 @@ func (srv *CompanyService) unregisterWatcherTree(target string) {
 	}
 
 	for _, dir := range targets {
-		if err := srv.targetWatcher.Remove(dir); err != nil {
+		if err := srv.watcher.Remove(dir); err != nil {
 			log.Printf("CompanyService: Failed to remove watcher for %s: %v", dir, err)
 		}
 		delete(srv.watchedDirs, dir)
@@ -223,7 +223,7 @@ func (srv *CompanyService) unregisterWatcherTree(target string) {
 
 // relativeDepth は指定パスの target からの相対深度を返します
 func (srv *CompanyService) relativeDepth(target string) (int, bool) {
-	rel, err := filepath.Rel(srv.target, target)
+	rel, err := filepath.Rel(srv.pathistServiceFolder, target)
 	if err != nil {
 		return -1, false
 	}
@@ -243,7 +243,7 @@ func (srv *CompanyService) relativeDepth(target string) (int, bool) {
 // UpdateCompanies 会社のキャッシュデータを更新します
 func (srv *CompanyService) UpdateCompanies() error {
 	// ファイルシステムから会社フォルダー一覧を取得
-	entries, err := os.ReadDir(srv.target)
+	entries, err := os.ReadDir(srv.pathistServiceFolder)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func (srv *CompanyService) UpdateCompanies() error {
 	for _, entry := range entries {
 		// Companyインスタンスの作成と初期化
 		company := models.NewCompany()
-		if err := company.ParseFrom(srv.target, entry.Name()); err == nil {
+		if err := company.ParseFrom(srv.pathistServiceFolder, entry.Name()); err == nil {
 			srv.companies[company.GetId()] = company
 		}
 	}

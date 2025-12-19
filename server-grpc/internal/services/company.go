@@ -36,6 +36,8 @@ type CompanyService struct {
 
 	// watchedDirs は監視登録済みディレクトリの集合
 	watchedDirs map[string]struct{}
+
+	core.Watcher
 }
 
 const companyWatcherMaxDepth = 2
@@ -56,7 +58,6 @@ func (srv *CompanyService) Start(services *Services, options *map[string]string)
 	srv.services = services
 	srv.pathistServiceFolder = target
 	srv.companies = map[string]*models.Company{}
-	srv.watchedDirs = make(map[string]struct{})
 
 	// companiesの情報を取得
 	if err = srv.UpdateCompanies(); err != nil {
@@ -64,6 +65,13 @@ func (srv *CompanyService) Start(services *Services, options *map[string]string)
 	}
 
 	// watcherの開始
+	watcher, err := core.NewWatcher(srv.pathistServiceFolder, companyWatcherMaxDepth)
+	if err != nil {
+		return err
+	}
+	srv.Watcher = *watcher
+
+	srv.watchedDirs = make(map[string]struct{})
 	if err = srv.watchTarget(); err != nil {
 		return err
 	}

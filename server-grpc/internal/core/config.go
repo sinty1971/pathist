@@ -9,10 +9,10 @@ import (
 // これらの値は、環境変数が設定されていない場合に使用されます。
 var ConfigMap = map[string]string{
 	"FileServiceTarget":          "{ROOT}",
-	"CompanyServiceTarget":       "{ROOT}/1 会社",
+	"CompanyServiceFolder":       "{ROOT}/1 会社",
 	"CompanyPersistFilename":     "@company.yaml",
 	"CompanyPollIntervalMillSec": "3000",
-	"KojiServiceTarget":          "{ROOT}/2 工事",
+	"KojiServiceFolder":          "{ROOT}/2 工事",
 	"KojiPersistFilename":        "@koji.yaml",
 	"MemberPersistFilename":      "@member.yaml",
 }

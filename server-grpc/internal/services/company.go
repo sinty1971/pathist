@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
+	"strconv"
 
 	grpcv1 "server-grpc/gen/grpc/v1"
 	grpcv1connect "server-grpc/gen/grpc/v1/grpcv1connect"
@@ -14,7 +14,6 @@ import (
 	"server-grpc/internal/models"
 
 	"connectrpc.com/connect"
-	"github.com/fsnotify/fsnotify"
 )
 
 // CompanyService の実装
@@ -28,73 +27,53 @@ type CompanyService struct {
 	// companies は会社データのキャッシュマップ
 	companies map[string]*models.Company
 
-	// pathistServiceFolder はこのサービスが管理する会社データのルートフォルダー
-	pathistServiceFolder string
+	// serviceFolder はこのサービスが管理する会社データのルートフォルダー
+	serviceFolder string
 
-	// watcher は target のファイルシステム監視オブジェクト
-	watcher *fsnotify.Watcher
-
-	// watchedDirs は監視登録済みディレクトリの集合
-	watchedDirs map[string]struct{}
-
-	core.Watcher
+	// watcher はファイルシステム監視オブジェクト
+	watcher *core.Watcher
 }
-
-const companyWatcherMaxDepth = 2
 
 // Start は CompanyService を初期化して開始します
 func (srv *CompanyService) Start(services *Services, options *map[string]string) error {
-	// パスをの取得と正規化
-	optTarget, exists := (*options)["CompanyServiceTarget"]
-	if !exists {
-		return errors.New("CompanyServiceTarget option is required")
-	}
-	target, err := core.NormalizeAbsPath(optTarget)
-	if err != nil {
-		return err
-	}
 
 	// 既存インスタンスに値をセット（再代入しないこと）
 	srv.services = services
-	srv.pathistServiceFolder = target
-	srv.companies = map[string]*models.Company{}
+
+	// サービスフォルダーの設定
+	optFolder, exists := (*options)["CompanyServiceFolder"]
+	if !exists {
+		return errors.New("CompanyServiceFolder option is required")
+	}
+
+	// パスをの取得と正規化
+	folder, err := core.NormalizeAbsPath(optFolder)
+	if err != nil {
+		return err
+	}
+	srv.serviceFolder = folder
 
 	// companiesの情報を取得
+	srv.companies = map[string]*models.Company{}
 	if err = srv.UpdateCompanies(); err != nil {
 		return err
 	}
 
 	// watcherの開始
-	watcher, err := core.NewWatcher(srv.pathistServiceFolder, companyWatcherMaxDepth)
-	if err != nil {
-		return err
+	optMaxDepth, exists := (*options)["CompanyWatcherMaxDepth"]
+	if !exists {
+		optMaxDepth = "2"
 	}
-	srv.Watcher = *watcher
+	maxDepth, err := strconv.Atoi(optMaxDepth)
 
-	srv.watchedDirs = make(map[string]struct{})
-	if err = srv.watchTarget(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (srv *CompanyService) Cleanup() {
-	// 現状クリーンアップは不要（監視を廃止したため）
-}
-
-// watchTarget は target のファイルシステム監視を開始します
-// 階層は2階層まで監視します
-func (srv *CompanyService) watchTarget() error {
-	// fsnotifyウォッチャーの作成
-	watcher, err := fsnotify.NewWatcher()
+	// オプションが存在する場合は数値に変換
+	watcher, err := core.NewWatcher(srv.serviceFolder, maxDepth)
 	if err != nil {
 		return err
 	}
 	srv.watcher = watcher
 
-	// target配下2階層までを監視対象に追加
-	if err := srv.addWatchersRecursively(srv.pathistServiceFolder, 0); err != nil {
+	if err = srv.watcher.Start(); err != nil {
 		return err
 	}
 
@@ -104,23 +83,28 @@ func (srv *CompanyService) watchTarget() error {
 	return nil
 }
 
+func (srv *CompanyService) Cleanup() {
+	if srv.watcher != nil {
+		srv.watcher.Close()
+	}
+}
+
 // consumeWatcherEvents はファイルシステム監視イベントを処理します
 func (srv *CompanyService) consumeWatcherEvents() {
 	for {
 		select {
-		case event, ok := <-srv.watcher.Events:
+		case event, ok := <-srv.watcher.Events():
 			if !ok {
 				return
 			}
 			log.Printf("CompanyService: File system event: %s", event)
-			srv.handleWatcherEvent(event)
 
 			// 会社キャッシュの更新
 			if err := srv.UpdateCompanies(); err != nil {
 				log.Printf("CompanyService: Failed to update company cache map: %v", err)
 			}
 
-		case err, ok := <-srv.watcher.Errors:
+		case err, ok := <-srv.watcher.Errors():
 			if !ok {
 				return
 			}
@@ -129,129 +113,10 @@ func (srv *CompanyService) consumeWatcherEvents() {
 	}
 }
 
-// handleWatcherEvent はファイルシステム監視イベントを処理します
-func (srv *CompanyService) handleWatcherEvent(event fsnotify.Event) {
-	// 無効なパスの場合は無視
-	if event.Name == "" {
-		return
-	}
-
-	// ディレクトリ作成イベントの場合は監視対象を拡張
-	if event.Op&fsnotify.Create != 0 {
-		if err := srv.addWatchIfDirectory(event.Name); err != nil {
-			log.Printf("CompanyService: Failed to expand watcher for %s: %v", event.Name, err)
-		}
-	}
-
-	// ディレクトリ削除・移動イベントの場合は監視対象を解除
-	if event.Op&(fsnotify.Remove|fsnotify.Rename) != 0 {
-		srv.unregisterWatcherTree(event.Name)
-	}
-}
-
-// addWatchIfDirectory は指定パスがディレクトリの場合に監視対象に追加します
-func (srv *CompanyService) addWatchIfDirectory(path string) error {
-	info, err := os.Stat(path)
-	if err != nil || !info.IsDir() {
-		return nil
-	}
-
-	depth, ok := srv.relativeDepth(path)
-	if !ok || depth > companyWatcherMaxDepth {
-		return nil
-	}
-
-	return srv.addWatchersRecursively(path, depth)
-}
-
-func (srv *CompanyService) addWatchersRecursively(dir string, depth int) error {
-	if depth > companyWatcherMaxDepth {
-		return nil
-	}
-
-	cleanDir := filepath.Clean(dir)
-	if err := srv.registerWatcher(cleanDir); err != nil {
-		return err
-	}
-
-	if depth == companyWatcherMaxDepth {
-		return nil
-	}
-
-	entries, err := os.ReadDir(cleanDir)
-	if err != nil {
-		log.Printf("CompanyService: Failed to read directory %s: %v", cleanDir, err)
-		return nil
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			if err := srv.addWatchersRecursively(filepath.Join(cleanDir, entry.Name()), depth+1); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (srv *CompanyService) registerWatcher(target string) error {
-	if _, watched := srv.watchedDirs[target]; watched {
-		return nil
-	}
-
-	if err := srv.watcher.Add(target); err != nil {
-		return err
-	}
-	srv.watchedDirs[target] = struct{}{}
-
-	return nil
-}
-
-func (srv *CompanyService) unregisterWatcherTree(target string) {
-	cleanPath := filepath.Clean(target)
-	if _, ok := srv.relativeDepth(cleanPath); !ok {
-		return
-	}
-
-	targets := make([]string, 0, len(srv.watchedDirs))
-	prefix := cleanPath + string(os.PathSeparator)
-	for dir := range srv.watchedDirs {
-		if dir == cleanPath || strings.HasPrefix(dir, prefix) {
-			targets = append(targets, dir)
-		}
-	}
-
-	for _, dir := range targets {
-		if err := srv.watcher.Remove(dir); err != nil {
-			log.Printf("CompanyService: Failed to remove watcher for %s: %v", dir, err)
-		}
-		delete(srv.watchedDirs, dir)
-	}
-}
-
-// relativeDepth は指定パスの target からの相対深度を返します
-func (srv *CompanyService) relativeDepth(target string) (int, bool) {
-	rel, err := filepath.Rel(srv.pathistServiceFolder, target)
-	if err != nil {
-		return -1, false
-	}
-
-	slashed := filepath.ToSlash(rel)
-	if slashed == "." || slashed == "" {
-		return 0, true
-	}
-
-	if slashed == ".." || strings.HasPrefix(slashed, "../") {
-		return -1, false
-	}
-
-	return strings.Count(slashed, "/") + 1, true
-}
-
 // UpdateCompanies 会社のキャッシュデータを更新します
 func (srv *CompanyService) UpdateCompanies() error {
 	// ファイルシステムから会社フォルダー一覧を取得
-	entries, err := os.ReadDir(srv.pathistServiceFolder)
+	entries, err := os.ReadDir(srv.serviceFolder)
 	if err != nil {
 		return err
 	}
@@ -263,7 +128,7 @@ func (srv *CompanyService) UpdateCompanies() error {
 	for _, entry := range entries {
 		// Companyインスタンスの作成と初期化
 		company := models.NewCompany()
-		if err := company.ParseFrom(srv.pathistServiceFolder, entry.Name()); err == nil {
+		if err := company.ParseFrom(srv.serviceFolder, entry.Name()); err == nil {
 			srv.companies[company.GetId()] = company
 		}
 	}

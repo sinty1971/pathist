@@ -23,7 +23,7 @@ def build_url(version: str, arch: str) -> tuple[str, str]:
 def main():
     parser = argparse.ArgumentParser(description="Download buf for Windows.")
     parser.add_argument("--version", default="latest")
-    parser.add_argument("--destination", default=str(Path.home() / "prj/bin/buf.exe"))
+    parser.add_argument("--destination", default=str(Path.home() / ".local/bin/buf.exe"))
     args = parser.parse_args()
 
     arch = detect_arch()

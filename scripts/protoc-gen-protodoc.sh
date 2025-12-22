@@ -6,4 +6,4 @@ REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 GOCACHE_DIR="$REPO_ROOT/.gocache"
 mkdir -p "$GOCACHE_DIR"
 
-exec env GOCACHE="$GOCACHE_DIR" go run "$REPO_ROOT/backend-grpc/cmd/protodoc" "$@"
+exec env GOCACHE="$GOCACHE_DIR" go run "$REPO_ROOT/server-grpc/cmd/protodoc" "$@"

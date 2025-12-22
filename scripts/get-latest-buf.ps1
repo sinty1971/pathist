@@ -1,5 +1,5 @@
-# Download the latest buf binary from GitHub Releases for Windows.
-# Example: .\get-latest-buf.ps1 -Version v1.34.0 -Destination C:\tools\buf.exe
+# GitHub Releases から Windows 向け buf バイナリの最新バージョンをダウンロードします。
+# 例: .\get-latest-buf.ps1 -Version v1.34.0 -Destination C:\tools\buf.exe
 
 param(
   [string]$Version = "latest",
@@ -47,3 +47,4 @@ Invoke-WebRequest -Uri $downloadUri -OutFile $Destination -Headers @{ "User-Agen
 $downloaded = Get-Item -Path $Destination
 Write-Host "Downloaded version tag: $tag"
 Write-Host ("Saved to {0} ({1} bytes)" -f $downloaded.FullName, $downloaded.Length)
+

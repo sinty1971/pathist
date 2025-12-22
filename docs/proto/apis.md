@@ -8,7 +8,7 @@ Protocol Buffers Editions 2023を使用したgRPC/Connect API仕様書
 
 - **Package**: `grpc.v1`
 - **Edition**: Protocol Buffers Editions 2023
-- **Go Package**: `backend-grpc/gen/grpc/v1;grpcv1`
+- **Go Package**: `server-grpc/gen/grpc/v1;grpcv1`
 
 ## データ型
 
@@ -82,9 +82,11 @@ Protocol Buffers Editions 2023を使用したgRPC/Connect API仕様書
 指定されたパスのファイル情報一覧を取得
 
 **リクエスト**: `GetFileInfosRequest`
+
 - `path` (string): 取得するパス
 
 **レスポンス**: `GetFileInfosResponse`
+
 - `file_infos` (repeated FileInfo): ファイル情報一覧
 
 #### GetFileBasePath
@@ -94,6 +96,7 @@ Protocol Buffers Editions 2023を使用したgRPC/Connect API仕様書
 **リクエスト**: `GetFileBasePathRequest` (空)
 
 **レスポンス**: `GetFileBasePathResponse`
+
 - `base_path` (string): ベースパス
 
 ### CompanyService
@@ -107,6 +110,7 @@ IDをキーとした会社マップを取得
 **リクエスト**: `GetCompanyMapByIdRequest` (空)
 
 **レスポンス**: `GetCompanyMapByIdResponse`
+
 - `company_map_by_id` (map<string, Company>): 会社IDマップ
 
 #### GetCompanyById
@@ -114,9 +118,11 @@ IDをキーとした会社マップを取得
 指定されたIDの会社情報を取得
 
 **リクエスト**: `GetCompanyByIdRequest`
+
 - `id` (string): 会社ID
 
 **レスポンス**: `GetCompanyByIdResponse`
+
 - `company` (Company): 会社情報
 
 #### UpdateCompany
@@ -124,10 +130,12 @@ IDをキーとした会社マップを取得
 会社情報を更新
 
 **リクエスト**: `UpdateCompanyRequest`
+
 - `current_company_id` (string): 現在の会社ID
 - `updated_company` (Company): 更新後の会社情報
 
 **レスポンス**: `UpdateCompanyResponse`
+
 - `company_map_by_id` (map<string, Company>): 更新後の会社IDマップ
 
 #### GetCompanyCategories
@@ -137,6 +145,7 @@ IDをキーとした会社マップを取得
 **リクエスト**: `GetCompanyCategoriesRequest` (空)
 
 **レスポンス**: `GetCompanyCategoriesResponse`
+
 - `categories` (repeated CompanyCategory): カテゴリー一覧
 
 ### KojiService
@@ -150,6 +159,7 @@ IDをキーとした工事マップを取得
 **リクエスト**: `GetKojiMapByIdRequest` (空)
 
 **レスポンス**: `GetKojiMapByIdResponse`
+
 - `koji_map_by_id` (map<string, Koji>): 工事IDマップ
 
 #### GetKojiById
@@ -157,9 +167,11 @@ IDをキーとした工事マップを取得
 指定されたIDの工事情報を取得
 
 **リクエスト**: `GetKojiByIdRequest`
+
 - `id` (string): 工事ID
 
 **レスポンス**: `GetKojiByIdResponse`
+
 - `koji` (Koji): 工事情報
 
 #### UpdateKoji
@@ -167,10 +179,12 @@ IDをキーとした工事マップを取得
 工事情報を更新
 
 **リクエスト**: `UpdateKojiRequest`
+
 - `current_koji_id` (string): 現在の工事ID
 - `updated_koji` (Koji): 更新後の工事情報
 
 **レスポンス**: `UpdateKojiResponse`
+
 - `koji_map_by_id` (map<string, Koji>): 更新後の工事IDマップ
 
 ## Connect RPC エンドポイント
@@ -178,16 +192,19 @@ IDをキーとした工事マップを取得
 各サービスは以下のHTTPエンドポイントでアクセス可能：
 
 ### FileService
+
 - `POST /grpc.v1.FileService/GetFileInfos`
 - `POST /grpc.v1.FileService/GetFileBasePath`
 
 ### CompanyService
+
 - `POST /grpc.v1.CompanyService/GetCompanyMapById`
 - `POST /grpc.v1.CompanyService/GetCompanyById`
 - `POST /grpc.v1.CompanyService/UpdateCompany`
 - `POST /grpc.v1.CompanyService/GetCompanyCategories`
 
 ### KojiService
+
 - `POST /grpc.v1.KojiService/GetKojiMapById`
 - `POST /grpc.v1.KojiService/GetKojiById`
 - `POST /grpc.v1.KojiService/UpdateKoji`

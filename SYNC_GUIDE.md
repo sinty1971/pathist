@@ -16,6 +16,7 @@
 ### フロントエンド実装
 
 #### 1. 基本ID同期ユーティリティ
+
 ```typescript
 // app/utils/idSync.ts
 import { IdSyncManager, useIdSync } from './idSync';
@@ -30,6 +31,7 @@ const {
 ```
 
 #### 2. 自動同期React Hook
+
 ```typescript
 // app/hooks/useAutoIdSync.ts
 import { useAutoIdSync } from '../hooks/useAutoIdSync';
@@ -58,6 +60,7 @@ const syncResult = useAutoIdSync(
 ```
 
 #### 3. フルパス→Len7変換Hook
+
 ```typescript
 // フルパスIDをLen7に一括変換
 const { 
@@ -75,7 +78,8 @@ const {
 ### バックエンド実装
 
 #### 1. ID同期API エンドポイント
-```
+
+```terminal
 POST /api/id-sync/generate-koji    # 工事ID生成
 POST /api/id-sync/generate-path    # パスID生成
 POST /api/id-sync/validate         # ID検証
@@ -85,8 +89,9 @@ GET  /api/id-sync/config           # 同期設定取得
 ```
 
 #### 2. ID生成アルゴリズム統一
+
 ```go
-// backend/internal/models/id.go - 既存のID生成機能を使用
+// server-grpc/internal/models/id.go - 既存のID生成機能を使用
 func generateKojiID(startDate time.Time, companyName, locationName string) (string, error) {
     dateStr := startDate.Format("20060102")
     combined := dateStr + companyName + locationName
@@ -188,39 +193,37 @@ await syncAll();
 
 ## 📊 パフォーマンス効果
 
-### メモリ使用量削減
-```
-フルパス ID: "豊田築炉/2-工事/2025-0618 豊田築炉 名和工場" (28文字)
-Len7 ID:     "3XK9P7M"                                (7文字)
-削減率:      75% ↓
-```
-
 ### 検索速度向上
+
 - 文字列比較: **4-8倍高速**
 - ハッシュマップ操作: **大幅改善**（大規模データ時）
 
 ### 衝突リスク
-- Len7 (32^7): **約343億通り** → 10万件以下では衝突リスクほぼゼロ
-- Len5 (32^5): **約3,355万通り** → 工事IDに最適
+
+- 53^6: **約343億通り** → 10万件以下では衝突リスクほぼゼロ
 
 ## 🛠️ 実装手順
 
 ### フェーズ1: 準備段階
+
 1. ✅ フロントエンド同期ユーティリティ実装
 2. ✅ バックエンドID同期API実装
 3. ✅ デモコンポーネント作成
 
 ### フェーズ2: 段階的適用
+
 1. **工事詳細モーダル**で自動同期を有効化
 2. **工事一覧**でID不整合検出機能を追加
 3. **ガントチャート**で同期機能を組み込み
 
 ### フェーズ3: パスID最適化（オプション）
+
 1. **Files.tsx**でLen7 ID変換を有効化
 2. **TreeView**のkey管理を最適化
 3. **メモリ使用量**の測定・検証
 
 ### フェーズ4: 本格運用
+
 1. **全コンポーネント**で同期機能を有効化
 2. **パフォーマンステスト**実行
 3. **エラーハンドリング**強化
@@ -228,6 +231,7 @@ Len7 ID:     "3XK9P7M"                                (7文字)
 ## 🔍 デバッグとテスト
 
 ### デモコンポーネント使用方法
+
 ```typescript
 // app/components/IdSyncDemo.tsx をページに追加
 import { IdSyncDemo } from '../components/IdSyncDemo';
@@ -238,21 +242,23 @@ function DebugPage() {
 ```
 
 ### 手動テストコマンド
+
 ```bash
 # フロントエンド開発サーバー
 just frontend
 
-# バックエンドAPI
-just backend
+# gRPCサーバー起動
+just server-grpc
 
 # gRPC サービス仕様
 less proto/penguin/v1/penguin.proto
 ```
 
 ### APIテスト例
+
 ```bash
 # 工事一覧の取得 (fileclient CLI)
-go run backend/cmd/fileclient/main.go -base-url http://localhost:9090
+go run server-grpc/cmd/fileclient/main.go -base-url http://localhost:9090
 
 # grpcurl を使った呼び出し例 (KojiService.ListKojies)
 grpcurl -plaintext \
@@ -264,16 +270,19 @@ grpcurl -plaintext \
 ## ⚠️ 注意事項
 
 ### 移行時の考慮点
+
 1. **既存データとの互換性**: 段階的な移行を推奨
 2. **バックアップ**: 重要データの事前バックアップ
 3. **ロールバック計画**: 問題発生時の復旧手順
 
 ### パフォーマンス監視
+
 1. **メモリ使用量**: 変換前後の比較測定
 2. **API応答時間**: ID生成・検証の速度測定  
 3. **衝突検出**: 実運用でのID重複監視
 
 ### セキュリティ
+
 1. **ID推測困難性**: BLAKE2bハッシュによる強固な生成
 2. **入力検証**: 不正なパラメータのチェック
 3. **レート制限**: API呼び出しの制限（将来検討）
@@ -281,16 +290,19 @@ grpcurl -plaintext \
 ## 📚 関連ファイル
 
 ### フロントエンド
+
 - `app/utils/idSync.ts` - メインの同期ロジック
 - `app/hooks/useAutoIdSync.ts` - React Hook実装
 - `app/components/IdSyncDemo.tsx` - デモ・テスト用コンポーネント
 
 ### バックエンド  
+
 - `internal/handlers/id_sync.go` - ID同期API
 - `internal/endpoints/id_sync.go` - ルート定義
 - `internal/models/id.go` - 既存のID生成機能
 
 ### 設計資料
+
 - `frontend/app/utils/idComparison.ts` - パフォーマンス分析
 - `frontend/app/utils/idDemo.ts` - ベンチマーク・衝突テスト
 

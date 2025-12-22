@@ -71,7 +71,7 @@ export class IdSyncManager {
     apiEndpoint?: string
   ): Promise<{
     isValid: boolean;
-    backendId?: string;
+    serverId?: string;
     needsSync: boolean;
     error?: string;
   }> {
@@ -90,7 +90,7 @@ export class IdSyncManager {
       const isValid = frontendId === expectedId;
 
       // APIエンドポイントが指定されている場合は、バックエンドとも比較
-      let backendId: string | undefined;
+      let serverId: string | undefined;
       if (apiEndpoint) {
         try {
           const response = await fetch(apiEndpoint, {
@@ -101,7 +101,7 @@ export class IdSyncManager {
           
           if (response.ok) {
             const data = await response.json();
-            backendId = data.id;
+            serverId = data.id;
           }
         } catch (error) {
           console.warn('バックエンドIDの検証に失敗:', error);
@@ -113,8 +113,8 @@ export class IdSyncManager {
       
       return {
         isValid,
-        backendId,
-        needsSync: backendId ? frontendId !== backendId : false
+        serverId,
+        needsSync: serverId ? frontendId !== serverId : false
       };
     } catch (error) {
       return {

@@ -3,7 +3,7 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: backend-grpc/gen   # ← Go の import 先プレフィックスを合わせる
+      value: server-grpc/gen   # ← Go の import 先プレフィックスを合わせる
 plugins:
   # ドキュメント生成プラグインはEditions 2023対応待ち
   # - local: protoc-gen-doc
@@ -11,11 +11,11 @@ plugins:
   #   opt:
   #     - markdown,apis.md:Penguin API ドキュメント
   - remote: buf.build/protocolbuffers/go   # protoc-gen-go 相当
-    out: backend-grpc/gen
+    out: server-grpc/gen
     opt:
       - paths=source_relative
   - remote: buf.build/connectrpc/gosimple  # protoc-gen-connect-go の推奨リモート版
-    out: backend-grpc/gen
+    out: server-grpc/gen
     opt:
       - paths=source_relative
       - simple
